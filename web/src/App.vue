@@ -1,0 +1,33 @@
+<template>
+  <div id="app">
+    <router-view/>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'app'
+}
+</script>
+
+<style lang="scss">
+
+@import '~bulma/sass/utilities/initial-variables.sass';
+
+// Colours from style guide:
+$tsr-green: #387469;
+$tsr-A: #7c5e77;
+$tsr-B: #415866;
+$tsr-C: #9e4c6e;
+$tsr-D: #6899ae;
+$tsr-E: #b45a65;
+$tsr-F: #93b479;
+$tsr-G: #636968;
+
+$primary: $tsr-green;
+
+$family-sans-serif: "Museo Sans", "Arial", BlinkMacSystemFont, -apple-system, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", sans-serif;
+
+@import "~bulma/bulma.sass";
+
+</style>

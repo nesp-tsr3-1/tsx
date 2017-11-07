@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+/build/
+/dist/
+
+*.bak
+*.log
+*.cache
+
+.DS_Store
+env/
+
+nesp.conf
+*.egg-info/

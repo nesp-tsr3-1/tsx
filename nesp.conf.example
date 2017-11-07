@@ -1,0 +1,13 @@
+[database]
+type=mysql
+host=localhost
+username=
+password=
+name=nesp
+
+[api]
+secret_key=change_me
+port=8080
+
+[global]
+data_dir=/opt/nesp
