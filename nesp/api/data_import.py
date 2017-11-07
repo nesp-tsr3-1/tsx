@@ -1,13 +1,13 @@
 from flask import Blueprint, jsonify, request, send_file
 from nesp.util import next_path, local_iso_datetime
 from nesp.api.util import db_session
-from nesp.api.auth import get_user_id
+# from nesp.api.auth import get_user_id
 from nesp.api.upload import get_upload_path, get_upload_name
 from nesp.importer import Importer
 from nesp.config import data_dir
 import logging
 import os
-from multiprocessing import Pool, Manager
+from threading import Thread, Lock
 import json
 import traceback
 from shutil import rmtree
@@ -17,32 +17,7 @@ bp = Blueprint('data_import', __name__)
 imports_path = data_dir("imports")
 running_imports = {} # Holds information about running imports
 
-# This is called in a separate process
-def process_import(file_path, working_path, commit, shared_ns):
-	try:
-		# Create logger for this import
-		log_file = os.path.join(working_path, 'import.log')
-		log = logging.getLogger(working_path)
-		handler = logging.FileHandler(log_file, mode='w')
-		handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-		handler.setLevel(logging.INFO)
-		log.setLevel(logging.INFO)
-		log.addHandler(handler)
-
-		# Plumbing to notify parent process of our progress
-		def update_progress(processed_rows, total_rows):
-			shared_ns.total_rows, shared_ns.processed_rows = total_rows, processed_rows
-
-		importer = Importer(file_path, commit = commit, logger = log, progress_callback = update_progress)
-		importer.ingest_data()
-
-		return {
-			'warnings': importer.warning_count,
-			'errors': importer.error_count
-		}
-	except:
-		traceback.print_exc()
-		raise
+lock = Lock() # Used to sync data import threads with main thread
 
 @bp.route('/imports', methods = ['POST'])
 def post_import():
@@ -86,20 +61,18 @@ def process_import_async(import_id, status):
 	file_path = get_upload_path(info['upload_uuid'])
 	working_path = import_path(import_id)
 
-	# Setup interprocess communication with import process
-	manager = Manager()
-	shared_ns = manager.Namespace()
-	shared_ns.total_rows = 0
-	shared_ns.processed_rows = 0
+	with lock:
+		running_imports[import_id] = {
+			'started': local_iso_datetime(),
+			'status': status,
+			'total_rows': 0,
+			'processed_rows': 0
+		}
 
-	running_imports[import_id] = {
-		'started': local_iso_datetime(),
-		'status': status,
-		'ns': shared_ns
-	}
+	def result_callback(result):
+		with lock:
+			del running_imports[import_id]
 
-	def process_result(result):
-		del running_imports[import_id]
 		success = result['errors'] == 0
 
 		if status == 'checking':
@@ -113,8 +86,41 @@ def process_import_async(import_id, status):
 			'warnings': result['warnings']
 		})
 
+	def progress_callback(processed_rows, total_rows):
+		with lock:
+			running_imports[import_id]['total_rows'] = total_rows
+			running_imports[import_id]['processed_rows'] = processed_rows
+
 	# Start import process
-	import_processing_pool.apply_async(process_import, (file_path, working_path, status == 'importing', shared_ns), callback = process_result)
+	t = Thread(target = process_import, args = (file_path, working_path, status == 'importing', progress_callback, result_callback))
+	t.start()
+
+# This is called off the main thread
+def process_import(file_path, working_path, commit, progress_callback, result_callback):
+	try:
+		# Create logger for this import
+		log_file = os.path.join(working_path, 'import.log')
+		log = logging.getLogger(working_path)
+		handler = logging.FileHandler(log_file, mode='w')
+		handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+		handler.setLevel(logging.INFO)
+		log.setLevel(logging.INFO)
+		log.addHandler(handler)
+
+		importer = Importer(file_path, commit = commit, logger = log, progress_callback = progress_callback)
+		importer.ingest_data()
+
+		result_callback({
+			'warnings': importer.warning_count,
+			'errors': importer.error_count
+		})
+	except:
+		traceback.print_exc()
+		result_callback({
+			'warnings': 0,
+			'errors': 1
+		})
+
 
 @bp.route('/imports/<int:id>', methods = ['PUT'])
 def update_import(id=None):
@@ -194,17 +200,13 @@ def import_info(import_id, include_running = False):
 		with open(import_info_path(import_id), 'r') as file:
 			info = json.load(file)
 
-		if info and include_running and import_id in running_imports:
-			extra = running_imports[import_id]
-			info['total_rows'] = extra['ns'].total_rows
-			info['processed_rows'] = extra['ns'].processed_rows
-			info['status'] = extra['status']
-			info['started'] = extra['started']
+		if info and include_running:
+			with lock:
+				if import_id in running_imports:
+					extra = running_imports[import_id]
+					info.update(extra)
 
 		return info
 
 	except:
 		return None
-
-# Note this must come after 'process_import' is defined, otherwise multiprocessing doesn't work
-import_processing_pool = Pool()
