@@ -11,6 +11,7 @@ from threading import Thread, Lock
 import json
 import traceback
 from shutil import rmtree
+import time
 
 bp = Blueprint('data_import', __name__)
 
@@ -100,7 +101,7 @@ def process_import(file_path, working_path, commit, progress_callback, result_ca
 	try:
 		# Create logger for this import
 		log_file = os.path.join(working_path, 'import.log')
-		log = logging.getLogger(working_path)
+		log = logging.getLogger('%s_%s' % (working_path, time.time()))
 		handler = logging.FileHandler(log_file, mode='w')
 		handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 		handler.setLevel(logging.INFO)
@@ -176,7 +177,7 @@ def get_import(id=None):
 
 @bp.route('/imports/<int:id>/log', methods = ['GET'])
 def get_import_log(id=None):
-	return send_file(os.path.join(import_path(id), 'import.log'), mimetype = 'text/plain')
+	return send_file(os.path.join(import_path(id), 'import.log'), mimetype = 'text/plain', cache_timeout = 5)
 
 def import_path(id):
 	return os.path.join(imports_path, "%04d" % int(id))
