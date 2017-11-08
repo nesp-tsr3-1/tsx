@@ -47,7 +47,6 @@ export default {
     var data = { imports: [] }
 
     api.dataImports().then((imports) => {
-      console.log(this.completed)
       data.imports = imports.filter(i => (i.status === 'imported') === this.completed)
     })
 

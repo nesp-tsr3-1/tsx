@@ -8,7 +8,7 @@ from flask_cors import CORS
 import nesp.api.upload
 import nesp.api.lpi_data
 import nesp.api.data_import
-import nesp.api.auth
+# import nesp.api.auth
 
 app = Flask('nesp')
 
