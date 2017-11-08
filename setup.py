@@ -23,7 +23,7 @@ setup(
 		'twisted': ['plugins/*',]
 	},
 	data_files=[
-		('/opt/nesp/conf', ['nesp.conf']),
+		('/opt/nesp/conf', ['nesp.conf.example']),
 		# The following breaks outside of Linux, so instead added I instructions to copy manually
 		# (installing init scripts doesn't belong in a Python install script anyway, it should go
 		# in an OS package e.g. .deb for Ubuntu)
@@ -57,4 +57,8 @@ The following native packages are required:
 To install as a Linux service:
 
 	sudo cp etc/init.d/nespapi /etc/init.d/
+
+Example configuration has been installed to /opt/nesp/conf/nesp.conf.example.
+Copy this to 'nesp.conf' and update configuration.
+
 """
