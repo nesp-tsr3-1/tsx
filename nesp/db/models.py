@@ -201,8 +201,8 @@ class T2Sighting(Base):
     __tablename__ = 't2_sighting'
 
     id = Column(Integer, primary_key=True)
-    survey_id = Column(ForeignKey(u't2_survey.id'), index=True)
-    taxon_id = Column(ForeignKey(u'taxon.id'), index=True)
+    survey_id = Column(ForeignKey(u't2_survey.id'), nullable=False, index=True)
+    taxon_id = Column(ForeignKey(u'taxon.id'), nullable=False, index=True)
     count = Column(Float(asdecimal=True))
     unit_id = Column(ForeignKey(u'unit.id'), index=True)
     breeding = Column(Integer)
@@ -254,7 +254,7 @@ class T2Survey(Base):
     position_accuracy = Column(Float(asdecimal=True))
     comments = Column(Text)
     search_type_id = Column(ForeignKey(u'search_type.id'), index=True)
-    source_primary_key = Column(String(255))
+    source_primary_key = Column(String(255), unique=True)
     secondary_source_id = Column(String(255))
 
     search_type = relationship(u'SearchType')
@@ -286,9 +286,9 @@ class Taxon(Base):
     iucn_status_id = Column(ForeignKey(u'taxon_status.id'), index=True)
     bird_group = Column(String(255))
 
-    aust_status = relationship(u'TaxonStatu', primaryjoin='Taxon.aust_status_id == TaxonStatu.id')
-    epbc_status = relationship(u'TaxonStatu', primaryjoin='Taxon.epbc_status_id == TaxonStatu.id')
-    iucn_status = relationship(u'TaxonStatu', primaryjoin='Taxon.iucn_status_id == TaxonStatu.id')
+    aust_status = relationship(u'TaxonStatus', primaryjoin='Taxon.aust_status_id == TaxonStatus.id')
+    epbc_status = relationship(u'TaxonStatus', primaryjoin='Taxon.epbc_status_id == TaxonStatus.id')
+    iucn_status = relationship(u'TaxonStatus', primaryjoin='Taxon.iucn_status_id == TaxonStatus.id')
     taxon_level = relationship(u'TaxonLevel')
 
 
@@ -319,7 +319,7 @@ class TaxonLevel(Base):
     description = Column(String(255), nullable=False)
 
 
-class TaxonStatu(Base):
+class TaxonStatus(Base):
     __tablename__ = 'taxon_status'
 
     id = Column(Integer, primary_key=True)
