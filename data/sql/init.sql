@@ -12,6 +12,15 @@ INSERT INTO unit (id, description) VALUES
 (10, "Proxy: nests with eggs"),
 (11, "Proxy: burrow estimate based on transect density");
 
+INSERT INTO taxon_status (id, description) VALUES
+(1, 'Least Concern'),
+(2, 'Near Threatened'),
+(3, 'Vulnerable'),
+(4, 'Endangered'),
+(5, 'Critically Endangered'),
+(6, 'Critically Endangered (possibly extinct)'),
+(7, 'Extinct');
+
 INSERT INTO `search_type` (`description`) VALUES
 ('2ha 20 minute search'),
 ('500m Area search'),
