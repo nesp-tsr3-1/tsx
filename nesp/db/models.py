@@ -9,6 +9,15 @@ Base = declarative_base()
 metadata = Base.metadata
 
 
+class GridCell(Base):
+    __tablename__ = 'grid_cell'
+
+    id = Column(Integer, primary_key=True)
+    x = Column(Float(asdecimal=True))
+    y = Column(Float(asdecimal=True))
+    grid_size_in_degrees = Column(Float(asdecimal=True))
+
+
 class GridTaxonPresence(Base):
     __tablename__ = 'grid_taxon_presence'
 
@@ -31,6 +40,21 @@ class Range(Base):
     __tablename__ = 'range'
 
     id = Column(Integer, primary_key=True)
+    description = Column(String(255), nullable=False)
+
+
+class Region(Base):
+    __tablename__ = 'region'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255))
+    geometry = Column(NullType)
+
+
+class ResponseVariableType(Base):
+    __tablename__ = 'response_variable_type'
+
+    id = Column(Integer, primary_key=True)
     description = Column(String(255))
 
 
@@ -38,7 +62,7 @@ class SearchType(Base):
     __tablename__ = 'search_type'
 
     id = Column(Integer, primary_key=True)
-    description = Column(String(255))
+    description = Column(String(255), nullable=False)
 
 
 class SiteTaxonPresence(Base):
@@ -64,14 +88,28 @@ class SourceType(Base):
     __tablename__ = 'source_type'
 
     id = Column(Integer, primary_key=True)
-    description = Column(String(255))
+    description = Column(String(255), nullable=False)
 
 
 t_species_presence = Table(
     'species_presence', metadata,
     Column('spno', SmallInteger, server_default=text("'0'")),
-    Column('coords', Geometry)
+    Column('coords', NullType)
 )
+
+
+class SpeciesRange(Base):
+    __tablename__ = 'species_range'
+
+    species_id = Column(Integer, primary_key=True)
+
+
+class State(Base):
+    __tablename__ = 'state'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255))
+    geometry = Column(NullType)
 
 
 class T1Sighting(Base):
@@ -82,6 +120,7 @@ class T1Sighting(Base):
     taxon_id = Column(ForeignKey(u'taxon.id'), nullable=False, index=True)
     count = Column(Float(asdecimal=True), nullable=False)
     unit_id = Column(ForeignKey(u'unit.id'), nullable=False, index=True)
+    breeding = Column(Integer)
 
     survey = relationship(u'T1Survey')
     taxon = relationship(u'Taxon')
@@ -108,12 +147,12 @@ class T1Survey(Base):
     site_id = Column(ForeignKey(u't1_site.id'), nullable=False, index=True)
     source_id = Column(ForeignKey(u'source.id'), nullable=False, index=True)
     source_primary_key = Column(String(255), nullable=False, unique=True)
-    start_d = Column(SmallInteger)
-    start_m = Column(SmallInteger)
-    start_y = Column(SmallInteger, nullable=False)
-    finish_d = Column(SmallInteger)
-    finish_m = Column(SmallInteger)
-    finish_y = Column(SmallInteger)
+    start_date_d = Column(SmallInteger)
+    start_date_m = Column(SmallInteger)
+    start_date_y = Column(SmallInteger, nullable=False)
+    finish_date_d = Column(SmallInteger)
+    finish_date_m = Column(SmallInteger)
+    finish_date_y = Column(SmallInteger)
     start_time = Column(Time)
     finish_time = Column(Time)
     duration_in_minutes = Column(Integer)
@@ -121,11 +160,28 @@ class T1Survey(Base):
     length_in_km = Column(Float(asdecimal=True))
     coords = Column(NullType)
     location = Column(String(255))
-    positional_accuracy = Column(Float(asdecimal=True))
+    positional_accuracy_in_m = Column(Float(asdecimal=True))
     comments = Column(Text)
+    response_variable_type_id = Column(ForeignKey(u'response_variable_type.id'), index=True)
 
+    response_variable_type = relationship(u'ResponseVariableType')
     site = relationship(u'T1Site')
     source = relationship(u'Source')
+
+
+class T2Aggregated(Base):
+    __tablename__ = 't2_aggregated'
+
+    id = Column(Integer, primary_key=True)
+    taxon_id = Column(String(6))
+    site_id = Column(Integer)
+    grid_id = Column(Integer)
+    search_type_id = Column(Integer)
+    start_date_y = Column(SmallInteger)
+    start_date_m = Column(SmallInteger)
+    experimental_design_type_id = Column(Integer)
+    response_variable_type_id = Column(Integer)
+    response_value = Column(Float(asdecimal=True))
 
 
 class T2ProcessedSighting(Base):
@@ -149,6 +205,7 @@ class T2Sighting(Base):
     taxon_id = Column(ForeignKey(u'taxon.id'), index=True)
     count = Column(Float(asdecimal=True))
     unit_id = Column(ForeignKey(u'unit.id'), index=True)
+    breeding = Column(Integer)
 
     survey = relationship(u'T2Survey')
     taxon = relationship(u'Taxon')
@@ -159,24 +216,34 @@ class T2Site(Base):
     __tablename__ = 't2_site'
 
     id = Column(Integer, primary_key=True)
-    source_id = Column(Integer)
-    name = Column(String(255))
-    search_type_id = Column(Integer)
+    source_id = Column(Integer, nullable=False)
+    name = Column(String(255), nullable=False)
+    search_type_id = Column(Integer, nullable=False)
+    geometry = Column(NullType, nullable=False)
 
     surveys = relationship(u'T2Survey', secondary='t2_survey_site')
+
+
+class T2Suitability(Base):
+    __tablename__ = 't2_suitability'
+
+    taxon_id = Column(Integer, primary_key=True)
+    experimental_design_type_id = Column(Integer)
+    response_variable_type_id = Column(Integer)
+    is_suitable = Column(Integer)
 
 
 class T2Survey(Base):
     __tablename__ = 't2_survey'
 
     id = Column(Integer, primary_key=True)
-    source_Id = Column(ForeignKey(u'source.id'), nullable=False, index=True)
-    start_d = Column(SmallInteger)
-    start_m = Column(SmallInteger)
-    start_y = Column(SmallInteger, nullable=False)
-    finish_d = Column(SmallInteger)
-    finish_m = Column(SmallInteger)
-    finish_y = Column(SmallInteger)
+    source_id = Column(ForeignKey(u'source.id'), nullable=False, index=True)
+    start_date_d = Column(SmallInteger)
+    start_date_m = Column(SmallInteger)
+    start_date_y = Column(SmallInteger, nullable=False)
+    finish_date_d = Column(SmallInteger)
+    finish_date_m = Column(SmallInteger)
+    finish_date_y = Column(SmallInteger)
     start_time = Column(Time)
     finish_time = Column(Time)
     duration_in_minutes = Column(Integer)
@@ -187,6 +254,8 @@ class T2Survey(Base):
     position_accuracy = Column(Float(asdecimal=True))
     comments = Column(Text)
     search_type_id = Column(ForeignKey(u'search_type.id'), index=True)
+    source_primary_key = Column(String(255))
+    secondary_source_id = Column(String(255))
 
     search_type = relationship(u'SearchType')
     source = relationship(u'Source')
@@ -211,10 +280,15 @@ class Taxon(Base):
     family_common_name = Column(String(255))
     family_scientific_name = Column(String(255))
     order = Column(String(255))
-    population = Column(Integer)
-    australian_conservation_status = Column(String(255))
-    include_for_nesp = Column(Integer, nullable=False, server_default=text("'1'"))
+    population = Column(String(255))
+    aust_status_id = Column(ForeignKey(u'taxon_status.id'), index=True)
+    epbc_status_id = Column(ForeignKey(u'taxon_status.id'), index=True)
+    iucn_status_id = Column(ForeignKey(u'taxon_status.id'), index=True)
+    bird_group = Column(String(255))
 
+    aust_status = relationship(u'TaxonStatu', primaryjoin='Taxon.aust_status_id == TaxonStatu.id')
+    epbc_status = relationship(u'TaxonStatu', primaryjoin='Taxon.epbc_status_id == TaxonStatu.id')
+    iucn_status = relationship(u'TaxonStatu', primaryjoin='Taxon.iucn_status_id == TaxonStatu.id')
     taxon_level = relationship(u'TaxonLevel')
 
 
@@ -222,9 +296,9 @@ class TaxonPresenceAlphaHull(Taxon):
     __tablename__ = 'taxon_presence_alpha_hull'
 
     taxon_id = Column(ForeignKey(u'taxon.id'), primary_key=True)
-    range_id = Column(ForeignKey(u'range.id'), index=True)
-    breeding_range_id = Column(Integer)
-    geometry = Column(NullType)
+    range_id = Column(ForeignKey(u'range.id'), nullable=False, index=True)
+    breeding_range_id = Column(Integer, nullable=False)
+    geometry = Column(NullType, nullable=False)
 
     range = relationship(u'Range')
 
@@ -245,8 +319,15 @@ class TaxonLevel(Base):
     description = Column(String(255), nullable=False)
 
 
+class TaxonStatu(Base):
+    __tablename__ = 'taxon_status'
+
+    id = Column(Integer, primary_key=True)
+    description = Column(String(255))
+
+
 class Unit(Base):
     __tablename__ = 'unit'
 
     id = Column(Integer, primary_key=True)
-    description = Column(String(255))
+    description = Column(String(255), nullable=False)
