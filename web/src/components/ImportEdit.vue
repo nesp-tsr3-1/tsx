@@ -214,7 +214,7 @@ export default {
       })
     },
     deleteImport: function() {
-      if(confirm('Delete survey - are you sure?')) {
+      if(confirm('Delete import - are you sure?')) {
         api.deleteImport(this.importId).then(() => {
           this.$router.push('/')
         }).catch((e) => {
