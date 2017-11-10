@@ -1,4 +1,4 @@
-from nesp.db import Taxon, TaxonLevel, get_session
+from nesp.db import Taxon, TaxonLevel, TaxonStatus, get_session
 import os
 import logging
 import sys
@@ -37,19 +37,24 @@ def main():
 			if str(row['SpNo']) not in str(row['TaxonID']):
 				raise ValueError("Invalid SpNo/TaxonID combination: %s/%s" % (row['SpNo'], row['TaxonID']))
 
-			taxon = Taxon(
-				id = row['TaxonID'],
-			    ultrataxon = row['UltrataxonID'] == 'u',
-			    taxon_level = get_or_create(session, TaxonLevel, description = row['Taxon Level']),
-			    spno = row['SpNo'],
-			    common_name = row['Taxon name'],
-			    scientific_name = row['Taxon scientific name'],
-			    family_common_name = row['Family common name'],
-			    family_scientific_name = row['Family scientific name'],
-			    order = row['Order'],
-			    population = row['Population'],
-			    australian_conservation_status = row['Australian conservation status']
-			)
+			try:
+				taxon = Taxon(
+					id = row['TaxonID'],
+					ultrataxon = row['UltrataxonID'] == 'u',
+					taxon_level = get_or_create(session, TaxonLevel, description = row['Taxon Level']),
+					spno = row['SpNo'],
+					common_name = row['Taxon name'],
+					scientific_name = row['Taxon scientific name'],
+					family_common_name = row['Family common name'],
+					family_scientific_name = row['Family scientific name'],
+					order = row['Order'],
+					population = row['Population'],
+					# TODO - there are status in WLAB like 'Introduced' and 'Vagrant' not in Glenn's list - for now importing as NULL
+					aust_status = session.query(TaxonStatus).filter_by(description = row['Australian conservation status']).one_or_none()
+				)
+			except:
+				print row
+				raise
 
 			session.add(taxon)
 
