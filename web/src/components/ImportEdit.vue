@@ -24,7 +24,7 @@
 
     <div v-if='processing'>
       <p>
-        Processing
+        Processing {{progressString}}
         <progress class="progress is-primary is-small" v-bind:value='processingProgress' max="100">{{processingProgress}}%</progress>
       </p>
     </div>
@@ -82,6 +82,7 @@ export default {
       fileUUID: null,
       filename: null,
       processingProgress: 0,
+      progressString: '',
       importLogs: [],
       status: 'init',
       importId: null,
@@ -188,6 +189,7 @@ export default {
 
         if(dataImport.total_rows && dataImport.processed_rows) {
           this.processingProgress = dataImport.processed_rows * 100 / dataImport.total_rows
+          this.progressString = dataImport.processed_rows.toLocaleString() + ' / ' + dataImport.total_rows.toLocaleString() + ' rows'
         }
         this.fileUUID = dataImport.upload_uuid
         this.name = dataImport.name
