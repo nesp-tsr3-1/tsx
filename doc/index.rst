@@ -11,10 +11,11 @@ Welcome to NESP's documentation!
 	:caption: Contents:
 
 	rest_api
+	dev
 
 .. toctree::
     :maxdepth: 1
-    :caption: API Reference:
+    :caption: Python API Reference:
     :glob:
 
     api/*

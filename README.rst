@@ -107,3 +107,10 @@ Deployment
 	sudo cp -r dist/ /var/www/nesp/
 	sudo chown -R www-data:www-data /var/www/nesp
 
+
+Documentation
+=============
+
+Documentation can be generated using::
+	cd doc
+	make html
