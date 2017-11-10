@@ -45,6 +45,7 @@ def post_import():
 	save_import_info(import_id, {
 		'id': import_id,
 		'upload_uuid': body['upload_uuid'],
+		'data_type': body.get('data_type'),
 		'status': 'init',
 		'filename': get_upload_name(upload_uuid),
 		'name': name,
@@ -61,6 +62,7 @@ def process_import_async(import_id, status):
 
 	file_path = get_upload_path(info['upload_uuid'])
 	working_path = import_path(import_id)
+	data_type = int(info.get('data_type', 1))
 
 	with lock:
 		running_imports[import_id] = {
@@ -93,11 +95,12 @@ def process_import_async(import_id, status):
 			running_imports[import_id]['processed_rows'] = processed_rows
 
 	# Start import process
-	t = Thread(target = process_import, args = (file_path, working_path, status == 'importing', progress_callback, result_callback))
+	t = Thread(target = process_import, args = (file_path, working_path, data_type, status == 'importing', progress_callback, result_callback))
 	t.start()
 
 # This is called off the main thread
-def process_import(file_path, working_path, commit, progress_callback, result_callback):
+# Ideally we would run this in a separate process, but Python 2 multiprocessing is broken/hard. Easy with Python 3 though.
+def process_import(file_path, working_path, data_type, commit, progress_callback, result_callback):
 	try:
 		# Create logger for this import
 		log_file = os.path.join(working_path, 'import.log')
@@ -108,7 +111,7 @@ def process_import(file_path, working_path, commit, progress_callback, result_ca
 		log.setLevel(logging.INFO)
 		log.addHandler(handler)
 
-		importer = Importer(file_path, commit = commit, data_type = 1, logger = log, progress_callback = progress_callback)
+		importer = Importer(file_path, commit = commit, data_type = data_type, logger = log, progress_callback = progress_callback)
 		importer.ingest_data()
 
 		result_callback({
@@ -143,6 +146,7 @@ def update_import(id=None):
 
 	update_import_info(id, {
 		'upload_uuid': new_info['upload_uuid'],
+		'data_type': new_info.get('data_type', 1),
 		'name': new_info['name']
 	})
 

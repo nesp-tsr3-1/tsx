@@ -9,18 +9,31 @@
       <input class="input" type="text" v-bind:disabled="!canEdit" v-model="name" style="max-width: 30em">
     </div>
 
-    <p v-if='status == "init"'>
-      <button class='button' v-on:click='selectFile'>Select file</button>
-    </p>
+    <div class="field">
+      <label class="label">Data type</label>
+      <div class="select">
+        <select v-model="dataType">
+          <option v-bind:value="1">Type 1</option>
+          <option v-bind:value="2">Type 2/3 (Big Data)</option>
+        </select>
+      </div>
+    </div>
 
-    <p v-if='uploading'>
-      Uploading
-      <progress class="progress is-primary is-small" v-bind:value='uploadProgress' max="100">{{uploadProgress}}%</progress>
-    </p>
+    <div class="field">
+      <label class="label">Data file</label>
+      <p v-if='status == "init"'>
+        <button class='button' v-on:click='selectFile'>Select file</button>
+      </p>
 
-    <p v-if='fileURL && filename && !uploading'>
-      File uploaded: <a v-bind:href='fileURL'>{{filename}}</a>
-    </p>
+      <p v-if='uploading'>
+        Uploading
+        <progress class="progress is-primary is-small" v-bind:value='uploadProgress' max="100">{{uploadProgress}}%</progress>
+      </p>
+
+      <p v-if='fileURL && filename && !uploading'>
+        File uploaded: <a v-bind:href='fileURL'>{{filename}}</a>
+      </p>
+    </div>
 
     <div v-if='processing'>
       <p>
@@ -80,6 +93,7 @@ export default {
       uploading: false,
       uploadProgress: 0,
       fileUUID: null,
+      dataType: 1,
       filename: null,
       processingProgress: 0,
       progressString: '',
@@ -164,17 +178,17 @@ export default {
 
       var promise
 
+      var dataImport = {
+        upload_uuid: this.fileUUID,
+        name: this.name.trim(),
+        data_type: this.dataType
+      }
+
       if(this.importId) {
-        promise = api.updateImport(this.importId, {
-          upload_uuid: this.fileUUID,
-          name: this.name.trim(),
-          status: status
-        })
+        dataImport.status = status
+        promise = api.updateImport(this.importId, dataImport)
       } else {
-        promise = api.createImport({
-          upload_uuid: this.fileUUID,
-          name: this.name.trim()
-        })
+        promise = api.createImport(dataImport)
       }
 
       promise.then((dataImport) => {
@@ -195,6 +209,7 @@ export default {
         this.name = dataImport.name
         this.filename = dataImport.filename
         this.status = dataImport.status
+        this.dataType = dataImport.data_type || 1
         return dataImport.status === 'checking' || dataImport.status === 'importing'
       }).then((dataImport) => {
         return api.dataImportLog(dataImport.id)
