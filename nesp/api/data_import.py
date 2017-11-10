@@ -18,7 +18,7 @@ bp = Blueprint('data_import', __name__)
 imports_path = data_dir("imports")
 running_imports = {} # Holds information about running imports
 
-lock = Lock() # Used to sync data import threads with main thread
+lock = Lock() # Used to sync data between import thread and main thread
 
 @bp.route('/imports', methods = ['POST'])
 def post_import():
@@ -108,7 +108,7 @@ def process_import(file_path, working_path, commit, progress_callback, result_ca
 		log.setLevel(logging.INFO)
 		log.addHandler(handler)
 
-		importer = Importer(file_path, commit = commit, logger = log, progress_callback = progress_callback)
+		importer = Importer(file_path, commit = commit, data_type = 1, logger = log, progress_callback = progress_callback)
 		importer.ingest_data()
 
 		result_callback({

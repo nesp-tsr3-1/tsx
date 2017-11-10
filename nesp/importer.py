@@ -1,6 +1,6 @@
 import pyproj
 from pyproj import Proj
-from nesp.db import T1Survey, T1Sighting, T1Site, Taxon, Source, SourceType, SearchType, Unit, get_session
+from nesp.db import T1Survey, T1Sighting, T1Site, T2Survey, T2Sighting, Taxon, Source, SourceType, SearchType, Unit, get_session
 import nesp.util
 import os
 import logging
@@ -15,6 +15,10 @@ import time
 from geoalchemy2 import shape
 from tqdm import tqdm
 
+# Ignore MySQL warning caused by binary geometry data
+import warnings
+warnings.filterwarnings("ignore", ".*Invalid utf8 character string.*")
+
 log = logging.getLogger(__name__)
 
 # Helper to make logging and progress bar work together
@@ -25,17 +29,17 @@ class TqdmStream(object):
 		pass
 
 def main():
-	logging.captureWarnings(True)
-	logging.basicConfig(stream=TqdmStream(), level=logging.DEBUG, format='%(asctime)-15s %(levelname)-8s %(message)s')
+	logging.basicConfig(stream=TqdmStream(), level=logging.INFO, format='%(asctime)-15s %(levelname)-8s %(message)s')
 
-	parser = argparse.ArgumentParser(description='Import Type 1 data into NESP database')
+	parser = argparse.ArgumentParser(description='Import Type 1/2/3 survey data into NESP database')
 	parser.add_argument('-i', dest='filename', type=str, help='data file to import (Excel/CSV)')
 	parser.add_argument('-t', action='store_true', dest='test', help='test database connection')
+	parser.add_argument('--type', dest='data_type', choices=[1,2], required=True, type=int, help='Type of data (1 or 2)')
 	parser.add_argument('-c', action='store_true', dest='commit', help='commit changes (default is dry-run)')
 	args = parser.parse_args()
 
 	if args.filename:
-		importer = Importer(args.filename, commit = args.commit)
+		importer = Importer(args.filename, data_type = args.data_type, commit = args.commit)
 		importer.ingest_data()
 	elif args.test:
 		test_db()
@@ -46,14 +50,14 @@ def test_db():
 	"""
 	Test the db conneciton
 	"""
-	print "Testing DB Connection"
-	print
+	print("Testing DB Connection")
+	print()
 	session = get_session()
 	# list all units
 	for u in session.query(Unit).all():
-		print "%d: %s" % (u.id, u.description)
-	print
-	print "DB Connection successful"
+		print("%d: %s" % (u.id, u.description))
+	print()
+	print("DB Connection successful")
 
 
 class ImportLogger(logging.LoggerAdapter):
@@ -64,11 +68,15 @@ class ImportError(Exception):
 	pass
 
 class Importer:
-	def __init__(self, filename, commit = False, logger = log, progress_callback = None):
+	def __init__(self, filename, data_type = None, commit = False, logger = log, progress_callback = None):
+		if data_type not in (1,2):
+			raise ValueError("Invalid type (must be 1 or 2)")
+
 		self.messages = []
 		self.filename = filename
 		self.commit = commit
 		self.log = logger
+		self.data_type = data_type
 		self.progress_callback = progress_callback
 		# see check_survey_consistency
 		self.survey_fields_by_pk = {}
@@ -79,6 +87,20 @@ class Importer:
 		self.error_count = 0
 		self.warning_count = 0
 		self.processed_rows = 0
+
+		# used to cache lookups
+		self.cache = {}
+		self.pending_sightings = []
+
+		# fast mode doesn't update sightings, just inserts
+		self.fast_mode = True
+
+		# list of columns that must not be blank
+		self.non_empty_keys = ['SearchTypeDesc', 'SourceDesc', 'SiteName', 'TaxonID', 'Count', 'StartDate', 'SpNo', 'X', 'Y', 'UnitID', 'SourcePrimaryKey']
+		if self.data_type == 2:
+			self.non_empty_keys.remove('SiteName')
+			self.non_empty_keys.remove('Count')
+
 
 	def progress_wrapper(self, iterable):
 		# Show a progress bar only if we are running as a script
@@ -95,6 +117,7 @@ class Importer:
 		self.log.info("Starting import")
 
 		session = get_session()
+		self.session = session
 
 		# check the extension of the to determine what file it is
 		extension = os.path.splitext(self.filename)[1]
@@ -131,6 +154,8 @@ class Importer:
 					self.check_headers(reader.fieldnames)
 					for i, row in enumerate(self.progress_wrapper(reader)):
 						self.process_row(session, row, i + 1)
+
+			self.flush_sightings(session) # flush any left over sightings not yet committed
 
 		except ImportError as e:
 			self.log.error(str(e))
@@ -183,6 +208,9 @@ class Importer:
 			"SightingComments",
 		])
 
+		if self.data_type == 2:
+			required_headers -= set(['SiteName', 'SourceType'])
+
 		missing_headers = required_headers - set(headers)
 
 		if len(missing_headers) > 0:
@@ -194,19 +222,9 @@ class Importer:
 			self.log.warning("Unrecognized column(s) - will be ignored: %s" % ', '.join(unrecognized_headers))
 
 	def process_row(self, session, row, row_index):
-		# Each row gets added inside a nested transaction so if anything goes wrong we can rollback just that row
-		session.begin_nested()
 		try:
-			# Disable autoflush - it's a pain
-			with session.no_autoflush:
-				if self.ingest_row(session, row, row_index):
-					session.commit()
-				else:
-					# If anything went wrong, rollback
-					session.rollback()
-
+			self.ingest_row(session, row, row_index)
 		except:
-			session.rollback()
 			self.log.exception("Fatal error during import")
 			raise ImportError("Unexpected error - probably a bug (see above)")
 
@@ -263,22 +281,27 @@ class Importer:
 			ok = False
 
 		# Check for empty values
-		for key in ['SearchTypeDesc', 'SourceDesc', 'SiteName', 'TaxonID', 'Count', 'StartDate', 'SpNo', 'X', 'Y', 'UnitID', 'SourcePrimaryKey']:
+		for key in self.non_empty_keys:
 			if row.get(key) == None:
 				log.error("%s: must not be empty" % key)
 				return False
 
 		# Source
-		source = session.query(Source).filter_by(description = row.get('SourceDesc')).one_or_none()
+		source = self.get_source(session, row.get('SourceDesc'))
+
 		if source == None:
 			source = Source(
 				description = row.get('SourceDesc'),
 				provider = row.get('SourceProvider'),
-				source_type = get_or_create(session, SourceType, description = row.get('SourceType')))
+				source_type = get_or_create(session, SourceType, description = row.get('SourceType')) if row.get('SourceType') else None)
 			session.add(source)
 			session.flush()
 		else:
-			if source.source_type.description != row.get('SourceType'):
+			if source.source_type == None:
+				if row.get('SourceType') != None:
+					log.error("SourceType: doesn't match database for this source")
+					ok = False
+			elif source.source_type.description != row.get('SourceType'):
 				log.error("SourceType: doesn't match database for this source")
 				ok = False
 			if source.provider != row.get('SourceProvider'):
@@ -286,101 +309,139 @@ class Importer:
 				ok = False
 
 		# SearchType
-		search_type = get_or_create(session, SearchType, description = row.get('SearchTypeDesc'))
+		search_type = self.get_or_create_search_type(session, row.get('SearchTypeDesc'))
 
 		# Site
-		try:
-			site = get_or_create(session, T1Site,
-				name = row.get('SiteName'),
-				search_type = search_type,
-				source = source)
-		except MultipleResultsFound:
-			log.error("Found duplicate sites in DB - this must be fixed before import can continue")
-			self.commit = False # serious error
-			return False
+		if self.data_type == 1:
+			last_site = self.cache.get('last_site')
+			if last_site != None and last_site.name == row.get('SiteName') and last_site.search_type == search_type and last_site.source == source:
+				# Same site as last row - no need to process site
+				site = last_site
+			else:
+				try:
+					site = get_or_create(session, T1Site,
+						name = row.get('SiteName'),
+						search_type = search_type,
+						source = source)
+				except MultipleResultsFound:
+					log.error("Found duplicate sites in DB - this must be fixed before import can continue")
+					self.commit = False # serious error
+					return False
+
+				self.cache['last_site'] = site
 
 		# Survey
-		survey = session.query(T1Survey).filter_by(source_primary_key = row.get('SourcePrimaryKey')).one_or_none()
-		if survey == None:
-			survey = T1Survey(site = site, source_primary_key = row.get('SourcePrimaryKey'))
+		last_survey = self.cache.get('last_survey')
+		if last_survey != None and last_survey.source_primary_key == row.get('SourcePrimaryKey'):
+			# Same survey as last row - no need to process survey fields (this yields a huge speed up for type 2/3 data)
+			survey = last_survey
+		else:
+			if self.data_type == 1:
+				if self.fast_mode:
+					survey = None
+				else:
+					survey = session.query(T1Survey).filter_by(source_primary_key = row.get('SourcePrimaryKey')).one_or_none()
 
-		survey.site = site
-		survey.source = source
+				if survey == None:
+					survey = T1Survey(site = site, source_primary_key = row.get('SourcePrimaryKey'))
+				survey.site = site
 
+			elif self.data_type == 2:
+				if self.fast_mode:
+					survey = None
+				else:
+					survey = session.query(T2Survey).filter_by(source_primary_key = row.get('SourcePrimaryKey')).one_or_none()
 
-		# Start/Finish date/time
-		with field('StartDate') as value:
-			survey.start_d, survey.start_m, survey.start_y = parse_date(value)
+				if survey == None:
+					survey = T2Survey(source_primary_key = row.get('SourcePrimaryKey'))
 
-		with field('FinishDate') as value:
-			survey.finish_d, survey.finish_m, survey.finish_y = parse_date(value)
+			self.cache['last_survey'] = survey
 
-		with field('StartTime') as value:
-			survey.start_time = parse_time(value)
+			survey.source = source
 
-		with field('FinishTime') as value:
-			survey.finish_time = parse_time(value)
+			# Start/Finish date/time
+			with field('StartDate') as value:
+				survey.start_date_d, survey.start_date_m, survey.start_date_y = parse_date(value)
 
-		if row.get('FinishDate') and (survey.start_y, survey.start_m, survey.start_d) > (survey.finish_y, survey.finish_m, survey.finish_d):
-			log.error("Start date after finish date: %s > %s" % ((survey.start_y, survey.start_m, survey.start_d), (survey.finish_y, survey.finish_m, survey.finish_d)));
-			ok = False
+			with field('FinishDate') as value:
+				survey.finish_date_d, survey.finish_date_m, survey.finish_date_y = parse_date(value)
 
-		# Duration, area, length, location, accuracy
+			with field('StartTime') as value:
+				survey.start_time = parse_time(value)
 
-		with field('Duration') as value:
-			survey.duration_in_minutes = validate(value, validate_int, validate_greater_than(0))
+			with field('FinishTime') as value:
+				survey.finish_time = parse_time(value)
 
-		with field('AreaInm2') as value:
-			survey.area_in_m2 = validate(value, validate_float, validate_greater_than(0))
-
-		with field('LengthInKm') as value:
-			survey.length_in_km = validate(value, validate_float, validate_greater_than(0))
-
-		with field('PositionalAccuracy') as value:
-			survey.positional_accuracy_in_m = validate(value, validate_int, validate_greater_than(0))
-
-		survey.location = row.get('Location name')
-
-		# Coordinates
-		with field('X') as value:
-			x = validate(value, validate_float)
-
-		with field('Y') as value:
-			y = validate(value, validate_float)
-
-		if x != None and y != None:
-			if x == 0 or y == 0:
-				log.warning('Suspicious zero coordinate before projection: %s, %s' % x, y)
-
-			coords = create_point(x, y, row.get('ProjectionReference'))
-
-			survey.coords = shape.from_shape(coords)
-
-			x, y = coords.x, coords.y
-
-			if x < -180 or x > 180 or y < -90 or y > 90:
-				log.error('Invalid coordinates after projection: %s, %s' % x, y)
+			if row.get('FinishDate') and (survey.start_date_y, survey.start_date_m, survey.start_date_d) > (survey.finish_date_y, survey.finish_date_m, survey.finish_date_d):
+				log.error("Start date after finish date: %s > %s" % ((survey.start_date_y, survey.start_date_m, survey.start_date_d), (survey.finish_date_y, survey.finish_date_m, survey.finish_date_d)));
 				ok = False
-			elif x == 0 or y == 0:
-				log.warning('Suspicious zero coordinate after projection: %s, %s' % x, y)
 
-		# Save survey
-		session.add(survey)
-		session.flush()
+			# Duration, area, length, location, accuracy
+
+			with field('DurationInMinutes') as value:
+				survey.duration_in_minutes = validate(value, validate_int, validate_greater_than(0))
+
+			with field('AreaInM2') as value:
+				survey.area_in_m2 = validate(value, validate_float, validate_greater_than(0))
+
+			with field('LengthInKm') as value:
+				survey.length_in_km = validate(value, validate_float, validate_greater_than(0))
+
+			with field('PositionalAccuracyInM') as value:
+				survey.positional_accuracy_in_m = validate(value, validate_int, validate_greater_than_or_equal(0))
+
+			survey.location = row.get('LocationName')
+			survey.comments = row.get('SurveyComments')
+
+			# Coordinates
+			with field('X') as value:
+				x = validate(value, validate_float)
+
+			with field('Y') as value:
+				y = validate(value, validate_float)
+
+			if x != None and y != None:
+				if x == 0 or y == 0:
+					log.warning('Suspicious zero coordinate before projection: %s, %s' % (x, y))
+
+				coords = create_point(x, y, row.get('ProjectionReference'))
+
+				survey.coords = shape.from_shape(coords)
+
+				x, y = coords.x, coords.y
+
+				if x < -180 or x > 180 or y < -90 or y > 90:
+					log.error('Invalid coordinates after projection: %s, %s' % (x, y))
+					ok = False
+				elif x == 0 or y == 0:
+					log.warning('Suspicious zero coordinate after projection: %s, %s' % (x, y))
 
 		# Taxon
-		try:
-			taxon = session.query(Taxon).filter_by(id = row.get('TaxonID'), spno = row.get('SpNo')).one()
-		except NoResultFound:
+		taxon_id = row.get('TaxonID')
+		if not self.check_taxon(session, row.get('SpNo'), taxon_id):
 			log.error("Invalid TaxonID/Spno: %s, %s" % (row.get('TaxonID'), row.get('SpNo')))
 			return False
 
-		sighting = session.query(T1Sighting).filter_by(survey = survey, taxon = taxon).one_or_none()
-		if sighting == None:
-			sighting = T1Sighting(survey = survey, taxon = taxon)
-			session.add(sighting)
+		if self.data_type == 1:
+			Sighting = T1Sighting
+		elif self.data_type == 2:
+			Sighting = T2Sighting
 
-		# TODO - breeding - what are we doing with that field?
+		if self.fast_mode:
+			sighting = None
+		else:
+			sighting = session.query(Sighting).filter_by(survey = survey, taxon_id = taxon_id).one_or_none()
+
+		if sighting == None:
+			sighting = Sighting(survey = survey, taxon_id = taxon_id)
+
+		with field('Breeding') as value:
+			if value in (None, '0'):
+				sighting.breeding = False
+			elif value == '1':
+				sighting.breeding = True
+			else:
+				raise ValueError('Invalid value (should be 0/blank or 1)')
 
 		with field('Count') as value:
 			if value is None:
@@ -392,16 +453,68 @@ class Importer:
 		with field('UnitID') as value:
 			unit_id = validate(value, validate_int)
 			try:
-				sighting.unit = session.query(Unit).get(unit_id)
+				sighting.unit = self.get_unit(session, unit_id)
 			except NoResultFound:
 				raise ValueError('Unrecognized ID')
 
-		return ok
+		sighting.comments = row.get('SightingComments')
+
+		if ok:
+			session.add(survey)
+			self.pending_sightings.append(sighting)
+			# session.add(sighting)
+
+		if row_index % 4000 == 0:
+			self.flush_sightings(session)
+			# session.flush()
 
 
+	def flush_sightings(self, session):
+		session.flush()
+		for sighting in self.pending_sightings:
+			sighting.survey_id = sighting.survey.id
+			sighting.unit_id = sighting.unit.id
+		session.bulk_save_objects(self.pending_sightings)
+		self.pending_sightings = []
+
+	# Helpers that cache results to speed things up:
+
+	def check_taxon(self, session, spno, taxon_id):
+		if 'species' not in self.cache:
+			self.cache['species'] = { taxon.id: taxon.spno for taxon in session.query(Taxon).all() }
+		return self.cache['species'].get(taxon_id) == int(spno)
+
+	def get_unit(self, session, unit_id):
+		return self.get_cached('unit', unit_id,
+			lambda: session.query(Unit).get(unit_id))
+
+	def get_source(self, session, description):
+		return self.get_cached('source', description,
+			lambda: session.query(Source).filter_by(description = description).one_or_none())
+
+	def get_or_create_search_type(self, session, description):
+		return self.get_cached('search_type', description,
+			lambda: get_or_create(session, SearchType, description = description))
+
+	def get_cached(self, group, key, fn, cacheNone = False):
+		if group not in self.cache:
+			self.cache[group] = {}
+		g = self.cache[group]
+
+		if key in g:
+			return g[key]
+
+		result = fn()
+
+		if result != None or cacheNone:
+			g[key] = result
+
+		return result
+
+
+	# Check that survey details don't change for the same 'SourcePrimaryKey'
 	def check_survey_consistency(self, row):
-		# Check that survey details don't change for the same 'SourcePrimaryKey'
-		survey_keys = ['SourceType', 'SourceDesc', 'SourceProvider', 'SiteName', 'SearchTypeDesc', 'StartDate', 'FinishDate', 'StartTime', 'FinishTime', 'Duration', 'AreaInm2', 'LengthInKm', 'LocationName', 'Y', 'X', 'ProjectionReference', 'PositionalAccuracy']
+		survey_keys = ['SourceType', 'SourceDesc', 'SourceProvider', 'SiteName', 'SearchTypeDesc', 'StartDate', 'FinishDate', 'StartTime', 'FinishTime', 'DurationInMinutes', 'AreaInM2', 'LengthInKm', 'LocationName', 'Y', 'X', 'ProjectionReference', 'PositionalAccuracyInM']
 		fields = {key:row.get(key) for key in survey_keys if key in row}
 		primary_key = row.get('SourcePrimaryKey')
 

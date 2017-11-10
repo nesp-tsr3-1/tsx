@@ -50,8 +50,8 @@ class CounterHandler(logging.Handler):
 
         ... code that uses logger ...
 
-        print "Warnings: %s" % handler.count(logging.WARN)
-        print "Errors: %s" % handler.count(logging.ERROR)
+        print("Warnings: %s" % handler.count(logging.WARN))
+        print("Errors: %s" % handler.count(logging.ERROR))
     """
     counters = None
 
