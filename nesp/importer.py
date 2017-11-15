@@ -1,6 +1,6 @@
 import pyproj
 from pyproj import Proj
-from nesp.db import T1Survey, T1Sighting, T1Site, T2Survey, T2Sighting, Taxon, Source, SourceType, SearchType, Unit, get_session
+from nesp.db import T1Survey, T1Sighting, T1Site, T2Survey, T2Sighting, T2Site, Taxon, Source, SourceType, SearchType, Unit, get_session
 import nesp.util
 import os
 import logging
@@ -34,11 +34,14 @@ def main():
 	parser = argparse.ArgumentParser(description='Import Type 1/2/3 survey data into NESP database')
 	parser.add_argument('-i', dest='filename', type=str, help='data file to import (Excel/CSV)')
 	parser.add_argument('-t', action='store_true', dest='test', help='test database connection')
-	parser.add_argument('--type', dest='data_type', choices=[1,2], required=True, type=int, help='Type of data (1 or 2)')
+	parser.add_argument('--type', dest='data_type', choices=[1,2], type=int, help='Type of data (1 or 2)')
 	parser.add_argument('-c', action='store_true', dest='commit', help='commit changes (default is dry-run)')
 	args = parser.parse_args()
 
 	if args.filename:
+		if not args.data_type:
+			parser.error('--type is required')
+			return
 		importer = Importer(args.filename, data_type = args.data_type, commit = args.commit)
 		importer.ingest_data()
 	elif args.test:
@@ -209,7 +212,8 @@ class Importer:
 		])
 
 		if self.data_type == 2:
-			required_headers -= set(['SiteName', 'SourceType'])
+			required_headers -= set(['SourceType'])
+			required_headers |= set(['SecondarySourceID'])
 
 		missing_headers = required_headers - set(headers)
 
@@ -235,10 +239,9 @@ class Importer:
 
 			self.processed_rows += 1
 
-		if self.processed_rows > 100 and self.error_count + self.warning_count > self.processed_rows / 5:
+
+		if self.processed_rows > 100 and self.error_count + self.warning_count > self.processed_rows / 100.0:
 			raise ImportError("Warning/error rate too high")
-		elif self.error_count + self.warning_count > 1000:
-			raise ImportError("Too many errors/warnings")
 
 	def ingest_row(self, session, row, row_index):
 		"""
@@ -251,6 +254,11 @@ class Importer:
 		log = ImportLogger(self.log, { 'row_index': row_index })
 
 		log.debug("Ingesting: %s" % row.values())
+
+		if self.data_type == 1:
+			Site, Survey, Sighting = T1Site, T1Survey, T1Sighting
+		else:
+			Site, Survey, Sighting = T2Site, T2Survey, T2Sighting
 
 		# If this is set to false, we don't insert the row
 		ok = True
@@ -312,14 +320,14 @@ class Importer:
 		search_type = self.get_or_create_search_type(session, row.get('SearchTypeDesc'))
 
 		# Site
-		if self.data_type == 1:
+		if self.data_type == 1 or row.get('SiteName') != None:
 			last_site = self.cache.get('last_site')
 			if last_site != None and last_site.name == row.get('SiteName') and last_site.search_type == search_type and last_site.source == source:
 				# Same site as last row - no need to process site
 				site = last_site
 			else:
 				try:
-					site = get_or_create(session, T1Site,
+					site = get_or_create(session, Site,
 						name = row.get('SiteName'),
 						search_type = search_type,
 						source = source)
@@ -336,28 +344,20 @@ class Importer:
 			# Same survey as last row - no need to process survey fields (this yields a huge speed up for type 2/3 data)
 			survey = last_survey
 		else:
-			if self.data_type == 1:
-				if self.fast_mode:
-					survey = None
-				else:
-					survey = session.query(T1Survey).filter_by(source_primary_key = row.get('SourcePrimaryKey')).one_or_none()
+			if self.fast_mode:
+				survey = None
+			else:
+				survey = session.query(Survey).filter_by(source_primary_key = row.get('SourcePrimaryKey')).one_or_none()
 
-				if survey == None:
-					survey = T1Survey(site = site, source_primary_key = row.get('SourcePrimaryKey'))
-				survey.site = site
-
-			elif self.data_type == 2:
-				if self.fast_mode:
-					survey = None
-				else:
-					survey = session.query(T2Survey).filter_by(source_primary_key = row.get('SourcePrimaryKey')).one_or_none()
-
-				if survey == None:
-					survey = T2Survey(source_primary_key = row.get('SourcePrimaryKey'))
+			if survey == None:
+				survey = Survey(site = site, source_primary_key = row.get('SourcePrimaryKey'))
 
 			self.cache['last_survey'] = survey
 
 			survey.source = source
+
+			if self.data_type == 2:
+				survey.secondary_source_id = row.get('SecondarySourceID')
 
 			# Start/Finish date/time
 			with field('StartDate') as value:
@@ -421,11 +421,6 @@ class Importer:
 		if not self.check_taxon(session, row.get('SpNo'), taxon_id):
 			log.error("Invalid TaxonID/Spno: %s, %s" % (row.get('TaxonID'), row.get('SpNo')))
 			return False
-
-		if self.data_type == 1:
-			Sighting = T1Sighting
-		elif self.data_type == 2:
-			Sighting = T2Sighting
 
 		if self.fast_mode:
 			sighting = None
