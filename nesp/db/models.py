@@ -3,7 +3,7 @@ from sqlalchemy import Column, Date, Float, ForeignKey, Integer, SmallInteger, S
 from sqlalchemy.sql.sqltypes import NullType
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
-from geoalchemy2 import Geometry
+
 
 Base = declarative_base()
 metadata = Base.metadata
@@ -216,11 +216,13 @@ class T2Site(Base):
     __tablename__ = 't2_site'
 
     id = Column(Integer, primary_key=True)
-    source_id = Column(Integer, nullable=False)
+    source_id = Column(ForeignKey(u'source.id'), nullable=False, index=True)
     name = Column(String(255), nullable=False)
-    search_type_id = Column(Integer, nullable=False)
+    search_type_id = Column(ForeignKey(u'search_type.id'), nullable=False, index=True)
     geometry = Column(NullType, nullable=False)
 
+    search_type = relationship(u'SearchType')
+    source = relationship(u'Source')
     surveys = relationship(u'T2Survey', secondary='t2_survey_site')
 
 
@@ -237,6 +239,7 @@ class T2Survey(Base):
     __tablename__ = 't2_survey'
 
     id = Column(Integer, primary_key=True)
+    site_id = Column(ForeignKey(u't2_site.id'), index=True)
     source_id = Column(ForeignKey(u'source.id'), nullable=False, index=True)
     start_date_d = Column(SmallInteger)
     start_date_m = Column(SmallInteger)
@@ -251,13 +254,14 @@ class T2Survey(Base):
     length_in_km = Column(Float(asdecimal=True))
     coords = Column(NullType)
     location = Column(String(255))
-    position_accuracy = Column(Float(asdecimal=True))
+    positional_accuracy_in_m = Column(Float(asdecimal=True))
     comments = Column(Text)
     search_type_id = Column(ForeignKey(u'search_type.id'), index=True)
     source_primary_key = Column(String(255), unique=True)
     secondary_source_id = Column(String(255))
 
     search_type = relationship(u'SearchType')
+    site = relationship(u'T2Site')
     source = relationship(u'Source')
 
 
