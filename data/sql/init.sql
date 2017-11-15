@@ -21,7 +21,7 @@ INSERT INTO taxon_status (id, description) VALUES
 (6, 'Critically Endangered (possibly extinct)'),
 (7, 'Extinct');
 
-INSERT INTO `search_type` (`description`) VALUES
+INSERT INTO search_type (description) VALUES
 ('2ha 20 minute search'),
 ('500m Area search'),
 ('5km Area search'),
@@ -64,3 +64,11 @@ INSERT INTO `search_type` (`description`) VALUES
 ('2ha non-20 minute search'),
 ('Automated call recordering'),
 ('LaTrobe Mallee call playback/spot counts');
+
+INSERT INTO `range` (id, description) VALUES
+  (1, "Core range"),
+  (2, "Suspect"),
+  (3, "Vagrant"),
+  (4, "Historical"),
+  (5, "Irruptive"),
+  (6, "Introduced");
