@@ -57,7 +57,10 @@ def get_upload(id=None):
 		with open(get_upload_path(filename, meta=True), "r") as meta_file:
 			meta = json.load(meta_file)
 			type = meta['type']
+			filename = meta['name']
 
 		response = send_file(get_upload_path(filename))
 		response.headers['Content-Type'] = type
+		if filename:
+			response.headers['Content-Disposition'] = 'attachment; filename="%s"' % filename
 		return response
