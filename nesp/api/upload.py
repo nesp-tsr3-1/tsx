@@ -51,16 +51,16 @@ def post_upload():
 @bp.route('/uploads/<id>', methods = ['GET'])
 def get_upload(id=None):
 	if id:
-		"""Retrive previously uploaded file"""
+		"""Retrieve previously uploaded file"""
 		filename = secure_filename(id)
 
 		with open(get_upload_path(filename, meta=True), "r") as meta_file:
 			meta = json.load(meta_file)
 			type = meta['type']
-			filename = meta['name']
+			download_filename = meta['name']
 
 		response = send_file(get_upload_path(filename))
 		response.headers['Content-Type'] = type
 		if filename:
-			response.headers['Content-Disposition'] = 'attachment; filename="%s"' % filename
+			response.headers['Content-Disposition'] = 'attachment; filename="%s"' % download_filename
 		return response
