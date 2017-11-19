@@ -103,6 +103,7 @@ class Importer:
 		if self.data_type == 2:
 			self.non_empty_keys.remove('SiteName')
 			self.non_empty_keys.remove('Count')
+			self.non_empty_keys.remove('TaxonID')
 
 
 	def progress_wrapper(self, iterable):
@@ -212,7 +213,7 @@ class Importer:
 		])
 
 		if self.data_type == 2:
-			required_headers -= set(['SourceType'])
+			required_headers -= set(['SourceType', 'TaxonID'])
 			required_headers |= set(['SecondarySourceID'])
 
 		missing_headers = required_headers - set(headers)
@@ -418,9 +419,16 @@ class Importer:
 
 		# Taxon
 		taxon_id = row.get('TaxonID')
-		if not self.check_taxon(session, row.get('SpNo'), taxon_id):
-			log.error("Invalid TaxonID/Spno: %s, %s" % (row.get('TaxonID'), row.get('SpNo')))
-			return False
+		if taxon_id == None:
+			# Get Taxon ID from SpNo
+			taxon_id = self.get_species_taxon(session, row.get('SpNo'))
+			if taxon_id == None:
+				log.error("Invalid Spno: %s" % (row.get('SpNo')))
+				return False
+		else:
+			if not self.check_taxon(session, row.get('SpNo'), taxon_id):
+				log.error("Invalid TaxonID/Spno: %s, %s" % (row.get('TaxonID'), row.get('SpNo')))
+				return False
 
 		if self.fast_mode:
 			sighting = None
@@ -474,10 +482,15 @@ class Importer:
 
 	# Helpers that cache results to speed things up:
 
+	def get_species_taxon(self, session, spno):
+		if 'species_taxon' not in self.cache:
+			self.cache['species_taxon'] = { taxon.spno: taxon.id for taxon in session.query(Taxon).all() if taxon.taxon_level.description == 'sp' }
+		return self.cache['species_taxon'].get(int(spno))
+
 	def check_taxon(self, session, spno, taxon_id):
-		if 'species' not in self.cache:
-			self.cache['species'] = { taxon.id: taxon.spno for taxon in session.query(Taxon).all() }
-		return self.cache['species'].get(taxon_id) == int(spno)
+		if 'taxa' not in self.cache:
+			self.cache['taxa'] = { taxon.id: taxon.spno for taxon in session.query(Taxon).all() }
+		return self.cache['taxa'].get(taxon_id) == int(spno)
 
 	def get_unit(self, session, unit_id):
 		return self.get_cached('unit', unit_id,
