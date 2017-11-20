@@ -3,13 +3,14 @@ import os
 import logging
 import sys
 import argparse
-import fiona
-from shapely.geometry.multipolygon import MultiPolygon
-from shapely.geometry.polygon import Polygon
-import shapely.wkb
-import shapely.geometry
 from tqdm import tqdm
 import re
+import shapely.wkb
+from nesp.geo import subdivide_geometry, to_multipolygon, count_points
+from shapely.geometry import MultiPolygon, Polygon, shape
+import fiona
+import time
+
 
 log = logging.getLogger(__name__)
 
@@ -62,7 +63,7 @@ def process_shp(session, spno, shp):
 			prefix = parts.group(1)
 			suffix = parts.group(2) or ''
 
-			geometry = shapely.geometry.shape(feature['geometry'])
+			geometry = shape(feature['geometry'])
 			if type(geometry) == Polygon:
 				geometry = MultiPolygon([geometry])
 
@@ -77,9 +78,23 @@ def process_shp(session, spno, shp):
 							'geom_wkb': shapely.wkb.dumps(geometry)
 						}
 					)
+
+					for geom in subdivide_geometry(geometry.buffer(0)):
+						geom = to_multipolygon(geom)
+						if not geom.is_empty:
+							session.execute("""INSERT INTO taxon_range_subdiv (taxon_id, range_id, breeding_range_id, geometry) VALUES
+								(:taxon_id, :range_id, :breeding_range_id, ST_GeomFromWKB(_BINARY :geom_wkb))""", {
+									'taxon_id': prefix + s,
+									'range_id': props['RNGE'] or None,
+									'breeding_range_id': props['BRRNGE'] or None,
+									'geom_wkb': shapely.wkb.dumps(to_multipolygon(geom))
+								}
+							)
+
 		except:
 			log.error("Error processing row: %s" % props)
 			raise
+
 
 if __name__ == '__main__':
 	main()
