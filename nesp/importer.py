@@ -105,6 +105,8 @@ class Importer:
 			self.non_empty_keys.remove('Count')
 			self.non_empty_keys.remove('TaxonID')
 
+		self.sighting_keys = set(["SpNo", "TaxonID", "Breeding", "Count", "UnitID", "SightingComments"])
+
 
 	def progress_wrapper(self, iterable):
 		# Show a progress bar only if we are running as a script
@@ -212,16 +214,19 @@ class Importer:
 			"SightingComments",
 		])
 
+		optional_headers = set()
+
 		if self.data_type == 2:
 			required_headers -= set(['SourceType', 'TaxonID'])
 			required_headers |= set(['SecondarySourceID'])
+			optional_headers.add('TaxonID')
 
 		missing_headers = required_headers - set(headers)
 
 		if len(missing_headers) > 0:
 			raise ImportError("Missing required header(s): %s" % ', '.join(missing_headers))
 
-		unrecognized_headers = set(headers) - required_headers
+		unrecognized_headers = set(headers) - required_headers - optional_headers
 
 		if len(unrecognized_headers) > 0:
 			self.log.warning("Unrecognized column(s) - will be ignored: %s" % ', '.join(unrecognized_headers))
@@ -261,7 +266,7 @@ class Importer:
 		else:
 			Site, Survey, Sighting = T2Site, T2Survey, T2Sighting
 
-		# If this is set to false, we don't insert the row
+		# If this gets set to false, we don't insert the row
 		ok = True
 
 		# Helper to avoid repetition when checking fields and logging errors
@@ -280,8 +285,7 @@ class Importer:
 			if row[key] == '':
 				row[key] = None
 
-		# Check that survey information doesn't change for the same SourcePrimaryKey, which would suggest either data
-		# corruption or a misunderstanding of how the format works
+		# Check that survey information doesn't change for the same SourcePrimaryKey
 		try:
 			self.check_survey_consistency(row)
 		except ValueError as e:
@@ -289,9 +293,12 @@ class Importer:
 			self.commit = False # serious error
 			ok = False
 
+		# Check if there is not sighting data at all (i.e. survey with no sightings)
+		sighting_empty = all(row.get(key) == None for key in self.sighting_keys)
+
 		# Check for empty values
 		for key in self.non_empty_keys:
-			if row.get(key) == None:
+			if row.get(key) == None and not (sighting_empty and key in self.sighting_keys):
 				log.error("%s: must not be empty" % key)
 				return False
 
@@ -418,55 +425,58 @@ class Importer:
 					log.warning('Suspicious zero coordinate after projection: %s, %s' % (x, y))
 
 		# Taxon
-		taxon_id = row.get('TaxonID')
-		if taxon_id == None:
-			# Get Taxon ID from SpNo
-			taxon_id = self.get_species_taxon(session, row.get('SpNo'))
+		if not sighting_empty:
+			taxon_id = row.get('TaxonID')
 			if taxon_id == None:
-				log.error("Invalid Spno: %s" % (row.get('SpNo')))
-				return False
-		else:
-			if not self.check_taxon(session, row.get('SpNo'), taxon_id):
-				log.error("Invalid TaxonID/Spno: %s, %s" % (row.get('TaxonID'), row.get('SpNo')))
-				return False
-
-		if self.fast_mode:
-			sighting = None
-		else:
-			sighting = session.query(Sighting).filter_by(survey = survey, taxon_id = taxon_id).one_or_none()
-
-		if sighting == None:
-			sighting = Sighting(survey = survey, taxon_id = taxon_id)
-
-		with field('Breeding') as value:
-			if value in (None, '0'):
-				sighting.breeding = False
-			elif value == '1':
-				sighting.breeding = True
+				# Get Taxon ID from SpNo
+				taxon_id = self.get_species_taxon(session, row.get('SpNo'))
+				if taxon_id == None:
+					log.error("Invalid Spno: %s" % (row.get('SpNo')))
+					return False
 			else:
-				raise ValueError('Invalid value (should be 0/blank or 1)')
+				if not self.check_taxon(session, row.get('SpNo'), taxon_id):
+					log.error("Invalid TaxonID/Spno: %s, %s" % (row.get('TaxonID'), row.get('SpNo')))
+					return False
 
-		with field('Count') as value:
-			if value is None:
-				sighting.count = 0
+			if self.fast_mode:
+				sighting = None
 			else:
-				sighting.count = validate(value, validate_float, validate_greater_than_or_equal(0))
+				sighting = session.query(Sighting).filter_by(survey = survey, taxon_id = taxon_id).one_or_none()
 
-		# Unit
-		with field('UnitID') as value:
-			unit_id = validate(value, validate_int)
-			try:
-				sighting.unit = self.get_unit(session, unit_id)
-			except NoResultFound:
-				raise ValueError('Unrecognized ID')
+			if sighting == None:
+				sighting = Sighting(survey = survey, taxon_id = taxon_id)
 
-		sighting.comments = row.get('SightingComments')
+			with field('Breeding') as value:
+				if value in (None, '0'):
+					sighting.breeding = False
+				elif value == '1':
+					sighting.breeding = True
+				else:
+					raise ValueError('Invalid value (should be 0/blank or 1)')
+
+			with field('Count') as value:
+				if value is None:
+					sighting.count = 0
+				else:
+					sighting.count = validate(value, validate_float, validate_greater_than_or_equal(0))
+
+			# Unit
+			with field('UnitID') as value:
+				unit_id = validate(value, validate_int)
+				try:
+					sighting.unit = self.get_unit(session, unit_id)
+				except NoResultFound:
+					raise ValueError('Unrecognized ID')
+
+			sighting.comments = row.get('SightingComments')
 
 		if ok:
 			session.add(survey)
 			self.pending_sightings.append(sighting)
 			# session.add(sighting)
 
+		# Performance optimisation: instead of adding sightings to the session straight away, we periodically flush them in
+		# batches, using the ultra-fast 'bulk_save_objects' method
 		if row_index % 4000 == 0:
 			self.flush_sightings(session)
 			# session.flush()
