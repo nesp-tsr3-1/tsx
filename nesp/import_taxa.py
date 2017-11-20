@@ -10,14 +10,14 @@ log = logging.getLogger(__name__)
 def main():
 	logging.basicConfig(stream=sys.stdout, level=logging.DEBUG, format='%(asctime)-15s %(name)s %(levelname)-8s %(message)s')
 
-	parser = argparse.ArgumentParser(description='Import WLAB spreadsheet into NESP taxon table')
-	parser.add_argument('filename', type=str, help='WLAB spreadsheet (Excel format)')
+	parser = argparse.ArgumentParser(description='Import Taxon spreadsheet into NESP taxon table')
+	parser.add_argument('filename', type=str, help='Taxon spreadsheet (Excel format)')
 	args = parser.parse_args()
 
 	session = get_session()
 
 	wb = openpyxl.load_workbook(args.filename)
-	ws = wb['WLAB']
+	ws = wb['TaxonList']
 
 	for i, row in enumerate(ws.rows):
 		row = [cell.value for cell in row]
@@ -50,7 +50,7 @@ def main():
 					order = row['Order'],
 					population = row['Population'],
 					# TODO - there are status in WLAB like 'Introduced' and 'Vagrant' not in Glenn's list - for now importing as NULL
-					aust_status = session.query(TaxonStatus).filter_by(description = row['Australian conservation status']).one_or_none()
+					aust_status = session.query(TaxonStatus).filter_by(description = row['AustralianStatus']).one_or_none()
 				)
 			except:
 				print row
