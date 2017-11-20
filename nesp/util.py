@@ -67,3 +67,84 @@ class CounterHandler(logging.Handler):
 
     def count(self, level):
         return self.counters.get(level, 0)
+
+
+from multiprocessing import cpu_count
+from threading import Thread
+from Queue import Queue, Empty
+import math
+
+
+def run_parallel(target, tasks, n_threads = None):
+    """
+    Runs tasks in parallel
+
+    `target` is a function
+    `tasks` is a list of argument tuples passed to the function. If `target` only takes one argument, then it doesn't need to
+    be wrapped in a tuple.
+
+    A generator yielding the result of each task is returned, in the form of a (result, error) tuple which allows errors to be
+    handled. The generator must be consumed in order to ensure all tasks are processed.
+    Results are yielded in the order they are completed, which is generally not the same as the order in which they are supplied.
+
+    Example::
+
+        do_hard_work(a, b):
+            ...
+
+        tasks = [(1,2), (5,2), (3,4) ....]
+
+        for result, error in run_parallel(do_hard_work, tasks):
+            print result
+
+    """
+    if n_threads is None:
+        n_threads = cpu_count()
+
+    # Setup queues
+    work_q = Queue()
+    result_q = Queue()
+
+    # Setup worker threads
+    def worker():
+        while True:
+            task = work_q.get()
+            if task is None:
+                break
+            try:
+                if type(task) != tuple:
+                    task = (task,)
+                result_q.put((target(*task), None))
+            except Exception as e:
+                result_q.put((None, e))
+
+    for i in range(0, n_threads):
+            t = Thread(target = worker)
+            t.daemon = True
+            t.start()
+
+    def next_result():
+        while True:
+            try:
+                return result_q.get(True, 1) # Get with timeout so main thread isn't constantly blocked
+            except Empty:
+                pass
+
+    # Feed in tasks and yield results
+    i = 0
+    for task in tasks:
+        work_q.put(task)
+        i += 1
+        # Start getting results once all threads have something to do
+        if i > n_threads:
+            yield next_result()
+            i -= 1
+
+    # Signal threads to stop
+    for j in range(0, n_threads):
+        work_q.put(None)
+
+    # Finish collecting results
+    while i > 0:
+        yield next_result()
+        i -= 1

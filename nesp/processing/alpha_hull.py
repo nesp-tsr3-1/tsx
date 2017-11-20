@@ -10,6 +10,16 @@ import pyproj
 import math
 from math import sin, cos, sqrt, atan2, radians
 import sys, os, getopt
+from shapely.geometry import shape, Point
+from nesp.geo import to_multipolygon, subdivide_geometry
+from nesp.util import run_parallel
+from nesp.db import get_session
+import nesp.config
+from tqdm import tqdm
+import logging
+import shapely.wkb
+
+log = logging.getLogger(__name__)
 
 def plot_polygon(polygon):
     # These imports are only needed for plotting
@@ -44,6 +54,7 @@ def add_edge(edges, coords, i, j):
     Add a line between the i-th and j-th points,
     if not in the list already
     """
+    i, j = sorted((i, j))
     if (i, j) in edges or (j, i) in edges:
         # already added
         return
@@ -51,7 +62,7 @@ def add_edge(edges, coords, i, j):
 
 def alpha_shape(coords, alpha):
     """
-    Creat alpha shape in following Bugman and Fox paper.
+    Create alpha shape in following Burgman and Fox paper.
     """
     try:
         tri = Delaunay(coords)
@@ -93,57 +104,36 @@ def alpha_shape(coords, alpha):
     triangles = list(polygonize(m))
     return cascaded_union(triangles), edge_points
 
+# def thinning(coords, thinning_distance):
+#     """
+#     """
+#     kdtree = KDTree(coords)
+#     _used = set()    # ids of points being used
+#     _removed = set() # ids of points being removed
+#     _list  = sorted(kdtree.query_pairs(thinning_distance)) # replace by thinning distance
+#     for _element in _list:
+#         if _used.issuperset(set([_element[0]])):
+#             _removed.add(_element[1])
+#         elif _used.issuperset(set([_element[1]])):
+#             _removed.add(_element[0])
+#         elif _removed.issuperset(set([_element[1]])):
+#             _used.add(_element[0])
+#             _removed.add(_element[1])
+#         else:
+#             _used.add(_element[1])
+#             _removed.add(_element[0])
 
-# This is approx 20% faster than the other thinning method, but not adding worth the extra dependency
-#
-# from rtree import index
-#
-# def dist(a, b):
-#     return sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2)
-#
-# def thinning2(coords, thinning_distance):
-#     idx = index.Index()
-#     result = []
-#     for i, coord in enumerate(coords):
-#         bounds = (coord[0], coord[1], coord[0], coord[1])
-#         nearest_i = list(idx.nearest(bounds, 1))
-#         if len(nearest_i) > 0 and dist(coord, coords[nearest_i[0]]) < thinning_distance:
-#             continue
-#         result.append(coord)
-#         idx.insert(i, bounds)
-#
-#     return np.array(result)
+#     #print "coords length=%d"%(len(coords))
+#     #print "list length=%d"%(len(_list))
+#     #print "used length=%d"%(len(_used))
+#     #print "removed length=%d"%(len(_removed))
+#     for i in range(0, len(coords)):
+#         if not _used.issuperset(set([i])) and not _removed.issuperset(set([i])):
+#             _used.add(i)
+#     return np.array([coords[i]  for i in _used])
 
+# JW - Simpler version of thinning function
 def thinning(coords, thinning_distance):
-    """
-    """
-    kdtree = KDTree(coords)
-    _used = set()    # ids of points being used
-    _removed = set() # ids of points being removed
-    _list  = sorted(kdtree.query_pairs(thinning_distance)) # replace by thinning distance
-    for _element in _list:
-        if _used.issuperset(set([_element[0]])):
-            _removed.add(_element[1])
-        elif _used.issuperset(set([_element[1]])):
-            _removed.add(_element[0])
-        elif _removed.issuperset(set([_element[1]])):
-            _used.add(_element[0])
-            _removed.add(_element[1])
-        else:
-            _used.add(_element[1])
-            _removed.add(_element[0])
-
-    #print "coords length=%d"%(len(coords))
-    #print "list length=%d"%(len(_list))
-    #print "used length=%d"%(len(_used))
-    #print "removed length=%d"%(len(_removed))
-    for i in range(0, len(coords)):
-        if not _used.issuperset(set([i])) and not _removed.issuperset(set([i])):
-            _used.add(i)
-    return np.array([coords[i]  for i in _used])
-
-# Simpler version of thinning function that I think also corrects a minor bug in the other version
-def thinning2(coords, thinning_distance):
     """
     Removes points from coords such that no two points remain within thinning_distance of each other
     """
@@ -151,6 +141,7 @@ def thinning2(coords, thinning_distance):
     removed = set()
 
     for a, b in sorted(kdtree.query_pairs(thinning_distance)):
+        # At least one of a or b should be removed:
         if a not in removed and b not in removed:
             removed.add(b)
 
@@ -162,7 +153,7 @@ def make_alpha_hull(points, coastal_shape,
     """
     """
     coords = np.array([point.coords[0] for point in points])
-    thinned_list = thinning2(coords, thinning_distance)
+    thinned_list = thinning(coords, thinning_distance)
     # print thinned_list
     concave_hull, edge_points = alpha_shape(thinned_list,alpha=alpha)
     # buffer
@@ -176,6 +167,140 @@ def make_alpha_hull(points, coastal_shape,
     return final.intersection(coastal_shape)
     #_ = plot_polygon(final)
     #pl.show()
+
+def process_database(species = None, commit = False):
+    """
+    Generates alpha hulls from raw sighting data in the database
+
+    Intersects alpha hulls with range layers, and inserts the result back into the database
+    """
+    session = get_session()
+
+    if species is None:
+        species = get_all_spno(session)
+
+    if commit:
+        for spno in species:
+            session.execute("""
+                DELETE FROM taxon_presence_alpha_hull
+                WHERE taxon_id IN (SELECT id FROM taxon WHERE spno = :spno)
+                """, { 'spno': spno })
+            session.execute("""
+                DELETE FROM taxon_presence_alpha_hull_subdiv
+                WHERE taxon_id IN (SELECT id FROM taxon WHERE spno = :spno)
+                """, { 'spno': spno })
+        session.commit()
+
+    db_proj = pyproj.Proj('+init=EPSG:4326') # Database always uses WGS84
+    working_proj = pyproj.Proj('+init=EPSG:3112') # GDA94 / Geoscience Australia Lambert - so that we can buffer in metres
+
+    # Load coastal shapefile
+    coastal_shape_filename = nesp.config.config.get("processing.alpha_hull", "coastal_shp")
+    with fiona.open(coastal_shape_filename, 'r') as coastal_shape:
+        # Convert from fiona dictionary to shapely geometry and reproject
+        coastal_shape = reproject(shape(coastal_shape[0]['geometry']), pyproj.Proj(coastal_shape.crs), working_proj)
+        # Simplify coastal boundary - makes things run ~20X faster
+        coastal_shape = coastal_shape.buffer(10000).simplify(10000)
+
+    # Process a single species.
+    # This gets run off the main thread.
+    def process_spno(spno):
+        session = get_session()
+        try:
+            # Get raw points from DB
+            raw_points = get_species_points(session, spno)
+
+            print raw_points
+
+            if len(raw_points) < 4:
+                # Not enough points to create an alpha
+                return
+
+            # Read points from database
+            points = [reproject(p, db_proj, working_proj) for p in raw_points]
+
+            # Generate alpha shape
+            alpha_shp = make_alpha_hull(
+                points = points,
+                coastal_shape = coastal_shape,
+                thinning_distance = nesp.config.config.getfloat('processing.alpha_hull', 'thinning_distance'),
+                alpha = nesp.config.config.getfloat('processing.alpha_hull', 'alpha'),
+                hullbuffer_distance = nesp.config.config.getfloat('processing.alpha_hull', 'hullbuffer_distance'),
+                isolatedbuffer_distance = nesp.config.config.getfloat('processing.alpha_hull', 'isolatedbuffer_distance'))
+
+            # Convert back to DB projection
+            alpha_shp = reproject(alpha_shp, working_proj, db_proj)
+
+            # Clean up geometry
+            alpha_shp = alpha_shp.buffer(0)
+
+            print alpha_shp.bounds
+
+            # Get range polygons to intersect with alpha shape
+            for taxon_id, range_id, breeding_range_id, geom_wkb in get_species_range_polygons(session, spno):
+                print taxon_id, range_id
+                # Intersect and insert into DB
+                geom = shapely.wkb.loads(geom_wkb).buffer(0)
+                geom = to_multipolygon(geom.intersection(alpha_shp))
+                if len(geom) > 0:
+                    session.execute("""INSERT INTO taxon_presence_alpha_hull (taxon_id, range_id, breeding_range_id, geometry)
+                        VALUES (:taxon_id, :range_id, :breeding_range_id, ST_GeomFromWKB(_BINARY :geom_wkb))""", {
+                            'taxon_id': taxon_id,
+                            'range_id': range_id,
+                            'breeding_range_id': breeding_range_id,
+                            'geom_wkb': shapely.wkb.dumps(geom)
+                        }
+                    )
+                # We also subdivide the geometries into small pieces and insert this into the database. This allows for much faster
+                # spatial queries in the database.
+                for subgeom in subdivide_geometry(geom, max_points = 100):
+                    session.execute("""INSERT INTO taxon_presence_alpha_hull_subdiv (taxon_id, range_id, breeding_range_id, geometry)
+                        VALUES (:taxon_id, :range_id, :breeding_range_id, ST_GeomFromWKB(_BINARY :geom_wkb))""", {
+                            'taxon_id': taxon_id,
+                            'range_id': range_id,
+                            'breeding_range_id': breeding_range_id,
+                            'geom_wkb': shapely.wkb.dumps(subgeom)
+                        }
+                    )
+
+        except:
+            log.exception("Exception processing alpha hull")
+            raise
+
+        if commit:
+            session.commit()
+
+    # Process all the species in parallel
+    for result, error in tqdm(run_parallel(process_spno, species), total = len(species)):
+        if error:
+            print error
+
+def reproject(geom, src_proj, dest_proj):
+    fn = partial(pyproj.transform, src_proj, dest_proj)
+    return transform(fn, geom)
+
+def get_all_spno(session):
+    return [spno for (spno,) in session.execute("SELECT DISTINCT spno FROM taxon").fetchall()]
+
+def get_species_points(session, spno):
+    # TODO - get points from type 1 data too
+    sql = """SELECT DISTINCT ST_X(coords), ST_Y(coords)
+        FROM t2_survey, t2_sighting, taxon
+        WHERE survey_id = t2_survey.id
+        AND taxon_id = taxon.id
+        AND spno = :spno"""
+
+    return [Point(x,y) for x, y in session.execute(sql, { 'spno': spno }).fetchall()]
+
+def get_species_range_polygons(session, spno):
+    return session.execute("""SELECT taxon_id, range_id, breeding_range_id, ST_AsWKB(geometry)
+                        FROM taxon_range, taxon
+                        WHERE taxon_id = taxon.id
+                        AND spno = :spno
+                        """, { 'spno': spno }).fetchall()
+
+# The rest of the functions below are only used when this file is called as a stand-alone script
+# (Leaving this here from Hoang's original script)
 
 def generate_alphashape(infile, outfile, inproj, outproj, coastal_shape,
                         thinning_distance, alpha,
