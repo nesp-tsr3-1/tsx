@@ -18,6 +18,8 @@ def get_session():
     session = Session()
     return session
 
-engine = create_engine(get_database_url(), convert_unicode=True)
-#Base.metadata.create_all(engine, checkfirst=True) # Creates tables in the database if they don't exist
+engine = create_engine(get_database_url(),
+    convert_unicode=True,
+    pool_recycle=600) # Avoid DB connection timeout
+
 Session = sessionmaker(bind=engine)
