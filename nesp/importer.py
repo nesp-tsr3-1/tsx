@@ -327,6 +327,7 @@ class Importer:
 		# SearchType
 		search_type = self.get_or_create_search_type(session, row.get('SearchTypeDesc'))
 
+		site = None
 		# Site
 		if self.data_type == 1 or row.get('SiteName') != None:
 			last_site = self.cache.get('last_site')
@@ -362,6 +363,7 @@ class Importer:
 
 			self.cache['last_survey'] = survey
 
+			survey.search_type = search_type
 			survey.source = source
 
 			if self.data_type == 2:
