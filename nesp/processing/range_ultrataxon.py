@@ -1,7 +1,7 @@
 from shapely.geometry import Point, Polygon
 import shapely.wkb
 from tqdm import tqdm
-from nesp.db import get_session, Taxon, T2ProcessedSighting
+from nesp.db import get_session, Taxon, T2UltrataxonSighting
 from nesp.util import run_parallel
 from nesp.geo import point_in_poly
 import logging
@@ -23,7 +23,7 @@ def process_database(species = None, commit = False):
 
     # Delete old results
     if commit:
-        session.execute("DELETE FROM t2_processed_sighting WHERE taxon_id IN :taxa", { 'taxa': taxa })
+        session.execute("DELETE FROM t2_ultrataxon_sighting WHERE taxon_id IN :taxa", { 'taxa': taxa })
         session.commit()
 
     # Process in parallel
@@ -64,7 +64,7 @@ def process_taxon(taxon_id, commit):
                 FROM t2_sighting, t2_survey
                 WHERE t2_sighting.survey_id = t2_survey.id
                 AND t2_sighting.taxon_id = :taxon_id
-                AND t2_sighting.taxon_id NOT IN (SELECT taxon_id FROM t2_processed_sighting WHERE sighting_id = t2_sighting.id)
+                AND t2_sighting.taxon_id NOT IN (SELECT taxon_id FROM t2_ultrataxon_sighting WHERE sighting_id = t2_sighting.id)
                 AND MBRContains(ST_GeomFromWKB(_BINARY :bounds_wkb), coords) """, {
                 'taxon_id': taxon.id,
                 'bounds_wkb': bounds_wkb
@@ -74,7 +74,7 @@ def process_taxon(taxon_id, commit):
 
             for sighting_id, x, y in q.fetchall():
                 if point_in_poly(geom, x, y, cache):
-                    records.append(T2ProcessedSighting(
+                    records.append(T2UltrataxonSighting(
                         sighting_id = sighting_id,
                         taxon_id = taxon.id,
                         range_id = range_id,
@@ -87,7 +87,7 @@ def process_taxon(taxon_id, commit):
                     FROM t2_sighting, t2_survey, taxon taxon_ssp, taxon taxon_sp
                     WHERE t2_sighting.survey_id = t2_survey.id
                     AND t2_sighting.taxon_id = taxon_sp.id
-                    AND taxon_ssp.id NOT IN (SELECT taxon_id FROM t2_processed_sighting WHERE sighting_id = t2_sighting.id)
+                    AND taxon_ssp.id NOT IN (SELECT taxon_id FROM t2_ultrataxon_sighting WHERE sighting_id = t2_sighting.id)
                     AND taxon_sp.taxon_level_id = (SELECT id FROM taxon_level WHERE description = 'sp')
                     AND taxon_sp.spno = taxon_ssp.spno
                     AND taxon_ssp.id = :taxon_id
@@ -98,7 +98,7 @@ def process_taxon(taxon_id, commit):
 
                 for sighting_id, x, y in q.fetchall():
                     if point_in_poly(geom, x, y, cache):
-                        records.append(T2ProcessedSighting(
+                        records.append(T2UltrataxonSighting(
                             sighting_id = sighting_id,
                             taxon_id = taxon.id,
                             range_id = range_id,

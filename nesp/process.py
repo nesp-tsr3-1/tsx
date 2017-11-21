@@ -1,23 +1,15 @@
 import argparse
 import tempfile
-from nesp.db import get_session, Taxon, T2ProcessedSighting
-from shapely.geometry import Point, Polygon, MultiPolygon, GeometryCollection, LineString, LinearRing, shape
-from shapely.ops import transform
+import shapely.geometry
 import shapely.wkb
 import nesp.config
 import nesp.processing.alpha_hull
 import nesp.processing.range_ultrataxon
 import fiona
-import pyproj
-from functools import partial
-from threading import Thread, Lock
-from Queue import Queue
-from multiprocessing import cpu_count
 from tqdm import tqdm
 import logging
 import os
-from nesp.util import run_parallel
-from nesp.geo import to_multipolygon, point_in_poly, subdivide_geometry
+from nesp.geo import to_multipolygon
 
 log = logging.getLogger(__name__)
 

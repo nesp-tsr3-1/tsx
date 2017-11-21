@@ -18,16 +18,6 @@ class GridCell(Base):
     grid_size_in_degrees = Column(Float(asdecimal=True))
 
 
-class GridTaxonPresence(Base):
-    __tablename__ = 'grid_taxon_presence'
-
-    grid_size = Column(Integer, primary_key=True, nullable=False)
-    grid_x = Column(Integer, primary_key=True, nullable=False)
-    grid_y = Column(Integer, primary_key=True, nullable=False)
-    taxon_id = Column(Integer)
-    experimental_design_type_id = Column(Integer)
-
-
 class IncidentalSighting(Base):
     __tablename__ = 'incidental_sighting'
 
@@ -43,14 +33,6 @@ class Range(Base):
     description = Column(String(255), nullable=False)
 
 
-class Region(Base):
-    __tablename__ = 'region'
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String(255))
-    geometry = Column(NullType)
-
-
 class ResponseVariableType(Base):
     __tablename__ = 'response_variable_type'
 
@@ -63,13 +45,6 @@ class SearchType(Base):
 
     id = Column(Integer, primary_key=True)
     description = Column(String(255), nullable=False)
-
-
-class SiteTaxonPresence(Base):
-    __tablename__ = 'site_taxon_presence'
-
-    site_id = Column(Integer, primary_key=True)
-    taxon_id = Column(Integer)
 
 
 class Source(Base):
@@ -159,7 +134,7 @@ class T1Survey(Base):
     area_in_m2 = Column(Float(asdecimal=True))
     length_in_km = Column(Float(asdecimal=True))
     coords = Column(NullType)
-    location = Column(String(255))
+    location = Column(Text)
     positional_accuracy_in_m = Column(Float(asdecimal=True))
     comments = Column(Text)
     response_variable_type_id = Column(ForeignKey(u'response_variable_type.id'), index=True)
@@ -167,34 +142,6 @@ class T1Survey(Base):
     response_variable_type = relationship(u'ResponseVariableType')
     site = relationship(u'T1Site')
     source = relationship(u'Source')
-
-
-class T2Aggregated(Base):
-    __tablename__ = 't2_aggregated'
-
-    id = Column(Integer, primary_key=True)
-    taxon_id = Column(String(6))
-    site_id = Column(Integer)
-    grid_id = Column(Integer)
-    search_type_id = Column(Integer)
-    start_date_y = Column(SmallInteger)
-    start_date_m = Column(SmallInteger)
-    experimental_design_type_id = Column(Integer)
-    response_variable_type_id = Column(Integer)
-    response_value = Column(Float(asdecimal=True))
-
-
-class T2ProcessedSighting(Base):
-    __tablename__ = 't2_processed_sighting'
-
-    sighting_id = Column(ForeignKey(u't2_sighting.id'), primary_key=True, nullable=False)
-    taxon_id = Column(ForeignKey(u'taxon.id'), primary_key=True, nullable=False, index=True)
-    range_id = Column(ForeignKey(u'range.id'), nullable=False, index=True)
-    generated_subspecies = Column(Integer, nullable=False)
-
-    range = relationship(u'Range')
-    sighting = relationship(u'T2Sighting')
-    taxon = relationship(u'Taxon')
 
 
 class T2Sighting(Base):
@@ -216,10 +163,10 @@ class T2Site(Base):
     __tablename__ = 't2_site'
 
     id = Column(Integer, primary_key=True)
-    source_id = Column(ForeignKey(u'source.id'), nullable=False, index=True)
-    name = Column(String(255), nullable=False)
+    source_id = Column(ForeignKey(u'source.id'), index=True)
+    name = Column(String(255))
     search_type_id = Column(ForeignKey(u'search_type.id'), nullable=False, index=True)
-    geometry = Column(NullType, nullable=False)
+    geometry = Column(NullType)
 
     search_type = relationship(u'SearchType')
     source = relationship(u'Source')
@@ -252,12 +199,12 @@ class T2Survey(Base):
     duration_in_minutes = Column(Integer)
     area_in_m2 = Column(Float(asdecimal=True))
     length_in_km = Column(Float(asdecimal=True))
-    coords = Column(NullType)
-    location = Column(String(255))
+    coords = Column(NullType, nullable=False, index=True)
+    location = Column(Text)
     positional_accuracy_in_m = Column(Float(asdecimal=True))
     comments = Column(Text)
-    search_type_id = Column(ForeignKey(u'search_type.id'), index=True)
-    source_primary_key = Column(String(255), unique=True)
+    search_type_id = Column(ForeignKey(u'search_type.id'), nullable=False, index=True)
+    source_primary_key = Column(String(255), nullable=False, unique=True)
     secondary_source_id = Column(String(255))
 
     search_type = relationship(u'SearchType')
@@ -270,6 +217,19 @@ t_t2_survey_site = Table(
     Column('survey_id', ForeignKey(u't2_survey.id'), primary_key=True, nullable=False),
     Column('site_id', ForeignKey(u't2_site.id'), primary_key=True, nullable=False, index=True)
 )
+
+
+class T2UltrataxonSighting(Base):
+    __tablename__ = 't2_ultrataxon_sighting'
+
+    sighting_id = Column(ForeignKey(u't2_sighting.id'), primary_key=True, nullable=False)
+    taxon_id = Column(ForeignKey(u'taxon.id'), primary_key=True, nullable=False, index=True)
+    range_id = Column(ForeignKey(u'range.id'), nullable=False, index=True)
+    generated_subspecies = Column(Integer, nullable=False)
+
+    range = relationship(u'Range')
+    sighting = relationship(u'T2Sighting')
+    taxon = relationship(u'Taxon')
 
 
 class Taxon(Base):
@@ -296,17 +256,6 @@ class Taxon(Base):
     taxon_level = relationship(u'TaxonLevel')
 
 
-class TaxonPresenceAlphaHull(Taxon):
-    __tablename__ = 'taxon_presence_alpha_hull'
-
-    taxon_id = Column(ForeignKey(u'taxon.id'), primary_key=True)
-    range_id = Column(ForeignKey(u'range.id'), nullable=False, index=True)
-    breeding_range_id = Column(Integer, nullable=False)
-    geometry = Column(NullType, nullable=False)
-
-    range = relationship(u'Range')
-
-
 class TaxonHybrid(Base):
     __tablename__ = 'taxon_hybrid'
 
@@ -321,6 +270,42 @@ class TaxonLevel(Base):
 
     id = Column(Integer, primary_key=True)
     description = Column(String(255), nullable=False)
+
+
+t_taxon_presence_alpha_hull = Table(
+    'taxon_presence_alpha_hull', metadata,
+    Column('taxon_id', ForeignKey(u'taxon.id'), nullable=False, index=True),
+    Column('range_id', ForeignKey(u'range.id'), nullable=False, index=True),
+    Column('breeding_range_id', Integer),
+    Column('geometry', NullType, nullable=False)
+)
+
+
+t_taxon_presence_alpha_hull_subdiv = Table(
+    'taxon_presence_alpha_hull_subdiv', metadata,
+    Column('taxon_id', ForeignKey(u'taxon.id'), nullable=False, index=True),
+    Column('range_id', ForeignKey(u'range.id'), nullable=False, index=True),
+    Column('breeding_range_id', Integer),
+    Column('geometry', NullType, nullable=False)
+)
+
+
+t_taxon_range = Table(
+    'taxon_range', metadata,
+    Column('taxon_id', ForeignKey(u'taxon.id'), nullable=False, index=True),
+    Column('range_id', ForeignKey(u'range.id'), nullable=False, index=True),
+    Column('breeding_range_id', ForeignKey(u'range.id'), index=True),
+    Column('geometry', NullType, nullable=False)
+)
+
+
+t_taxon_range_subdiv = Table(
+    'taxon_range_subdiv', metadata,
+    Column('taxon_id', ForeignKey(u'taxon.id'), nullable=False, index=True),
+    Column('range_id', ForeignKey(u'range.id'), nullable=False, index=True),
+    Column('breeding_range_id', ForeignKey(u'range.id'), index=True),
+    Column('geometry', NullType, nullable=False)
+)
 
 
 class TaxonStatus(Base):
