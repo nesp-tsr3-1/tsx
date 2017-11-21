@@ -37,7 +37,13 @@ Getting started with a local development environment
 		source env/bin/activate
 		pip install -r requirements.txt
 
-3. Import some sample data
+3. Import taxa
+
+	.. code:: bash
+
+		python -m nesp.import_taxa [path to TaxonList.xlsx]
+
+4. Import some sample data
 
 	Via command line:
 
@@ -57,9 +63,11 @@ Getting started with a local development environment
 		npm install
 		npm run dev
 
-4. Run processing scripts
+5. Run processing scripts::
 
-(TODO)
+	python -m nesp.process alpha_hull
+	python -m nesp.process range_ultrataxon
+	python -m nesp.process pseudo_absence (TODO)
 
 .. # All at once
 
@@ -81,12 +89,12 @@ Deployment
 
 3. Edit configuration in ``/opt/nesp/conf/nesp.conf``
 
-3. Setup as service (Linux)::
+4. Setup as service (Linux)::
 
 	sudo cp etc/init.d/nespapi /etc/init.d/
 	sudo service nespapi start
 
-4. Deploy static resources::
+5. Deploy static resources::
 
 	# If you don't have have node/npm installed:
 	#
@@ -112,5 +120,6 @@ Documentation
 =============
 
 Documentation can be generated using::
+
 	cd doc
 	make html
