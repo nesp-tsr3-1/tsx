@@ -6,11 +6,11 @@ import argparse
 from tqdm import tqdm
 import re
 import shapely.wkb
-from nesp.geo import subdivide_geometry, to_multipolygon, count_points
+from nesp.geo import subdivide_geometry, to_multipolygon, count_points, reproject
 from shapely.geometry import MultiPolygon, Polygon, shape
 import fiona
 import time
-
+import pyproj
 
 log = logging.getLogger(__name__)
 
@@ -66,6 +66,8 @@ def process_shp(session, spno, shp):
 			geometry = shape(feature['geometry'])
 			if type(geometry) == Polygon:
 				geometry = MultiPolygon([geometry])
+
+			geometry = reproject(geometry, pyproj.Proj(shp.crs), pyproj.Proj('+init=EPSG:4326'))
 
 			for s in suffix.split("."):
 				taxon_exists = len(session.execute("SELECT 1 FROM taxon WHERE id = :id", { 'id': prefix + s }).fetchall()) > 0
