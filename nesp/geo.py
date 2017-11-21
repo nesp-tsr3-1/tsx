@@ -2,6 +2,9 @@
 from collections import deque
 import time
 from shapely.geometry import Point, Polygon, MultiPolygon, GeometryCollection, LineString, LinearRing, shape
+from shapely.ops import transform
+from functools import partial
+import pyproj
 
 # def subdivide_geometry(geometry, max_points = 1000):
 # 	"""
@@ -21,6 +24,13 @@ from shapely.geometry import Point, Polygon, MultiPolygon, GeometryCollection, L
 # 					geom2 = to_multipolygon(geom.intersection(tile_bounds((x2, y2, z2))))
 # 					if not geom2.is_empty:
 # 						tiles.append((x2, y2, z2, geom2))
+
+def reproject(geom, src_proj, dest_proj):
+    return reproject_fn(src_proj, dest_proj)(geom)
+
+def reproject_fn(src_proj, dest_proj):
+	fn = partial(pyproj.transform, src_proj, dest_proj)
+	return lambda geom: transform(fn, geom)
 
 def subdivide_geometry(geometry, max_points = 100):
 	"""
