@@ -4,6 +4,9 @@ from tqdm import tqdm
 from nesp.db import get_session, Taxon, T2ProcessedSighting
 from nesp.util import run_parallel
 from nesp.geo import point_in_poly
+import logging
+
+log = logging.getLogger(__name__)
 
 def process_database(species = None, commit = False):
     session = get_session()

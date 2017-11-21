@@ -210,8 +210,6 @@ def process_database(species = None, commit = False):
             # Get raw points from DB
             raw_points = get_species_points(session, spno)
 
-            print raw_points
-
             if len(raw_points) < 4:
                 # Not enough points to create an alpha
                 return
@@ -234,11 +232,8 @@ def process_database(species = None, commit = False):
             # Clean up geometry
             alpha_shp = alpha_shp.buffer(0)
 
-            print alpha_shp.bounds
-
             # Get range polygons to intersect with alpha shape
             for taxon_id, range_id, breeding_range_id, geom_wkb in get_species_range_polygons(session, spno):
-                print taxon_id, range_id
                 # Intersect and insert into DB
                 geom = shapely.wkb.loads(geom_wkb).buffer(0)
                 geom = to_multipolygon(geom.intersection(alpha_shp))
