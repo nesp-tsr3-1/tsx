@@ -414,7 +414,7 @@ class Importer:
 
 				coords = create_point(x, y, row.get('ProjectionReference'))
 
-				survey.coords = shape.from_shape(coords)
+				survey.coords = shape.from_shape(coords, srid = 0)
 
 				x, y = coords.x, coords.y
 
