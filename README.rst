@@ -53,7 +53,7 @@ Via command line:
 
 .. code:: bash
 
-	python -m nesp.importer -i data/type-1-sample.csv
+	python -m nesp.importer --type 1 --commit -i data/type-1-sample.csv
 
 Or alternatively via web upload interface
 
@@ -74,7 +74,7 @@ Or alternatively via web upload interface
 
 	python -m nesp.process alpha_hull
 	python -m nesp.process range_ultrataxon
-	python -m nesp.process pseudo_absence (TODO)
+	python -m nesp.process pseudo_absence
 
 
 Deployment
