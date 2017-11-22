@@ -1,3 +1,8 @@
+# Unfortunately MySQL Workbench doesn't support spatial indexes so I'm creating them here instead
+
+CREATE SPATIAL INDEX coords ON t2_survey (coords);
+CREATE SPATIAL INDEX geometry ON taxon_presence_alpha_hull_subdiv (geometry);
+CREATE SPATIAL INDEX geometry ON taxon_range_subdiv (geometry);
 
 INSERT INTO unit (id, description) VALUES
 (1, "Sample: Occupancy (# presences/# absences)"),
