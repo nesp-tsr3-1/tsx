@@ -10,7 +10,7 @@ import pyproj
 import math
 from math import sin, cos, sqrt, atan2, radians
 import sys, os, getopt
-from shapely.geometry import shape, Point
+from shapely.geometry import shape, Point, MultiPolygon
 from nesp.geo import to_multipolygon, subdivide_geometry
 from nesp.util import run_parallel
 from nesp.db import get_session
@@ -64,6 +64,10 @@ def alpha_shape(coords, alpha):
     """
     Create alpha shape in following Burgman and Fox paper.
     """
+    # Return empty geometry if not enough points
+    if len(coords) < 3:
+        return MultiPolygon()
+
     try:
         tri = Delaunay(coords)
     except:
@@ -200,7 +204,10 @@ def process_database(species = None, commit = False):
         # Convert from fiona dictionary to shapely geometry and reproject
         coastal_shape = reproject(shape(coastal_shape[0]['geometry']), pyproj.Proj(coastal_shape.crs), working_proj)
         # Simplify coastal boundary - makes things run ~20X faster
+        log.info("Simplifying coastal boundary")
         coastal_shape = coastal_shape.buffer(10000).simplify(10000)
+
+    log.info("Generating alpha shapes")
 
     # Process a single species.
     # This gets run off the main thread.
@@ -211,7 +218,7 @@ def process_database(species = None, commit = False):
             raw_points = get_species_points(session, spno)
 
             if len(raw_points) < 4:
-                # Not enough points to create an alpha
+                # Not enough points to create an alpha hull
                 return
 
             # Read points from database
