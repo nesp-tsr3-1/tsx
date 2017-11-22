@@ -5,6 +5,7 @@ import shapely.wkb
 import nesp.config
 import nesp.processing.alpha_hull
 import nesp.processing.range_ultrataxon
+import nesp.processing.pseudo_absence
 import fiona
 from tqdm import tqdm
 import logging
@@ -33,6 +34,7 @@ def main():
     p = subparsers.add_parser('alpha_hull')
     p = subparsers.add_parser('export_alpha_hull')
     p = subparsers.add_parser('range_ultrataxon')
+    p = subparsers.add_parser('pseudo_absence')
 
     args = parser.parse_args()
 
@@ -43,12 +45,17 @@ def main():
     except ValueError:
         parser.error('--species argument must be a comma-separated list of integers')
 
+    if args.commit != True:
+        log.info("Not committing any changes to database (dry-run only)")
+
     if args.command == 'alpha_hull':
         nesp.processing.alpha_hull.process_database(species = species, commit = args.commit)
     elif args.command == 'export_alpha_hull':
         export_alpha_hull()
     elif args.command == 'range_ultrataxon':
         nesp.processing.range_ultrataxon.process_database(species = species, commit = args.commit)
+    elif args.command == 'pseudo_absence':
+        nesp.processing.pseudo_absence.process_database(commit = args.commit)
 
 # ----- Export alpha hull
 
