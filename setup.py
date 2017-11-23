@@ -7,7 +7,7 @@ setup(
 	description='NESP',
 	author='Hoang Anh Nguyen',
 	author_email='hoangnguyen177@gmail.com',
-	url='https://bitbucket.org/coesra/database',
+	url='https://github.com/nesp-tsr/nesp',
 	packages=[
 		'nesp',
 		'nesp.api',
