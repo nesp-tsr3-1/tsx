@@ -6,11 +6,13 @@ import nesp.config
 import nesp.processing.alpha_hull
 import nesp.processing.range_ultrataxon
 import nesp.processing.pseudo_absence
+import nesp.processing.response_variable
 import fiona
 from tqdm import tqdm
 import logging
 import os
 from nesp.geo import to_multipolygon
+from nesp.db import get_session
 
 log = logging.getLogger(__name__)
 
@@ -100,6 +102,10 @@ def export_alpha_hull():
                             'BRRNGE': breeding_range_id
                         }
                     })
+
+def get_all_spno(session):
+    return [spno for (spno,) in session.execute("SELECT DISTINCT spno FROM taxon").fetchall()]
+
 
 if __name__ == '__main__':
     main()
