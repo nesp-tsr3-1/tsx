@@ -44,17 +44,20 @@ def subdivide_geometry(geometry, max_points = 100):
 		if count_points(geom) <= max_points:
 			yield geom
 		else:
-			# Split bounds along longest dimension
-			minx, miny, maxx, maxy = geom.bounds
-			if maxy - miny > maxx - minx:
-				midy = (miny + maxy) / 2
-				subbounds = [(minx, miny, maxx, midy), (minx, midy, maxx, maxy)]
-			else:
-				midx = (minx + maxx) / 2
-				subbounds = [(minx, miny, midx, maxy), (midx, miny, maxx, maxy)]
-			# Intersect geometry with each of the split bounds, and add to work queue
-			for b in subbounds:
+			# Intersect geometry with each half of its bounding box, and add to work queue
+			for b in split_bounds(*geom.bounds):
 				q.append(geom.intersection(Polygon.from_bounds(*b)))
+
+def split_bounds(minx, miny, maxx, maxy):
+	"""
+	Splits the bounding box in half across it's shortest dimension
+	"""
+	if maxy - miny > maxx - minx:
+		midy = (miny + maxy) / 2
+		return [(minx, miny, maxx, midy), (minx, midy, maxx, maxy)]
+	else:
+		midx = (minx + maxx) / 2
+		return [(minx, miny, midx, maxy), (midx, miny, maxx, maxy)]
 
 def to_multipolygon(geom):
 	"""
