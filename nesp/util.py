@@ -104,11 +104,18 @@ def run_parallel(target, tasks, n_threads = None):
     # Setup queues
     work_q = Queue()
     result_q = Queue()
+    # Helper to get next item from queue without constantly blocking
+    def next(q):
+        while True:
+            try:
+                return q.get(True, 1) # Get with timeout so thread isn't constantly blocked
+            except Empty:
+                pass
 
     # Setup worker threads
     def worker():
         while True:
-            task = work_q.get()
+            task = next(work_q)
             if task is None:
                 break
             try:
@@ -123,13 +130,6 @@ def run_parallel(target, tasks, n_threads = None):
             t.daemon = True
             t.start()
 
-    def next_result():
-        while True:
-            try:
-                return result_q.get(True, 1) # Get with timeout so main thread isn't constantly blocked
-            except Empty:
-                pass
-
     # Feed in tasks and yield results
     i = 0
     for task in tasks:
@@ -137,7 +137,7 @@ def run_parallel(target, tasks, n_threads = None):
         i += 1
         # Start getting results once all threads have something to do
         if i > n_threads:
-            yield next_result()
+            yield next(result_q)
             i -= 1
 
     # Signal threads to stop
@@ -146,5 +146,5 @@ def run_parallel(target, tasks, n_threads = None):
 
     # Finish collecting results
     while i > 0:
-        yield next_result()
+        yield next(result_q)
         i -= 1
