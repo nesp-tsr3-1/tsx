@@ -165,7 +165,7 @@ def make_alpha_hull(points, coastal_shape,
     # now get the isolated points
     multipoint = geometry.MultiPoint(points)
     # single_points = multipoint.difference(alpha_hull_buff).buffer(isolatedbuffer_distance) # slow
-    single_points = fast_difference(alpha_hull_buff, multipoint).buffer(isolatedbuffer_distance)
+    single_points = fast_difference(multipoint, alpha_hull_buff).buffer(isolatedbuffer_distance)
     final = alpha_hull_buff.union(single_points)
 
     #clipping
@@ -265,13 +265,14 @@ def process_database(species = None, commit = False):
                             'geom_wkb': shapely.wkb.dumps(subgeom)
                         }
                     )
+            if commit:
+                session.commit()
 
         except:
             log.exception("Exception processing alpha hull")
             raise
-
-        if commit:
-            session.commit()
+        finally:
+            session.close()
 
     # Process all the species in parallel
     for result, error in tqdm(run_parallel(process_spno, species), total = len(species)):
