@@ -66,7 +66,7 @@ def alpha_shape(coords, alpha):
     """
     # Return empty geometry if not enough points
     if len(coords) < 3:
-        return MultiPolygon()
+        return MultiPolygon(), None
 
     try:
         tri = Delaunay(coords)
