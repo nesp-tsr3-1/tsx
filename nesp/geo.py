@@ -170,6 +170,9 @@ def fast_difference(a, b):
 	if type(b) not in (Polygon, MultiPolygon) and type(a) != MultiPoint:
 		raise ValueError("Unsupported geometry types")
 
+	if b.is_empty:
+		return a
+
 	cache = {}
 	result = []
 	for point in a:
