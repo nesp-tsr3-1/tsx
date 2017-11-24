@@ -14,10 +14,13 @@ from shapely.geometry import shape, Point, MultiPolygon
 from nesp.geo import to_multipolygon, subdivide_geometry, fast_difference
 from nesp.util import run_parallel
 from nesp.db import get_session
+import nesp.db.connect
 import nesp.config
 from tqdm import tqdm
 import logging
 import shapely.wkb
+
+import threading, sys, traceback
 
 log = logging.getLogger(__name__)
 
@@ -274,8 +277,12 @@ def process_database(species = None, commit = False):
         finally:
             session.close()
 
+    # This is important because we are about to spawn child processes, and this stops them attempting to share the
+    # same database connection pool
+    session.close()
+    nesp.db.connect.engine.dispose()
     # Process all the species in parallel
-    for result, error in tqdm(run_parallel(process_spno, species), total = len(species)):
+    for result, error in tqdm(run_parallel(process_spno, species, use_processes = True), total = len(species)):
         if error:
             print error
 
