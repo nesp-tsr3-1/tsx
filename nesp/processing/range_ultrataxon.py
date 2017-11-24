@@ -3,7 +3,7 @@ import shapely.wkb
 from tqdm import tqdm
 from nesp.db import get_session, Taxon, T2UltrataxonSighting
 from nesp.util import run_parallel
-from nesp.geo import point_in_poly
+from nesp.geo import point_intersects_geom
 import logging
 
 log = logging.getLogger(__name__)
@@ -73,7 +73,7 @@ def process_taxon(taxon_id, commit):
             records = []
 
             for sighting_id, x, y in q.fetchall():
-                if point_in_poly(geom, x, y, cache):
+                if point_intersects_geom(geom, x, y, cache):
                     records.append(T2UltrataxonSighting(
                         sighting_id = sighting_id,
                         taxon_id = taxon.id,
@@ -97,7 +97,7 @@ def process_taxon(taxon_id, commit):
                 })
 
                 for sighting_id, x, y in q.fetchall():
-                    if point_in_poly(geom, x, y, cache):
+                    if point_intersects_geom(geom, x, y, cache):
                         records.append(T2UltrataxonSighting(
                             sighting_id = sighting_id,
                             taxon_id = taxon.id,

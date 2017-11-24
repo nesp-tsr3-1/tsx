@@ -1,7 +1,7 @@
 # Geospatial utils
 from collections import deque
 import time
-from shapely.geometry import Point, Polygon, MultiPolygon, GeometryCollection, LineString, LinearRing, shape
+from shapely.geometry import Point, MultiPoint, Polygon, MultiPolygon, GeometryCollection, LineString, LinearRing, shape
 from shapely.ops import transform
 from functools import partial
 import pyproj
@@ -74,6 +74,29 @@ def to_multipolygon(geom):
 	else:
 		return MultiPolygon([])
 
+def tile_key_fn(bounds):
+	minx, miny, maxx, maxy = bounds
+	w = maxx - minx
+	h = maxy - miny
+	def tile_key(x, y, z):
+		x = int((1 << z) * (x - minx) / w)
+		y = int((1 << z) * (y - miny) / h)
+		return (x, y, z)
+	return tile_key
+
+def tile_bounds_fn(bounds):
+	bminx, bminy, bmaxx, bmaxy = bounds
+	bw = bmaxx - bminx
+	bh = bmaxy - bminy
+	def tile_bounds(key):
+		x, y, z = key
+		minx = float(x * bw) / (1 << z) + bminx
+		miny = float(y * bh) / (1 << z) + bminy
+		maxx = float((x + 1) * bw) / (1 << z) + bminx
+		maxy = float((y + 1) * bh) / (1 << z) + bminy
+		return Polygon.from_bounds(minx, miny, maxx, maxy)
+	return tile_bounds
+
 def tile_key(x, y, z):
 	x = int((1 << z) * (x + 180) / 360)
 	y = int((1 << z) * (y + 90) / 180)
@@ -97,12 +120,12 @@ def count_points(geom):
 		return 1
 	if type(geom) == Polygon:
 		return len(geom.exterior.coords) + sum([len(i.coords) for i in geom.interiors])
-	if type(geom) in (LineString, LinearRing):
+	if type(geom) in (LineString, MultiPoint):
 		return len(geom)
 	else:
 		return sum([count_points(g) for g in geom])
 
-def point_in_poly(poly, x, y, cache, z = 4): # z = 4 chosen based on testing
+def point_intersects_geom(poly, x, y, cache, z = 2, tile_key = None, tile_bounds = None): # z = 2 chosen based on testing
 	"""
 	Fast point in polygon test that uses a cache to speed up results
 
@@ -110,7 +133,15 @@ def point_in_poly(poly, x, y, cache, z = 4): # z = 4 chosen based on testing
 	subsequent calls with the same polygon
 	"""
 	if z > 18:
-	   return poly.contains(Point(x, y))
+		return poly.intersects(Point(x, y))
+
+	if tile_key == None:
+		if 'tile_key' not in cache:
+			cache['tile_key'] = tile_key_fn(poly.bounds)
+			cache['tile_bounds'] = tile_bounds_fn(poly.bounds)
+
+		tile_key = cache['tile_key']
+		tile_bounds = cache['tile_bounds']
 
 	key = tile_key(x, y, z)
 
@@ -132,4 +163,4 @@ def point_in_poly(poly, x, y, cache, z = 4): # z = 4 chosen based on testing
 	elif val == False:
 		return False
 	else:
-		return point_in_poly(val, x, y, cache, z = z + 2) # z + 2 chosen based on testing
+		return point_intersects_geom(val, x, y, cache, z = z + 2, tile_key = tile_key, tile_bounds = tile_bounds) # z + 2 chosen based on testing
