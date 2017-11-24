@@ -37,6 +37,7 @@ def main():
     p = subparsers.add_parser('export_alpha_hull')
     p = subparsers.add_parser('range_ultrataxon')
     p = subparsers.add_parser('pseudo_absence')
+    p = subparsers.add_parser('response_variable')
 
     args = parser.parse_args()
 
@@ -58,6 +59,8 @@ def main():
         nesp.processing.range_ultrataxon.process_database(species = species, commit = args.commit)
     elif args.command == 'pseudo_absence':
         nesp.processing.pseudo_absence.process_database(commit = args.commit)
+    elif args.command == 'response_variable':
+        nesp.processing.response_variable.process_database(commit = args.commit)
 
 # ----- Export alpha hull
 
