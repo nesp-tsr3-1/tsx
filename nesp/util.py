@@ -2,6 +2,11 @@ import os
 import tzlocal
 from datetime import datetime
 import logging
+import time
+from contextlib import contextmanager
+import logging
+
+log = logging.getLogger(__name__)
 
 # https://stackoverflow.com/a/47087513/165783
 def next_path(path_pattern):
@@ -68,6 +73,12 @@ class CounterHandler(logging.Handler):
     def count(self, level):
         return self.counters.get(level, 0)
 
+@contextmanager
+def log_time(msg):
+    t1 = time.time()
+    yield
+    t2 = time.time()
+    log.info('%s: %0.2fs' % (msg, t2 - t1))
 
 from multiprocessing import cpu_count
 from threading import Thread
