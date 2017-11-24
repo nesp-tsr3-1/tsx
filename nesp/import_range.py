@@ -13,6 +13,7 @@ import time
 import pyproj
 
 log = logging.getLogger(__name__)
+insert_subdivided = False
 
 def main():
 	logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)-15s %(name)s %(levelname)-8s %(message)s')
@@ -81,17 +82,18 @@ def process_shp(session, spno, shp):
 						}
 					)
 
-					for geom in subdivide_geometry(geometry.buffer(0)):
-						geom = to_multipolygon(geom)
-						if not geom.is_empty:
-							session.execute("""INSERT INTO taxon_range_subdiv (taxon_id, range_id, breeding_range_id, geometry) VALUES
-								(:taxon_id, :range_id, :breeding_range_id, ST_GeomFromWKB(_BINARY :geom_wkb))""", {
-									'taxon_id': prefix + s,
-									'range_id': props['RNGE'] or None,
-									'breeding_range_id': props['BRRNGE'] or None,
-									'geom_wkb': shapely.wkb.dumps(to_multipolygon(geom))
-								}
-							)
+					if insert_subdivided:
+						for geom in subdivide_geometry(geometry.buffer(0)):
+							geom = to_multipolygon(geom)
+							if not geom.is_empty:
+								session.execute("""INSERT INTO taxon_range_subdiv (taxon_id, range_id, breeding_range_id, geometry) VALUES
+									(:taxon_id, :range_id, :breeding_range_id, ST_GeomFromWKB(_BINARY :geom_wkb))""", {
+										'taxon_id': prefix + s,
+										'range_id': props['RNGE'] or None,
+										'breeding_range_id': props['BRRNGE'] or None,
+										'geom_wkb': shapely.wkb.dumps(to_multipolygon(geom))
+									}
+								)
 
 		except:
 			log.error("Error processing row: %s" % props)
