@@ -11,7 +11,7 @@ import math
 from math import sin, cos, sqrt, atan2, radians
 import sys, os, getopt
 from shapely.geometry import shape, Point, MultiPolygon
-from nesp.geo import to_multipolygon, subdivide_geometry
+from nesp.geo import to_multipolygon, subdivide_geometry, fast_difference
 from nesp.util import run_parallel
 from nesp.db import get_session
 import nesp.config
@@ -164,7 +164,8 @@ def make_alpha_hull(points, coastal_shape,
     alpha_hull_buff = concave_hull.buffer(hullbuffer_distance)
     # now get the isolated points
     multipoint = geometry.MultiPoint(points)
-    single_points = multipoint.difference(alpha_hull_buff).buffer(isolatedbuffer_distance)
+    # single_points = multipoint.difference(alpha_hull_buff).buffer(isolatedbuffer_distance) # slow
+    single_points = fast_difference(alpha_hull_buff, multipoint).buffer(isolatedbuffer_distance)
     final = alpha_hull_buff.union(single_points)
 
     #clipping
@@ -243,7 +244,7 @@ def process_database(species = None, commit = False):
             for taxon_id, range_id, breeding_range_id, geom_wkb in get_species_range_polygons(session, spno):
                 # Intersect and insert into DB
                 geom = shapely.wkb.loads(geom_wkb).buffer(0)
-                geom = to_multipolygon(geom.intersection(alpha_shp))
+                geom = to_multipolygon(geom.intersection(alpha_shp)) # slow
                 if len(geom) > 0:
                     session.execute("""INSERT INTO taxon_presence_alpha_hull (taxon_id, range_id, breeding_range_id, geometry)
                         VALUES (:taxon_id, :range_id, :breeding_range_id, ST_GeomFromWKB(_BINARY :geom_wkb))""", {

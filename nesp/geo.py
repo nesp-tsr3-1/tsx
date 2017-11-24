@@ -164,3 +164,16 @@ def point_intersects_geom(poly, x, y, cache, z = 2, tile_key = None, tile_bounds
 		return False
 	else:
 		return point_intersects_geom(val, x, y, cache, z = z + 2, tile_key = tile_key, tile_bounds = tile_bounds) # z + 2 chosen based on testing
+
+def fast_difference(a, b):
+	# We can extend this to other geometry types if we want
+	if type(b) not in (Polygon, MultiPolygon) and type(a) != MultiPoint:
+		raise ValueError("Unsupported geometry types")
+
+	cache = {}
+	result = []
+	for point in a:
+		if not point_intersects_geom(b, point.x, point.y, cache):
+			result.append(point)
+
+	return MultiPoint(result)
