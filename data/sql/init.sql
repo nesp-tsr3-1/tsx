@@ -3,6 +3,7 @@
 CREATE SPATIAL INDEX coords ON t2_survey (coords);
 CREATE SPATIAL INDEX geometry ON taxon_presence_alpha_hull_subdiv (geometry);
 CREATE SPATIAL INDEX geometry ON taxon_range_subdiv (geometry);
+CREATE SPATIAL INDEX geometry ON grid_cell (geometry);
 
 INSERT INTO unit (id, description) VALUES
 (1, "Sample: Occupancy (# presences/# absences)"),
