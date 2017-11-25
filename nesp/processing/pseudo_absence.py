@@ -5,30 +5,87 @@ from nesp.util import run_parallel
 import time
 log = logging.getLogger(__name__)
 
+# I originally wanted to make this able to process each taxon separately, however this is not trivial to implement
+# It's much easier to generate the whole dataset for all taxa in one go.
 def process_database(commit = False):
 	session = get_session()
 
-	def run_sql(msg, sql):
-		log.info(msg)
-		t1 = time.time()
-		r = session.execute(sql)
-		t2 = time.time()
-		log.info("  Rows affected: %s (%0.2fs)" % (r.rowcount, t2 - t1))
+	if not (is_empty(session, "t2_processed_survey") and is_empty(session, "t2_survey_site")):
+		log.error("Existing outputs found - please drop and recreate these tables first: t2_processed_sighting, t2_processed_survey, t2_survey_site")
+		return
 
-	run_sql("Delete previous sightings",
-		"""DELETE t2_processed_sighting
-			FROM t2_processed_sighting, t2_processed_survey
-			WHERE t2_processed_sighting.survey_id = t2_processed_survey.id
-			AND t2_processed_survey.site_id IS NOT NULL""")
+	process_sites(session)
+	process_grid(session)
 
-	run_sql("Delete previous surveys",
-		"""DELETE FROM t2_processed_survey
-			WHERE t2_processed_survey.site_id IS NOT NULL""")
+	if commit:
+		log.info("Committing changes")
+		session.commit()
+	else:
+		log.info("Rolling back changes (dry-run only)")
+		session.rollback()
 
-	run_sql("Delete previous t2_survey_site entries",
-		"""DELETE FROM t2_survey_site""")
+def process_grid(session):
+	# TODO: configure this outside of code (e.g. in configuration)
+	taxa = [ "u40b", "u20", "u233", "u224b", "u223", "u250a", "u250b", "u250c", "u246a", "u246b", "u236", "u264b",
+		"u309", "u542a", "u542b", "u527", "u871a", "u603", "u967", "u402", "u422b", "u382", "u670" ]
 
-	run_sql("Populate t2_survey_site",
+	# Notes - times are with a warm buffer pool, first run was not so fast
+
+	run_sql(session, "Intersecting alpha hulls with grid",
+		"""CREATE TEMPORARY TABLE tmp_taxon_grid
+			(INDEX(taxon_id, grid_cell_id))
+			SELECT DISTINCT grid_cell.id AS grid_cell_id, alpha.taxon_id
+			FROM grid_cell, taxon_presence_alpha_hull_subdiv alpha
+			WHERE alpha.range_id = 1
+			AND ST_Intersects(grid_cell.geometry, alpha.geometry)
+			AND taxon_id IN :taxa""", {
+				'taxa': tuple(taxa)
+			})
+	# Rows affected: 15721 (3.33s)
+
+	run_sql(session, "Intersecting surveys with grid",
+		"""CREATE TEMPORARY TABLE tmp_survey_grid
+			(INDEX(grid_cell_id, survey_id))
+			SELECT t2_survey.id AS survey_id, grid_cell.id AS grid_cell_id
+			FROM t2_survey, grid_cell
+			WHERE ST_Intersects(grid_cell.geometry, t2_survey.coords)""")
+	# Rows affected: 1021487 (17.73s)
+
+	run_sql(session, "Populate grid surveys",
+		"""INSERT INTO t2_processed_survey (raw_survey_id, grid_cell_id, search_type_id, start_date_y, start_date_m, experimental_design_type_id)
+			SELECT t2_survey.id, tmp_survey_grid.grid_cell_id, search_type_id, start_date_y, start_date_m, 2
+			FROM t2_survey, tmp_survey_grid
+			WHERE t2_survey.id = tmp_survey_grid.survey_id""")
+	# 1021487 rows affected (17.10 sec)
+
+	run_sql(session, "Populate presences / non-pseudo-absences",
+		"""INSERT INTO t2_processed_sighting (survey_id, taxon_id, count, unit_id, pseudo_absence)
+			SELECT t2_processed_survey.id, t2_ultrataxon_sighting.taxon_id, count, unit_id, 0
+			FROM t2_ultrataxon_sighting, t2_sighting, t2_processed_survey
+			WHERE t2_ultrataxon_sighting.sighting_id = t2_sighting.id
+			AND t2_sighting.survey_id = t2_processed_survey.raw_survey_id
+			AND t2_processed_survey.experimental_design_type_id = 2
+			AND t2_ultrataxon_sighting.taxon_id IN :taxa""", {
+				'taxa': tuple(taxa)
+			})
+	# Rows affected: 6920 (3.24s)
+
+	log.info("Populate pseudo-absences")
+	for taxon_id in tqdm(taxa):
+		session.execute("""INSERT INTO t2_processed_sighting (survey_id, taxon_id, count, unit_id, pseudo_absence)
+				SELECT t2_processed_survey.id, tmp_taxon_grid.taxon_id, 0, 2, 1
+				FROM t2_survey
+				INNER JOIN tmp_survey_grid ON t2_survey.id = tmp_survey_grid.survey_id
+				INNER JOIN t2_processed_survey ON t2_survey.id = t2_processed_survey.raw_survey_id AND t2_processed_survey.experimental_design_type_id = 2
+				INNER JOIN tmp_taxon_grid ON tmp_survey_grid.grid_cell_id = tmp_taxon_grid.grid_cell_id AND taxon_id = :taxon_id
+				LEFT JOIN t2_processed_sighting ON t2_processed_sighting.survey_id = t2_processed_survey.id AND t2_processed_sighting.taxon_id = tmp_taxon_grid.taxon_id
+				WHERE t2_processed_sighting.id IS NULL""", {
+				'taxon_id': taxon_id
+			})
+	# Processed 23 taxa in 2m25s
+
+def process_sites(session):
+	run_sql(session, "Populate t2_survey_site",
 		"""INSERT INTO t2_survey_site (survey_id, site_id)
 			SELECT t2_survey.id, t2_site.id
 			FROM t2_survey, t2_site
@@ -36,7 +93,7 @@ def process_database(commit = False):
 	# Query OK, 14073 rows affected (0.68 sec)
 	# Records: 14073  Duplicates: 0  Warnings: 0
 
-	run_sql("Populate t2_survey_site (spatial)",
+	run_sql(session, "Populate t2_survey_site (spatial)",
 		"""INSERT INTO t2_survey_site
 			SELECT t2_survey.id, t2_site.id
 			FROM t2_site STRAIGHT_JOIN t2_survey USE INDEX (coords)
@@ -46,7 +103,7 @@ def process_database(commit = False):
 	# Query OK, 278678 rows affected (15.77 sec)
 	# Records: 278678  Duplicates: 0  Warnings: 0
 
-	run_sql("Populate standardised site surveys",
+	run_sql(session, "Populate standardised site surveys",
 		"""INSERT INTO t2_processed_survey (raw_survey_id, site_id, search_type_id, start_date_y, start_date_m, experimental_design_type_id)
 			SELECT t2_survey.id, t2_survey_site.site_id, search_type_id, start_date_y, start_date_m, 1
 			FROM t2_survey, t2_survey_site
@@ -54,7 +111,7 @@ def process_database(commit = False):
 	# Query OK, 292751 rows affected (5.00 sec)
 	# Records: 292751  Duplicates: 0  Warnings: 0
 
-	run_sql("Populate presences / non-pseudo-absences",
+	run_sql(session, "Populate presences / non-pseudo-absences",
 		"""INSERT INTO t2_processed_sighting (survey_id, taxon_id, count, unit_id, pseudo_absence)
 			SELECT t2_processed_survey.id, t2_ultrataxon_sighting.taxon_id, count, unit_id, 0
 			FROM t2_ultrataxon_sighting, t2_sighting, t2_processed_survey
@@ -64,17 +121,13 @@ def process_database(commit = False):
 	# Query OK, 5775718 rows affected (2 min 35.55 sec)
 	# Records: 5775718  Duplicates: 0  Warnings: 0
 
-	# session.commit()
-	# return
-
 	log.info("Identify taxa for each site based on alpha hulls")
 
 	taxa = [taxon_id for (taxon_id,) in session.execute("SELECT DISTINCT taxon_id FROM taxon_presence_alpha_hull_subdiv").fetchall()]
 	session.execute("""CREATE TEMPORARY TABLE tmp_taxon_site (
 		site_id INT NOT NULL,
 		taxon_id CHAR(6) NOT NULL,
-		INDEX (site_id),
-		INDEX (taxon_id)
+		INDEX (taxon_id, site_id)
 	)""")
 
 	# The next step was originally a very slow query, directly populating the tmp_taxon_site table.
@@ -106,43 +159,35 @@ def process_database(commit = False):
 			insert_data = [{ 'site_id': site_id, 'taxon_id': taxon_id } for site_id, taxon_id in result]
 			session.execute("""INSERT INTO tmp_taxon_site (site_id, taxon_id) VALUES (:site_id, :taxon_id)""", insert_data)
 
-	# This query is a bit tricky. We do a left join to find taxons that are not present for a survey, and match on
-	# t2_processed_sighting.id = NULL to generate the pseudo-absences
-	run_sql("Populate pseudo absences",
-		"""INSERT INTO t2_processed_sighting (survey_id, taxon_id, count, unit_id, pseudo_absence)
-			SELECT t2_processed_survey.id, tmp_taxon_site.taxon_id, 0, 2, 1
-			FROM t2_survey
-			INNER JOIN t2_survey_site ON t2_survey.id = t2_survey_site.survey_id
-			INNER JOIN t2_processed_survey ON t2_survey.id = t2_processed_survey.raw_survey_id AND t2_processed_survey.experimental_design_type_id = 1
-			INNER JOIN tmp_taxon_site ON t2_survey_site.site_id = tmp_taxon_site.site_id
-			LEFT JOIN t2_processed_sighting ON t2_processed_sighting.survey_id = t2_processed_survey.id AND t2_processed_sighting.taxon_id = tmp_taxon_site.taxon_id
-			WHERE t2_processed_sighting.id IS NULL""")
-	# Query OK, 49926906 rows affected (15 min 21.20 sec)
-	# Records: 49926906  Duplicates: 0  Warnings: 0
+	log.info("Insert pseudo absences")
 
-	if commit:
-		log.info("Committing changes")
-		session.commit()
-	else:
-		log.info("Rolling back changes (dry-run only)")
-		session.rollback()
+	# This next step originally ran in about 15 minutes on my laptop as a single query, but took forever on the server
+	# (I gave up after a couple of hours) so I've split it up by taxon with is a bit slower overall but at least you can
+	# see progress
 
+	# Running this in parallel resulted in MySQL deadlock errors... probably because we are inserting and selecting from the same table
+	for taxon_id in tqdm(taxa):
+		# This query is a bit tricky. We do a left join to find taxons that are not present for a survey, and match on
+		# t2_processed_sighting.id = NULL to generate the pseudo-absences
+		session.execute("""INSERT INTO t2_processed_sighting (survey_id, taxon_id, count, unit_id, pseudo_absence)
+				SELECT t2_processed_survey.id, tmp_taxon_site.taxon_id, 0, 2, 1
+				FROM t2_survey
+				INNER JOIN t2_survey_site ON t2_survey.id = t2_survey_site.survey_id
+				INNER JOIN t2_processed_survey ON t2_survey.id = t2_processed_survey.raw_survey_id AND t2_processed_survey.experimental_design_type_id = 1
+				INNER JOIN tmp_taxon_site ON t2_survey_site.site_id = tmp_taxon_site.site_id AND taxon_id = :taxon_id
+				LEFT JOIN t2_processed_sighting ON t2_processed_sighting.survey_id = t2_processed_survey.id AND t2_processed_sighting.taxon_id = tmp_taxon_site.taxon_id
+				WHERE t2_processed_sighting.id IS NULL""", {
+				'taxon_id': taxon_id
+			})
 
-# """CREATE TEMPORARY TABLE tmp_taxon_grid
-# SELECT DISTINCT grid_cell.id AS grid_cell_id, alpha.taxon_id
-# FROM grid_cell, taxon_presence_alpha_hull_subdiv alpha USE INDEX (geometry)
-# WHERE alpha.range_id = 1
-# AND ST_Intersects(grid_cell.geometry, alpha.geometry)
-# """
-# # Query OK, 1644638 rows affected (3 min 22.52 sec)
-# # Records: 1644638  Duplicates: 0  Warnings: 0
+def run_sql(session, msg, sql, params = None):
+	log.info(msg)
+	t1 = time.time()
+	r = session.execute(sql, params = params)
+	t2 = time.time()
+	log.info("  Rows affected: %s (%0.2fs)" % (r.rowcount, t2 - t1))
 
-# """CREATE TEMPORARY TABLE tmp_survey_grid
-# SELECT t2_survey.id AS survey_id, grid_cell.id AS grid_cell_id
-# FROM t2_survey, grid_cell
-# WHERE ST_Contains(grid_cell.geometry, t2_survey.coords)
-# """
-# # Query OK, 1021487 rows affected (1 min 40.73 sec)
-# # Records: 1021487  Duplicates: 0  Warnings: 0
-
+def is_empty(session, table):
+	sql = "SELECT 1 FROM %s LIMIT 1" % table
+	return len(session.execute(sql).fetchall()) == 0
 
