@@ -124,7 +124,10 @@ def process_sites(session):
 	log.info("Identify taxa for each site based on alpha hulls")
 
 	taxa = [taxon_id for (taxon_id,) in session.execute("SELECT DISTINCT taxon_id FROM taxon_presence_alpha_hull_subdiv").fetchall()]
-	session.execute("""CREATE TEMPORARY TABLE tmp_taxon_site (
+	session.execute("""DROP TABLE IF EXISTS tmp_taxon_site""")
+	# Note for some reason CREATE TEMPORARY TABLE doesn't work as expected, the table seems to be empty by the time we get
+	# to the next step... I'm guessing after some kind of timeout the transaction gets rolled back(?)
+	session.execute("""CREATE TABLE tmp_taxon_site (
 		site_id INT NOT NULL,
 		taxon_id CHAR(6) NOT NULL,
 		INDEX (taxon_id, site_id)
@@ -179,6 +182,8 @@ def process_sites(session):
 				WHERE t2_processed_sighting.id IS NULL""", {
 				'taxon_id': taxon_id
 			})
+
+	session.execute("""DROP TABLE tmp_taxon_site""")
 
 def run_sql(session, msg, sql, params = None):
 	log.info(msg)
