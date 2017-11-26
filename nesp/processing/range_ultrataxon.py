@@ -83,7 +83,7 @@ def process_taxon(taxon_id, commit):
                         sighting_id = sighting_id,
                         taxon_id = taxon.id,
                         range_id = range_id,
-                        generated_subspecies = False # TODO: populate this properly for Birdata sightings
+                        generated_subspecies = False
                     ))
 
             if taxon.taxon_level.description == 'ssp':
