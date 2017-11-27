@@ -18,8 +18,8 @@ Initialise the database using the provided scripts:
 
 .. code:: bash
 
-	mysql nesp < schema/create.sql
-	mysql nesp < schema/init.sql
+	mysql nesp < data/sql/create.sql
+	mysql nesp < data/sql/init.sql
 
 Copy example configuration:
 
@@ -75,6 +75,12 @@ Or alternatively via web upload interface
 	python -m nesp.process alpha_hull
 	python -m nesp.process range_ultrataxon
 	python -m nesp.process pseudo_absence
+
+Or all at once:
+
+.. code:: bash
+
+	python -m nesp.process -c all
 
 
 Deployment
