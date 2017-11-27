@@ -35,7 +35,10 @@ def main():
     subparsers = parser.add_subparsers(help = 'command', dest = 'command')
 
     p = subparsers.add_parser('alpha_hull')
-    p = subparsers.add_parser('export') # TODO - add sub-options for export
+    p = subparsers.add_parser('export')
+
+    p.add_argument('layers', nargs='+', choices=['alpha', 'ultrataxa', 'pa', 'grid'], help='Layers to export')
+
     p = subparsers.add_parser('range_ultrataxon')
     p = subparsers.add_parser('pseudo_absence')
     p = subparsers.add_parser('response_variable')
@@ -56,7 +59,7 @@ def main():
     if args.command == 'alpha_hull':
         nesp.processing.alpha_hull.process_database(species = species, commit = args.commit)
     elif args.command == 'export':
-        export(species = species)
+        export(args.layers, species = species)
     elif args.command == 'range_ultrataxon':
         nesp.processing.range_ultrataxon.process_database(species = species, commit = args.commit)
     elif args.command == 'pseudo_absence':
@@ -84,18 +87,13 @@ def main():
 
 # ----- Export shapefiles showing processed data
 
-def export(species = None):
+def export(layers, species = None):
     session = get_session()
 
-    # export_alpha = True
-    # export_ultrataxa = True
-    # export_pseudo_absence = True
-    # export_grid = False
-
-    export_alpha = True
-    export_ultrataxa = False
-    export_pseudo_absence = False
-    export_grid = True
+    export_alpha = 'alpha' in layers
+    export_ultrataxa = 'ultrataxa' in layers
+    export_pseudo_absence = 'pa' in layers
+    export_grid = 'grid' in layers
 
     export_dir = nesp.config.data_dir('export')
 
