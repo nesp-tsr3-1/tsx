@@ -53,7 +53,7 @@ Via command line:
 
 .. code:: bash
 
-	python -m nesp.importer --type 1 --commit -i data/type-1-sample.csv
+	python -m nesp.importer --type 1 --commit data/type-1-sample.csv
 
 Or alternatively via web upload interface
 
