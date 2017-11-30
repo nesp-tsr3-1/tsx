@@ -75,6 +75,7 @@ def aggregate_by_month(taxon_id, commit = False):
         sql = """INSERT INTO aggregated_by_month (
             start_date_y,
             start_date_m,
+            source_id,
             {fields},
             taxon_id,
             experimental_design_type_id,
@@ -84,6 +85,7 @@ def aggregate_by_month(taxon_id, commit = False):
         SELECT
             start_date_y,
             start_date_m,
+            source_id,
             {fields},
             taxon_id,
             :experimental_design_type_id,
@@ -105,6 +107,7 @@ def aggregate_by_month(taxon_id, commit = False):
         GROUP BY
             start_date_y,
             start_date_m,
+            source_id,
             {fields}
         """.format(
                 aggregate_expression = aggregate_expression,
@@ -136,6 +139,7 @@ def aggregate_by_year(taxon_id, commit = False):
         sql = """
             INSERT INTO aggregated_by_year (
                 start_date_y,
+                source_id,
                 search_type_id,
                 site_id,
                 grid_cell_id,
@@ -146,6 +150,7 @@ def aggregate_by_year(taxon_id, commit = False):
                 data_type)
             SELECT
                 start_date_y,
+                source_id,
                 search_type_id,
                 site_id,
                 grid_cell_id,
@@ -158,6 +163,7 @@ def aggregate_by_year(taxon_id, commit = False):
             WHERE taxon_id = :taxon_id
             GROUP BY
                 start_date_y,
+                source_id,
                 search_type_id,
                 site_id,
                 grid_cell_id,

@@ -52,8 +52,8 @@ def process_grid(session):
 	# Rows affected: 1021487 (17.73s)
 
 	run_sql(session, "Populate grid surveys",
-		"""INSERT INTO t2_processed_survey (raw_survey_id, grid_cell_id, search_type_id, start_date_y, start_date_m, experimental_design_type_id)
-			SELECT t2_survey.id, tmp_survey_grid.grid_cell_id, search_type_id, start_date_y, start_date_m, 2
+		"""INSERT INTO t2_processed_survey (raw_survey_id, grid_cell_id, search_type_id, start_date_y, start_date_m, source_id, experimental_design_type_id)
+			SELECT t2_survey.id, tmp_survey_grid.grid_cell_id, search_type_id, start_date_y, start_date_m, source_id, 2
 			FROM t2_survey, tmp_survey_grid
 			WHERE t2_survey.id = tmp_survey_grid.survey_id""")
 	# 1021487 rows affected (17.10 sec)
@@ -104,8 +104,8 @@ def process_sites(session):
 	# Records: 278678  Duplicates: 0  Warnings: 0
 
 	run_sql(session, "Populate standardised site surveys",
-		"""INSERT INTO t2_processed_survey (raw_survey_id, site_id, search_type_id, start_date_y, start_date_m, experimental_design_type_id)
-			SELECT t2_survey.id, t2_survey_site.site_id, search_type_id, start_date_y, start_date_m, 1
+		"""INSERT INTO t2_processed_survey (raw_survey_id, site_id, search_type_id, start_date_y, start_date_m, source_id, experimental_design_type_id)
+			SELECT t2_survey.id, t2_survey_site.site_id, search_type_id, start_date_y, start_date_m, source_id, 1
 			FROM t2_survey, t2_survey_site
 			WHERE t2_survey.id = t2_survey_site.survey_id""")
 	# Query OK, 292751 rows affected (5.00 sec)
