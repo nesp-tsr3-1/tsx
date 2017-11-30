@@ -23,7 +23,7 @@
       <label class="label">Data file</label>
       <p v-if='status == "init"'>
         <button class='button' v-on:click='selectFile'>Select file</button>
-        <p>Tip: the import will run faster if records belonging to the same survey and site are grouped into continous rows instead of scattered throughout the file</p>
+        <p>Tip: the import will run faster if records belonging to the same survey and site are grouped into contiguous rows instead of scattered throughout the file</p>
       </p>
 
       <p v-if='uploading'>

@@ -17,7 +17,7 @@ def process_database(species = None, commit = False):
         taxa = session.execute("SELECT DISTINCT taxon_id FROM taxon_range").fetchall()
     else:
         taxa = session.execute("SELECT DISTINCT taxon_id FROM taxon_range, taxon WHERE taxon_id = taxon.id AND spno IN :species",
-            { 'species': species}).fetchall()
+            { 'species': species }).fetchall()
 
     # Unwrap tuple
     taxa = [taxon_id for (taxon_id,) in taxa]

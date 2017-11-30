@@ -25,7 +25,7 @@ def process_database(commit = False):
 		session.rollback()
 
 def process_grid(session):
-	# TODO: configure this outside of code (e.g. in configuration)
+	# TODO: load this from taxon spreadsheet instead of specifying in code
 	taxa = [ "u40b", "u20", "u233", "u224b", "u223", "u250a", "u250b", "u250c", "u246a", "u246b", "u236", "u264b",
 		"u309", "u542a", "u542b", "u527", "u871a", "u603", "u967", "u402", "u422b", "u382", "u670" ]
 
