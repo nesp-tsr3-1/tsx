@@ -65,7 +65,7 @@ def main():
     elif args.command == 'pseudo_absence':
         nesp.processing.pseudo_absence.process_database(commit = args.commit)
     elif args.command == 'response_variable':
-        nesp.processing.response_variable.process_database(commit = args.commit)
+        nesp.processing.response_variable.process_database(species = species, commit = args.commit)
     elif args.command == 'all':
         if not args.commit:
             log.error("Dry-run mode not supported for 'all'")
@@ -255,10 +255,8 @@ def export(layers, species = None):
                             }
                         })
 
-
 def get_all_spno(session):
     return [spno for (spno,) in session.execute("SELECT DISTINCT spno FROM taxon").fetchall()]
-
 
 if __name__ == '__main__':
     main()
