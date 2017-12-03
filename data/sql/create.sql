@@ -563,8 +563,7 @@ DROP TABLE IF EXISTS `region` ;
 CREATE TABLE IF NOT EXISTS `region` (
   `id` INT NOT NULL,
   `name` VARCHAR(255) NULL,
-  `geometry` MULTIPOLYGON NULL,
-  PRIMARY KEY (`id`))
+  `geometry` MULTIPOLYGON NOT NULL)
 ENGINE = InnoDB;
 
 

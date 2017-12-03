@@ -4,7 +4,7 @@ import sys
 import argparse
 from tqdm import tqdm
 import shapely.wkb
-from nesp.geo import reproject_fn, to_multipolygon
+from nesp.geo import reproject_fn, to_multipolygon, subdivide_geometry
 from shapely.geometry import shape
 import fiona
 import pyproj
@@ -24,14 +24,18 @@ def main():
 		reproject = reproject_fn(pyproj.Proj(shp.crs), pyproj.Proj('+init=EPSG:4326'))
 		for feature in tqdm(shp):
 			props = feature['properties']
-			geometry = to_multipolygon(reproject(shape(feature['geometry'])))
 
-			session.execute("""INSERT INTO region (id, name, geometry)
-				VALUES (:id, :name, ST_GeomFromWKB(_BINARY :geometry_wkb))""", {
-					'id': props['subIBRA_ID'],
-					'name': props['Name'],
-					'geometry_wkb': shapely.wkb.dumps(geometry)
-				})
+
+			for geometry in subdivide_geometry(reproject(shape(feature['geometry']))):
+
+				geometry = to_multipolygon(geometry)
+
+				session.execute("""INSERT INTO region (id, name, geometry)
+					VALUES (:id, :name, ST_GeomFromWKB(_BINARY :geometry_wkb))""", {
+						'id': props['subIBRA_ID'],
+						'name': props['Name'],
+						'geometry_wkb': shapely.wkb.dumps(geometry)
+					})
 
 	session.commit()
 
