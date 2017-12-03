@@ -7,6 +7,7 @@ import nesp.processing.alpha_hull
 import nesp.processing.range_ultrataxon
 import nesp.processing.pseudo_absence
 import nesp.processing.response_variable
+import nesp.processing.export_lpi
 import fiona
 from tqdm import tqdm
 import logging
@@ -42,6 +43,7 @@ def main():
     p = subparsers.add_parser('range_ultrataxon')
     p = subparsers.add_parser('pseudo_absence')
     p = subparsers.add_parser('response_variable')
+    p = subparsers.add_parser('export_lpi')
     p = subparsers.add_parser('all')
 
     args = parser.parse_args()
@@ -66,6 +68,8 @@ def main():
         nesp.processing.pseudo_absence.process_database(commit = args.commit)
     elif args.command == 'response_variable':
         nesp.processing.response_variable.process_database(species = species, commit = args.commit)
+    elif args.command == 'export_lpi':
+        nesp.processing.export_lpi.process_database(species = species)
     elif args.command == 'all':
         if not args.commit:
             log.error("Dry-run mode not supported for 'all'")
