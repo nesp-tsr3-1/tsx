@@ -93,20 +93,24 @@ def aggregate_yearly(taxon_id, commit = False):
 	            taxon_id,
 	            count,
 	            source_id,
-	            coords)
+	            subibra_id,
+	            subibra_name)
             SELECT
                 start_date_y,
 	            site_id,
 	            search_type_id,
 	            taxon_id,
-				AVG(count) as count, 
+		    AVG(count) as count, 
 	            source_id,
-	            coords
+	            subibra.subibra_id as subibra_id,
+	            subibra.name as subibra_name
             FROM t1_monthly_aggregation
+            INNER JOIN 
+            	subibra ON ST_Within(t1_monthly_aggregation.coords, subibra.SHAPE)
             WHERE
 		taxon_id = :taxon_id
 	    GROUP BY
-                start_date_y, site_id, search_type_id, taxon_id, source_id, coords
+                start_date_y, site_id, search_type_id, taxon_id, source_id, subibra_id, subibra_name
         """
 
         session.execute(sql, { 'taxon_id': taxon_id })
