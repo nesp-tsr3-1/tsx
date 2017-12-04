@@ -26,13 +26,8 @@ def lpi_data():
 def get_data():
 	sql = """
 		SELECT
-			WLAB.*,
-			SearchTypeID,
-			subibra_id,
-			subibra_name,
-			GROUP_CONCAT(CONCAT(StartDate_y, '=', Count) ORDER BY StartDate_y) AS Counts
-		FROM SpatialTemportalAggregated, WLAB
-		WHERE SpatialTemportalAggregated.TaxonID = WLAB.TaxonID
+		FROM t1_yearly_aggregation, taxon
+		WHERE t1_yearly_aggregation.taxon_id = taxon.id
 		GROUP BY SearchTypeID, TaxonID, subibra_id, subibra_name
 		"""
 

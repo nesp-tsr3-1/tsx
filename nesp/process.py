@@ -6,6 +6,7 @@ import nesp.config
 import nesp.processing.alpha_hull
 import nesp.processing.range_ultrataxon
 import nesp.processing.pseudo_absence
+import nesp.processing.t1_aggregation
 import fiona
 from tqdm import tqdm
 import logging
@@ -35,7 +36,8 @@ def main():
     p = subparsers.add_parser('export_alpha_hull')
     p = subparsers.add_parser('range_ultrataxon')
     p = subparsers.add_parser('pseudo_absence')
-
+    p = subparsers.add_parser('t1_aggregation')
+    
     args = parser.parse_args()
 
     species = None
@@ -56,6 +58,8 @@ def main():
         nesp.processing.range_ultrataxon.process_database(species = species, commit = args.commit)
     elif args.command == 'pseudo_absence':
         nesp.processing.pseudo_absence.process_database(commit = args.commit)
+    elif args.command == 't1_aggregation':
+        nesp.processing.t1_aggregation.process_database(commit = args.commit)
 
 # ----- Export alpha hull
 

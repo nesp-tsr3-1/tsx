@@ -682,6 +682,85 @@ SELECT spno, coords FROM t2_survey, t2_sighting, taxon WHERE survey_id = t2_surv
 UNION
 SELECT spno, coords FROM incidental_sighting, taxon WHERE taxon_id = taxon.id;
 
+
+
+-- -----------------------------------------------------
+-- Aggregation
+-- -----------------------------------------------------
+
+-- -----------------------------------------------------
+-- Table `t1_monthly_aggregation`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `t1_monthly_aggregation` ;
+
+CREATE TABLE IF NOT EXISTS `t1_monthly_aggregation` (
+  `start_date_y` SMALLINT NOT NULL,
+  `start_date_m` SMALLINT NOT NULL,
+  `site_id` INT NULL,
+  `search_type_id` INT NULL,
+  `taxon_id` CHAR(6) NOT NULL,
+  `count` DOUBLE NOT NULL,
+  `source_id` INT NOT NULL,
+  `coords` POINT NOT NULL,
+  INDEX `fk_t1_monthly_aggregation_search_type` (`search_type_id` ASC),
+  INDEX `fk_t1_monthly_aggregation_taxon_id` (`taxon_id` ASC),
+  INDEX `fk_t1_monthly_aggregation_source_id` (`source_id` ASC),
+  CONSTRAINT `fk_t1_monthly_aggregation_search_type`
+    FOREIGN KEY (`search_type_id`)
+    REFERENCES `search_type` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_t1_monthly_aggregation_taxon_id`
+    FOREIGN KEY (`taxon_id`)
+    REFERENCES `taxon` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_t1_monthly_aggregation_source_id`
+    FOREIGN KEY (`source_id`)
+    REFERENCES `source` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `t1_yearly_aggregation`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `t1_yearly_aggregation` ;
+
+CREATE TABLE IF NOT EXISTS `t1_yearly_aggregation` (
+  `start_date_y` SMALLINT NOT NULL,
+  `site_id` INT NULL,
+  `search_type_id` INT NULL,
+  `taxon_id` CHAR(6) NOT NULL,
+  `count` DOUBLE NOT NULL,
+  `source_id` INT NOT NULL,
+  `coords` POINT NOT NULL,
+  INDEX `t1_yearly_aggregation_search_type` (`search_type_id` ASC),
+  INDEX `t1_yearly_aggregation_taxon_id` (`taxon_id` ASC),
+  INDEX `t1_yearly_aggregation_source_id` (`source_id` ASC),
+  CONSTRAINT `t1_yearly_aggregation_search_type`
+    FOREIGN KEY (`search_type_id`)
+    REFERENCES `search_type` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `t1_yearly_aggregation_taxon_id`
+    FOREIGN KEY (`taxon_id`)
+    REFERENCES `taxon` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `t1_yearly_aggregation_source_id`
+    FOREIGN KEY (`source_id`)
+    REFERENCES `source` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+
+
+
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+
+
