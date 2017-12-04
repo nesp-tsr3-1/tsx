@@ -60,7 +60,7 @@ def aggregate_monthly(taxon_id, commit = False):
 			t1_site site ON site.id = survey.site_id
 		INNER JOIN 
 			t1_sighting sighting ON sighting.survey_id = survey.id
-		WHERE
+		WHERE 
 			taxon_id = :taxon_id
 		GROUP BY
 		    start_date_y, start_date_m, site_id, search_type_id, taxon_id, source_id, coords
@@ -88,13 +88,13 @@ def aggregate_yearly(taxon_id, commit = False):
         sql = """
             INSERT INTO t1_yearly_aggregation (
                 start_date_y,
-	            start_date_m,
 	            site_id,
 	            search_type_id,
 	            taxon_id,
 	            count,
 	            source_id,
-	            coords)
+	            subibra_id,
+	            subibra_name)
             SELECT
                 start_date_y,
 	            site_id,
@@ -102,11 +102,15 @@ def aggregate_yearly(taxon_id, commit = False):
 	            taxon_id,
 				AVG(count) as count, 
 	            source_id,
-	            coords
+	            subibra.subibra_id as subibra_id,
+	            subibra.name as subibra_name
             FROM t1_monthly_aggregation
-	    WHERE taxon_id = :taxon_id
-            GROUP BY
-                start_date_y, site_id, search_type_id, taxon_id, source_id, coords
+            INNER JOIN 
+            	subibra ON ST_Within(t1_monthly_aggregation.coords, subibra.SHAPE)
+		    WHERE 
+		    	taxon_id = :taxon_id
+	        GROUP BY
+	            start_date_y, site_id, search_type_id, taxon_id, source_id, subibra_id, subibra_name
         """
 
         session.execute(sql, { 'taxon_id': taxon_id })
