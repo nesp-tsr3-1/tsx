@@ -32,7 +32,7 @@ def main():
 	logging.basicConfig(stream=TqdmStream(), level=logging.INFO, format='%(asctime)-15s %(levelname)-8s %(message)s')
 
 	parser = argparse.ArgumentParser(description='Import Type 1/2/3 survey data into NESP database')
-	parser.add_argument('-i', dest='filename', type=str, help='data file to import (Excel/CSV)')
+	parser.add_argument('filename', type=str, help='data file to import (Excel/CSV)')
 	parser.add_argument('-t', action='store_true', dest='test', help='test database connection')
 	parser.add_argument('--type', dest='data_type', choices=[1,2], type=int, help='Type of data (1 or 2)')
 	parser.add_argument('-c', action='store_true', dest='commit', help='commit changes (default is dry-run)')

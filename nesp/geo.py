@@ -1,7 +1,7 @@
 # Geospatial utils
 from collections import deque
 import time
-from shapely.geometry import Point, Polygon, MultiPolygon, GeometryCollection, LineString, LinearRing, shape
+from shapely.geometry import Point, MultiPoint, Polygon, MultiPolygon, GeometryCollection, LineString, LinearRing, shape
 from shapely.ops import transform
 from functools import partial
 import pyproj
@@ -44,17 +44,20 @@ def subdivide_geometry(geometry, max_points = 100):
 		if count_points(geom) <= max_points:
 			yield geom
 		else:
-			# Split bounds along longest dimension
-			minx, miny, maxx, maxy = geom.bounds
-			if maxy - miny > maxx - minx:
-				midy = (miny + maxy) / 2
-				subbounds = [(minx, miny, maxx, midy), (minx, midy, maxx, maxy)]
-			else:
-				midx = (minx + maxx) / 2
-				subbounds = [(minx, miny, midx, maxy), (midx, miny, maxx, maxy)]
-			# Intersect geometry with each of the split bounds, and add to work queue
-			for b in subbounds:
+			# Intersect geometry with each half of its bounding box, and add to work queue
+			for b in split_bounds(*geom.bounds):
 				q.append(geom.intersection(Polygon.from_bounds(*b)))
+
+def split_bounds(minx, miny, maxx, maxy):
+	"""
+	Splits the bounding box in half across it's shortest dimension
+	"""
+	if maxy - miny > maxx - minx:
+		midy = (miny + maxy) / 2
+		return [(minx, miny, maxx, midy), (minx, midy, maxx, maxy)]
+	else:
+		midx = (minx + maxx) / 2
+		return [(minx, miny, midx, maxy), (midx, miny, maxx, maxy)]
 
 def to_multipolygon(geom):
 	"""
@@ -70,6 +73,29 @@ def to_multipolygon(geom):
 		return MultiPolygon([poly for g in geom for poly in to_multipolygon(g)])
 	else:
 		return MultiPolygon([])
+
+def tile_key_fn(bounds):
+	minx, miny, maxx, maxy = bounds
+	w = maxx - minx
+	h = maxy - miny
+	def tile_key(x, y, z):
+		x = int((1 << z) * (x - minx) / w)
+		y = int((1 << z) * (y - miny) / h)
+		return (x, y, z)
+	return tile_key
+
+def tile_bounds_fn(bounds):
+	bminx, bminy, bmaxx, bmaxy = bounds
+	bw = bmaxx - bminx
+	bh = bmaxy - bminy
+	def tile_bounds(key):
+		x, y, z = key
+		minx = float(x * bw) / (1 << z) + bminx
+		miny = float(y * bh) / (1 << z) + bminy
+		maxx = float((x + 1) * bw) / (1 << z) + bminx
+		maxy = float((y + 1) * bh) / (1 << z) + bminy
+		return Polygon.from_bounds(minx, miny, maxx, maxy)
+	return tile_bounds
 
 def tile_key(x, y, z):
 	x = int((1 << z) * (x + 180) / 360)
@@ -94,12 +120,12 @@ def count_points(geom):
 		return 1
 	if type(geom) == Polygon:
 		return len(geom.exterior.coords) + sum([len(i.coords) for i in geom.interiors])
-	if type(geom) in (LineString, LinearRing):
+	if type(geom) in (LineString, MultiPoint):
 		return len(geom)
 	else:
 		return sum([count_points(g) for g in geom])
 
-def point_in_poly(poly, x, y, cache, z = 4): # z = 4 chosen based on testing
+def point_intersects_geom(poly, x, y, cache, z = 2, tile_key = None, tile_bounds = None): # z = 2 chosen based on testing
 	"""
 	Fast point in polygon test that uses a cache to speed up results
 
@@ -107,7 +133,15 @@ def point_in_poly(poly, x, y, cache, z = 4): # z = 4 chosen based on testing
 	subsequent calls with the same polygon
 	"""
 	if z > 18:
-	   return poly.contains(Point(x, y))
+		return poly.intersects(Point(x, y))
+
+	if tile_key == None:
+		if 'tile_key' not in cache:
+			cache['tile_key'] = tile_key_fn(poly.bounds)
+			cache['tile_bounds'] = tile_bounds_fn(poly.bounds)
+
+		tile_key = cache['tile_key']
+		tile_bounds = cache['tile_bounds']
 
 	key = tile_key(x, y, z)
 
@@ -129,4 +163,20 @@ def point_in_poly(poly, x, y, cache, z = 4): # z = 4 chosen based on testing
 	elif val == False:
 		return False
 	else:
-		return point_in_poly(val, x, y, cache, z = z + 2) # z + 2 chosen based on testing
+		return point_intersects_geom(val, x, y, cache, z = z + 2, tile_key = tile_key, tile_bounds = tile_bounds) # z + 2 chosen based on testing
+
+def fast_difference(a, b):
+	# We can extend this to other geometry types if we want
+	if type(b) not in (Polygon, MultiPolygon) and type(a) != MultiPoint:
+		raise ValueError("Unsupported geometry types")
+
+	if b.is_empty:
+		return a
+
+	cache = {}
+	result = []
+	for point in a:
+		if not point_intersects_geom(b, point.x, point.y, cache):
+			result.append(point)
+
+	return MultiPoint(result)

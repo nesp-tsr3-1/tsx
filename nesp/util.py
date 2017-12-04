@@ -2,6 +2,11 @@ import os
 import tzlocal
 from datetime import datetime
 import logging
+import time
+from contextlib import contextmanager
+import logging
+
+log = logging.getLogger(__name__)
 
 # https://stackoverflow.com/a/47087513/165783
 def next_path(path_pattern):
@@ -68,14 +73,19 @@ class CounterHandler(logging.Handler):
     def count(self, level):
         return self.counters.get(level, 0)
 
+@contextmanager
+def log_time(msg):
+    t1 = time.time()
+    yield
+    t2 = time.time()
+    log.info('%s: %0.2fs' % (msg, t2 - t1))
 
-from multiprocessing import cpu_count
+import multiprocessing
 from threading import Thread
 from Queue import Queue, Empty
 import math
 
-
-def run_parallel(target, tasks, n_threads = None):
+def run_parallel(target, tasks, n_workers = None, use_processes = False):
     """
     Runs tasks in parallel
 
@@ -97,18 +107,36 @@ def run_parallel(target, tasks, n_threads = None):
         for result, error in run_parallel(do_hard_work, tasks):
             print result
 
+    A pool of worker threads (or processes if `use_processes = True`) is used to process the tasks.
+    Threads may not always be able to achieve parallelism due to Python GIL.
+    If using processes, be careful not to use shared global resources such as database connection pools in the target function.
+    The number of workers defaults to the number of cpu cores as reported by `multiprocessing.cpu_count`, but can be set
+    using the `n_workers` parameter.
     """
-    if n_threads is None:
-        n_threads = cpu_count()
+    if n_workers is None:
+        n_workers = multiprocessing.cpu_count()
+
+    Q = multiprocessing.Queue if use_processes else Queue
 
     # Setup queues
-    work_q = Queue()
-    result_q = Queue()
+
+    work_q = Q()
+    result_q = Q()
+    # Helper to get next item from queue without constantly blocking
+    def next(q):
+        while True:
+            try:
+                return q.get(True, 1) # Get with timeout so thread isn't constantly blocked
+            except Empty:
+                pass
+            except:
+                log.exception("Exception getting item from queue")
+                raise
 
     # Setup worker threads
-    def worker():
+    def worker(work_q, result_q):
         while True:
-            task = work_q.get()
+            task = next(work_q)
             if task is None:
                 break
             try:
@@ -116,19 +144,17 @@ def run_parallel(target, tasks, n_threads = None):
                     task = (task,)
                 result_q.put((target(*task), None))
             except Exception as e:
+                log.exception("Exception in worker")
                 result_q.put((None, e))
 
-    for i in range(0, n_threads):
-            t = Thread(target = worker)
-            t.daemon = True
-            t.start()
-
-    def next_result():
-        while True:
-            try:
-                return result_q.get(True, 1) # Get with timeout so main thread isn't constantly blocked
-            except Empty:
-                pass
+    for i in range(0, n_workers):
+            if use_processes:
+                p = multiprocessing.Process(target = worker, args = (work_q, result_q))
+                p.start()
+            else:
+                t = Thread(target = worker, args = (work_q, result_q))
+                t.daemon = True
+                t.start()
 
     # Feed in tasks and yield results
     i = 0
@@ -136,15 +162,15 @@ def run_parallel(target, tasks, n_threads = None):
         work_q.put(task)
         i += 1
         # Start getting results once all threads have something to do
-        if i > n_threads:
-            yield next_result()
+        if i > n_workers:
+            yield next(result_q)
             i -= 1
 
     # Signal threads to stop
-    for j in range(0, n_threads):
+    for j in range(0, n_workers):
         work_q.put(None)
 
     # Finish collecting results
     while i > 0:
-        yield next_result()
+        yield next(result_q)
         i -= 1

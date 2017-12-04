@@ -2,8 +2,9 @@ from shapely.geometry import Point, Polygon
 import shapely.wkb
 from tqdm import tqdm
 from nesp.db import get_session, Taxon, T2UltrataxonSighting
+import nesp.db.connect
 from nesp.util import run_parallel
-from nesp.geo import point_in_poly
+from nesp.geo import point_intersects_geom
 import logging
 
 log = logging.getLogger(__name__)
@@ -16,7 +17,7 @@ def process_database(species = None, commit = False):
         taxa = session.execute("SELECT DISTINCT taxon_id FROM taxon_range").fetchall()
     else:
         taxa = session.execute("SELECT DISTINCT taxon_id FROM taxon_range, taxon WHERE taxon_id = taxon.id AND spno IN :species",
-            { 'species': species}).fetchall()
+            { 'species': species }).fetchall()
 
     # Unwrap tuple
     taxa = [taxon_id for (taxon_id,) in taxa]
@@ -29,7 +30,11 @@ def process_database(species = None, commit = False):
     # Process in parallel
     tasks = [(taxon_id, commit) for taxon_id in taxa]
 
-    for result, error in tqdm(run_parallel(process_taxon, tasks), total=len(tasks)):
+    # This is important because we are about to spawn child processes, and this stops them attempting to share the
+    # same database connection pool
+    session.close()
+    nesp.db.connect.engine.dispose()
+    for result, error in tqdm(run_parallel(process_taxon, tasks, use_processes = True), total=len(tasks)):
         if error:
             print error
 
@@ -73,12 +78,12 @@ def process_taxon(taxon_id, commit):
             records = []
 
             for sighting_id, x, y in q.fetchall():
-                if point_in_poly(geom, x, y, cache):
+                if point_intersects_geom(geom, x, y, cache):
                     records.append(T2UltrataxonSighting(
                         sighting_id = sighting_id,
                         taxon_id = taxon.id,
                         range_id = range_id,
-                        generated_subspecies = False # TODO: populate this properly for Birdata sightings
+                        generated_subspecies = False
                     ))
 
             if taxon.taxon_level.description == 'ssp':
@@ -97,7 +102,7 @@ def process_taxon(taxon_id, commit):
                 })
 
                 for sighting_id, x, y in q.fetchall():
-                    if point_in_poly(geom, x, y, cache):
+                    if point_intersects_geom(geom, x, y, cache):
                         records.append(T2UltrataxonSighting(
                             sighting_id = sighting_id,
                             taxon_id = taxon.id,
@@ -106,7 +111,8 @@ def process_taxon(taxon_id, commit):
                         ))
 
             session.bulk_save_objects(records)
-        session.commit()
+        if commit:
+            session.commit()
     except Exception as e:
         log.exception('Exception in range and ultrataxon processing')
         raise

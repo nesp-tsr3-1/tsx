@@ -10,14 +10,17 @@ import pyproj
 import math
 from math import sin, cos, sqrt, atan2, radians
 import sys, os, getopt
-from shapely.geometry import shape, Point
-from nesp.geo import to_multipolygon, subdivide_geometry
+from shapely.geometry import shape, Point, MultiPolygon
+from nesp.geo import to_multipolygon, subdivide_geometry, fast_difference
 from nesp.util import run_parallel
 from nesp.db import get_session
+import nesp.db.connect
 import nesp.config
 from tqdm import tqdm
 import logging
 import shapely.wkb
+
+import threading, sys, traceback
 
 log = logging.getLogger(__name__)
 
@@ -64,6 +67,10 @@ def alpha_shape(coords, alpha):
     """
     Create alpha shape in following Burgman and Fox paper.
     """
+    # Return empty geometry if not enough points
+    if len(coords) < 3:
+        return MultiPolygon(), None
+
     try:
         tri = Delaunay(coords)
     except:
@@ -160,7 +167,8 @@ def make_alpha_hull(points, coastal_shape,
     alpha_hull_buff = concave_hull.buffer(hullbuffer_distance)
     # now get the isolated points
     multipoint = geometry.MultiPoint(points)
-    single_points = multipoint.difference(alpha_hull_buff).buffer(isolatedbuffer_distance)
+    # single_points = multipoint.difference(alpha_hull_buff).buffer(isolatedbuffer_distance) # slow
+    single_points = fast_difference(multipoint, alpha_hull_buff).buffer(isolatedbuffer_distance)
     final = alpha_hull_buff.union(single_points)
 
     #clipping
@@ -200,7 +208,10 @@ def process_database(species = None, commit = False):
         # Convert from fiona dictionary to shapely geometry and reproject
         coastal_shape = reproject(shape(coastal_shape[0]['geometry']), pyproj.Proj(coastal_shape.crs), working_proj)
         # Simplify coastal boundary - makes things run ~20X faster
+        log.info("Simplifying coastal boundary")
         coastal_shape = coastal_shape.buffer(10000).simplify(10000)
+
+    log.info("Generating alpha shapes")
 
     # Process a single species.
     # This gets run off the main thread.
@@ -211,7 +222,7 @@ def process_database(species = None, commit = False):
             raw_points = get_species_points(session, spno)
 
             if len(raw_points) < 4:
-                # Not enough points to create an alpha
+                # Not enough points to create an alpha hull
                 return
 
             # Read points from database
@@ -236,7 +247,7 @@ def process_database(species = None, commit = False):
             for taxon_id, range_id, breeding_range_id, geom_wkb in get_species_range_polygons(session, spno):
                 # Intersect and insert into DB
                 geom = shapely.wkb.loads(geom_wkb).buffer(0)
-                geom = to_multipolygon(geom.intersection(alpha_shp))
+                geom = to_multipolygon(geom.intersection(alpha_shp)) # slow
                 if len(geom) > 0:
                     session.execute("""INSERT INTO taxon_presence_alpha_hull (taxon_id, range_id, breeding_range_id, geometry)
                         VALUES (:taxon_id, :range_id, :breeding_range_id, ST_GeomFromWKB(_BINARY :geom_wkb))""", {
@@ -257,16 +268,21 @@ def process_database(species = None, commit = False):
                             'geom_wkb': shapely.wkb.dumps(subgeom)
                         }
                     )
+            if commit:
+                session.commit()
 
         except:
             log.exception("Exception processing alpha hull")
             raise
+        finally:
+            session.close()
 
-        if commit:
-            session.commit()
-
+    # This is important because we are about to spawn child processes, and this stops them attempting to share the
+    # same database connection pool
+    session.close()
+    nesp.db.connect.engine.dispose()
     # Process all the species in parallel
-    for result, error in tqdm(run_parallel(process_spno, species), total = len(species)):
+    for result, error in tqdm(run_parallel(process_spno, species, use_processes = True), total = len(species)):
         if error:
             print error
 
@@ -278,12 +294,23 @@ def get_all_spno(session):
     return [spno for (spno,) in session.execute("SELECT DISTINCT spno FROM taxon").fetchall()]
 
 def get_species_points(session, spno):
-    # TODO - get points from type 1 data too
     sql = """SELECT DISTINCT ST_X(coords), ST_Y(coords)
+        FROM t1_survey, t1_sighting, taxon
+        WHERE survey_id = t1_survey.id
+        AND taxon_id = taxon.id
+        AND spno = :spno
+        UNION
+        SELECT DISTINCT ST_X(coords), ST_Y(coords)
         FROM t2_survey, t2_sighting, taxon
         WHERE survey_id = t2_survey.id
         AND taxon_id = taxon.id
-        AND spno = :spno"""
+        AND spno = :spno
+        UNION
+        SELECT DISTINCT ST_X(coords), ST_Y(coords)
+        FROM incidental_sighting, taxon
+        WHERE taxon_id = taxon.id
+        AND spno = :spno
+        """
 
     return [Point(x,y) for x, y in session.execute(sql, { 'spno': spno }).fetchall()]
 
