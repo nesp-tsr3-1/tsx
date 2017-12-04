@@ -294,12 +294,23 @@ def get_all_spno(session):
     return [spno for (spno,) in session.execute("SELECT DISTINCT spno FROM taxon").fetchall()]
 
 def get_species_points(session, spno):
-    # TODO - get points from type 1 data too
     sql = """SELECT DISTINCT ST_X(coords), ST_Y(coords)
+        FROM t1_survey, t1_sighting, taxon
+        WHERE survey_id = t1_survey.id
+        AND taxon_id = taxon.id
+        AND spno = :spno
+        UNION
+        SELECT DISTINCT ST_X(coords), ST_Y(coords)
         FROM t2_survey, t2_sighting, taxon
         WHERE survey_id = t2_survey.id
         AND taxon_id = taxon.id
-        AND spno = :spno"""
+        AND spno = :spno
+        UNION
+        SELECT DISTINCT ST_X(coords), ST_Y(coords)
+        FROM incidental_sighting, taxon
+        WHERE taxon_id = taxon.id
+        AND spno = :spno
+        """
 
     return [Point(x,y) for x, y in session.execute(sql, { 'spno': spno }).fetchall()]
 
