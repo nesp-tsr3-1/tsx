@@ -43,15 +43,10 @@ def main():
 
     p = subparsers.add_parser('range_ultrataxon')
     p = subparsers.add_parser('pseudo_absence')
-<<<<<<< HEAD
     p = subparsers.add_parser('t1_aggregation')
-    
-=======
     p = subparsers.add_parser('response_variable')
     p = subparsers.add_parser('export_lpi')
     p = subparsers.add_parser('all')
-
->>>>>>> 7e5e3d371bbb451a93d985f5430c5c5618f8f26b
     args = parser.parse_args()
 
     species = None
@@ -72,10 +67,8 @@ def main():
         nesp.processing.range_ultrataxon.process_database(species = species, commit = args.commit)
     elif args.command == 'pseudo_absence':
         nesp.processing.pseudo_absence.process_database(commit = args.commit)
-<<<<<<< HEAD
     elif args.command == 't1_aggregation':
         nesp.processing.t1_aggregation.process_database(commit = args.commit)
-=======
     elif args.command == 'response_variable':
         nesp.processing.response_variable.process_database(species = species, commit = args.commit)
     elif args.command == 'export_lpi':
@@ -96,7 +89,6 @@ def main():
 
         log.info("STEP 3 - GENERATE PSEUDO ABSENCES")
         nesp.processing.pseudo_absence.process_database(commit = True)
->>>>>>> 7e5e3d371bbb451a93d985f5430c5c5618f8f26b
 
         log.info("PROCESSING COMPLETE")
 
