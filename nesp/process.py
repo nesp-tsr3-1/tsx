@@ -68,7 +68,7 @@ def main():
     elif args.command == 'pseudo_absence':
         nesp.processing.pseudo_absence.process_database(commit = args.commit)
     elif args.command == 't1_aggregation':
-        nesp.processing.t1_aggregation.process_database(commit = args.commit)
+        nesp.processing.t1_aggregation.process_database(species = species, commit = args.commit)
     elif args.command == 'response_variable':
         nesp.processing.response_variable.process_database(species = species, commit = args.commit)
     elif args.command == 'export_lpi':

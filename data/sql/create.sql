@@ -820,7 +820,7 @@ DROP TABLE IF EXISTS `t1_monthly_aggregation` ;
 
 CREATE TABLE IF NOT EXISTS `t1_monthly_aggregation` (
   `start_date_y` SMALLINT NOT NULL,
-  `start_date_m` SMALLINT NOT NULL,
+  `start_date_m` SMALLINT,
   `site_id` INT NULL,
   `search_type_id` INT NULL,
   `taxon_id` CHAR(6) NOT NULL,

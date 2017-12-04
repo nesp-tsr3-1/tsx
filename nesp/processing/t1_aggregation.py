@@ -18,7 +18,7 @@ def process_database(species = None, commit = False):
                 'species': species
             }).fetchall()]
      # Unwrap tuple
-    taxa = [taxon_id for (taxon_id,) in taxa]
+    taxa = [taxon_id for (taxon_id) in taxa]
 
     # Process in parallel
     tasks = [(taxon_id, commit) for taxon_id in taxa]
@@ -60,10 +60,10 @@ def aggregate_monthly(taxon_id, commit = False):
 			t1_site site ON site.id = survey.site_id
 		INNER JOIN 
 			t1_sighting sighting ON sighting.survey_id = survey.id
+		WHERE
+			taxon_id = :taxon_id
 		GROUP BY
 		    start_date_y, start_date_m, site_id, search_type_id, taxon_id, source_id, coords
-		WHERE 
-			taxon_id = :taxon_id
         """
 
         session.execute(sql, {
@@ -104,9 +104,9 @@ def aggregate_yearly(taxon_id, commit = False):
 	            source_id,
 	            coords
             FROM t1_monthly_aggregation
+	    WHERE taxon_id = :taxon_id
             GROUP BY
                 start_date_y, site_id, search_type_id, taxon_id, source_id, coords
-			WHERE taxon_id = :taxon_id
         """
 
         session.execute(sql, { 'taxon_id': taxon_id })
