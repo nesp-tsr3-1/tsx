@@ -99,6 +99,7 @@ def aggregate_monthly(taxon_id, commit = False):
             t1_sighting sighting ON sighting.survey_id = survey.id
         WHERE
             taxon_id = :taxon_id
+            {where_conditions}
         GROUP BY
             start_date_y, start_date_m, site_id, search_type_id, survey.source_id, unit_id
         """.format(
