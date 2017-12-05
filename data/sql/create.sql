@@ -887,6 +887,10 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `t1_yearly_aggregation` ;
 
+CREATE TABLE IF NOT EXISTS `region_subdiv` (
+  `id` INT NOT NULL,
+  `name` VARCHAR(255) NULL,
+  `geometry` MULTIPOLYGON NOT NULL)
 CREATE TABLE IF NOT EXISTS `t1_yearly_aggregation` (
   `start_date_y` SMALLINT NOT NULL,
   `site_id` INT NULL,
