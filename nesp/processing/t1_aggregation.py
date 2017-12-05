@@ -139,7 +139,8 @@ def aggregate_yearly(taxon_id, commit = False):
                 value,
                 data_type,
                 region_id,
-                unit_id)
+                unit_id,
+                positional_accuracy_in_m)
             SELECT
                 start_date_y,
                 source_id,
@@ -152,7 +153,8 @@ def aggregate_yearly(taxon_id, commit = False):
                 AVG(value),
                 data_type,
                 region_id,
-                unit_id
+                unit_id,
+                positional_accuracy_in_m
             FROM aggregated_by_month
             WHERE taxon_id = :taxon_id
             AND data_type = 1
@@ -168,7 +170,8 @@ def aggregate_yearly(taxon_id, commit = False):
                 value,
                 data_type,
                 region_id,
-                unit_id
+                unit_id,
+                positional_accuracy_in_m
         """
 
         session.execute(sql, { 'taxon_id': taxon_id })
