@@ -68,7 +68,7 @@ def process_database(species = None):
                     source.description AS SourceDesc,
                     unit.description AS Unit,
                     (SELECT DISTINCT name FROM region WHERE region_id = region.id) AS SubIBRA,
-                    positional_accuracy_in_m AS SpatialAccuracyInM,
+                    MAX(positional_accuracy_in_m) AS SpatialAccuracyInM,
                     GROUP_CONCAT(CONCAT(start_date_y, '=', value) ORDER BY start_date_y) AS value_by_year,
                     data_type AS DataType,
                     (SELECT description FROM experimental_design_type WHERE agg.experimental_design_type_id = experimental_design_type.id) AS ExperimentalDesignType,
