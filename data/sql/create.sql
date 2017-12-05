@@ -818,24 +818,6 @@ CREATE TABLE IF NOT EXISTS `aggregated_by_year` (
 ENGINE = InnoDB;
 
 
--- -----------------------------------------------------
--- Placeholder table for view `species_presence`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `species_presence` (`spno` INT, `coords` INT);
-
--- -----------------------------------------------------
--- View `species_presence`
--- -----------------------------------------------------
-DROP VIEW IF EXISTS `species_presence` ;
-DROP TABLE IF EXISTS `species_presence`;
-CREATE  OR REPLACE VIEW `species_presence` AS
-SELECT spno, coords FROM t1_survey, t1_sighting, taxon WHERE survey_id = t1_survey.id AND taxon_id = taxon.id
-UNION
-SELECT spno, coords FROM t2_survey, t2_sighting, taxon WHERE survey_id = t2_survey.id AND taxon_id = taxon.id
-UNION
-SELECT spno, coords FROM incidental_sighting, taxon WHERE taxon_id = taxon.id;
-
-
 
 -- -----------------------------------------------------
 -- Aggregation
