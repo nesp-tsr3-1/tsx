@@ -327,6 +327,7 @@ CREATE TABLE IF NOT EXISTS `t2_site` (
   PRIMARY KEY (`id`),
   INDEX `fk_t2_site_search_type1_idx` (`search_type_id` ASC),
   INDEX `fk_t2_site_source1_idx` (`source_id` ASC),
+  INDEX `source_name` (`source_id` ASC, `name` ASC),
   CONSTRAINT `fk_t2_site_search_type1`
     FOREIGN KEY (`search_type_id`)
     REFERENCES `search_type` (`id`)
