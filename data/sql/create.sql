@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS `source` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `source_type_id` INT NULL,
   `provider` VARCHAR(255) NULL,
-  `description` VARCHAR(255) NULL,
+  `description` TEXT NULL,
   `notes` TEXT NULL,
   PRIMARY KEY (`id`),
   INDEX `fk_Source_SourceType_idx` (`source_type_id` ASC),
