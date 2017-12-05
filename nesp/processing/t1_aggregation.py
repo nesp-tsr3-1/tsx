@@ -45,6 +45,7 @@ def aggregate_monthly(taxon_id, commit = False):
             taxon_id,
             count,
             source_id,
+            unit_id, 
             coords)
         SELECT
             start_date_y,
@@ -54,6 +55,7 @@ def aggregate_monthly(taxon_id, commit = False):
             taxon_id,
 			AVG(count) as count, 
             survey.source_id,
+            unit_id,
             coords
         FROM t1_survey survey
 		INNER JOIN 
@@ -63,7 +65,7 @@ def aggregate_monthly(taxon_id, commit = False):
 		WHERE 
 			taxon_id = :taxon_id
 		GROUP BY
-		    start_date_y, start_date_m, site_id, search_type_id, taxon_id, source_id, coords
+		    start_date_y, start_date_m, site_id, search_type_id, taxon_id, source_id, unit_id, coords
         """
 
         session.execute(sql, {
@@ -93,6 +95,7 @@ def aggregate_yearly(taxon_id, commit = False):
 	            taxon_id,
 	            count,
 	            source_id,
+	            unit_id,
 	            subibra_id,
 	            subibra_name)
             SELECT
@@ -100,8 +103,9 @@ def aggregate_yearly(taxon_id, commit = False):
 	            site_id,
 	            search_type_id,
 	            taxon_id,
-				AVG(count) as count, 
+		    AVG(count) as count, 
 	            source_id,
+	            unit_id,
 	            subibra.subibra_id as subibra_id,
 	            subibra.name as subibra_name
             FROM t1_monthly_aggregation
@@ -110,7 +114,7 @@ def aggregate_yearly(taxon_id, commit = False):
 		    WHERE 
 		    	taxon_id = :taxon_id
 	        GROUP BY
-	            start_date_y, site_id, search_type_id, taxon_id, source_id, subibra_id, subibra_name
+	            start_date_y, site_id, search_type_id, taxon_id, source_id, unit_id, subibra_id, subibra_name
         """
 
         session.execute(sql, { 'taxon_id': taxon_id })

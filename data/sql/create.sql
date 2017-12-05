@@ -826,10 +826,12 @@ CREATE TABLE IF NOT EXISTS `t1_monthly_aggregation` (
   `taxon_id` CHAR(6) NOT NULL,
   `count` DOUBLE NOT NULL,
   `source_id` INT NOT NULL,
+  `unit_id` INT NOT NULL,
   `coords` POINT NOT NULL,
   INDEX `fk_t1_monthly_aggregation_search_type` (`search_type_id` ASC),
   INDEX `fk_t1_monthly_aggregation_taxon_id` (`taxon_id` ASC),
   INDEX `fk_t1_monthly_aggregation_source_id` (`source_id` ASC),
+  INDEX `fk_t1_monthly_aggregation_unit_id` (`unit_id` ASC),
   CONSTRAINT `fk_t1_monthly_aggregation_search_type`
     FOREIGN KEY (`search_type_id`)
     REFERENCES `search_type` (`id`)
@@ -843,6 +845,11 @@ CREATE TABLE IF NOT EXISTS `t1_monthly_aggregation` (
   CONSTRAINT `fk_t1_monthly_aggregation_source_id`
     FOREIGN KEY (`source_id`)
     REFERENCES `source` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_t1_monthly_aggregation_unit_id`
+    FOREIGN KEY (`unit_id`)
+    REFERENCES `unit` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
@@ -860,12 +867,14 @@ CREATE TABLE IF NOT EXISTS `t1_yearly_aggregation` (
   `taxon_id` CHAR(6) NOT NULL,
   `count` DOUBLE NOT NULL,
   `source_id` INT NOT NULL,
+  `unit_id` INT NOT NULL,
   `subibra_id` SMALLINT NOT NULL,
   `subibra_name` varchar(254) NOT NULL,
   INDEX `t1_yearly_aggregation_search_type` (`search_type_id` ASC),
   INDEX `t1_yearly_aggregation_taxon_id` (`taxon_id` ASC),
   INDEX `t1_yearly_aggregation_source_id` (`source_id` ASC),
   INDEX `t1_yearly_aggregation_subibra_id` (`subibra_id` ASC),
+  INDEX `t1_yearly_aggregation_unit_id` (`unit_id` ASC),
   CONSTRAINT `t1_yearly_aggregation_search_type`
     FOREIGN KEY (`search_type_id`)
     REFERENCES `search_type` (`id`)
@@ -879,6 +888,11 @@ CREATE TABLE IF NOT EXISTS `t1_yearly_aggregation` (
   CONSTRAINT `t1_yearly_aggregation_source_id`
     FOREIGN KEY (`source_id`)
     REFERENCES `source` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_t1_yearly_aggregation_unit_id`
+    FOREIGN KEY (`unit_id`)
+    REFERENCES `unit` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;

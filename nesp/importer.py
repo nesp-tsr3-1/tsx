@@ -556,7 +556,11 @@ def create_point(x, y, projection_ref):
 	None, EPSG:1234, all of these references are from spatialreference.org
 	"""
 	if projection_ref not in (None, 'EPSG:4326'):
-		p1 = Proj(init=projection_ref)
+		try:
+			p1 = Proj(init=projection_ref)
+		except:
+			log.exception("Invalid/unrecognized projection")
+			raise ImportError("Invalid/unrecognized projection: %s" % projection_ref)
 		p2 = Proj(init='EPSG:4326')
 		x, y = pyproj.transform(p1, p2, x, y)
 
