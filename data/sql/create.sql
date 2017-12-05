@@ -162,6 +162,30 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
+-- Table `experimental_design_type`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `experimental_design_type` ;
+
+CREATE TABLE IF NOT EXISTS `experimental_design_type` (
+  `id` INT NOT NULL,
+  `description` VARCHAR(255) NULL,
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `response_variable_type`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `response_variable_type` ;
+
+CREATE TABLE IF NOT EXISTS `response_variable_type` (
+  `id` INT NOT NULL,
+  `description` VARCHAR(255) NULL,
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
 -- Table `taxon`
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `taxon` ;
@@ -181,11 +205,16 @@ CREATE TABLE IF NOT EXISTS `taxon` (
   `epbc_status_id` INT NULL,
   `iucn_status_id` INT NULL,
   `bird_group` VARCHAR(255) NULL,
+  `experimental_design_type_id` INT NULL,
+  `response_variable_type_id` INT NULL,
+  `positional_accuracy_threshold_in_m` DOUBLE NULL,
   PRIMARY KEY (`id`),
   INDEX `fk_Taxon_TaxonLevel1_idx` (`taxon_level_id` ASC),
   INDEX `fk_taxon_taxon_status1_idx` (`aust_status_id` ASC),
   INDEX `fk_taxon_taxon_status2_idx` (`epbc_status_id` ASC),
   INDEX `fk_taxon_taxon_status3_idx` (`iucn_status_id` ASC),
+  INDEX `fk_taxon_experimental_design_type1_idx` (`experimental_design_type_id` ASC),
+  INDEX `fk_taxon_response_variable_type1_idx` (`response_variable_type_id` ASC),
   CONSTRAINT `fk_Taxon_TaxonLevel1`
     FOREIGN KEY (`taxon_level_id`)
     REFERENCES `taxon_level` (`id`)
@@ -204,6 +233,16 @@ CREATE TABLE IF NOT EXISTS `taxon` (
   CONSTRAINT `fk_taxon_taxon_status3`
     FOREIGN KEY (`iucn_status_id`)
     REFERENCES `taxon_status` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_taxon_experimental_design_type1`
+    FOREIGN KEY (`experimental_design_type_id`)
+    REFERENCES `experimental_design_type` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_taxon_response_variable_type1`
+    FOREIGN KEY (`response_variable_type_id`)
+    REFERENCES `response_variable_type` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
@@ -527,18 +566,6 @@ CREATE TABLE IF NOT EXISTS `t2_processed_survey` (
     REFERENCES `source` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table `response_variable_type`
--- -----------------------------------------------------
-DROP TABLE IF EXISTS `response_variable_type` ;
-
-CREATE TABLE IF NOT EXISTS `response_variable_type` (
-  `id` INT NOT NULL,
-  `description` VARCHAR(255) NULL,
-  PRIMARY KEY (`id`))
 ENGINE = InnoDB;
 
 

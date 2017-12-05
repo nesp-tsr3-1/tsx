@@ -6,6 +6,16 @@ CREATE SPATIAL INDEX geometry ON taxon_range_subdiv (geometry);
 CREATE SPATIAL INDEX geometry ON grid_cell (geometry);
 CREATE SPATIAL INDEX geometry ON region (geometry);
 
+INSERT INTO experimental_design_type (id, description) VALUES
+(1, "Standardised site"),
+(2, "Standardised grid"),
+(3, "Unstandardised grid");
+
+INSERT INTO response_variable_type (id, description) VALUES
+(1, "Average count"),
+(2, "Maximum count"),
+(3, "Reporting rate");
+
 INSERT INTO unit (id, description) VALUES
 (1, "Sample: Occupancy (# presences/# absences)"),
 (2, "Sample: abundance (counts)"),
