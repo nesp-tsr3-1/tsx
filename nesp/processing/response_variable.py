@@ -18,6 +18,8 @@ def process_database(species = None, commit = False):
                 'species': species
             }).fetchall()]
 
+    create_region_lookup_table(session)
+
     log.info("Step 1/2: Monthly aggregation")
 
     fn = functools.partial(aggregate_by_month, commit = commit)
@@ -32,14 +34,18 @@ def process_database(species = None, commit = False):
     for result, error in tqdm(run_parallel(fn, taxa), total = len(taxa)):
         pass
 
+    cleanup_region_lookup_table(session)
+
 
 def aggregate_by_month(taxon_id, commit = False):
     session = get_session()
     try:
-        # TODO: load this from taxon spreadhseet
-        # (Just generating random combinations now for test purposes)
-        experimental_design_type_id = (hash(taxon_id) % 3) + 1
-        response_variable_type_id = (hash('_' + taxon_id) % 3) + 1
+        experimental_design_type_id, response_variable_type_id, positional_accuracy_threshold_in_m = session.execute(
+            """SELECT experimental_design_type_id, response_variable_type_id, positional_accuracy_threshold_in_m
+                FROM taxon
+                WHERE id = :taxon_id""",
+            { 'taxon_id': taxon_id }
+        ).fetchone()
 
         where_conditions = []
 
@@ -81,6 +87,9 @@ def aggregate_by_month(taxon_id, commit = False):
             experimental_design_type_id,
             response_variable_type_id,
             value,
+            region_id,
+            positional_accuracy_in_m,
+            unit_id,
             data_type)
         SELECT
             start_date_y,
@@ -91,6 +100,9 @@ def aggregate_by_month(taxon_id, commit = False):
             :experimental_design_type_id,
             :response_variable_type_id,
             {aggregate_expression},
+            MIN((SELECT MIN(region_id) FROM tmp_region_lookup t WHERE t.site_id <=> survey.site_id AND t.grid_cell_id <=> survey.grid_cell_id)),
+            MAX((SELECT positional_accuracy_in_m FROM t2_survey WHERE t2_survey.id = raw_survey_id)),
+            :unit_id,
             2
         FROM
             t2_processed_survey survey
@@ -99,7 +111,7 @@ def aggregate_by_month(taxon_id, commit = False):
         AND raw_survey_id IN (
             SELECT id
             FROM t2_survey
-            WHERE COALESCE(positional_accuracy_in_m < 500, TRUE) # TODO: base this on taxon spreadsheet
+            WHERE COALESCE(positional_accuracy_in_m < :positional_accuracy_threshold_in_m, TRUE)
             AND COALESCE(duration_in_minutes <= 6 * 60, TRUE)
             AND COALESCE((t2_survey.start_date_y, t2_survey.start_date_m, start_date_d) = (finish_date_y, finish_date_m, finish_date_d), TRUE)
         )
@@ -118,7 +130,9 @@ def aggregate_by_month(taxon_id, commit = False):
         session.execute(sql, {
             'experimental_design_type_id': experimental_design_type_id,
             'response_variable_type_id': response_variable_type_id,
-            'taxon_id': taxon_id
+            'taxon_id': taxon_id,
+            'unit_id': 1 if response_variable_type_id == 3 else 2,
+            'positional_accuracy_threshold_in_m': positional_accuracy_threshold_in_m
         })
 
         if commit:
@@ -147,7 +161,10 @@ def aggregate_by_year(taxon_id, commit = False):
                 experimental_design_type_id,
                 response_variable_type_id,
                 value,
-                data_type)
+                data_type,
+                region_id,
+                unit_id,
+                positional_accuracy_in_m)
             SELECT
                 start_date_y,
                 source_id,
@@ -158,9 +175,13 @@ def aggregate_by_year(taxon_id, commit = False):
                 experimental_design_type_id,
                 response_variable_type_id,
                 AVG(value),
-                data_type
+                data_type,
+                region_id,
+                unit_id,
+                positional_accuracy_in_m
             FROM aggregated_by_month
             WHERE taxon_id = :taxon_id
+            AND data_type = 2
             GROUP BY
                 start_date_y,
                 source_id,
@@ -171,7 +192,10 @@ def aggregate_by_year(taxon_id, commit = False):
                 experimental_design_type_id,
                 response_variable_type_id,
                 value,
-                data_type
+                data_type,
+                region_id,
+                unit_id,
+                positional_accuracy_in_m
         """
 
         session.execute(sql, { 'taxon_id': taxon_id })
@@ -183,3 +207,30 @@ def aggregate_by_year(taxon_id, commit = False):
         raise
     finally:
         session.close()
+
+def cleanup_region_lookup_table(session):
+    session.execute("""DROP TABLE IF EXISTS tmp_region_lookup""")
+
+def create_region_lookup_table(session):
+    log.info("Pre-calculating region for each site/grid")
+
+    cleanup_region_lookup_table(session)
+    session.execute("""CREATE TABLE tmp_region_lookup
+        ( INDEX (site_id, grid_cell_id) )
+        SELECT DISTINCT
+            t2_survey_site.site_id,
+            NULL AS grid_cell_id,
+            region_subdiv.id AS region_id
+        FROM
+            t2_survey
+            INNER JOIN t2_survey_site ON t2_survey_site.survey_id = t2_survey.id
+            STRAIGHT_JOIN region_subdiv USE INDEX (geometry) ON ST_Intersects(coords, geometry)
+        UNION ALL
+        SELECT DISTINCT
+            NULL AS site_id,
+            grid_cell.id AS grid_cell_id,
+            region_subdiv.id AS region_id
+        FROM
+            grid_cell, region_subdiv
+            WHERE ST_Intersects(ST_Centroid(grid_cell.geometry), region_subdiv.geometry)
+        """)

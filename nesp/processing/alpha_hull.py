@@ -111,35 +111,6 @@ def alpha_shape(coords, alpha):
     triangles = list(polygonize(m))
     return cascaded_union(triangles), edge_points
 
-# def thinning(coords, thinning_distance):
-#     """
-#     """
-#     kdtree = KDTree(coords)
-#     _used = set()    # ids of points being used
-#     _removed = set() # ids of points being removed
-#     _list  = sorted(kdtree.query_pairs(thinning_distance)) # replace by thinning distance
-#     for _element in _list:
-#         if _used.issuperset(set([_element[0]])):
-#             _removed.add(_element[1])
-#         elif _used.issuperset(set([_element[1]])):
-#             _removed.add(_element[0])
-#         elif _removed.issuperset(set([_element[1]])):
-#             _used.add(_element[0])
-#             _removed.add(_element[1])
-#         else:
-#             _used.add(_element[1])
-#             _removed.add(_element[0])
-
-#     #print "coords length=%d"%(len(coords))
-#     #print "list length=%d"%(len(_list))
-#     #print "used length=%d"%(len(_used))
-#     #print "removed length=%d"%(len(_removed))
-#     for i in range(0, len(coords)):
-#         if not _used.issuperset(set([i])) and not _removed.issuperset(set([i])):
-#             _used.add(i)
-#     return np.array([coords[i]  for i in _used])
-
-# JW - Simpler version of thinning function
 def thinning(coords, thinning_distance):
     """
     Removes points from coords such that no two points remain within thinning_distance of each other

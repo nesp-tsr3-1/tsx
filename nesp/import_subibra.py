@@ -25,16 +25,22 @@ def main():
 		for feature in tqdm(shp):
 			props = feature['properties']
 
+			geometry = reproject(shape(feature['geometry']))
 
-			for geometry in subdivide_geometry(reproject(shape(feature['geometry']))):
-
-				geometry = to_multipolygon(geometry)
-
-				session.execute("""INSERT INTO region (id, name, geometry)
+			session.execute("""INSERT INTO region (id, name, geometry)
 					VALUES (:id, :name, ST_GeomFromWKB(_BINARY :geometry_wkb))""", {
 						'id': props['subIBRA_ID'],
 						'name': props['Name'],
-						'geometry_wkb': shapely.wkb.dumps(geometry)
+						'geometry_wkb': shapely.wkb.dumps(to_multipolygon(geometry))
+					})
+
+			for geometry in subdivide_geometry(geometry):
+
+				session.execute("""INSERT INTO region_subdiv (id, name, geometry)
+					VALUES (:id, :name, ST_GeomFromWKB(_BINARY :geometry_wkb))""", {
+						'id': props['subIBRA_ID'],
+						'name': props['Name'],
+						'geometry_wkb': shapely.wkb.dumps(to_multipolygon(geometry))
 					})
 
 	session.commit()

@@ -1,5 +1,5 @@
 # coding: utf-8
-from sqlalchemy import Column, Date, Float, ForeignKey, Integer, SmallInteger, String, Table, Text, Time, text
+from sqlalchemy import Column, Date, Float, ForeignKey, Index, Integer, SmallInteger, String, Table, Text, Time, text
 from sqlalchemy.sql.sqltypes import NullType
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
@@ -9,13 +9,49 @@ Base = declarative_base()
 metadata = Base.metadata
 
 
+t_aggregated_by_month = Table(
+    'aggregated_by_month', metadata,
+    Column('start_date_y', SmallInteger, nullable=False),
+    Column('start_date_m', SmallInteger),
+    Column('site_id', Integer),
+    Column('grid_cell_id', ForeignKey(u'grid_cell.id'), index=True),
+    Column('search_type_id', ForeignKey(u'search_type.id'), index=True),
+    Column('taxon_id', ForeignKey(u'taxon.id'), nullable=False, index=True),
+    Column('experimental_design_type_id', ForeignKey(u'experimental_design_type.id'), nullable=False, index=True),
+    Column('response_variable_type_id', ForeignKey(u'response_variable_type.id'), nullable=False, index=True),
+    Column('value', Float(asdecimal=True), nullable=False),
+    Column('data_type', Integer, nullable=False),
+    Column('source_id', ForeignKey(u'source.id'), nullable=False, index=True)
+)
+
+
+t_aggregated_by_year = Table(
+    'aggregated_by_year', metadata,
+    Column('start_date_y', SmallInteger, nullable=False),
+    Column('site_id', Integer),
+    Column('grid_cell_id', ForeignKey(u'grid_cell.id'), index=True),
+    Column('search_type_id', ForeignKey(u'search_type.id'), index=True),
+    Column('taxon_id', ForeignKey(u'taxon.id'), nullable=False, index=True),
+    Column('experimental_design_type_id', ForeignKey(u'experimental_design_type.id'), nullable=False, index=True),
+    Column('response_variable_type_id', ForeignKey(u'response_variable_type.id'), nullable=False, index=True),
+    Column('value', Float(asdecimal=True), nullable=False),
+    Column('data_type', Integer, nullable=False),
+    Column('source_id', ForeignKey(u'source.id'), nullable=False, index=True)
+)
+
+
+class ExperimentalDesignType(Base):
+    __tablename__ = 'experimental_design_type'
+
+    id = Column(Integer, primary_key=True)
+    description = Column(String(255))
+
+
 class GridCell(Base):
     __tablename__ = 'grid_cell'
 
     id = Column(Integer, primary_key=True)
-    x = Column(Float(asdecimal=True))
-    y = Column(Float(asdecimal=True))
-    grid_size_in_degrees = Column(Float(asdecimal=True))
+    geometry = Column(NullType, nullable=False, index=True)
 
 
 class IncidentalSighting(Base):
@@ -249,10 +285,15 @@ class Taxon(Base):
     epbc_status_id = Column(ForeignKey(u'taxon_status.id'), index=True)
     iucn_status_id = Column(ForeignKey(u'taxon_status.id'), index=True)
     bird_group = Column(String(255))
+    experimental_design_type_id = Column(ForeignKey(u'experimental_design_type.id'), index=True)
+    response_variable_type_id = Column(ForeignKey(u'response_variable_type.id'), index=True)
+    positional_accuracy_threshold_in_m = Column(Float(asdecimal=True))
 
     aust_status = relationship(u'TaxonStatus', primaryjoin='Taxon.aust_status_id == TaxonStatus.id')
     epbc_status = relationship(u'TaxonStatus', primaryjoin='Taxon.epbc_status_id == TaxonStatus.id')
+    experimental_design_type = relationship(u'ExperimentalDesignType')
     iucn_status = relationship(u'TaxonStatus', primaryjoin='Taxon.iucn_status_id == TaxonStatus.id')
+    response_variable_type = relationship(u'ResponseVariableType')
     taxon_level = relationship(u'TaxonLevel')
 
 
