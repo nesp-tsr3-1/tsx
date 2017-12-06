@@ -7,6 +7,7 @@ import csv
 import os
 import nesp.config
 from datetime import date
+import re
 
 log = logging.getLogger(__name__)
 
@@ -33,6 +34,8 @@ def process_database(species = None):
 
     with open(os.path.join(export_dir, filename), 'w') as csvfile:
         fieldnames = [
+            'ID',
+            'Binomial',
             'SpNo',
             'TaxonID',
             'CommonName',
@@ -52,6 +55,8 @@ def process_database(species = None):
 
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
+
+        i = 1
 
         for taxon_id in tqdm(taxa):
             # Note we select units based on response variable type id
@@ -110,6 +115,10 @@ def process_database(species = None):
 
                 # Populate years in output
                 data.update(year_data)
+
+                data['Binomial'] = re.sub(r'[^\w]', '_', data['CommonName'])
+                data['ID'] = i
+                i += 1
 
                 # This is going to get calculated downstream anyway:
 
