@@ -876,6 +876,21 @@ CREATE TABLE IF NOT EXISTS `region_subdiv` (
 ENGINE = InnoDB;
 
 
+-- -----------------------------------------------------
+-- Table `taxon_source_alpha_hull`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `taxon_source_alpha_hull` ;
+
+CREATE TABLE IF NOT EXISTS `taxon_source_alpha_hull` (
+  `taxon_id` CHAR(6) NOT NULL,
+  `source_id` INT NOT NULL,
+  `data_type` VARCHAR(255) NOT NULL,
+  `geometry` MULTIPOLYGON NULL,
+  `core_range_coverage` DOUBLE NOT NULL,
+  PRIMARY KEY (`taxon_id`, `source_id`, `data_type`))
+ENGINE = InnoDB;
+
+
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;

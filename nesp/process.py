@@ -9,6 +9,7 @@ import nesp.processing.pseudo_absence
 import nesp.processing.t1_aggregation
 import nesp.processing.response_variable
 import nesp.processing.export_lpi
+import nesp.processing.spatial_rep
 import fiona
 from tqdm import tqdm
 import logging
@@ -46,6 +47,7 @@ def main():
     p = subparsers.add_parser('t1_aggregation')
     p = subparsers.add_parser('response_variable')
     p = subparsers.add_parser('export_lpi')
+    p = subparsers.add_parser('spatial_rep')
     p = subparsers.add_parser('all')
     args = parser.parse_args()
 
@@ -73,6 +75,8 @@ def main():
         nesp.processing.response_variable.process_database(species = species, commit = args.commit)
     elif args.command == 'export_lpi':
         nesp.processing.export_lpi.process_database(species = species)
+    elif args.command == 'spatial_rep':
+        nesp.processing.spatial_rep.process_database(species = species, commit = args.commit)
     elif args.command == 'all':
         if not args.commit:
             log.error("Dry-run mode not supported for 'all'")
