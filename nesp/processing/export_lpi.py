@@ -7,6 +7,7 @@ import csv
 import os
 import nesp.config
 from datetime import date
+import re
 
 log = logging.getLogger(__name__)
 
@@ -33,12 +34,15 @@ def process_database(species = None):
 
     with open(os.path.join(export_dir, filename), 'w') as csvfile:
         fieldnames = [
+            'ID',
+            'Binomial',
             'SpNo',
             'TaxonID',
             'CommonName',
             'SiteDesc',
             'SourceDesc',
             'SubIBRA',
+            'State',
             'Unit',
             'SearchTypeDesc',
             # 'TimeSeriesLength',
@@ -52,6 +56,8 @@ def process_database(species = None):
 
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
+
+        i = 1
 
         for taxon_id in tqdm(taxa):
             # Note we select units based on response variable type id
@@ -67,7 +73,8 @@ def process_database(species = None):
                         CONCAT('grid_', grid_cell_id)) AS SiteDesc,
                     source.description AS SourceDesc,
                     unit.description AS Unit,
-                    (SELECT DISTINCT name FROM region WHERE region_id = region.id) AS SubIBRA,
+                    region.name AS SubIBRA,
+                    region.state AS State,
                     MAX(positional_accuracy_in_m) AS SpatialAccuracyInM,
                     GROUP_CONCAT(CONCAT(start_date_y, '=', value) ORDER BY start_date_y) AS value_by_year,
                     data_type AS DataType,
@@ -79,6 +86,7 @@ def process_database(species = None):
                     INNER JOIN search_type ON search_type.id = search_type_id
                     INNER JOIN source ON source.id = source_id
                     INNER JOIN unit ON unit.id = unit_id
+                    LEFT JOIN region ON region.id = region_id
                 WHERE taxon_id = :taxon_id
                 AND start_date_y >= :min_year
                 AND start_date_y <= :max_year
@@ -110,6 +118,10 @@ def process_database(species = None):
 
                 # Populate years in output
                 data.update(year_data)
+
+                data['Binomial'] = re.sub(r'[^\w]', '_', data['CommonName'])
+                data['ID'] = i
+                i += 1
 
                 # This is going to get calculated downstream anyway:
 

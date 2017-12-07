@@ -285,15 +285,10 @@ class Taxon(Base):
     epbc_status_id = Column(ForeignKey(u'taxon_status.id'), index=True)
     iucn_status_id = Column(ForeignKey(u'taxon_status.id'), index=True)
     bird_group = Column(String(255))
-    experimental_design_type_id = Column(ForeignKey(u'experimental_design_type.id'), index=True)
-    response_variable_type_id = Column(ForeignKey(u'response_variable_type.id'), index=True)
-    positional_accuracy_threshold_in_m = Column(Float(asdecimal=True))
 
     aust_status = relationship(u'TaxonStatus', primaryjoin='Taxon.aust_status_id == TaxonStatus.id')
     epbc_status = relationship(u'TaxonStatus', primaryjoin='Taxon.epbc_status_id == TaxonStatus.id')
-    experimental_design_type = relationship(u'ExperimentalDesignType')
     iucn_status = relationship(u'TaxonStatus', primaryjoin='Taxon.iucn_status_id == TaxonStatus.id')
-    response_variable_type = relationship(u'ResponseVariableType')
     taxon_level = relationship(u'TaxonLevel')
 
 

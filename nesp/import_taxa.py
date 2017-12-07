@@ -50,11 +50,7 @@ def main():
 					order = row['Order'],
 					population = row['Population'],
 					# TODO - there are status in WLAB like 'Introduced' and 'Vagrant' not in Glenn's list - for now importing as NULL
-					aust_status = session.query(TaxonStatus).filter_by(description = row['AustralianStatus']).one_or_none(),
-
-					experimental_design_type_id = row['experimental_design_type_id'],
-					response_variable_type_id = row['response_variable_type_id'],
-					positional_accuracy_threshold_in_m = row['spatial_accuracy_threshold']
+					aust_status = session.query(TaxonStatus).filter_by(description = row['AustralianStatus']).one_or_none()
 				)
 			except:
 				print row
