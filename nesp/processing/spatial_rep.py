@@ -100,7 +100,7 @@ def process_database(species = None, commit = False):
                             'taxon_id': taxon_id,
                             'data_type': data_type
                         })
-                else
+                else:
                     session.execute("""INSERT INTO taxon_source_alpha_hull (source_id, taxon_id, data_type, geometry, core_range_coverage)
                         VALUES (:source_id, :taxon_id, :data_type, ST_GeomFromWKB(_BINARY :geom_wkb), :core_range_coverage)""", {
                             'source_id': source_id,
