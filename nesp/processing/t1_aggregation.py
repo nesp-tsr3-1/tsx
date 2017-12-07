@@ -41,76 +41,88 @@ def process_database(species = None, commit = False):
 def aggregate_monthly(taxon_id, commit = False):
     session = get_session()
     try:
-        (response_variable_type_id,) = session.execute(
-            """SELECT response_variable_type_id FROM taxon WHERE id = :taxon_id""",
-            { 'taxon_id': taxon_id }
-        ).fetchone()
+        sql = """SELECT source_id, unit_id, search_type_id, experimental_design_type_id, response_variable_type_id
+            FROM processing_method
+            WHERE data_type = 1
+            AND taxon_id = :taxon_id"""
+        rows = session.execute(sql, {'taxon_id': taxon_id}).fetchall()
 
-        # Tweak SQL based on response variable type
+        for source_id, unit_id, search_type_id, experimental_design_type_id, response_variable_type_id in rows:
 
-        where_conditions = []
+            if experimental_design_type_id != 1:
+                raise ValueError("Unexpected experimental_design_type_id: %s (only '1' is supported)" % experimental_design_type_id)
 
-        if response_variable_type_id == 1:
-            aggregate_expression = 'AVG(count)'
-            where_conditions.append("unit_id > 1")
+            # Tweak SQL based on response variable type
 
-        elif response_variable_type_id == 2:
-            aggregate_expression = 'MAX(count)'
-            where_conditions.append("unit_id > 1")
+            where_conditions = []
 
-        elif response_variable_type_id == 3:
-            aggregate_expression = 'AVG(count > 0)'
-            where_conditions.append("unit_id = 1")
+            if response_variable_type_id == 1:
+                aggregate_expression = 'AVG(count)'
+                where_conditions.append("unit_id > 1")
+
+            elif response_variable_type_id == 2:
+                aggregate_expression = 'MAX(count)'
+                where_conditions.append("unit_id > 1")
+
+            elif response_variable_type_id == 3:
+                aggregate_expression = 'AVG(count > 0)'
+                where_conditions.append("unit_id = 1")
 
 
-        # ingest into the table
-        sql = """INSERT INTO aggregated_by_month (
-            start_date_y,
-            start_date_m,
-            source_id,
-            site_id,
-            search_type_id,
-            taxon_id,
-            experimental_design_type_id,
-            response_variable_type_id,
-            value,
-            region_id,
-            positional_accuracy_in_m,
-            unit_id,
-            data_type)
-        SELECT
-            start_date_y,
-            start_date_m,
-            survey.source_id,
-            site_id,
-            search_type_id,
-            taxon_id,
-            1,
-            :response_variable_type_id,
-            {aggregate_expression},
-            MIN((SELECT MIN(region_id) FROM tmp_region_lookup t WHERE t.site_id = survey.site_id)),
-            MAX(positional_accuracy_in_m),
-            unit_id,
-            1
-        FROM t1_survey survey
-        INNER JOIN
-            t1_site site ON site.id = survey.site_id
-        INNER JOIN
-            t1_sighting sighting ON sighting.survey_id = survey.id
-        WHERE
-            taxon_id = :taxon_id
-            {where_conditions}
-        GROUP BY
-            start_date_y, start_date_m, site_id, search_type_id, survey.source_id, unit_id
-        """.format(
-                aggregate_expression = aggregate_expression,
-                where_conditions = " ".join("AND %s" % cond for cond in where_conditions)
-            )
+            # ingest into the table
+            sql = """INSERT INTO aggregated_by_month (
+                start_date_y,
+                start_date_m,
+                source_id,
+                site_id,
+                search_type_id,
+                taxon_id,
+                experimental_design_type_id,
+                response_variable_type_id,
+                value,
+                region_id,
+                positional_accuracy_in_m,
+                unit_id,
+                data_type)
+            SELECT
+                start_date_y,
+                start_date_m,
+                survey.source_id,
+                site_id,
+                search_type_id,
+                taxon_id,
+                1,
+                :response_variable_type_id,
+                {aggregate_expression},
+                MIN((SELECT MIN(region_id) FROM tmp_region_lookup t WHERE t.site_id = survey.site_id)),
+                MAX(positional_accuracy_in_m),
+                unit_id,
+                1
+            FROM t1_survey survey
+            INNER JOIN
+                t1_site site ON site.id = survey.site_id
+            INNER JOIN
+                t1_sighting sighting ON sighting.survey_id = survey.id
+            WHERE
+                taxon_id = :taxon_id
+                AND survey.source_id = :source_id
+                AND unit_id = :unit_id
+                AND search_type_id = :search_type_id
+                {where_conditions}
+            GROUP BY
+                start_date_y, start_date_m, site_id
+            """.format(
+                    aggregate_expression = aggregate_expression,
+                    where_conditions = " ".join("AND %s" % cond for cond in where_conditions)
+                )
 
-        session.execute(sql, {
-            'taxon_id': taxon_id,
-            'response_variable_type_id': response_variable_type_id
-        })
+            session.execute(sql, {
+                'taxon_id': taxon_id,
+                'response_variable_type_id': response_variable_type_id,
+                'source_id': source_id,
+                'unit_id': unit_id,
+                'search_type_id': search_type_id
+            })
 
         if commit:
             session.commit()
