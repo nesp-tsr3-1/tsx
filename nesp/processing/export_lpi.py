@@ -62,8 +62,6 @@ def process_database(species = None, monthly = False):
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
 
-        i = 1
-
         where_conditions = []
 
         if monthly:
@@ -77,6 +75,7 @@ def process_database(species = None, monthly = False):
         for taxon_id in tqdm(taxa):
             # Note we select units based on response variable type id
             sql = """SELECT
+                    CONCAT(taxon.id, '_', search_type.id, '_', source.id, '_', unit.id, '_', site_id, '_', data_type) AS ID,
                     taxon.spno AS SpNo,
                     taxon.id AS TaxonID,
                     taxon.common_name AS CommonName,
@@ -141,8 +140,6 @@ def process_database(species = None, monthly = False):
                 data.update(year_data)
 
                 data['Binomial'] = re.sub(r'[^\w]', '_', data['CommonName'])
-                data['ID'] = i
-                i += 1
 
                 # This is going to get calculated downstream anyway:
 
