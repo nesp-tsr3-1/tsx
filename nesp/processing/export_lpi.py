@@ -64,9 +64,12 @@ def process_database(species = None, monthly = False):
 
         i = 1
 
+        where_conditions = []
+
         if monthly:
             value_series = "GROUP_CONCAT(CONCAT(start_date_y, '_', LPAD(start_date_m, 2, '0'), '=', value) ORDER BY start_date_y)"
             aggregated_table = 'aggregated_by_month'
+            where_conditions.append('start_date_m IS NOT NULL')
         else:
             value_series = "GROUP_CONCAT(CONCAT(start_date_y, '=', value) ORDER BY start_date_y)"
             aggregated_table = 'aggregated_by_year'
@@ -102,6 +105,7 @@ def process_database(species = None, monthly = False):
                 WHERE taxon_id = :taxon_id
                 AND start_date_y >= :min_year
                 AND start_date_y <= :max_year
+                {where_conditions}
                 GROUP BY
                     agg.source_id,
                     agg.search_type_id,
@@ -114,7 +118,8 @@ def process_database(species = None, monthly = False):
                     agg.data_type
                     """.format(
                         value_series = value_series,
-                        aggregated_table = aggregated_table
+                        aggregated_table = aggregated_table,
+                        where_conditions = " ".join("AND %s" % cond for cond in where_conditions)
                     )
 
             result = session.execute(sql, {
