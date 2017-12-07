@@ -11,7 +11,7 @@ import re
 
 log = logging.getLogger(__name__)
 
-def process_database(species = None):
+def process_database(species = None, monthly = False):
     session = get_session()
 
     if species == None:
@@ -27,10 +27,10 @@ def process_database(species = None):
     min_year, max_year = 1950, date.today().year + 1
 
     # Without this, the GROUP_CONCAT in the export query produces rows that are too long
-    session.execute("""SET SESSION group_concat_max_len = 4096;""")
+    session.execute("""SET SESSION group_concat_max_len = 50000;""")
 
     export_dir = nesp.config.data_dir('export')
-    filename = 'lpi.csv'
+    filename = 'lpi-monthly.csv' if monthly else 'lpi.csv'
 
     with open(os.path.join(export_dir, filename), 'w') as csvfile:
         fieldnames = [
@@ -52,16 +52,28 @@ def process_database(species = None):
             'ResponseVariableType',
             'DataType'
             # 'TaxonSpatialRepresentativeness'
-        ] + [str(year) for year in range(min_year, max_year + 1)]
+        ]
+
+        if monthly:
+            fieldnames += ["%s_%02d" % (year, month) for year in range(min_year, max_year + 1) for month in range(1, 13)]
+        else:
+            fieldnames += [str(year) for year in range(min_year, max_year + 1)]
 
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
 
         i = 1
 
+        if monthly:
+            value_series = "GROUP_CONCAT(CONCAT(start_date_y, '_', LPAD(start_date_m, 2, '0'), '=', value) ORDER BY start_date_y)"
+            aggregated_table = 'aggregated_by_month'
+        else:
+            value_series = "GROUP_CONCAT(CONCAT(start_date_y, '=', value) ORDER BY start_date_y)"
+            aggregated_table = 'aggregated_by_year'
+
         for taxon_id in tqdm(taxa):
             # Note we select units based on response variable type id
-            result = session.execute("""SELECT
+            sql = """SELECT
                     taxon.spno AS SpNo,
                     taxon.id AS TaxonID,
                     taxon.common_name AS CommonName,
@@ -76,12 +88,12 @@ def process_database(species = None):
                     region.name AS SubIBRA,
                     region.state AS State,
                     MAX(positional_accuracy_in_m) AS SpatialAccuracyInM,
-                    GROUP_CONCAT(CONCAT(start_date_y, '=', value) ORDER BY start_date_y) AS value_by_year,
+                    {value_series} AS value_series,
                     data_type AS DataType,
                     (SELECT description FROM experimental_design_type WHERE agg.experimental_design_type_id = experimental_design_type.id) AS ExperimentalDesignType,
                     (SELECT description FROM response_variable_type WHERE agg.response_variable_type_id = response_variable_type.id) AS ResponseVariableType
                 FROM
-                    aggregated_by_year agg
+                    {aggregated_table} agg
                     INNER JOIN taxon ON taxon.id = taxon_id
                     INNER JOIN search_type ON search_type.id = search_type_id
                     INNER JOIN source ON source.id = source_id
@@ -100,8 +112,12 @@ def process_database(species = None):
                     agg.region_id,
                     agg.unit_id,
                     agg.data_type
-                    """,
-                    {
+                    """.format(
+                        value_series = value_series,
+                        aggregated_table = aggregated_table
+                    )
+
+            result = session.execute(sql, {
                         'taxon_id': taxon_id,
                         'min_year': min_year,
                         'max_year': max_year
@@ -114,7 +130,7 @@ def process_database(species = None):
                 data = dict(zip(keys, row))
 
                 # Parse out the yearly values
-                year_data = dict(item.split('=') for item in data['value_by_year'].split(','))
+                year_data = dict(item.split('=') for item in data['value_series'].split(','))
 
                 # Populate years in output
                 data.update(year_data)
@@ -131,7 +147,7 @@ def process_database(species = None):
                     # data['TimeSeriesCompleteness'] = "%0.3f" % (float(len(years)) / (max(years) - min(years) + 1))
 
                 # Remove unwanted key from dict
-                del data['value_by_year']
+                del data['value_series']
 
                 writer.writerow(data)
 

@@ -47,6 +47,9 @@ def main():
     p = subparsers.add_parser('t1_aggregation')
     p = subparsers.add_parser('response_variable')
     p = subparsers.add_parser('export_lpi')
+
+    p.add_argument('--monthly', '-m', action='store_true', dest='monthly', help='Output a column for each month')
+
     p = subparsers.add_parser('spatial_rep')
     p = subparsers.add_parser('all')
     args = parser.parse_args()
@@ -74,7 +77,7 @@ def main():
     elif args.command == 'response_variable':
         nesp.processing.response_variable.process_database(species = species, commit = args.commit)
     elif args.command == 'export_lpi':
-        nesp.processing.export_lpi.process_database(species = species)
+        nesp.processing.export_lpi.process_database(species = species, monthly = args.monthly)
     elif args.command == 'spatial_rep':
         nesp.processing.spatial_rep.process_database(species = species, commit = args.commit)
     elif args.command == 'all':
