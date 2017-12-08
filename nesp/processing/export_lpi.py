@@ -50,8 +50,8 @@ def process_database(species = None, monthly = False):
             'SpatialAccuracyInM',
             'ExperimentalDesignType',
             'ResponseVariableType',
-            'DataType'
-            # 'TaxonSpatialRepresentativeness'
+            'DataType',
+            'TaxonSourceSpatialRepresentativeness'
         ]
 
         if monthly:
@@ -75,15 +75,15 @@ def process_database(species = None, monthly = False):
         for taxon_id in tqdm(taxa):
             # Note we select units based on response variable type id
             sql = """SELECT
-                    CONCAT(taxon.id, '_', search_type.id, '_', source.id, '_', unit.id, '_', site_id, '_', data_type) AS ID,
+                    CONCAT(taxon.id, '_', search_type.id, '_', source.id, '_', unit.id, '_', site_id, '_', agg.data_type) AS ID,
                     taxon.spno AS SpNo,
                     taxon.id AS TaxonID,
                     taxon.common_name AS CommonName,
                     search_type.description AS SearchTypeDesc,
                     COALESCE(
-                        (SELECT name FROM t1_site WHERE site_id = t1_site.id AND data_type = 1),
-                        (SELECT name FROM t2_site WHERE site_id = t2_site.id AND data_type = 2),
-                        CONCAT('site_', data_type, '_', site_id),
+                        (SELECT name FROM t1_site WHERE site_id = t1_site.id AND agg.data_type = 1),
+                        (SELECT name FROM t2_site WHERE site_id = t2_site.id AND agg.data_type = 2),
+                        CONCAT('site_', agg.data_type, '_', site_id),
                         CONCAT('grid_', grid_cell_id)) AS SiteDesc,
                     source.description AS SourceDesc,
                     unit.description AS Unit,
@@ -91,9 +91,10 @@ def process_database(species = None, monthly = False):
                     region.state AS State,
                     MAX(positional_accuracy_in_m) AS SpatialAccuracyInM,
                     {value_series} AS value_series,
-                    data_type AS DataType,
+                    agg.data_type AS DataType,
                     (SELECT description FROM experimental_design_type WHERE agg.experimental_design_type_id = experimental_design_type.id) AS ExperimentalDesignType,
-                    (SELECT description FROM response_variable_type WHERE agg.response_variable_type_id = response_variable_type.id) AS ResponseVariableType
+                    (SELECT description FROM response_variable_type WHERE agg.response_variable_type_id = response_variable_type.id) AS ResponseVariableType,
+                    COALESCE(alpha.alpha_hull_area_in_m2 / alpha.core_range_area_in_m2, 0) AS TaxonSourceSpatialRepresentativeness
                 FROM
                     {aggregated_table} agg
                     INNER JOIN taxon ON taxon.id = taxon_id
@@ -101,7 +102,8 @@ def process_database(species = None, monthly = False):
                     INNER JOIN source ON source.id = source_id
                     INNER JOIN unit ON unit.id = unit_id
                     LEFT JOIN region ON region.id = region_id
-                WHERE taxon_id = :taxon_id
+                    LEFT JOIN taxon_source_alpha_hull alpha ON alpha.taxon_id = agg.taxon_id AND alpha.source_id = agg.source_id AND alpha.data_type = agg.data_type
+                WHERE agg.taxon_id = :taxon_id
                 AND start_date_y >= :min_year
                 AND start_date_y <= :max_year
                 {where_conditions}
