@@ -143,7 +143,10 @@ def make_alpha_hull(points, coastal_shape,
     final = alpha_hull_buff.union(single_points)
 
     #clipping
-    return final.intersection(coastal_shape)
+    if coastal_shape != None:
+        final = final.intersection(coastal_shape)
+
+    return final
     #_ = plot_polygon(final)
     #pl.show()
 
