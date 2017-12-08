@@ -94,7 +94,7 @@ def process_database(species = None, commit = False):
                             # Intersect alpha hull with core range
                             intersected_alpha = to_multipolygon(core_range_geom.intersection(alpha_shp))
 
-                            empty = intersected_alpha.empty
+                            empty = intersected_alpha.is_empty
 
                     if empty:
                         session.execute("""INSERT INTO taxon_source_alpha_hull (source_id, taxon_id, data_type, core_range_area_in_m2, alpha_hull_area_in_m2)
@@ -104,8 +104,8 @@ def process_database(species = None, commit = False):
                                 'data_type': data_type
                             })
                     else:
-                        session.execute("""INSERT INTO taxon_source_alpha_hull (source_id, taxon_id, data_type, core_range_area_in_m2, alpha_hull_area_in_m2)
-                            VALUES (:source_id, :taxon_id, :data_type, ST_GeomFromWKB(_BINARY :geom_wkb), :core_ranage_area, :alpha_hull_area)""", {
+                        session.execute("""INSERT INTO taxon_source_alpha_hull (source_id, taxon_id, data_type, geometry, core_range_area_in_m2, alpha_hull_area_in_m2)
+                            VALUES (:source_id, :taxon_id, :data_type, ST_GeomFromWKB(_BINARY :geom_wkb), :core_range_area, :alpha_hull_area)""", {
                                 'source_id': source_id,
                                 'taxon_id': taxon_id,
                                 'data_type': data_type,
