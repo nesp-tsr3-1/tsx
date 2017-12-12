@@ -53,7 +53,7 @@ def process_taxon(taxon_id, commit):
 
         for range_id, breeding_range_id, geom_wkb in get_taxon_range_polygons(session, taxon.id):
             if not taxon.ultrataxon:
-                log.warning("Unexpected range polygon for non-ultrataxon: %s" % taxon.id)
+                log.info("Skipping range polygon for non-ultrataxon: %s" % taxon.id)
                 continue
 
             # tqdm.write("Taxon: %s, range: %s" % (taxon.id, range_id))
