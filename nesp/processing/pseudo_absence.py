@@ -25,9 +25,11 @@ def process_database(commit = False):
 		session.rollback()
 
 def process_grid(session):
-	# TODO: load this from taxon spreadsheet instead of specifying in code
-	taxa = [ "u40b", "u20", "u233", "u224b", "u223", "u250a", "u250b", "u250c", "u246a", "u246b", "u236", "u264b",
-		"u309", "u542a", "u542b", "u527", "u871a", "u603", "u967", "u402", "u422b", "u382", "u670" ]
+	taxa = [taxon_id for (taxon_id,) in session.execute("""SELECT DISTINCT taxon_id
+		FROM processing_method
+		WHERE data_type = 2
+		AND experimental_design_type_id IN (2, 3)""").fetchall()
+	]
 
 	# Notes - times are with a warm buffer pool, first run was not so fast
 
