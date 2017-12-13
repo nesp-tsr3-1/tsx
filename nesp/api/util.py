@@ -12,7 +12,7 @@ def csv_response(rows, filename="export.csv"):
 	si = StringIO.StringIO()
 	cw = csv.writer(si)
 	cw.writerow(header)
-	for row in data:
+	for row in rows:
 		cw.writerow()
 	output = make_response(si.getvalue())
 	output.headers["Content-Disposition"] = "attachment; filename=%s" % filename

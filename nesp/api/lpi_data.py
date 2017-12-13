@@ -1,74 +1,85 @@
 import csv
 import StringIO
-from flask import make_response, g, jsonify, Blueprint
+from flask import request, make_response, g, jsonify, Blueprint
 from nesp.api.util import csv_response
 from nesp.db import get_session
 from datetime import datetime
-
+import nesp.config
+import pandas as pd
+import os
+import json
+# this is going to use quite alot of RAM, but it is more responsive than using dask
 bp = Blueprint('lpi_data', __name__)
+export_dir = nesp.config.data_dir('export')
+filename = 'lpi.csv'
+df = pd.read_csv(os.path.join(export_dir, filename), index_col = 'ID', 
+	dtype={'ID': str, 'SpNo': int, 'TaxonID': str, 'CommonName': str, 'SiteDesc': str,
+			'SourceDesc': str,'SubIBRA': str,'Unit': str,'SearchTypeDesc': str,'SpatialAccuracyInM': float,
+			'ExperimentalDesignType': str,'ResponseVariableType': str,'DataType': str})
+
 
 @bp.route('/lpi-data', methods = ['GET'])
 def lpi_data():
 	"""Output aggregated data in LPI wide format"""
-
-	output_format = request.args.get('format')
-	data = get_data(session)
-
-	if output_format == None or output_format == 'json':
-		return jsonify(data)
-	elif output_format == "csv":
-		header = data[0].keys()
-		rows = [[row[x] for x in header] for row in data]
-		return csv_response(header + rows)
+	#output forat: csv or json
+	output_format = request.args.get('format', type=str)
+	download_file = request.args.get('download', type=str)
+	#filter: species, state, searchtype
+	filter_str = ""
+	#spno
+	filters = []
+	if(request.args.has_key('spno')):
+		_sp_no = request.args.get('spno', type=int)
+		filters.append("SpNo=='%d'" % (_sp_no))
+	#state
+	if(request.args.has_key('state')):
+		filters.append("State=='%s'" % (request.args.get('state', type=str)))
+	#searchtypedesc
+	if(request.args.has_key('searchtype')):
+		_search_type = request.args.get('searchtype', type=int)
+		# find in database
+		session = get_session()
+		_search_type_desc = session.execute(
+            """SELECT * FROM search_type WHERE id = :searchtypeid""", 
+            {'searchtypeid': _search_type}).fetchone()['description']
+		filters.append("SearchTypeDesc=='%s'" % (_search_type_desc))
+	#subibra
+	if(request.args.has_key('subibra')):
+		_subibra = request.args.get('subibra', type=str)
+		filters.append("SubIBRA=='%s'" % (_subibra))
+	
+	#create filters
+	filtered_dat = None
+	if len(filters) > 0:
+		filters_str = " and ".join(filters)
+		filtered_dat = df.query(filters_str) 
+	else:
+		filtered_dat = df
+	if output_format == None or output_format == 'csv':
+		if download_file == None or download_file == "":
+			return filtered_dat.to_csv()
+		else:
+			output = make_response(filtered_dat.to_csv())
+			output.headers["Content-Disposition"] = "attachment; filename=%s" % download_file
+			output.headers["Content-type"] = "text/csv"
+			return output
+	elif output_format == "json":
+		#pandas index data a bit different, so need to unfold it, can use json_pandas for direct export
+		json_data = json.loads(filtered_dat.to_json())
+		return_json = {}
+		for field, value in json_data.items():
+			for _timeserie_id, _item_value in value.items():
+				if not return_json.has_key(_timeserie_id):
+					return_json[_timeserie_id] = {}
+				return_json[_timeserie_id][field] = _item_value
+		return jsonify(return_json)
+	elif output_format == 'json_pandas':
+		return filtered_dat.to_json()
 	else:
 		return jsonify("Unsupported format (Supported: csv, json)"), 400
 
 
-def get_data():
-	sql = """
-		SELECT 
-		    replace(taxon.common_name, " ", "_") as Binomial,
-		    taxon.spno AS SpNo,
-		    taxon.id AS TaxonID,
-		    taxon.family_common_name AS FamilyCommonName,
-		    taxon.family_scientific_name as FamilyScientificName,
-		    taxon.scientific_name as TaxonScientificName, 
-		    taxon.population as Population,
-		    taxon.order as `Order`,
-		    source_type_desc.sourcetype as SourceType,
-		    source_type_desc.description as SourceDesc,
-		    unit.description as Unit,
-		    search_type.description AS SearchTypeDesc,
-		    aggregation.subibra_id as subIBRA_name, 
-		    aggregation.subibra_name as subIBRA_ID, 
-		    GROUP_CONCAT(CONCAT(start_date_y, '=', aggregation.count) ORDER BY start_date_y) AS Counts
-		FROM 
-		    t1_yearly_aggregation aggregation
-		INNER JOIN taxon ON taxon.id = aggregation.taxon_id
-		INNER JOIN search_type ON search_type.id = aggregation.search_type_id
-		INNER JOIN
-		(
-		    SELECT source.*, source_type.description as sourcetype FROM `source` 
-		    INNER JOIN source_type where source.source_type_id = source_type.id
-		) as source_type_desc ON source_type_desc.id = aggregation.source_id
-		INNER JOIN unit ON unit.id = aggregation.unit_id
-		GROUP BY Binomial, SpNo, TaxonID, SourceType, Unit, SearchTypeDesc, SourceDesc, subIBRA_ID, subIBRA_name
-		"""
-    session = get_session()
-	sql_result = session.execute(sql)
-	result = []
 
-	for row in sql_result.fetchall():
-		item = dict(zip(row, sql_result.keys()))
-		for year in range(1950, datetime.now().year+1):
-			item[year] = None
 
-		for pair in item['Counts'].split(','):
-			(year, count) = pair.split('=')
-			item[int(year)] = count
 
-		del item['Counts']
-		result.append(item)
-
-	return result
 

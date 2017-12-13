@@ -42,7 +42,8 @@ setup(
 		"pytz>=2017.3",
 		"Shapely>=1.6.2.post1",
 		"tzlocal>=1.4",
-		"tqdm>=4.19.4"
+		"tqdm>=4.19.4", 
+		"pandas>=0.21.0"
 	]
 )
 
