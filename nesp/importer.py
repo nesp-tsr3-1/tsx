@@ -506,7 +506,7 @@ class Importer:
 
 	def get_unit(self, session, unit_id):
 		return self.get_cached('unit', unit_id,
-			lambda: session.query(Unit).get(unit_id))
+			lambda: session.query(Unit).filter(Unit.id==unit_id).one())
 
 	def get_source(self, session, description):
 		return self.get_cached('source', description,
