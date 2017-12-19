@@ -8,6 +8,7 @@ import os
 import nesp.config
 from datetime import date
 import re
+import numpy as np
 
 log = logging.getLogger(__name__)
 
@@ -18,9 +19,16 @@ def process_database(species = None, monthly = False):
         taxa = [taxon_id for (taxon_id,) in session.execute("SELECT DISTINCT taxon_id FROM aggregated_by_year").fetchall()]
     else:
         taxa = [taxon_id for (taxon_id,) in session.execute(
-            "SELECT DISTINCT taxon_id FROM t2_processed_sighting, taxon WHERE taxon.id = taxon_id AND spno IN :species", {
+            "SELECT DISTINCT taxon_id FROM aggregated_by_year, taxon WHERE taxon.id = taxon_id AND spno IN :species", {
                 'species': species
             }).fetchall()]
+
+    # Create stable IDs for each taxon_id / search_type_id / source_id / unit_id / site_id / data_type combination
+    session.execute("""CREATE TEMPORARY TABLE aggregated_id
+        ( INDEX (taxon_id, search_type_id, source_id, unit_id, site_id, data_type) )
+        SELECT (@cnt := @cnt + 1) AS id, taxon_id, search_type_id, source_id, unit_id, site_id, data_type
+        FROM (SELECT DISTINCT taxon_id, search_type_id, source_id, unit_id, site_id, data_type FROM aggregated_by_year) t
+        CROSS JOIN (SELECT @cnt := 0) AS dummy""")
 
     # Get year range
     # TODO: Read min year from config file
@@ -39,25 +47,49 @@ def process_database(species = None, monthly = False):
             'SpNo',
             'TaxonID',
             'CommonName',
-            'SiteDesc',
-            'SourceDesc',
-            'SubIBRA',
+            #  Class, Order, Family, Genus, Species, Subspecies # TBD
+            'FunctionalSubGroup', # TBD
+            'EPBCStatus' # TBD
+            'IUCNStatus', # TBD
+            'BirdLifeAustStatus', # TBD
+            'MaxStatus', # TBD
             'State',
+            'SubIBRA',
+            'Latitude', # TBD
+            'Longitude', # TBD
+            'SiteID',
+            'SiteDesc',
+            'SourceID',
+            'SourceDesc',
+            'UnitID',
             'Unit',
+            'SearchTypeID',
             'SearchTypeDesc',
-            # 'TimeSeriesLength',
-            # 'TimeSeriesCompleteness',
-            'SpatialAccuracyInM',
             'ExperimentalDesignType',
             'ResponseVariableType',
-            'DataType',
-            'TaxonSourceSpatialRepresentativeness'
+            'DataType'
         ]
 
         if monthly:
             fieldnames += ["%s_%02d" % (year, month) for year in range(min_year, max_year + 1) for month in range(1, 13)]
         else:
             fieldnames += [str(year) for year in range(min_year, max_year + 1)]
+
+        fieldnames += [
+            'TimeSeriesLength',
+            'TimeSeriesSampleYears',
+            'TimeSeriesCompleteness',
+            'TimeSeriesGapMean',
+            'TimeSeriesGapVariance',
+            'NoAbsencesRecorded', # TBD
+            'StandardisationOfMethodEffort', # TBD
+            'ObjectiveOfMonitoring', # TBD
+            'SpatialRepresentativeness',
+            #'OtherEvenenessThingys',
+            'SpatialAccuracyInM',
+            'ConsistencyOfMonitoring', # TBD
+            'MonitoringFrequencyAndTiming' # TBD
+        ]
 
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
@@ -75,17 +107,21 @@ def process_database(species = None, monthly = False):
         for taxon_id in tqdm(taxa):
             # Note we select units based on response variable type id
             sql = """SELECT
-                    CONCAT(taxon.id, '_', search_type.id, '_', source.id, '_', unit.id, '_', site_id, '_', agg.data_type) AS ID,
+                    (SELECT CAST(id AS UNSIGNED) FROM aggregated_id agg_id WHERE agg.taxon_id = agg_id.taxon_id AND agg.search_type_id = agg_id.search_type_id AND agg.source_id = agg_id.source_id AND agg.unit_id = agg_id.unit_id AND agg.site_id = agg_id.site_id AND agg.data_type = agg_id.data_type) AS ID,
                     taxon.spno AS SpNo,
                     taxon.id AS TaxonID,
                     taxon.common_name AS CommonName,
+                    search_type.id AS SearchTypeID,
                     search_type.description AS SearchTypeDesc,
+                    COALESCE(site_id, grid_cell_id) AS SiteID,
                     COALESCE(
                         (SELECT name FROM t1_site WHERE site_id = t1_site.id AND agg.data_type = 1),
                         (SELECT name FROM t2_site WHERE site_id = t2_site.id AND agg.data_type = 2),
                         CONCAT('site_', agg.data_type, '_', site_id),
                         CONCAT('grid_', grid_cell_id)) AS SiteDesc,
+                    source.id AS SourceID,
                     source.description AS SourceDesc,
+                    unit.id AS UnitID,
                     unit.description AS Unit,
                     region.name AS SubIBRA,
                     region.state AS State,
@@ -94,7 +130,7 @@ def process_database(species = None, monthly = False):
                     agg.data_type AS DataType,
                     (SELECT description FROM experimental_design_type WHERE agg.experimental_design_type_id = experimental_design_type.id) AS ExperimentalDesignType,
                     (SELECT description FROM response_variable_type WHERE agg.response_variable_type_id = response_variable_type.id) AS ResponseVariableType,
-                    COALESCE(alpha.alpha_hull_area_in_m2 / alpha.core_range_area_in_m2, 0) AS TaxonSourceSpatialRepresentativeness
+                    COALESCE(ROUND(alpha.alpha_hull_area_in_m2 / alpha.core_range_area_in_m2, 4), 0) AS SpatialRepresentativeness
                 FROM
                     {aggregated_table} agg
                     INNER JOIN taxon ON taxon.id = taxon_id
@@ -145,10 +181,22 @@ def process_database(species = None, monthly = False):
 
                 # This is going to get calculated downstream anyway:
 
-                # if len(year_data) > 0:
-                    # years = [int(year) for year in year_data.keys()]
-                    # data['TimeSeriesLength'] = max(years) - min(years) + 1
-                    # data['TimeSeriesCompleteness'] = "%0.3f" % (float(len(years)) / (max(years) - min(years) + 1))
+                if len(year_data) > 0:
+                    years = sorted([int(year) for year in year_data.keys()])
+                    year_range = max(years) - min(years) + 1
+
+                    data['TimeSeriesLength'] = year_range
+                    data['TimeSeriesSampleYears'] = len(years)
+                    data['TimeSeriesCompleteness'] = "%0.3f" % (float(len(years)) / year_range)
+
+                    # Get all non-zero gaps between years
+                    gaps = [b - a - 1 for a, b in zip(years[:-1], years[1:]) if b - a > 1]
+                    if len(gaps) > 0:
+                        data['TimeSeriesGapMean'] = np.array(gaps).mean()
+                        data['TimeSeriesGapVariance'] = np.array(gaps).var()
+                    else:
+                        data['TimeSeriesGapMean'] = 0
+                        data['TimeSeriesGapVariance'] = 0
 
                 # Remove unwanted key from dict
                 del data['value_series']
