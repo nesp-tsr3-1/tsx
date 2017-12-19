@@ -42,10 +42,10 @@ def main():
 				else:
 					continue
 			else:
-				if source_by_id.get(row['source_id'], None) != row['source_description']:
+				if source_by_id.get(int(row['source_id']), None) != row['source_description']:
 					raise ValueError("Unrecognized source id/description combination (%s, %s)" % (row['source_id'], row['source_description']))
 
-				if search_type_by_id.get(row['search_type_id'], None) != row['search_type_description']:
+				if search_type_by_id.get(int(row['search_type_id']), None) != row['search_type_description']:
 					raise ValueError("Unrecognized search type id/description combination (%s, %s)" % (row['search_type_id'], row['search_type_description']))
 
 
