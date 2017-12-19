@@ -179,7 +179,7 @@ def process_database(species = None, monthly = False):
 
                 data['Binomial'] = re.sub(r'[^\w]', '_', data['CommonName'])
 
-                # This is going to get calculated downstream anyway:
+                # Calculate temporal suitability metrics:
 
                 if len(year_data) > 0:
                     years = sorted([int(year) for year in year_data.keys()])
