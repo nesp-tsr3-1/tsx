@@ -35,7 +35,7 @@ def process_database(species = None, monthly = False):
     log.info("Calculating region centroids")
 
     session.execute("""CREATE TEMPORARY TABLE region_centroid
-        (INDEX (id))
+        (PRIMARY KEY (id))
         SELECT id, ST_X(ST_Centroid(geometry)) AS x, ST_Y(ST_Centroid(geometry)) AS y
         FROM region""")
 
