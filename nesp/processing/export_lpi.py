@@ -59,7 +59,13 @@ def process_database(species = None, monthly = False):
             'SpNo',
             'TaxonID',
             'CommonName',
-            #  Class, Order, Family, Genus, Species, Subspecies # TBD
+            'Class', # TBD
+            'Order', # TBD
+            'Family',
+            'FamilyCommonName',
+            'Genus',  # TBD
+            'Species', # TBD
+            'Subspecies', # TBD
             'FunctionalGroup',
             'FunctionalSubGroup',
             'EPBCStatus',
@@ -67,7 +73,7 @@ def process_database(species = None, monthly = False):
             'BirdLifeAustraliaStatus',
             'MaxStatus',
             'State',
-            'SubIBRA',
+            'Region',
             'Latitude',
             'Longitude',
             'SiteID',
@@ -97,10 +103,11 @@ def process_database(species = None, monthly = False):
             'StandardisationOfMethodEffort', # TBD
             'ObjectiveOfMonitoring', # TBD
             'SpatialRepresentativeness',
-            #'OtherEvenenessThingys', # TBD
+            'SeasonalConsistency', # TBD
             'SpatialAccuracy',
             'ConsistencyOfMonitoring', # TBD
-            'MonitoringFrequencyAndTiming' # TBD
+            'MonitoringFrequencyAndTiming', # TBD
+            'DataAgreement' # TBD
         ]
 
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -122,6 +129,8 @@ def process_database(species = None, monthly = False):
                     taxon.spno AS SpNo,
                     taxon.id AS TaxonID,
                     taxon.common_name AS CommonName,
+                    taxon.family_scientific_name AS Family,
+                    taxon.family_common_name AS FamilyCommonName,
                     taxon.bird_group AS FunctionalGroup,
                     taxon.bird_sub_group AS FunctionalSubGroup,
                     (SELECT description FROM taxon_status WHERE taxon_status.id = taxon.epbc_status_id) AS EPBCStatus,
@@ -141,7 +150,7 @@ def process_database(species = None, monthly = False):
                     source.description AS SourceDesc,
                     unit.id AS UnitID,
                     unit.description AS Unit,
-                    region.name AS SubIBRA,
+                    region.name AS Region,
                     region.state AS State,
                     region_centroid.x AS Longitude,
                     region_centroid.y AS Latitude,
