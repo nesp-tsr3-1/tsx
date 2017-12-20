@@ -48,11 +48,12 @@ def process_database(species = None, monthly = False):
             'TaxonID',
             'CommonName',
             #  Class, Order, Family, Genus, Species, Subspecies # TBD
-            'FunctionalSubGroup', # TBD
-            'EPBCStatus' # TBD
-            'IUCNStatus', # TBD
-            'BirdLifeAustStatus', # TBD
-            'MaxStatus', # TBD
+            'FunctionalGroup',
+            'FunctionalSubGroup',
+            'EPBCStatus',
+            'IUCNStatus',
+            'BirdLifeAustraliaStatus',
+            'MaxStatus',
             'State',
             'SubIBRA',
             'Latitude', # TBD
@@ -109,6 +110,13 @@ def process_database(species = None, monthly = False):
                     taxon.spno AS SpNo,
                     taxon.id AS TaxonID,
                     taxon.common_name AS CommonName,
+                    taxon.bird_group AS FunctionalGroup,
+                    taxon.bird_sub_group AS FunctionalSubGroup,
+                    (SELECT description FROM taxon_status WHERE taxon_status.id = taxon.epbc_status_id) AS EPBCStatus,
+                    (SELECT description FROM taxon_status WHERE taxon_status.id = taxon.iucn_status_id) AS IUCNStatus,
+                    (SELECT description FROM taxon_status WHERE taxon_status.id = taxon.aust_status_id) AS BirdLifeAustraliaStatus,
+                    (SELECT description FROM taxon_status WHERE taxon_status.id =
+                        GREATEST(COALESCE(taxon.epbc_status_id, 0), COALESCE(taxon.iucn_status_id, 0), COALESCE(taxon.aust_status_id, 0))) AS MaxStatus,
                     search_type.id AS SearchTypeID,
                     search_type.description AS SearchTypeDesc,
                     COALESCE(site_id, grid_cell_id) AS SiteID,
