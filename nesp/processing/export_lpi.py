@@ -79,8 +79,7 @@ def process_database(species = None, monthly = False):
             'TimeSeriesLength',
             'TimeSeriesSampleYears',
             'TimeSeriesCompleteness',
-            'TimeSeriesGapMean',
-            'TimeSeriesGapVariance',
+            'TimeSeriesSamplingEvenness',
             'NoAbsencesRecorded', # TBD
             'StandardisationOfMethodEffort', # TBD
             'ObjectiveOfMonitoring', # TBD
@@ -105,7 +104,6 @@ def process_database(species = None, monthly = False):
             aggregated_table = 'aggregated_by_year'
 
         for taxon_id in tqdm(taxa):
-            # Note we select units based on response variable type id
             sql = """SELECT
                     (SELECT CAST(id AS UNSIGNED) FROM aggregated_id agg_id WHERE agg.taxon_id = agg_id.taxon_id AND agg.search_type_id = agg_id.search_type_id AND agg.source_id = agg_id.source_id AND agg.unit_id = agg_id.unit_id AND agg.site_id = agg_id.site_id AND agg.data_type = agg_id.data_type) AS ID,
                     taxon.spno AS SpNo,
@@ -191,12 +189,7 @@ def process_database(species = None, monthly = False):
 
                     # Get all non-zero gaps between years
                     gaps = [b - a - 1 for a, b in zip(years[:-1], years[1:]) if b - a > 1]
-                    if len(gaps) > 0:
-                        data['TimeSeriesGapMean'] = np.array(gaps).mean()
-                        data['TimeSeriesGapVariance'] = np.array(gaps).var()
-                    else:
-                        data['TimeSeriesGapMean'] = 0
-                        data['TimeSeriesGapVariance'] = 0
+                    data['TimeSeriesSamplingEvenness'] = np.array(gaps).var() if len(gaps) > 0 else 0
 
                 # Remove unwanted key from dict
                 del data['value_series']
