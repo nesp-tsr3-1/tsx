@@ -16,6 +16,9 @@ def main():
 
 	session = get_session()
 
+	session.execute("SET FOREIGN_KEY_CHECKS = 0")
+	session.execute("DELETE FROM taxon")
+
 	wb = openpyxl.load_workbook(args.filename)
 	ws = wb['TaxonList']
 
@@ -50,13 +53,19 @@ def main():
 					order = row['Order'],
 					population = row['Population'],
 					# TODO - there are status in WLAB like 'Introduced' and 'Vagrant' not in Glenn's list - for now importing as NULL
-					aust_status = session.query(TaxonStatus).filter_by(description = row['AustralianStatus']).one_or_none()
+					aust_status = session.query(TaxonStatus).filter_by(description = row['AustralianStatus']).one_or_none(),
+					epbc_status = session.query(TaxonStatus).filter_by(description = row['EPBCStatus']).one_or_none(),
+					iucn_status = session.query(TaxonStatus).filter_by(description = row['IUCNStatus']).one_or_none(),
+					bird_group = row['BirdGroup'],
+					bird_sub_group = row['BirdSubGroup']
 				)
 			except:
 				print row
 				raise
 
 			session.add(taxon)
+
+	session.execute("SET FOREIGN_KEY_CHECKS = 1")
 
 	session.commit()
 

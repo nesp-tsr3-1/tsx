@@ -285,6 +285,7 @@ class Taxon(Base):
     epbc_status_id = Column(ForeignKey(u'taxon_status.id'), index=True)
     iucn_status_id = Column(ForeignKey(u'taxon_status.id'), index=True)
     bird_group = Column(String(255))
+    bird_sub_group = Column(String(255))
 
     aust_status = relationship(u'TaxonStatus', primaryjoin='Taxon.aust_status_id == TaxonStatus.id')
     epbc_status = relationship(u'TaxonStatus', primaryjoin='Taxon.epbc_status_id == TaxonStatus.id')
