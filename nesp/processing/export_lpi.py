@@ -23,12 +23,21 @@ def process_database(species = None, monthly = False):
                 'species': species
             }).fetchall()]
 
+    log.info("Generating numeric IDs")
+
     # Create stable IDs for each taxon_id / search_type_id / source_id / unit_id / site_id / data_type combination
     session.execute("""CREATE TEMPORARY TABLE aggregated_id
         ( INDEX (taxon_id, search_type_id, source_id, unit_id, site_id, data_type) )
         SELECT (@cnt := @cnt + 1) AS id, taxon_id, search_type_id, source_id, unit_id, site_id, data_type
         FROM (SELECT DISTINCT taxon_id, search_type_id, source_id, unit_id, site_id, data_type FROM aggregated_by_year) t
         CROSS JOIN (SELECT @cnt := 0) AS dummy""")
+
+    log.info("Calculating region centroids")
+
+    session.execute("""CREATE TEMPORARY TABLE region_centroid
+        (INDEX (id))
+        SELECT id, ST_X(ST_Centroid(geometry)) AS x, ST_Y(ST_Centroid(geometry)) AS y
+        FROM region""")
 
     # Get year range
     # TODO: Read min year from config file
@@ -39,8 +48,11 @@ def process_database(species = None, monthly = False):
 
     export_dir = nesp.config.data_dir('export')
     filename = 'lpi-monthly.csv' if monthly else 'lpi.csv'
+    filepath = os.path.join(export_dir, filename)
 
-    with open(os.path.join(export_dir, filename), 'w') as csvfile:
+    log.info("Exporting LPI wide table file: %s" % filepath)
+
+    with open(filepath, 'w') as csvfile:
         fieldnames = [
             'ID',
             'Binomial',
@@ -56,8 +68,8 @@ def process_database(species = None, monthly = False):
             'MaxStatus',
             'State',
             'SubIBRA',
-            'Latitude', # TBD
-            'Longitude', # TBD
+            'Latitude',
+            'Longitude',
             'SiteID',
             'SiteDesc',
             'SourceID',
@@ -85,8 +97,8 @@ def process_database(species = None, monthly = False):
             'StandardisationOfMethodEffort', # TBD
             'ObjectiveOfMonitoring', # TBD
             'SpatialRepresentativeness',
-            #'OtherEvenenessThingys',
-            'SpatialAccuracyInM',
+            #'OtherEvenenessThingys', # TBD
+            'SpatialAccuracy',
             'ConsistencyOfMonitoring', # TBD
             'MonitoringFrequencyAndTiming' # TBD
         ]
@@ -131,7 +143,9 @@ def process_database(species = None, monthly = False):
                     unit.description AS Unit,
                     region.name AS SubIBRA,
                     region.state AS State,
-                    MAX(positional_accuracy_in_m) AS SpatialAccuracyInM,
+                    region_centroid.x AS Longitude,
+                    region_centroid.y AS Latitude,
+                    MAX(positional_accuracy_in_m) AS SpatialAccuracy,
                     {value_series} AS value_series,
                     agg.data_type AS DataType,
                     (SELECT description FROM experimental_design_type WHERE agg.experimental_design_type_id = experimental_design_type.id) AS ExperimentalDesignType,
@@ -144,6 +158,7 @@ def process_database(species = None, monthly = False):
                     INNER JOIN source ON source.id = source_id
                     INNER JOIN unit ON unit.id = unit_id
                     LEFT JOIN region ON region.id = region_id
+                    LEFT JOIN region_centroid ON region_centroid.id = region_id
                     LEFT JOIN taxon_source_alpha_hull alpha ON alpha.taxon_id = agg.taxon_id AND alpha.source_id = agg.source_id AND alpha.data_type = agg.data_type
                 WHERE agg.taxon_id = :taxon_id
                 AND start_date_y >= :min_year
