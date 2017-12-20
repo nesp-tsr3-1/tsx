@@ -90,7 +90,7 @@ def process_database(species = None, monthly = False):
         ]
 
         if monthly:
-            fieldnames += ["%s_%02d" % (year, month) for year in range(min_year, max_year + 1) for month in range(1, 13)]
+            fieldnames += ["%s_%02d" % (year, month) for year in range(min_year, max_year + 1) for month in range(0, 13)]
         else:
             fieldnames += [str(year) for year in range(min_year, max_year + 1)]
 
@@ -116,9 +116,8 @@ def process_database(species = None, monthly = False):
         where_conditions = []
 
         if monthly:
-            value_series = "GROUP_CONCAT(CONCAT(start_date_y, '_', LPAD(start_date_m, 2, '0'), '=', value) ORDER BY start_date_y)"
+            value_series = "GROUP_CONCAT(CONCAT(start_date_y, '_', LPAD(COALESCE(start_date_m, 0), 2, '0'), '=', value) ORDER BY start_date_y)"
             aggregated_table = 'aggregated_by_month'
-            where_conditions.append('start_date_m IS NOT NULL')
         else:
             value_series = "GROUP_CONCAT(CONCAT(start_date_y, '=', value) ORDER BY start_date_y)"
             aggregated_table = 'aggregated_by_year'
@@ -201,7 +200,7 @@ def process_database(species = None, monthly = False):
                 # Get row as a dict
                 data = dict(zip(keys, row))
 
-                # Parse out the yearly values
+                # Parse out the yearly values (or monthly)
                 year_data = dict(item.split('=') for item in data['value_series'].split(','))
 
                 # Populate years in output
@@ -211,7 +210,7 @@ def process_database(species = None, monthly = False):
 
                 # Calculate temporal suitability metrics:
 
-                if len(year_data) > 0:
+                if not monthly and len(year_data) > 0:
                     years = sorted([int(year) for year in year_data.keys()])
                     year_range = max(years) - min(years) + 1
 
