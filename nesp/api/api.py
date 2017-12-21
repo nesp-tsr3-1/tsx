@@ -8,6 +8,7 @@ from flask_cors import CORS
 import nesp.api.upload
 import nesp.api.lpi_data
 import nesp.api.data_import
+import nesp.api.misc
 # import nesp.api.auth
 
 app = Flask('nesp')
@@ -25,3 +26,4 @@ setup_db(app)
 app.register_blueprint(nesp.api.upload.bp)
 app.register_blueprint(nesp.api.lpi_data.bp)
 app.register_blueprint(nesp.api.data_import.bp)
+app.register_blueprint(nesp.api.misc.bp)

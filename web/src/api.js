@@ -1,10 +1,11 @@
 import Promise from 'bluebird' // We can drop this when browser support is better
-import * as util from 'util'
+// import * as util from 'util'
+import * as util from '@/util'
 import _ from 'underscore'
 
 // const ROOT_URL = 'http://192.168.168.4:5000'
 // const ROOT_URL = 'http://localhost:5000'
-const ROOT_URL = 'https://nesp-dev.coesra.org.au/nespapi'
+const ROOT_URL = 'https://nesp-dev1.coesra.org.au/nespapi'
 
 export function createImport(dataImport) {
   return post('/imports', dataImport)
@@ -24,6 +25,44 @@ export function dataImport(id) {
 
 export function dataImportLog(id) {
   return get('/imports/' + id + '/log')
+}
+
+export function lpidata(params) {
+  return get('/lpi-data', params)
+}
+
+export function getLpiDataUrl(params) {
+  params = params || {}
+
+  // var options = params._options || {}
+  params = _.omit(params, '_options')
+
+  var url = '/lpi-data'
+  if(!_.isEmpty(params)) {
+    url += '?' + util.encodeParams(params)
+  }
+
+  return ROOT_URL + url
+}
+
+export function region() {
+  return get('/region')
+}
+
+export function searchtype() {
+  return get('/searchtype')
+}
+
+export function species() {
+  return get('/species')
+}
+
+export function source() {
+  return get('/source')
+}
+
+export function status() {
+  return get('/status')
 }
 
 export function deleteImport(id) {

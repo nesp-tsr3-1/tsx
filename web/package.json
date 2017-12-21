@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "bluebird": "^3.5.1",
+    "chart.js": "^2.7.1",
+    "fs": "0.0.1-security",
     "underscore": "^1.8.3",
     "vue": "^2.5.2",
     "vue-router": "^3.0.1"
