@@ -59,13 +59,13 @@ def process_database(species = None, monthly = False):
             'SpNo',
             'TaxonID',
             'CommonName',
-            'Class', # TBD
-            'Order', # TBD
+            'Class',
+            'Order',
             'Family',
             'FamilyCommonName',
-            'Genus',  # TBD
-            'Species', # TBD
-            'Subspecies', # TBD
+            'Genus',
+            'Species',
+            'Subspecies',
             'FunctionalGroup',
             'FunctionalSubGroup',
             'EPBCStatus',
@@ -107,7 +107,6 @@ def process_database(species = None, monthly = False):
             'SpatialAccuracy',
             'ConsistencyOfMonitoring', # TBD
             'MonitoringFrequencyAndTiming', # TBD
-            'DataAgreement' # TBD
         ]
 
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -128,6 +127,8 @@ def process_database(species = None, monthly = False):
                     taxon.spno AS SpNo,
                     taxon.id AS TaxonID,
                     taxon.common_name AS CommonName,
+                    taxon.order AS `Order`,
+                    taxon.scientific_name AS scientific_name,
                     taxon.family_scientific_name AS Family,
                     taxon.family_common_name AS FamilyCommonName,
                     taxon.bird_group AS FunctionalGroup,
@@ -206,7 +207,15 @@ def process_database(species = None, monthly = False):
                 # Populate years in output
                 data.update(year_data)
 
+                # Taxonomic columns
                 data['Binomial'] = re.sub(r'[^\w]', '_', data['CommonName'])
+                data['Class'] = 'Aves'
+                name_parts = data['scientific_name'].split(' ')
+                data['Genus'] = name_parts[0]
+                if len(name_parts) > 1:
+                    data['Species'] = name_parts[1]
+                if len(name_parts) > 2:
+                    data['Subspecies'] = name_parts[2]
 
                 # Calculate temporal suitability metrics:
 
@@ -224,6 +233,7 @@ def process_database(species = None, monthly = False):
 
                 # Remove unwanted key from dict
                 del data['value_series']
+                del data['scientific_name']
 
                 writer.writerow(data)
 
