@@ -7,9 +7,8 @@
     <table class='table is-fullwidth'>
       <thead>
         <tr>
-          <th>Species</th>
-          <th>Data Type</th>
           <th>Source</th>
+          <th>Species</th>
           <th>Status</th>
           <th>State</th>
         </tr>
@@ -17,46 +16,23 @@
       <tbody>
         <tr>
           <td>
-            <div class='select'>
-              <select v-model=species class='my-select'>
-                <option v-for='sp in speciesList' v-bind:value=sp.spno>{{sp.common_name}}</option>
-              </select>
-            </div>
-          </td>
-
-          <td>
-            <div class='select'>
-              <select v-model='dataType'>
-                <option v-bind:value=0>None</option>
-                <option v-bind:value=1>Type 1</option>
-                <option v-bind:value=2>Type 2/3</option>
-              </select>
-            </div>
+            <basic-select :options='sourceList' :selected-option='selectedSource' @select='onSourceSelect'>
+            </basic-select>
           </td>
           
           <td>
-            <div class='select'>
-              <select v-model=source class='my-select'>
-                <option v-for='source in sourceList' v-bind:value=source.id>{{source.description}}</option>
-              </select>
-            </div>
-          </td>
-          
-          <td>
-            <div class='select'>
-              <select v-model=status class='my-select'>
-                <option v-for='status in statusList' v-bind:value=status.description>{{status.description}}</option>
-              </select>
-            </div>
+            <basic-select :options='taxonList' :selected-option='selectedTaxon' @select='onTaxonSelect'>
+            </basic-select>
           </td>
 
+          <td>
+            <basic-select :options='statusList' :selected-option='selectedStatus' @select='onStatusSelect'>
+            </basic-select>
+          </td>
 
           <td>
-            <div class='select'>
-              <select v-model='state'>
-                <option v-for='stateName in states' v-bind:value=stateName>{{stateName}}</option>
-              </select>
-            </div>
+            <basic-select :options='stateList' :selected-option='selectedState' @select='onStateSelect'>
+            </basic-select>
           </td>
         </tr>
       </tbody>
@@ -72,42 +48,59 @@
 </template>
 <script>
 import * as api from '@/api'
-import Chart from 'chart.js/dist/Chart.js'
-import Spinner from 'vue-simple-spinner/dist/vue-simple-spinner.js'
+import Chart from 'chart.js'
+import Spinner from 'vue-simple-spinner'
+import { BasicSelect } from 'vue-search-select'
 // import * as util from '@/util'
 export default {
   name: 'Plot',
   components: {
-    Spinner
+    Spinner, BasicSelect
   },
   data () {
-    var data = {speciesList: [], sourceList: [], statusList: [], states: [], dataType: 0, species: 0, source: 0, status: 'None', region: 0, state: 'None', char: null, chartDataSet: null, loadingData: false}
+    var data = {
+      // taxon
+      taxonList: [],
+      selectedTaxon: {value: '0', text: 'All'},
+      // source
+      sourceList: [],
+      selectedSource: {value: '0', text: 'All'},
+      // status
+      statusList: [],
+      selectedStatus: {value: 'None', text: 'All'},
+      // states
+      stateList: [],
+      selectedState: {value: 'None', text: 'All'},
+      // chart
+      chart: null,
+      // chart data
+      chartDataSet: null,
+      // is loading dataset
+      loadingData: false
+    }
     // states filter
-    data.states.push('None')
-    data.states.push('Australian Capital Territory')
-    data.states.push('Commonwealth')
-    data.states.push('Queensland')
-    data.states.push('New South Wales')
-    data.states.push('Northern Territory')
-    data.states.push('South Australia')
-    data.states.push('Western Australia')
-    data.states.push('Tasmania')
-    data.states.push('Victoria')
-    api.searchtype().then((searchlist) => {
-      data.searchTypeList = searchlist
-      data.searchTypeList.push({'id': 0, 'name': 'None'})
+    data.stateList.push({value: 'None', text: 'All'})
+    data.stateList.push({value: 'Australian Capital Territory', text: 'Australian Capital Territory'})
+    data.stateList.push({value: 'Commonwealth', text: 'Commonwealth'})
+    data.stateList.push({value: 'Queensland', text: 'Queensland'})
+    data.stateList.push({value: 'New South Wales', text: 'New South Wales'})
+    data.stateList.push({value: 'Northern Territory', text: 'Northern Territory'})
+    data.stateList.push({value: 'South Australia', text: 'South Australia'})
+    data.stateList.push({value: 'Western Australia', text: 'Western Australia'})
+    data.stateList.push({value: 'Tasmania', text: 'Tasmania'})
+    data.stateList.push({value: 'Victoria', text: 'Victoria'})
+    // query data
+    api.species().then((taxonList) => {
+      data.taxonList = taxonList.map(i => { return {value: i['spno'], text: i['common_name']} })
+      data.taxonList.push({value: 0, text: 'All'})
     })
-    api.species().then((specieslist) => {
-      data.speciesList = specieslist
-      data.speciesList.push({'spno': 0, 'common_name': 'None'})
+    api.source().then((sourceList) => {
+      data.sourceList = sourceList.map(i => { return {value: i['id'], text: i['description']} })
+      data.sourceList.push({value: 0, text: 'All'})
     })
-    api.source().then((sourcelist) => {
-      data.sourceList = sourcelist
-      data.sourceList.push({'id': 0, 'description': 'None'})
-    })
-    api.status().then((statuslist) => {
-      data.statusList = statuslist
-      data.statusList.push({'id': 0, 'description': 'None'})
+    api.status().then((statusList) => {
+      data.statusList = statusList.map(i => { return {value: i['description'], text: i['description']} })
+      data.statusList.push({value: 'None', text: 'All'})
     })
     return data
   },
@@ -145,22 +138,33 @@ export default {
     updatePlot: function() {
       this.loadingData = true
       var filterParams = {}
-      if (this.dataType !== 0) filterParams['datatype'] = this.dataType
-      if (this.species !== 0) filterParams['spno'] = this.species
-      if (this.source !== 0) filterParams['sourceid'] = this.source
-      if (this.state !== 'None') filterParams['state'] = this.state
-      if (this.status !== 'None') filterParams['status'] = this.status
+      if (this.selectedTaxon.value !== '0') filterParams['spno'] = this.selectedTaxon.value
+      if (this.selectedSource.value !== '0') filterParams['sourceid'] = this.selectedSource.value
+      if (this.selectedState.value !== 'None') filterParams['state'] = this.selectedState.value
+      if (this.selectedStatus.value !== 'None') filterParams['status'] = this.selectedStatus.value
       filterParams['format'] = 'dotplot'
       console.log(filterParams)
       var that = this
       api.lpidata(filterParams).then((data) => {
-        console.log('Getting data')
+        // console.log('Getting data')
         that.chartDataSet.datasets[0].data = data.map(i => { return { 'x': +i['year'], 'y': +i['ID'], 'r': 1 } })
         that.chart.update()
         this.loadingData = false
-        console.log(that.chartDataSet)
+        // console.log(that.chartDataSet)
       })
-    }// end updatePlot function
+    }, // end updatePlot function
+    onSourceSelect: function(aSource) {
+      this.selectedSource = aSource
+    }, // end onSourceSelect
+    onTaxonSelect: function(aTaxon) {
+      this.selectedTaxon = aTaxon
+    }, // end onSourceSelect
+    onStatusSelect: function(aStatus) {
+      this.selectedStatus = aStatus
+    }, // end onSourceSelect
+    onStateSelect: function(aState) {
+      this.selectedState = aState
+    }
   }
 }
 </script>

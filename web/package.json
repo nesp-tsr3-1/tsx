@@ -17,6 +17,7 @@
     "underscore": "^1.8.3",
     "vue": "^2.5.2",
     "vue-simple-spinner": "^1.2.8",
+    "vue-search-select": "^2.4.0",
     "vue-router": "^3.0.1"
   },
   "devDependencies": {

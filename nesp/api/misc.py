@@ -30,7 +30,7 @@ def get_searchtype():
 @bp.route('/species', methods = ['GET'])
 def get_species():
 	session = get_session()
-	rows = session.execute("""SELECT spno, common_name FROM taxon""").fetchall()
+	rows = session.execute("""SELECT spno, common_name FROM taxon ORDER BY common_name""").fetchall()
 	species_info = []
 	for spno, common_name in rows:
 		species_info.append({'spno': int(spno), 'common_name': common_name})
@@ -62,7 +62,7 @@ def get_status():
 @bp.route('/source', methods = ['GET'])
 def get_source():
 	session = get_session()
-	rows = session.execute("""SELECT id, source_type_id, provider, description FROM source""").fetchall()
+	rows = session.execute("""SELECT id, source_type_id, provider, description FROM source ORDER BY description""").fetchall()
 	res_info = []
 	for id, source_type_id, provider, description in rows:
 		res_info.append({'id': int(id), "source_type_id": int(source_type_id), 'provider': provider, 'description': description})

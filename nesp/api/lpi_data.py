@@ -100,7 +100,7 @@ def lpi_data():
 		binomials = json_data['Binomial']
 		for year in years:
 			for _timeserie_id, _item_value in json_data[year].items():
-				if _item_value != None and float(_item_value) != 0:
+				if _item_value != None:
 					plot_dat.append({"ID": _timeserie_id, "year": year, "Binomial": binomials[_timeserie_id], "count": _item_value})
 		return json.dumps(plot_dat)
 	else:
