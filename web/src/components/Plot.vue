@@ -63,9 +63,9 @@
     </table>
 
     <p>
-      <button class='button is-primary' v-on:click='updatePlot'>Update</button>
+      <button class='button is-primary' v-on:click='updatePlot' :disabled='loadingData'>Update</button>
     </p>
-
+    <spinner size='large' message='Loading data....' v-show='loadingData'></spinner>
     <canvas ref='dotplot'></canvas>
     
   </div>
@@ -73,13 +73,15 @@
 <script>
 import * as api from '@/api'
 import Chart from 'chart.js/dist/Chart.js'
+import Spinner from 'vue-simple-spinner/dist/vue-simple-spinner.js'
 // import * as util from '@/util'
-// import Plotly from 'plotly.js/lib/core'
 export default {
   name: 'Plot',
-  props: ['groupBy', 'data'],
+  components: {
+    Spinner
+  },
   data () {
-    var data = {speciesList: [], sourceList: [], statusList: [], states: [], dataType: 0, species: 0, source: 0, status: 'None', region: 0, state: 'None', char: null, chartDataSet: null}
+    var data = {speciesList: [], sourceList: [], statusList: [], states: [], dataType: 0, species: 0, source: 0, status: 'None', region: 0, state: 'None', char: null, chartDataSet: null, loadingData: false}
     // states filter
     data.states.push('None')
     data.states.push('Australian Capital Territory')
@@ -141,6 +143,7 @@ export default {
   },
   methods: {
     updatePlot: function() {
+      this.loadingData = true
       var filterParams = {}
       if (this.dataType !== 0) filterParams['datatype'] = this.dataType
       if (this.species !== 0) filterParams['spno'] = this.species
@@ -154,6 +157,7 @@ export default {
         console.log('Getting data')
         that.chartDataSet.datasets[0].data = data.map(i => { return { 'x': +i['year'], 'y': +i['ID'], 'r': 1 } })
         that.chart.update()
+        this.loadingData = false
         console.log(that.chartDataSet)
       })
     }// end updatePlot function
