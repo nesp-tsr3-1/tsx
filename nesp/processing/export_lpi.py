@@ -163,9 +163,9 @@ def process_database(species = None, monthly = False):
                 FROM
                     {aggregated_table} agg
                     INNER JOIN taxon ON taxon.id = taxon_id
-                    INNER JOIN search_type ON search_type.id = search_type_id
                     INNER JOIN source ON source.id = source_id
                     INNER JOIN unit ON unit.id = unit_id
+                    LEFT JOIN search_type ON search_type.id = search_type_id
                     LEFT JOIN region ON region.id = region_id
                     LEFT JOIN region_centroid ON region_centroid.id = region_id
                     LEFT JOIN taxon_source_alpha_hull alpha ON alpha.taxon_id = agg.taxon_id AND alpha.source_id = agg.source_id AND alpha.data_type = agg.data_type
