@@ -75,10 +75,12 @@ def aggregate_by_month(taxon_id, commit = False):
             if experimental_design_type_id == 1:
                 fields = 'site_id, search_type_id'
                 where_conditions.append("site_id IS NOT NULL")
+                where_conditions.append("search_type_id != 6") # Exclude Incidental Surveys
 
             elif experimental_design_type_id == 2:
                 fields = 'grid_cell_id, search_type_id'
                 where_conditions.append("grid_cell_id IS NOT NULL")
+                where_conditions.append("search_type_id != 6") # Exclude Incidental Surveys
 
             elif experimental_design_type_id == 3:
                 fields = 'grid_cell_id'
