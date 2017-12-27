@@ -27,9 +27,9 @@ def process_database(species = None, monthly = False):
 
     # Create stable IDs for each taxon_id / search_type_id / source_id / unit_id / site_id / data_type combination
     session.execute("""CREATE TEMPORARY TABLE aggregated_id
-        ( INDEX (taxon_id, search_type_id, source_id, unit_id, site_id, data_type) )
-        SELECT (@cnt := @cnt + 1) AS id, taxon_id, search_type_id, source_id, unit_id, site_id, data_type
-        FROM (SELECT DISTINCT taxon_id, search_type_id, source_id, unit_id, site_id, data_type FROM aggregated_by_year) t
+        ( INDEX (taxon_id, search_type_id, source_id, unit_id, site_id, grid_cell_id, data_type) )
+        SELECT (@cnt := @cnt + 1) AS id, taxon_id, search_type_id, source_id, unit_id, site_id, grid_cell_id, data_type
+        FROM (SELECT DISTINCT taxon_id, search_type_id, source_id, unit_id, site_id, grid_cell_id, data_type FROM aggregated_by_year) t
         CROSS JOIN (SELECT @cnt := 0) AS dummy""")
 
     log.info("Calculating region centroids")
@@ -123,7 +123,7 @@ def process_database(species = None, monthly = False):
 
         for taxon_id in tqdm(taxa):
             sql = """SELECT
-                    (SELECT CAST(id AS UNSIGNED) FROM aggregated_id agg_id WHERE agg.taxon_id = agg_id.taxon_id AND agg.search_type_id = agg_id.search_type_id AND agg.source_id = agg_id.source_id AND agg.unit_id = agg_id.unit_id AND agg.site_id = agg_id.site_id AND agg.data_type = agg_id.data_type) AS ID,
+                    (SELECT CAST(id AS UNSIGNED) FROM aggregated_id agg_id WHERE agg.taxon_id = agg_id.taxon_id AND agg.search_type_id <=> agg_id.search_type_id AND agg.source_id = agg_id.source_id AND agg.unit_id = agg_id.unit_id AND agg.site_id <=> agg_id.site_id AND agg.grid_cell_id <=> agg_id.grid_cell_id AND agg.data_type = agg_id.data_type) AS ID,
                     taxon.spno AS SpNo,
                     taxon.id AS TaxonID,
                     taxon.common_name AS CommonName,
@@ -163,9 +163,9 @@ def process_database(species = None, monthly = False):
                 FROM
                     {aggregated_table} agg
                     INNER JOIN taxon ON taxon.id = taxon_id
+                    LEFT JOIN search_type ON search_type.id = search_type_id
                     INNER JOIN source ON source.id = source_id
                     INNER JOIN unit ON unit.id = unit_id
-                    LEFT JOIN search_type ON search_type.id = search_type_id
                     LEFT JOIN region ON region.id = region_id
                     LEFT JOIN region_centroid ON region_centroid.id = region_id
                     LEFT JOIN taxon_source_alpha_hull alpha ON alpha.taxon_id = agg.taxon_id AND alpha.source_id = agg.source_id AND alpha.data_type = agg.data_type
