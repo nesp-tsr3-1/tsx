@@ -99,14 +99,15 @@ def process_database(species = None, monthly = False):
             'TimeSeriesSampleYears',
             'TimeSeriesCompleteness',
             'TimeSeriesSamplingEvenness',
-            'NoAbsencesRecorded', # TBD
-            'StandardisationOfMethodEffort', # TBD
-            'ObjectiveOfMonitoring', # TBD
+            'NoAbsencesRecorded',
+            'StandardisationOfMethodEffort',
+            'ObjectiveOfMonitoring',
             'SpatialRepresentativeness',
             'SeasonalConsistency', # TBD
             'SpatialAccuracy',
-            'ConsistencyOfMonitoring', # TBD
-            'MonitoringFrequencyAndTiming', # TBD
+            'ConsistencyOfMonitoring',
+            'MonitoringFrequencyAndTiming',
+            'DataAgreement'
         ]
 
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -159,16 +160,22 @@ def process_database(species = None, monthly = False):
                     agg.data_type AS DataType,
                     (SELECT description FROM experimental_design_type WHERE agg.experimental_design_type_id = experimental_design_type.id) AS ExperimentalDesignType,
                     (SELECT description FROM response_variable_type WHERE agg.response_variable_type_id = response_variable_type.id) AS ResponseVariableType,
-                    COALESCE(ROUND(alpha.alpha_hull_area_in_m2 / alpha.core_range_area_in_m2, 4), 0) AS SpatialRepresentativeness
+                    COALESCE(ROUND(alpha.alpha_hull_area_in_m2 / alpha.core_range_area_in_m2, 4), 0) AS SpatialRepresentativeness,
+                    data_source.no_absences_recorded AS NoAbsencesRecorded,
+                    data_source.standardisation_of_method_effort_id AS StandardisationOfMethodEffort,
+                    data_source.objective_of_monitoring_id AS ObjectiveOfMonitoring,
+                    data_source.consistency_of_monitoring_id AS ConsistencyOfMonitoring,
+                    data_source.data_agreement_id AS DataAgreement
                 FROM
                     {aggregated_table} agg
-                    INNER JOIN taxon ON taxon.id = taxon_id
+                    INNER JOIN taxon ON taxon.id = agg.taxon_id
                     LEFT JOIN search_type ON search_type.id = search_type_id
-                    INNER JOIN source ON source.id = source_id
+                    INNER JOIN source ON source.id = agg.source_id
                     INNER JOIN unit ON unit.id = unit_id
                     LEFT JOIN region ON region.id = region_id
                     LEFT JOIN region_centroid ON region_centroid.id = region_id
                     LEFT JOIN taxon_source_alpha_hull alpha ON alpha.taxon_id = agg.taxon_id AND alpha.source_id = agg.source_id AND alpha.data_type = agg.data_type
+                    LEFT JOIN data_source ON data_source.taxon_id = agg.taxon_id AND data_source.source_id = agg.source_id
                 WHERE agg.taxon_id = :taxon_id
                 AND start_date_y >= :min_year
                 AND start_date_y <= :max_year
