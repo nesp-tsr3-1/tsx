@@ -947,7 +947,7 @@ CREATE TABLE IF NOT EXISTS `data_source` (
   CONSTRAINT `fk_data_source_source1`
     FOREIGN KEY (`source_id`)
     REFERENCES `source` (`id`)
-    ON DELETE NO ACTION
+    ON DELETE CASCADE
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_data_source_taxon1`
     FOREIGN KEY (`taxon_id`)
