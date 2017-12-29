@@ -100,7 +100,9 @@ def aggregate_by_month(taxon_id, commit = False):
                 region_id,
                 positional_accuracy_in_m,
                 unit_id,
-                data_type)
+                data_type,
+                centroid_coords,
+                survey_count)
             SELECT
                 start_date_y,
                 start_date_m,
@@ -113,7 +115,12 @@ def aggregate_by_month(taxon_id, commit = False):
                 MIN((SELECT MIN(region_id) FROM tmp_region_lookup t WHERE t.site_id <=> survey.site_id AND t.grid_cell_id <=> survey.grid_cell_id)),
                 MAX((SELECT positional_accuracy_in_m FROM t2_survey WHERE t2_survey.id = raw_survey_id)),
                 :unit_id,
-                2
+                2,
+                Point(
+                    AVG((SELECT ST_X(coords) FROM t2_survey WHERE t2_survey.id = raw_survey_id)),
+                    AVG((SELECT ST_Y(coords) FROM t2_survey WHERE t2_survey.id = raw_survey_id))
+                ),
+                COUNT(*)
             FROM
                 t2_processed_survey survey
                 INNER JOIN t2_processed_sighting sighting ON survey_id = survey.id
@@ -176,7 +183,9 @@ def aggregate_by_year(taxon_id, commit = False):
                 data_type,
                 region_id,
                 unit_id,
-                positional_accuracy_in_m)
+                positional_accuracy_in_m,
+                centroid_coords,
+                survey_count)
             SELECT
                 start_date_y,
                 source_id,
@@ -190,7 +199,9 @@ def aggregate_by_year(taxon_id, commit = False):
                 data_type,
                 region_id,
                 unit_id,
-                positional_accuracy_in_m
+                positional_accuracy_in_m,
+                Point(AVG(ST_X(centroid_coords)), AVG(ST_Y(centroid_coords))),
+                SUM(survey_count)
             FROM aggregated_by_month
             WHERE taxon_id = :taxon_id
             AND data_type = 2

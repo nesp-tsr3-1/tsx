@@ -83,7 +83,9 @@ def aggregate_monthly(taxon_id, commit = False):
                 region_id,
                 positional_accuracy_in_m,
                 unit_id,
-                data_type)
+                data_type,
+                centroid_coords,
+                survey_count)
             SELECT
                 start_date_y,
                 start_date_m,
@@ -97,7 +99,9 @@ def aggregate_monthly(taxon_id, commit = False):
                 MIN((SELECT MIN(region_id) FROM tmp_region_lookup t WHERE t.site_id = survey.site_id)),
                 MAX(positional_accuracy_in_m),
                 unit_id,
-                1
+                1,
+                Point(AVG(ST_X(survey.coords)), AVG(ST_Y(survey.coords))),
+                COUNT(*)
             FROM t1_survey survey
             INNER JOIN
                 t1_site site ON site.id = survey.site_id
@@ -152,7 +156,9 @@ def aggregate_yearly(taxon_id, commit = False):
                 data_type,
                 region_id,
                 unit_id,
-                positional_accuracy_in_m)
+                positional_accuracy_in_m,
+                centroid_coords,
+                survey_count)
             SELECT
                 start_date_y,
                 source_id,
@@ -166,7 +172,9 @@ def aggregate_yearly(taxon_id, commit = False):
                 data_type,
                 region_id,
                 unit_id,
-                positional_accuracy_in_m
+                positional_accuracy_in_m,
+                Point(AVG(ST_X(centroid_coords)), AVG(ST_Y(centroid_coords))),
+                SUM(survey_count)
             FROM aggregated_by_month
             WHERE taxon_id = :taxon_id
             AND data_type = 1
