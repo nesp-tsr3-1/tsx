@@ -36,17 +36,17 @@ def lpi_data():
 	filter_str = ""
 	#spno
 	filters = []
-	if(request.args.has_key('spno')):
+	if request.args.has_key('spno'):
 		_sp_no = request.args.get('spno', type=int)
 		filters.append("SpNo=='%d'" % (_sp_no))
-	if(request.args.has_key('datatype')):
+	if request.args.has_key('datatype'):
 		_sp_no = request.args.get('datatype', type=int)
 		filters.append("DataType=='%d'" % (_sp_no))
 	#state
-	if(request.args.has_key('state')):
+	if request.args.has_key('state'):
 		filters.append("State=='%s'" % (request.args.get('state', type=str)))
 	#searchtypedesc
-	if(request.args.has_key('searchtype')):
+	if request.args.has_key('searchtype'):
 		_search_type = request.args.get('searchtype', type=int)
 		# find in database
 		session = get_session()
@@ -56,17 +56,43 @@ def lpi_data():
 		filters.append("SearchTypeDesc=='%s'" % (_search_type_desc))
 		session.close()
 	#subibra
-	if(request.args.has_key('subibra')):
+	if request.args.has_key('subibra'):
 		_subibra = request.args.get('subibra', type=str)
 		filters.append("SubIBRA=='%s'" % (_subibra))
+	
 	#sourceid
-	if(request.args.has_key('sourceid')):
+	if request.args.has_key('sourceid'):
 		_sourceid = request.args.get('sourceid', type=int)
 		filters.append("SourceID=='%d'" % (_sourceid))
-	#status
-	if(request.args.has_key('status')):
+	
+	# Functional group
+	if request.args.has_key('group'):
+		_group = request.args.get('group', type=str)
+		filters.append("FunctionalGroup=='%s'" % (_group))
+	
+	# functional subgroup
+	if request.args.has_key('subgroup'):
+		_subgroup = request.args.get('subgroup', type=str)
+		filters.append("FunctionalSubGroup=='%s'" % (_subgroup))
+
+	#statusauth
+	_status = None
+	if request.args.has_key('status'):
 		_status = request.args.get('status', type=str)
-		filters.append("MaxStatus=='%s'" % (_status))
+
+	if _status!= None and request.args.has_key('statusauth'): #IUCN, EPBC, BirdLifeAustralia, Max
+		_statusauth = request.args.get('statusauth', type=str)
+		if _statusauth == "IUCN" :
+			filters.append("IUCNStatus=='%s'" % (_status))
+		elif _statusauth == "EPBC":
+			filters.append("EPBCStatus=='%s'" % (_status))
+		elif _statusauth == "BirdLifeAustralia":
+			filters.append("BirdLifeAustraliaStatus=='%s'" % (_status))
+		elif _statusauth == "Max":
+			filters.append("MaxStatus=='%s'" % (_status))
+		else:
+			# do nothing
+			_status = None
 	
 	#create filters
 	filtered_dat = None
