@@ -13,15 +13,17 @@ import json
 bp = Blueprint('lpi_data', __name__)
 export_dir = nesp.config.data_dir('export')
 filename = 'lpi.csv'
-df = pd.read_csv(os.path.join(export_dir, filename), index_col = 'ID', 
+df = pd.read_csv(os.path.join(export_dir, filename), index_col = 'ID',quoting=csv.QUOTE_MINIMAL, 
 	dtype={'ID': int, 'Binomial': str, 'SpNo': int, 'TaxonID': str, 'CommonName': str, 
-			'FunctionalGroup': str, 'FunctionalSubGroup': str, 'EPBCStatus': str, 'IUCNStatus': str, 'BirdLifeAustraliaStatus': str,
-			'MaxStatus': str, 'State': str, 'SubIBRA': str, 'Latitude': float, 'Longitude': float, 'SiteID': int, 'SiteDesc': str,
-			'SourceID': int, 'SourceDesc': str, 'UnitID': int, 'Unit': str, 'SearchTypeID': int, 'SearchTypeDesc': str, 'ExperimentalDesignType': str,
-			'ExperimentalDesignType': str,'ResponseVariableType': str, 'DataType': int, 'TimeSeriesLength': float,
-			'TimeSeriesSampleYears': float ,'TimeSeriesCompleteness': float,'TimeSeriesSamplingEvenness': float,
-			'NoAbsencesRecorded': str,'StandardisationOfMethodEffort': str,'ObjectiveOfMonitoring': str,'SpatialRepresentativeness': float,
-			'SpatialAccuracyInM':float,'ConsistencyOfMonitoring': float,'MonitoringFrequencyAndTiming': float, 'DataAgreement': str})
+		'Class': str, 'Order': str, 'Family': str, 'FamilyCommonName': str, 
+		'Genus': str, 'Species': str, 'Subspecies': str,  
+		'FunctionalGroup': str, 'FunctionalSubGroup': str, 'EPBCStatus': str, 'IUCNStatus': str, 'BirdLifeAustraliaStatus': str,
+		'MaxStatus': str, 'State': str, 'Region': str, 'Latitude': float, 'Longitude': float, 'SiteID': int, 'SiteDesc': str,
+		'SourceID': int, 'SourceDesc': str, 'UnitID': int, 'Unit': str, 'SearchTypeID': str, 'SearchTypeDesc': str, 'ExperimentalDesignType': str,
+		'ExperimentalDesignType': str,'ResponseVariableType': str, 'DataType': int, 'TimeSeriesLength': float,
+		'TimeSeriesSampleYears': float ,'TimeSeriesCompleteness': float,'TimeSeriesSamplingEvenness': float,
+		'NoAbsencesRecorded': str,'StandardisationOfMethodEffort': str,'ObjectiveOfMonitoring': str,'SpatialRepresentativeness': float, 'SeasonalConsistency': float,
+		'SpatialAccuracy':float,'ConsistencyOfMonitoring': float,'MonitoringFrequencyAndTiming': float})
 
 
 @bp.route('/lpi-data', methods = ['GET'])

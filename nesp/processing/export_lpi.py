@@ -169,9 +169,9 @@ def process_database(species = None, monthly = False):
                     data_source.objective_of_monitoring_id AS ObjectiveOfMonitoring,
                     data_source.consistency_of_monitoring_id AS ConsistencyOfMonitoring,
                     data_source.data_agreement_id AS DataAgreement,
-                    ST_X(agg.centroid_coords) AS SurveysCentroidLongitude,
-                    ST_Y(agg.centroid_coords) AS SurveysCentroidLatitude,
-                    agg.survey_count AS SurveyCount
+                    MAX(ST_X(agg.centroid_coords)) AS SurveysCentroidLongitude,
+                    MAX(ST_Y(agg.centroid_coords)) AS SurveysCentroidLatitude,
+                    MAX(agg.survey_count) AS SurveyCount
                 FROM
                     {aggregated_table} agg
                     INNER JOIN taxon ON taxon.id = agg.taxon_id
