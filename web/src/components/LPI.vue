@@ -32,7 +32,7 @@
           </td>
 
           <td>
-            <basic-select :options='statusAuthorityList' :selected-option='selectedStateAuthority' @select='onStatusAuthoritySelect'>
+            <basic-select :options='statusAuthorityList' :selected-option='selectedStatusAuthority' @select='onStatusAuthoritySelect'>
             </basic-select>
           </td>
 
@@ -81,7 +81,7 @@ export default {
       selectedState: {value: 'None', text: 'All'},
       // status auth
       statusAuthorityList: [],
-      selectedStateAuthority: {value: 'None', text: 'All'},
+      selectedStatusAuthority: {value: 'None', text: 'All'},
       // status
       statusList: [],
       selectedStatus: {value: 'None', text: 'All'},
@@ -150,8 +150,8 @@ export default {
       if(this.selectedState.value !== 'None') {
         filters = filters + 'state-' + encodeURI(this.selectedState.value + '_')
       }
-      if(this.selectedStateAuthority.value !== 'None') {
-        filters = filters + 'statusauth-' + encodeURI(this.selectedStateAuthority.value + '_')
+      if(this.selectedStatusAuthority.value !== 'None') {
+        filters = filters + 'statusauth-' + encodeURI(this.selectedStatusAuthority.value + '_')
       }
       if(this.selectedStatus.value !== 'None') {
         filters = filters + 'status-' + encodeURI(this.selectedStatus.value + '_')
