@@ -154,7 +154,7 @@ export default {
         filters = filters + 'statusauth-' + encodeURI(this.selectedStatusAuthority.value + '_')
       }
       if(this.selectedStatus.value !== 'None') {
-        filters = filters + 'status-' + encodeURI(this.selectedStatus.value + '_')
+        filters = filters + 'status-' + encodeURI(this.selectedStatus.value)
       }
       if (filters === '') {
         filters = 'all'

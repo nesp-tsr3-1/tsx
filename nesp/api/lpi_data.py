@@ -88,11 +88,8 @@ def lpi_data():
 			filters.append("EPBCStatus=='%s'" % (_status))
 		elif _statusauth == "BirdLifeAustralia":
 			filters.append("BirdLifeAustraliaStatus=='%s'" % (_status))
-		elif _statusauth == "Max":
-			filters.append("MaxStatus=='%s'" % (_status))
 		else:
-			# do nothing
-			_status = None
+			filters.append("MaxStatus=='%s'" % (_status))
 	
 	#create filters
 	filtered_dat = None
