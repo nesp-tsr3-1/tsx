@@ -148,8 +148,13 @@ def lpi_data():
 					else:
 						timeseries_year[year] = 1
 						species_year[year] = set([species[_timeserie_id]])
+		# print (species_year)
 		for year in years:
-			species_count_year[year] = len(species_year[year])
+			if year in species_year.keys():
+				species_count_year[year] = len(species_year[year])
+			#else:
+			#	species_count_year[year] = 0
+			#	timeseries_year[year] =0
 		summaryplot_dat = {'species': species_count_year, 'timeseries': timeseries_year}
 		return_json={'summary': summaryplot_dat, 'dotplot': dotplot_dat}
 		return json.dumps(return_json)
