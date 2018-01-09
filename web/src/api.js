@@ -31,18 +31,45 @@ export function lpidata(params) {
   return get('/lpi-data', params)
 }
 
-export function getLpiDataUrl(params) {
-  params = params || {}
-
-  // var options = params._options || {}
-  params = _.omit(params, '_options')
-
-  var url = '/lpi-data'
-  if(!_.isEmpty(params)) {
-    url += '?' + util.encodeParams(params)
+export function lpiRunData(path, filetype) {
+  var baseLPIRunURL = 'https://nesp-dev1.coesra.org.au/lpi_runs/'
+  var url = ''
+  if(!_.isEmpty(path)) {
+    url += encodeURI(path)
+  } else { // default one
+    url += encodeURI('statusauth-Max_')
   }
+  console.log(url)
+  var xhr = new XMLHttpRequest()
+  xhr.open('GET', baseLPIRunURL + url)
+  console.log(baseLPIRunURL + url)
+  // Used for debugging (e.g. in exceptions)
+  var params = {}
+  var options = {}
+  xhr._meta = {
+    url: url,
+    method: 'GET',
+    params: params,
+    options: options
+  }
+  xhr.responseType = ''
+  xhr.withCredentials = true
 
-  return ROOT_URL + url
+  _.each(options.headers || {}, function(v, k) {
+    xhr.setRequestHeader(k, v)
+  })
+  // var accessToken = util.store.get('accessToken');
+  // if(accessToken) {
+  //   xhr.setRequestHeader("Authorization", "Bearer " + accessToken);
+  // }
+  return xhrPromise(xhr).then(function(xhr) {
+    var response = xhr.responseText
+    // console.log(response)
+    if(filetype === 'json') {
+      try { response = JSON.parse(response) } catch(e) {}
+    }
+    return response
+  })
 }
 
 export function region() {

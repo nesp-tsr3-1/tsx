@@ -128,6 +128,31 @@ def lpi_data():
 				if _item_value != None:
 					plot_dat.append({"ID": _timeserie_id, "year": year, "Binomial": binomials[_timeserie_id], "count": _item_value})
 		return json.dumps(plot_dat)
+	# TODO: replace dotplot with plot
+	elif output_format == 'plot':
+		json_data = json.loads(filtered_dat.to_json())
+		dotplot_dat = []
+		timeseries_year = {}
+		species_year = {}
+		species_count_year = {}
+		years = sorted([ y for y in json_data.keys() if y.isdigit() ])
+		binomials = json_data['Binomial']
+		species = json_data['SpNo']
+		for year in years:
+			for _timeserie_id, _item_value in json_data[year].items():
+				if _item_value != None:
+					dotplot_dat.append({"ID": _timeserie_id, "year": year, "Binomial": binomials[_timeserie_id], "count": _item_value})
+					if year in timeseries_year.keys():
+						timeseries_year[year] = timeseries_year[year] + 1
+						species_year[year].add(species[_timeserie_id])
+					else:
+						timeseries_year[year] = 1
+						species_year[year] = set([species[_timeserie_id]])
+		for year in years:
+			species_count_year[year] = len(species_year[year])
+		summaryplot_dat = {'species': species_count_year, 'timeseries': timeseries_year}
+		return_json={'summary': summaryplot_dat, 'dotplot': dotplot_dat}
+		return json.dumps(return_json)
 	else:
 		return jsonify("Unsupported format (Supported: csv, json)"), 400
 
