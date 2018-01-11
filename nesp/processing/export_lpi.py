@@ -47,7 +47,14 @@ def process_database(species = None, monthly = False, filter_output = False):
     session.execute("""SET SESSION group_concat_max_len = 50000;""")
 
     export_dir = nesp.config.data_dir('export')
-    filename = 'lpi-monthly.csv' if monthly else 'lpi.csv'
+
+    filename = 'lpi'
+    if monthly:
+        filename += '-monthly'
+    if filter_output:
+        filename += '-filtered'
+    filename += '.csv'
+
     filepath = os.path.join(export_dir, filename)
 
     log.info("Exporting LPI wide table file: %s" % filepath)
@@ -137,7 +144,7 @@ def process_database(species = None, monthly = False, filter_output = False):
 
             # Exclude zero-only time series
             # At least 5 years per time series
-            having_clause = "HAVING MAX(value) > 0 AND COUNT(*) >= 5"
+            having_clause = "HAVING MAX(value) > 0 AND COUNT(DISTINCT start_date_y) >= 5"
 
         if monthly:
             value_series = "GROUP_CONCAT(CONCAT(start_date_y, '_', LPAD(COALESCE(start_date_m, 0), 2, '0'), '=', value) ORDER BY start_date_y)"
