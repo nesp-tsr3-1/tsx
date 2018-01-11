@@ -12,7 +12,7 @@ import numpy as np
 
 log = logging.getLogger(__name__)
 
-def process_database(species = None, monthly = False):
+def process_database(species = None, monthly = False, filter_output = False):
     session = get_session()
 
     if species == None:
@@ -117,6 +117,27 @@ def process_database(species = None, monthly = False):
         writer.writeheader()
 
         where_conditions = []
+        having_clause = ''
+
+        if filter_output:
+            where_conditions += [
+                # Exclude incidental surveys
+                'COALESCE(agg.search_type_id, 0) != 6',
+                # Exclude status = LC, EX or Blank
+                'GREATEST(COALESCE(taxon.epbc_status_id, 0), COALESCE(taxon.iucn_status_id, 0), COALESCE(taxon.aust_status_id, 0)) NOT IN (0,1,7)',
+                # Exclude blank region
+                'agg.region_id IS NOT NULL',
+                # Exclude data agreement = 0, 1
+                'COALESCE(data_source.data_agreement_id, -1) NOT IN (0, 1)',
+                # Exclude standardisation of monitoring/effort < 2
+                'COALESCE(data_source.standardisation_of_method_effort_id, 2) >= 2',
+                # Exclude consistency of monitoring < 2
+                'COALESCE(data_source.consistency_of_monitoring_id, 2) >= 2'
+            ]
+
+            # Exclude zero-only time series
+            # At least 5 years per time series
+            having_clause = "HAVING MAX(value) > 0 AND COUNT(*) >= 5"
 
         if monthly:
             value_series = "GROUP_CONCAT(CONCAT(start_date_y, '_', LPAD(COALESCE(start_date_m, 0), 2, '0'), '=', value) ORDER BY start_date_y)"
@@ -196,10 +217,12 @@ def process_database(species = None, monthly = False):
                     agg.region_id,
                     agg.unit_id,
                     agg.data_type
+                {having_clause}
                     """.format(
                         value_series = value_series,
                         aggregated_table = aggregated_table,
-                        where_conditions = " ".join("AND %s" % cond for cond in where_conditions)
+                        where_conditions = " ".join("AND %s" % cond for cond in where_conditions),
+                        having_clause = having_clause
                     )
 
             result = session.execute(sql, {

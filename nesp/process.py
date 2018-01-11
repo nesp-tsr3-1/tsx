@@ -49,6 +49,7 @@ def main():
     p = subparsers.add_parser('export_lpi')
 
     p.add_argument('--monthly', '-m', action='store_true', dest='monthly', help='Output a column for each month')
+    p.add_argument('--filter', '-f', action='store_true', dest='filter', help='Filter output')
 
     p = subparsers.add_parser('spatial_rep')
     p = subparsers.add_parser('all')
@@ -77,7 +78,7 @@ def main():
     elif args.command == 'response_variable':
         nesp.processing.response_variable.process_database(species = species, commit = args.commit)
     elif args.command == 'export_lpi':
-        nesp.processing.export_lpi.process_database(species = species, monthly = args.monthly)
+        nesp.processing.export_lpi.process_database(species = species, monthly = args.monthly, filter_output = args.filter)
     elif args.command == 'spatial_rep':
         nesp.processing.spatial_rep.process_database(species = species, commit = args.commit)
     elif args.command == 'all':
