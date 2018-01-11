@@ -1,6 +1,6 @@
 <template>
   <div class='plot content'>
-    <h3 class='title'>LPI Plots</h3>
+    <h3 class='title'>TSX Plots</h3>
     <router-link to='/'>Back to imports</router-link>
     <hr>
 
@@ -56,10 +56,10 @@
       <button class='button is-primary' v-on:click='updatePlot' :disabled='loadingData'>Update</button>
     </p>
     <spinner size='large' message='Loading data....' v-show='loadingData'></spinner>
-    <canvas ref='lpiplot' class='big-plot'></canvas>
-    <canvas ref='dotplot' class='big-plot'></canvas>
-    <canvas ref='summaryplot'></canvas>
-    <canvas ref='lambdaplot'></canvas>
+    <canvas ref='lpiplot' class='medium-plot'></canvas>
+    <canvas ref='intensityplot' class='medium-plot'></canvas>
+    <canvas ref='dotplot' class='medium-plot'></canvas>
+    <canvas ref='sumplot' class='medium-plot'></canvas>    
   </div>
 </template>
 <script>
@@ -70,7 +70,7 @@ import { BasicSelect } from 'vue-search-select'
 // import * as util from '@/util'
 // import _ from 'underscore'
 export default {
-  name: 'LPI',
+  name: 'TSX',
   components: {
     Spinner, BasicSelect
   },
@@ -102,7 +102,12 @@ export default {
       // lpi plot
       lpiPlot: null,
       lpiPlotDataSet: null,
-      loadingData: false
+      // summayplot
+      summaryPlotDataSet: null,
+      summaryPlot: null,
+      scatterChartData: null,
+      loadingData: false,
+      queryLPIData: true
     }
     // groups
     data.groupList.push({value: 'None', text: 'All'})
@@ -162,76 +167,126 @@ export default {
   },
   mounted: function() {
     var that = this
+    Chart.defaults.global.defaultFontSize = 30
     // ---------- dot plot -------------
     this.dotPlotDataSet = {
-      animation: {
-        duration: 10000
-      },
       datasets: [{
         label: 'count>0',
-        backgroundColor: '#4dc9f6',
+        backgroundColor: 'black',
         borderColor: 'black',
         borderWidth: 1,
         data: [] },
       {
         label: 'count==0',
-        backgroundColor: '#4dc906',
-        borderColor: 'black',
+        backgroundColor: 'grey',
+        borderColor: 'grey',
         borderWidth: 1,
         data: [] }]
     }
-    var ctx = this.$refs.dotplot.getContext('2d')
-    this.dotPlot = new Chart(ctx, {
-      type: 'bubble',
+    this.dotPlot = new Chart.Bubble(this.$refs.dotplot.getContext('2d'), {
       data: that.dotPlotDataSet,
       // Configuration options go here
       options: {
         responsive: true,
-        title: {
-          display: true,
-          text: 'Dot plots'
-        },
         tooltips: {
           mode: 'point'
+        },
+        scales: {
+          yAxes: [{
+            type: 'linear',
+            display: true,
+            position: 'left',
+            scaleLabel: {
+              display: true,
+              labelString: 'Time series'
+            }
+          }]
         }
       }
     })
+    // --------- summary plot ------------
+    this.summaryPlotDataSet = {
+      datasets: [{
+        label: 'Species',
+        xAxisID: 'x-axis-1',
+        yAxisID: 'y-axis-1',
+        borderColor: 'blue',
+        backgroundColor: 'blue',
+        data: []
+      }, {
+        label: 'TimesSeries',
+        xAxisID: 'x-axis-1',
+        yAxisID: 'y-axis-2',
+        borderColor: 'red',
+        backgroundColor: 'red',
+        data: []
+      }]
+    }
     // --------- lpi plot ------------
     this.lpiPlotDataSet = {
       labels: [],
       datasets: [{
-        label: 'LPI_final',
+        label: 'TSX Final',
         borderColor: 'black',
+        backgroundColor: 'black',
         fill: false,
         data: [] },
       {
-        label: 'CI_Low',
-        borderColor: '#3e95cd',
+        label: 'Confidence Interval (low)',
+        borderColor: '#3e9555',
+        backgroundColor: '#3e9555',
         fill: 1,
         data: [] },
       {
-        label: 'CI_High',
+        label: 'Confidence Interval (high)',
         borderColor: '#3e95cd',
+        backgroundColor: '#3e95cd',
         fill: 1,
         data: [] }]
     }
-    var lpiPlotCtx = this.$refs.lpiplot.getContext('2d')
-    this.lpiPlot = new Chart(lpiPlotCtx, {
-      type: 'line',
+    this.lpiPlot = new Chart.Line(this.$refs.lpiplot.getContext('2d'), {
       data: that.lpiPlotDataSet,
       // Configuration options go here
       options: {
         responsive: true,
-        title: {
-          display: true,
-          text: 'LPI plot'
+        scales: {
+          yAxes: [{
+            type: 'logarithmic',
+            display: true,
+            position: 'left',
+            scaleLabel: {
+              display: true,
+              labelString: 'Index'
+            },
+            ticks: {
+              min: 0.2,
+              max: 2.0,
+              callback: function(tick, index, ticks) {
+                return tick.toLocaleString()
+              }
+            },
+            gridLines: {
+              drawOnChartArea: true
+            }
+          }]
         }
       }
     })
   },
   methods: {
     updatePlot: function() {
+      console.log('Requery lpi data:' + this.queryLPIData)
       this.loadingData = true
+      // clear existing data
+      this.dotPlotDataSet.datasets[0].data = []
+      this.dotPlotDataSet.datasets[1].data = []
+      this.summaryPlotDataSet.datasets[0].data = []
+      this.summaryPlotDataSet.datasets[1].data = []
+      this.lpiPlotDataSet.labels = []
+      this.lpiPlotDataSet.datasets[0].data = []
+      this.lpiPlotDataSet.datasets[1].data = []
+      this.lpiPlotDataSet.datasets[2].data = []
+      // filters
       var filtersStr = ''
       var filterParams = {}
       if(this.selectedGroup.value !== 'None') {
@@ -254,25 +309,41 @@ export default {
         filtersStr = filtersStr + 'status-' + this.selectedStatus.value
         filterParams['status'] = this.selectedStatus.value
       }
-      filterParams['format'] = 'dotplot'
-      console.log(filtersStr)
-      console.log(filterParams)
+      filterParams['format'] = 'plot'
       var that = this
-      // ping api first
-      api.lpidata(filterParams).then((data) => {
-        console.log('Getting data')
-        console.log(data)
-        data.map(function(currentValue) {
-          if(+currentValue['count'] > 0) {
-            that.dotPlotDataSet.datasets[0].data.push({ 'x': +currentValue['year'], 'y': +currentValue['ID'], 'r': 1 })
-          } else if (+currentValue['count'] === 0) {
-            that.dotPlotDataSet.datasets[1].data.push({ 'x': +currentValue['year'], 'y': +currentValue['ID'], 'r': 1 })
+      if(this.queryLPIData) {
+        // ping api first
+        api.lpidata(filterParams).then((data) => {
+          // console.log('Getting data')
+          // console.log(data)
+          // dotplot
+          var dotPlotData = data['dotplot']
+          dotPlotData.map(function(currentValue) {
+            if(+currentValue['count'] > 0) {
+              that.dotPlotDataSet.datasets[0].data.push({ 'x': +currentValue['year'], 'y': +currentValue['ID'], 'r': 1 })
+            } else if (+currentValue['count'] === 0) {
+              that.dotPlotDataSet.datasets[1].data.push({ 'x': +currentValue['year'], 'y': +currentValue['ID'], 'r': 1 })
+            }
+          })
+          // summary plot
+          var speciesCountData = data['summary']['species']
+          var timeSeriesCountData = data['summary']['timeseries']
+          var year = 0
+          for (year in speciesCountData) {
+            that.summaryPlotDataSet.datasets[0].data.push({'x': +year, 'y': +speciesCountData[year]})
           }
+          for (year in timeSeriesCountData) {
+            that.summaryPlotDataSet.datasets[1].data.push({'x': +year, 'y': +timeSeriesCountData[year]})
+          }
+          // console.log(that.summaryPlotDataSet)
+          that.dotPlot.update()
+          // this will cause exception as the axis might be change
+          // that.summaryPlot.update()
+          that.refreshSummaryPlot()
+          that.loadingData = false
+          this.queryLPIData = false
         })
-        that.dotPlot.update()
-        that.loadingData = false
-        // console.log(that.dotPlotDataSet)
-      })
+      }
       // get files later
       var lpiResultFile = filtersStr + '/nesp_' + this.selectedYear.value + '_infile_Results.txt'
       console.log(lpiResultFile)
@@ -280,10 +351,8 @@ export default {
         // format:
         // 'LPI_final' 'CI_low' 'CI_low'
         // '1980' float float float
-        that.lpiPlotDataSet.labels = []
-        that.lpiPlotDataSet.datasets[0].data = []
-        that.lpiPlotDataSet.datasets[1].data = []
-        that.lpiPlotDataSet.datasets[1].data = []
+        var lowestCI = 1.0
+        var highestCI = 1.0
         var lines = data.split('\n')
         // ignore first line
         lines = lines.slice(1)
@@ -294,14 +363,26 @@ export default {
             if(values[1] !== 'NA' && values[2] !== 'NA' && values[3] !== 'NA') {
               that.lpiPlotDataSet.labels.push(parseInt(year))
               that.lpiPlotDataSet.datasets[0].data.push(parseFloat(values[1]))
-              that.lpiPlotDataSet.datasets[1].data.push(parseFloat(values[2]))
-              that.lpiPlotDataSet.datasets[2].data.push(parseFloat(values[3]))
+              var lowCIVal = parseFloat(values[2])
+              that.lpiPlotDataSet.datasets[1].data.push(lowCIVal)
+              if(lowCIVal < lowestCI) {
+                lowestCI = lowCIVal
+              }
+              var highCIVal = parseFloat(values[3])
+              that.lpiPlotDataSet.datasets[2].data.push(highCIVal)
+              if(highCIVal > highestCI) {
+                highestCI = highCIVal
+              }
             }
           }
         })
-        console.log(that.lpiPlotDataSet)
+        // update lpi plot
+        that.lpiPlot.options.scales.yAxes[0].ticks.min = Number((lowestCI - 0.1).toFixed(1))
+        that.lpiPlot.options.scales.yAxes[0].ticks.max = Number((highestCI + 0.1).toFixed(1))
         that.lpiPlot.update()
-        // that.loadingData = false
+        if (!that.queryLPIData) {
+          that.loadingData = false
+        }
       })
     }, // end updatePlot function
     onGroupSelect: function(aGroup) {
@@ -312,26 +393,87 @@ export default {
         this.selectedSubGroupDisabled = true
         this.selectedSubGroup = {value: 'None', text: 'All'}
       }
+      this.queryLPIData = true
+      this.loadingData = false
     }, // end onSourceSelect
     onSubGroupSelect: function(aSubGroup) {
       this.selectedSubGroup = aSubGroup
+      this.queryLPIData = true
+      this.loadingData = false
     }, // end onSourceSelect
     onStateSelect: function(aState) {
       this.selectedState = aState
+      this.queryLPIData = true
+      this.loadingData = false
     },
     onStatusAuthoritySelect: function(aStatusAuthority) {
       this.selectedStatusAuthority = aStatusAuthority
       if (this.selectedStatusAuthority.value === 'None') {
         this.selectedStatus = {value: 'None', text: 'All'}
         this.selectedStatusDisabled = true
-        // this.selectedStatus.disable
+        this.queryLPIData = true
+        this.loadingData = false
       }
     }, // end onSourceSelect
     onStatusSelect: function(aStatus) {
       this.selectedStatus = aStatus
+      this.queryLPIData = true
+      this.loadingData = false
     },
     onYearSelect: function(aYear) {
       this.selectedYear = aYear
+      this.loadingData = false
+    },
+    // refresh summary plot
+    refreshSummaryPlot: function() {
+      if (this.summaryPlot) {
+        this.summaryPlot.destroy()
+      }
+      // create new one
+      this.summaryPlot = new Chart.Scatter(this.$refs.sumplot.getContext('2d'), {
+        data: this.summaryPlotDataSet,
+        options: {
+          responsive: true,
+          hoverMode: 'nearest',
+          intersect: true,
+          title: {
+            display: true,
+            text: 'Data Summary'
+          },
+          scales: {
+            xAxes: [{
+              position: 'bottom',
+              gridLines: {
+                zeroLineColor: 'rgba(0,0,0,1)'
+              }
+            }],
+            yAxes: [{
+              type: 'linear',
+              display: true,
+              position: 'left',
+              scaleLabel: {
+                display: true,
+                labelString: 'Number of taxa'
+              },
+              id: 'y-axis-1'
+            }, {
+              type: 'linear',
+              display: true,
+              position: 'right',
+              reverse: true,
+              id: 'y-axis-2',
+              scaleLabel: {
+                display: true,
+                labelString: 'Number of time series'
+              },
+              // grid line settings
+              gridLines: {
+                drawOnChartArea: false
+              }
+            }]
+          }
+        }
+      })
     }
   }
 }
@@ -343,6 +485,11 @@ export default {
   }
   .big-plot {
     width: 70% !important;
-    height: 500px !important;;
+    height: 500px !important;
+  }
+  .medium-plot {
+    width: 50% !important;
+    height: 300px !important;
+    float:left;
   }
 </style>

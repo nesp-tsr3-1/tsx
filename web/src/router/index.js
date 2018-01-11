@@ -4,7 +4,7 @@ import Router from 'vue-router'
 import ImportHome from '@/components/ImportHome'
 import ImportEdit from '@/components/ImportEdit'
 import Plot from '@/components/Plot'
-import LPI from '@/components/LPI'
+import TSX from '@/components/TSX'
 
 Vue.use(Router)
 
@@ -26,9 +26,9 @@ export default new Router({
       component: Plot
     },
     {
-      path: '/lpi',
-      name: 'LPI',
-      component: LPI
+      path: '/tsx',
+      name: 'TSX',
+      component: TSX
     }
   ]
 })

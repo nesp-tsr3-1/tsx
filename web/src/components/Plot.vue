@@ -1,6 +1,6 @@
 <template>
   <div class='plot content'>
-    <h3 class='title'>NESP Plots</h3>
+    <h3 class='title'>TSX Plots</h3>
     <router-link to='/'>Back to imports</router-link>
     <hr>
 

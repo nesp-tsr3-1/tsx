@@ -2,8 +2,7 @@
   <div class="import-home">
     <h2 class="title">Plots</h2>
     <router-link to="/import/new" tag="button" class="button is-primary">Import surveys</router-link>
-    <router-link to="/plot" tag="button" class="button is-primary">Plots</router-link>
-    <router-link to="/lpi" tag="button" class="button is-primary">LPI</router-link>
+    <router-link to="/tsx" tag="button" class="button is-primary">TSX</router-link>
     <hr>
     <h2 class="subtitle">Imports in progress</h2>
     <import-list></import-list>

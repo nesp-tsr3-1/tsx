@@ -127,7 +127,7 @@ export default {
       }
     },
     title: function() {
-      return 'NESP Data Import – ' + (this.name || 'Untitled')
+      return 'TSX Data Import – ' + (this.name || 'Untitled')
     }
   },
   created: function() {
