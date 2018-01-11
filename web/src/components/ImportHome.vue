@@ -1,6 +1,6 @@
 <template>
   <div class="import-home">
-    <h2 class="title">Plots</h2>
+    <h2 class="title">Australian Threatened Species Index (TSX)</h2>
     <router-link to="/import/new" tag="button" class="button is-primary">Import surveys</router-link>
     <router-link to="/tsx" tag="button" class="button is-primary">TSX</router-link>
     <hr>
