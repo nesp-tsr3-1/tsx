@@ -54,6 +54,7 @@
 
     <p>
       <button class='button is-primary' v-on:click='updatePlot' :disabled='loadingData'>Update</button>
+      <button class='button is-primary' v-on:click='downloadCSV'>Download CSV</button>
     </p>
     <spinner size='large' message='Loading data....' v-show='loadingData'></spinner>
     <canvas ref='lpiplot' class='medium-plot'></canvas>
@@ -67,7 +68,7 @@ import * as api from '@/api'
 import Chart from 'chart.js'
 import Spinner from 'vue-simple-spinner'
 import { BasicSelect } from 'vue-search-select'
-// import * as util from '@/util'
+import * as util from '@/util'
 // import _ from 'underscore'
 export default {
   name: 'TSX',
@@ -94,10 +95,8 @@ export default {
       // year
       yearList: [],
       selectedYear: {value: '1970', text: '1970'},
-      // is loading dataset
-      // chart
+      // charts
       dotPlot: null,
-      // chart data
       dotPlotDataSet: null,
       // lpi plot
       lpiPlot: null,
@@ -105,8 +104,9 @@ export default {
       // summayplot
       summaryPlotDataSet: null,
       summaryPlot: null,
-      scatterChartData: null,
+      // is loading data
       loadingData: false,
+      // need to query LPI rest service
       queryLPIData: true
     }
     // groups
@@ -287,28 +287,8 @@ export default {
       this.lpiPlotDataSet.datasets[1].data = []
       this.lpiPlotDataSet.datasets[2].data = []
       // filters
-      var filtersStr = ''
-      var filterParams = {}
-      if(this.selectedGroup.value !== 'None') {
-        filtersStr = filtersStr + 'group-' + this.selectedGroup.value + '_'
-        filterParams['group'] = this.selectedGroup.value
-      }
-      if(this.selectedSubGroup.value !== 'None') {
-        filtersStr = filtersStr + 'subgroup-' + this.selectedSubGroup.value + '_'
-        filterParams['subgroup'] = this.selectedSubGroup.value
-      }
-      if(this.selectedState.value !== 'None') {
-        filtersStr = filtersStr + 'state-' + this.selectedState.value + '_'
-        filterParams['state'] = this.selectedState.value
-      }
-      if(this.selectedStatusAuthority.value !== 'None') {
-        filtersStr = filtersStr + 'statusauth-' + this.selectedStatusAuthority.value + '_'
-        filterParams['statusauth'] = this.selectedStatusAuthority.value
-      }
-      if(this.selectedStatus.value !== 'None') {
-        filtersStr = filtersStr + 'status-' + this.selectedStatus.value
-        filterParams['status'] = this.selectedStatus.value
-      }
+      var filtersStr = this.getFilterString()
+      var filterParams = this.getFilterParams()
       filterParams['format'] = 'plot'
       var that = this
       if(this.queryLPIData) {
@@ -385,6 +365,13 @@ export default {
         }
       })
     }, // end updatePlot function
+    downloadCSV: function() {
+      var filterParams = this.getFilterParams()
+      filterParams['format'] = 'csv'
+      filterParams['download'] = 'widetable.csv'
+      var url = api.ROOT_URL + '/lpi-data?' + util.encodeParams(filterParams)
+      window.open(url)
+    },
     onGroupSelect: function(aGroup) {
       console.log('new group selected')
       this.selectedGroup = aGroup
@@ -423,6 +410,44 @@ export default {
     onYearSelect: function(aYear) {
       this.selectedYear = aYear
       this.loadingData = false
+    },
+    getFilterParams: function() {
+      var filterParams = {}
+      if(this.selectedGroup.value !== 'None') {
+        filterParams['group'] = this.selectedGroup.value
+      }
+      if(this.selectedSubGroup.value !== 'None') {
+        filterParams['subgroup'] = this.selectedSubGroup.value
+      }
+      if(this.selectedState.value !== 'None') {
+        filterParams['state'] = this.selectedState.value
+      }
+      if(this.selectedStatusAuthority.value !== 'None') {
+        filterParams['statusauth'] = this.selectedStatusAuthority.value
+      }
+      if(this.selectedStatus.value !== 'None') {
+        filterParams['status'] = this.selectedStatus.value
+      }
+      return filterParams
+    },
+    getFilterString: function() {
+      var filtersStr = ''
+      if(this.selectedGroup.value !== 'None') {
+        filtersStr = filtersStr + 'group-' + this.selectedGroup.value + '_'
+      }
+      if(this.selectedSubGroup.value !== 'None') {
+        filtersStr = filtersStr + 'subgroup-' + this.selectedSubGroup.value + '_'
+      }
+      if(this.selectedState.value !== 'None') {
+        filtersStr = filtersStr + 'state-' + this.selectedState.value + '_'
+      }
+      if(this.selectedStatusAuthority.value !== 'None') {
+        filtersStr = filtersStr + 'statusauth-' + this.selectedStatusAuthority.value + '_'
+      }
+      if(this.selectedStatus.value !== 'None') {
+        filtersStr = filtersStr + 'status-' + this.selectedStatus.value
+      }
+      return filtersStr
     },
     // refresh summary plot
     refreshSummaryPlot: function() {

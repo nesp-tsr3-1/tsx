@@ -5,8 +5,8 @@ import _ from 'underscore'
 
 // const ROOT_URL = 'http://192.168.168.4:5000'
 // const ROOT_URL = 'http://localhost:5000'
-const NESP_URL = 'https://nesp-dev1.coesra.org.au/'
-const ROOT_URL = NESP_URL + 'nespapi'
+export const NESP_URL = 'https://nesp-dev1.coesra.org.au/'
+export const ROOT_URL = NESP_URL + 'nespapi'
 
 export function createImport(dataImport) {
   return post('/imports', dataImport)
@@ -55,7 +55,7 @@ export function lpiRunData(path, filetype) {
     options: options
   }
   xhr.responseType = ''
-  xhr.withCredentials = false
+  xhr.withCredentials = true
 
   _.each(options.headers || {}, function(v, k) {
     xhr.setRequestHeader(k, v)
