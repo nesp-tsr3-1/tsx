@@ -214,7 +214,6 @@ def aggregate_by_year(taxon_id, commit = False):
                 taxon_id,
                 experimental_design_type_id,
                 response_variable_type_id,
-                value,
                 data_type,
                 region_id,
                 unit_id,
