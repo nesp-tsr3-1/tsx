@@ -136,10 +136,10 @@ def process_database(species = None, monthly = False, filter_output = False):
                 'agg.region_id IS NOT NULL',
                 # Exclude data agreement = 0, 1
                 'COALESCE(data_source.data_agreement_id, -1) NOT IN (0, 1)',
-                # Exclude standardisation of monitoring/effort < 2
-                'COALESCE(data_source.standardisation_of_method_effort_id, 2) >= 2',
-                # Exclude consistency of monitoring < 2
-                'COALESCE(data_source.consistency_of_monitoring_id, 2) >= 2'
+                # Exclude standardisation of monitoring/effort = NA, 0, 1
+                'COALESCE(data_source.standardisation_of_method_effort_id, 0) NOT IN (0, 1)',
+                # Exclude consistency of monitoring = NA, 0, 1
+                'COALESCE(data_source.consistency_of_monitoring_id, 0) NOT IN (0, 1)'
             ]
 
             # Exclude zero-only time series
