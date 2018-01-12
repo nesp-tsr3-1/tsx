@@ -188,6 +188,7 @@ def process_database(species = None, monthly = False, filter_output = False):
                     region_centroid.y AS Latitude,
                     MAX(positional_accuracy_in_m) AS SpatialAccuracy,
                     {value_series} AS value_series,
+                    COUNT(*) AS value_count,
                     agg.data_type AS DataType,
                     (SELECT description FROM experimental_design_type WHERE agg.experimental_design_type_id = experimental_design_type.id) AS ExperimentalDesignType,
                     (SELECT description FROM response_variable_type WHERE agg.response_variable_type_id = response_variable_type.id) AS ResponseVariableType,
@@ -247,6 +248,9 @@ def process_database(species = None, monthly = False, filter_output = False):
                 # Parse out the yearly values (or monthly)
                 year_data = dict(item.split('=') for item in data['value_series'].split(','))
 
+                if len(year_data) != data['value_count']:
+                    raise ValueError("Aggregation problem - duplicate years found in time series: %s" % row)
+
                 # Populate years in output
                 data.update(year_data)
 
@@ -276,6 +280,7 @@ def process_database(species = None, monthly = False, filter_output = False):
 
                 # Remove unwanted key from dict
                 del data['value_series']
+                del data['value_count']
                 del data['scientific_name']
 
                 writer.writerow(data)
