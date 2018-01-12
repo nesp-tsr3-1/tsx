@@ -117,7 +117,8 @@ def process_database(species = None, monthly = False, filter_output = False):
             'DataAgreement',
             'SurveysCentroidLatitude',
             'SurveysCentroidLongitude',
-            'SurveyCount'
+            'SurveyCount',
+            'TimeSeriesID'
         ]
 
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -156,6 +157,7 @@ def process_database(species = None, monthly = False, filter_output = False):
         for taxon_id in tqdm(taxa):
             sql = """SELECT
                     (SELECT CAST(id AS UNSIGNED) FROM aggregated_id agg_id WHERE agg.taxon_id = agg_id.taxon_id AND agg.search_type_id <=> agg_id.search_type_id AND agg.source_id = agg_id.source_id AND agg.unit_id = agg_id.unit_id AND agg.site_id <=> agg_id.site_id AND agg.grid_cell_id <=> agg_id.grid_cell_id AND agg.data_type = agg_id.data_type) AS ID,
+                    time_series_id AS TimeSeriesID,
                     taxon.spno AS SpNo,
                     taxon.id AS TaxonID,
                     taxon.common_name AS CommonName,
