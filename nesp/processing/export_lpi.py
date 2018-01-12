@@ -118,7 +118,8 @@ def process_database(species = None, monthly = False, filter_output = False):
             'SurveysCentroidLatitude',
             'SurveysCentroidLongitude',
             'SurveyCount',
-            'TimeSeriesID'
+            'TimeSeriesID',
+            'NationalPriorityTaxa'
         ]
 
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -167,6 +168,7 @@ def process_database(species = None, monthly = False, filter_output = False):
                     taxon.family_common_name AS FamilyCommonName,
                     taxon.bird_group AS FunctionalGroup,
                     taxon.bird_sub_group AS FunctionalSubGroup,
+                    taxon.national_priority AS NationalPriorityTaxa,
                     (SELECT description FROM taxon_status WHERE taxon_status.id = taxon.epbc_status_id) AS EPBCStatus,
                     (SELECT description FROM taxon_status WHERE taxon_status.id = taxon.iucn_status_id) AS IUCNStatus,
                     (SELECT description FROM taxon_status WHERE taxon_status.id = taxon.aust_status_id) AS BirdLifeAustraliaStatus,
