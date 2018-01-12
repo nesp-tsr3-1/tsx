@@ -172,7 +172,7 @@ def aggregate_yearly(taxon_id, commit = False):
                 data_type,
                 region_id,
                 unit_id,
-                positional_accuracy_in_m,
+                MAX(positional_accuracy_in_m),
                 Point(AVG(ST_X(centroid_coords)), AVG(ST_Y(centroid_coords))),
                 SUM(survey_count)
             FROM aggregated_by_month
@@ -189,8 +189,7 @@ def aggregate_yearly(taxon_id, commit = False):
                 response_variable_type_id,
                 data_type,
                 region_id,
-                unit_id,
-                positional_accuracy_in_m
+                unit_id
         """
 
         session.execute(sql, { 'taxon_id': taxon_id })
