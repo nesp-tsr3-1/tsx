@@ -328,40 +328,42 @@ export default {
       var lpiResultFile = filtersStr + '/nesp_' + this.selectedYear.value + '_infile_Results.txt'
       console.log(lpiResultFile)
       api.lpiRunData(lpiResultFile, 'txt').then((data) => {
-        // format:
-        // 'LPI_final' 'CI_low' 'CI_low'
-        // '1980' float float float
-        var lowestCI = 1.0
-        var highestCI = 1.0
-        var lines = data.split('\n')
-        // ignore first line
-        lines = lines.slice(1)
-        lines.map(function(currentValue) {
-          if(currentValue.trim()) {
-            var values = currentValue.split(' ')
-            var year = values[0].replace(/"/g, '')
-            if(values[1] !== 'NA' && values[2] !== 'NA' && values[3] !== 'NA') {
-              that.lpiPlotDataSet.labels.push(parseInt(year))
-              that.lpiPlotDataSet.datasets[0].data.push(parseFloat(values[1]))
-              var lowCIVal = parseFloat(values[2])
-              that.lpiPlotDataSet.datasets[1].data.push(lowCIVal)
-              if(lowCIVal < lowestCI) {
-                lowestCI = lowCIVal
-              }
-              var highCIVal = parseFloat(values[3])
-              that.lpiPlotDataSet.datasets[2].data.push(highCIVal)
-              if(highCIVal > highestCI) {
-                highestCI = highCIVal
+        if(data) {
+          // format:
+          // 'LPI_final' 'CI_low' 'CI_low'
+          // '1980' float float float
+          var lowestCI = 1.0
+          var highestCI = 1.0
+          var lines = data.split('\n')
+          // ignore first line
+          lines = lines.slice(1)
+          lines.map(function(currentValue) {
+            if(currentValue.trim()) {
+              var values = currentValue.split(' ')
+              var year = values[0].replace(/"/g, '')
+              if(values[1] !== 'NA' && values[2] !== 'NA' && values[3] !== 'NA') {
+                that.lpiPlotDataSet.labels.push(parseInt(year))
+                that.lpiPlotDataSet.datasets[0].data.push(parseFloat(values[1]))
+                var lowCIVal = parseFloat(values[2])
+                that.lpiPlotDataSet.datasets[1].data.push(lowCIVal)
+                if(lowCIVal < lowestCI) {
+                  lowestCI = lowCIVal
+                }
+                var highCIVal = parseFloat(values[3])
+                that.lpiPlotDataSet.datasets[2].data.push(highCIVal)
+                if(highCIVal > highestCI) {
+                  highestCI = highCIVal
+                }
               }
             }
+          })
+          // update lpi plot
+          that.lpiPlot.options.scales.yAxes[0].ticks.min = Number((lowestCI - 0.1).toFixed(1))
+          that.lpiPlot.options.scales.yAxes[0].ticks.max = Number((highestCI + 0.1).toFixed(1))
+          that.lpiPlot.update()
+          if (!that.queryLPIData) {
+            that.loadingData = false
           }
-        })
-        // update lpi plot
-        that.lpiPlot.options.scales.yAxes[0].ticks.min = Number((lowestCI - 0.1).toFixed(1))
-        that.lpiPlot.options.scales.yAxes[0].ticks.max = Number((highestCI + 0.1).toFixed(1))
-        that.lpiPlot.update()
-        if (!that.queryLPIData) {
-          that.loadingData = false
         }
       })
     }, // end updatePlot function

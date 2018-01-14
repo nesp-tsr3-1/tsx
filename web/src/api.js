@@ -66,11 +66,13 @@ export function lpiRunData(path, filetype) {
   // }
   return xhrPromise(xhr).then(function(xhr) {
     var response = xhr.responseText
-    // console.log(response)
     if(filetype === 'json') {
       try { response = JSON.parse(response) } catch(e) {}
     }
     return response
+  })
+  .catch(function(e) {
+    console.log('Error:' + e)
   })
 }
 
