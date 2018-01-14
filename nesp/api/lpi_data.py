@@ -12,7 +12,7 @@ import json
 # this is going to use quite alot of RAM, but it is more responsive than using dask
 bp = Blueprint('lpi_data', __name__)
 export_dir = nesp.config.data_dir('export')
-filename = 'lpi.csv'
+filename = 'lpi-filtered.csv'
 df = pd.read_csv(os.path.join(export_dir, filename), index_col = 'ID',quoting=csv.QUOTE_MINIMAL, 
 	dtype={'ID': int, 'Binomial': str, 'SpNo': int, 'TaxonID': str, 'CommonName': str, 
 		'Class': str, 'Order': str, 'Family': str, 'FamilyCommonName': str, 
@@ -23,7 +23,8 @@ df = pd.read_csv(os.path.join(export_dir, filename), index_col = 'ID',quoting=cs
 		'ExperimentalDesignType': str,'ResponseVariableType': str, 'DataType': int, 'TimeSeriesLength': float,
 		'TimeSeriesSampleYears': float ,'TimeSeriesCompleteness': float,'TimeSeriesSamplingEvenness': float,
 		'NoAbsencesRecorded': str,'StandardisationOfMethodEffort': str,'ObjectiveOfMonitoring': str,'SpatialRepresentativeness': float, 'SeasonalConsistency': float,
-		'SpatialAccuracy':float,'ConsistencyOfMonitoring': float,'MonitoringFrequencyAndTiming': float})
+		'SpatialAccuracy':float,'ConsistencyOfMonitoring': float,'MonitoringFrequencyAndTiming': float, 'DataAgreement': str, 'SurveysCentroidLatitude': float, 
+		'SurveysCentroidLongitude': float, 'SurveyCount': int, 'TimeSeriesID': str, 'NationalPriorityTaxa': int})
 
 
 @bp.route('/lpi-data', methods = ['GET'])
@@ -90,7 +91,9 @@ def lpi_data():
 			filters.append("BirdLifeAustraliaStatus=='%s'" % (_status))
 		else:
 			filters.append("MaxStatus=='%s'" % (_status))
-	
+	# national priority
+	if request.args.has_key('priority'):
+		filters.append("NationalPriorityTaxa=='%d'" %(request.args.get('priority', type=int)))
 	#create filters
 	filtered_dat = None
 	if len(filters) > 0:
@@ -108,7 +111,7 @@ def lpi_data():
 			return output
 	elif output_format == "json":
 		#pandas index data a bit different, so need to unfold it, can use json_pandas for direct export
-		json_data = json.loads(filtered_dat.to_json())
+		json_data = json.loads(unicode(filtered_dat.to_json(), errors='ignore'))
 		return_json = {}
 		for field, value in json_data.items():
 			for _timeserie_id, _item_value in value.items():
@@ -118,8 +121,9 @@ def lpi_data():
 		return jsonify(return_json)
 	elif output_format == 'json_pandas':
 		return filtered_dat.to_json()
+	# This will be removed
 	elif output_format == 'dotplot':
-		json_data = json.loads(filtered_dat.to_json())
+		json_data = json.loads(unicode(filtered_dat.to_json(), errors='ignore'))
 		plot_dat = []
 		years = sorted([ y for y in json_data.keys() if y.isdigit() ])
 		binomials = json_data['Binomial']
@@ -130,7 +134,7 @@ def lpi_data():
 		return json.dumps(plot_dat)
 	# TODO: replace dotplot with plot
 	elif output_format == 'plot':
-		json_data = json.loads(filtered_dat.to_json())
+		json_data = json.loads(unicode(filtered_dat.to_json(), errors='ignore'))
 		dotplot_dat = []
 		timeseries_year = {}
 		species_year = {}
