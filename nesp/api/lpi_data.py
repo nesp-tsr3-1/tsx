@@ -139,9 +139,12 @@ def lpi_data():
 		timeseries_year = {}
 		species_year = {}
 		species_count_year = {}
+		taxa_count_year = {}
+		taxa_year = {}
 		years = sorted([ y for y in json_data.keys() if y.isdigit() ])
 		binomials = json_data['Binomial']
 		species = json_data['SpNo']
+		taxa = json_data['TaxonID']
 		for year in years:
 			for _timeserie_id, _item_value in json_data[year].items():
 				if _item_value != None:
@@ -149,17 +152,20 @@ def lpi_data():
 					if year in timeseries_year.keys():
 						timeseries_year[year] = timeseries_year[year] + 1
 						species_year[year].add(species[_timeserie_id])
+						taxa_year[year].add(taxa[_timeserie_id])
 					else:
 						timeseries_year[year] = 1
 						species_year[year] = set([species[_timeserie_id]])
+						taxa_year[year] = set([taxa[_timeserie_id]])
 		# print (species_year)
 		for year in years:
 			if year in species_year.keys():
 				species_count_year[year] = len(species_year[year])
+				taxa_count_year[year] = len(taxa_year[year])
 			#else:
 			#	species_count_year[year] = 0
 			#	timeseries_year[year] =0
-		summaryplot_dat = {'species': species_count_year, 'timeseries': timeseries_year}
+		summaryplot_dat = {'species': species_count_year, 'timeseries': timeseries_year, 'taxa': taxa_count_year}
 		return_json={'summary': summaryplot_dat, 'dotplot': dotplot_dat}
 		return json.dumps(return_json)
 	else:

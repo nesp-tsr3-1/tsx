@@ -306,11 +306,12 @@ export default {
             }
           })
           // summary plot
-          var speciesCountData = data['summary']['species']
+          // var speciesCountData = data['summary']['species']
+          var taxaCountData = data['summary']['taxa']
           var timeSeriesCountData = data['summary']['timeseries']
           var year = 0
-          for (year in speciesCountData) {
-            that.summaryPlotDataSet.datasets[0].data.push({'x': +year, 'y': +speciesCountData[year]})
+          for (year in taxaCountData) {
+            that.summaryPlotDataSet.datasets[0].data.push({'x': +year, 'y': +taxaCountData[year]})
           }
           for (year in timeSeriesCountData) {
             that.summaryPlotDataSet.datasets[1].data.push({'x': +year, 'y': +timeSeriesCountData[year]})
