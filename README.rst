@@ -1,8 +1,10 @@
-==============================
-Welcome to the NESP Repository
-==============================
+===================================================================
+Welcome to the Australian Threatened Species Index (TSX) Repository
+===================================================================
 
-TODO: Brief description of NESP project, links etc.
+For information about the Australian Threatened Species Index project, see http://www.nespthreatenedspecies.edu.au/projects/national-and-regional-monitoring-for-threatened-species
+
+The code in this repository is responsible for data-import and pre-processing of data, and visualsation of the generated trend graphs and associated data. It does not (yet) contain the code for generating the actual trends.
 
 Getting started with a local development environment
 ====================================================
