@@ -5,8 +5,8 @@ import _ from 'underscore'
 
 // const ROOT_URL = 'http://192.168.168.4:5000'
 // const ROOT_URL = 'http://localhost:5000'
-export const NESP_URL = 'https://nesp-dev1.coesra.org.au/'
-export const ROOT_URL = NESP_URL + 'nespapi'
+export const NESP_URL = 'https://nesp-dev1.coesra.org.au'
+export const ROOT_URL = NESP_URL + '/nespapi'
 
 export function createImport(dataImport) {
   return post('/imports', dataImport)
@@ -32,9 +32,17 @@ export function lpidata(params) {
   return get('/lpi-data', params)
 }
 
+export function lpiDownloadURL(params) {
+  return ROOT_URL + '/lpi-data?' + util.encodeParams(params)
+}
+
+export function lpiPlot(params) {
+  return get('/lpi-data/plot', params)
+}
+
 // TODO: if files are in object stores, update this
 export function lpiRunData(path, filetype) {
-  var baseLPIRunURL = NESP_URL + 'lpi_runs/'
+  var baseLPIRunURL = NESP_URL + '/lpi_runs/'
   var url = ''
   if(!_.isEmpty(path)) {
     url += encodeURI(path)
