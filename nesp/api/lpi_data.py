@@ -30,77 +30,13 @@ df = pd.read_csv(os.path.join(export_dir, filename), index_col = 'ID',quoting=cs
 @bp.route('/lpi-data', methods = ['GET'])
 def lpi_data():
 	"""Output aggregated data in LPI wide format"""
-	#output forat: csv or json
+	#output format: csv or json
 	output_format = request.args.get('format', type=str)
 	download_file = request.args.get('download', type=str)
-	#filter: species, state, searchtype
-	filter_str = ""
-	#spno
-	filters = []
-	if request.args.has_key('spno'):
-		_sp_no = request.args.get('spno', type=int)
-		filters.append("SpNo=='%d'" % (_sp_no))
-	if request.args.has_key('datatype'):
-		_sp_no = request.args.get('datatype', type=int)
-		filters.append("DataType=='%d'" % (_sp_no))
-	#state
-	if request.args.has_key('state'):
-		filters.append("State=='%s'" % (request.args.get('state', type=str)))
-	#searchtypedesc
-	if request.args.has_key('searchtype'):
-		_search_type = request.args.get('searchtype', type=int)
-		# find in database
-		session = get_session()
-		_search_type_desc = session.execute(
-            """SELECT * FROM search_type WHERE id = :searchtypeid""", 
-            {'searchtypeid': _search_type}).fetchone()['description']
-		filters.append("SearchTypeDesc=='%s'" % (_search_type_desc))
-		session.close()
-	#subibra
-	if request.args.has_key('subibra'):
-		_subibra = request.args.get('subibra', type=str)
-		filters.append("SubIBRA=='%s'" % (_subibra))
-	
-	#sourceid
-	if request.args.has_key('sourceid'):
-		_sourceid = request.args.get('sourceid', type=int)
-		filters.append("SourceID=='%d'" % (_sourceid))
-	
-	# Functional group
-	if request.args.has_key('group'):
-		_group = request.args.get('group', type=str)
-		filters.append("FunctionalGroup=='%s'" % (_group))
-	
-	# functional subgroup
-	if request.args.has_key('subgroup'):
-		_subgroup = request.args.get('subgroup', type=str)
-		filters.append("FunctionalSubGroup=='%s'" % (_subgroup))
 
-	#statusauth
-	_status = None
-	if request.args.has_key('status'):
-		_status = request.args.get('status', type=str)
+	# Filter LPI data based on request parameters
+	filtered_dat = get_filtered_data()
 
-	if _status!= None and request.args.has_key('statusauth'): #IUCN, EPBC, BirdLifeAustralia, Max
-		_statusauth = request.args.get('statusauth', type=str)
-		if _statusauth == "IUCN" :
-			filters.append("IUCNStatus=='%s'" % (_status))
-		elif _statusauth == "EPBC":
-			filters.append("EPBCStatus=='%s'" % (_status))
-		elif _statusauth == "BirdLifeAustralia":
-			filters.append("BirdLifeAustraliaStatus=='%s'" % (_status))
-		else:
-			filters.append("MaxStatus=='%s'" % (_status))
-	# national priority
-	if request.args.has_key('priority'):
-		filters.append("NationalPriorityTaxa=='%d'" %(request.args.get('priority', type=int)))
-	#create filters
-	filtered_dat = None
-	if len(filters) > 0:
-		filters_str = " and ".join(filters)
-		filtered_dat = df.query(filters_str) 
-	else:
-		filtered_dat = df
 	if output_format == None or output_format == 'csv':
 		if download_file == None or download_file == "":
 			return filtered_dat.to_csv()
@@ -171,8 +107,129 @@ def lpi_data():
 	else:
 		return jsonify("Unsupported format (Supported: csv, json)"), 400
 
+@bp.route('/lpi-data/plot', methods = ['GET'])
+def plot():
+	# Filter data
+	df = get_filtered_data()
+
+	return json.dumps({
+		'dotplot': get_dotplot_data(df),
+		'summary': get_summary_data(df)
+	})
 
 
+def get_dotplot_data(filtered_data):
+	"""Converts time-series to a minimal form for generating dot plots:
+	[
+		[[year,count],[year,count] .. ],
+		...
+	]
+	Where count = 0 or 1
+	"""
+	df = filtered_data
 
+	# Get year columns
+	years = [col for col in df.columns if col.isdigit()]
+	int_years = [int(year) for year in years]
 
+	# Convert Pandas data to numpy array so we can iterate over it efficiently
+	raw_data = df.loc[:,years].values
+	result = []
+	for i, row in enumerate(raw_data):
+		result.append([[int_years[j], 1 if value > 0 else 0] for j, value in enumerate(row) if value >= 0])
 
+	return result
+
+def get_summary_data(filtered_data):
+	"""Calculates the number of time-series and distinct taxa per year"""
+
+	df = filtered_data
+
+	# Get year columns
+	years = [col for col in df.columns if col.isdigit()]
+
+	return {
+		# Get number of time series per year
+		'timeseries': df.loc[:,years].count().to_dict(),
+
+		# Get number of unique taxa per year
+		# There is a bit to unpack in this line:
+		#    df.loc[:,['TaxonID'] + years]   -- Filter down to just year and taxon id columns
+		#    groupby('TaxonID').count() > 0  -- Group on taxon ID to get a matrix of Taxa x Year with True/False in each cell
+		#    sum()                           -- Finally count up totals for each year
+		'taxa': (df.loc[:,['TaxonID'] + years].groupby('TaxonID').count() > 0).sum().to_dict()
+	}
+
+def get_filtered_data():
+	filter_str = build_filter_string()
+	if filter_str:
+		return df.query(filter_str)
+	else:
+		return df
+
+def build_filter_string():
+	filter_str = ""
+	#spno
+	filters = []
+	if request.args.has_key('spno'):
+		_sp_no = request.args.get('spno', type=int)
+		filters.append("SpNo=='%d'" % (_sp_no))
+	if request.args.has_key('datatype'):
+		_sp_no = request.args.get('datatype', type=int)
+		filters.append("DataType=='%d'" % (_sp_no))
+	#state
+	if request.args.has_key('state'):
+		filters.append("State=='%s'" % (request.args.get('state', type=str)))
+	#searchtypedesc
+	if request.args.has_key('searchtype'):
+		_search_type = request.args.get('searchtype', type=int)
+		# find in database
+		session = get_session()
+		_search_type_desc = session.execute(
+            """SELECT * FROM search_type WHERE id = :searchtypeid""",
+            {'searchtypeid': _search_type}).fetchone()['description']
+		filters.append("SearchTypeDesc=='%s'" % (_search_type_desc))
+		session.close()
+	#subibra
+	if request.args.has_key('subibra'):
+		_subibra = request.args.get('subibra', type=str)
+		filters.append("SubIBRA=='%s'" % (_subibra))
+
+	#sourceid
+	if request.args.has_key('sourceid'):
+		_sourceid = request.args.get('sourceid', type=int)
+		filters.append("SourceID=='%d'" % (_sourceid))
+
+	# Functional group
+	if request.args.has_key('group'):
+		_group = request.args.get('group', type=str)
+		filters.append("FunctionalGroup=='%s'" % (_group))
+
+	# functional subgroup
+	if request.args.has_key('subgroup'):
+		_subgroup = request.args.get('subgroup', type=str)
+		filters.append("FunctionalSubGroup=='%s'" % (_subgroup))
+
+	#statusauth
+	_status = None
+	if request.args.has_key('status'):
+		_status = request.args.get('status', type=str)
+
+	if _status!= None and request.args.has_key('statusauth'): #IUCN, EPBC, BirdLifeAustralia, Max
+		_statusauth = request.args.get('statusauth', type=str)
+		if _statusauth == "IUCN" :
+			filters.append("IUCNStatus=='%s'" % (_status))
+		elif _statusauth == "EPBC":
+			filters.append("EPBCStatus=='%s'" % (_status))
+		elif _statusauth == "BirdLifeAustralia":
+			filters.append("BirdLifeAustraliaStatus=='%s'" % (_status))
+		else:
+			filters.append("MaxStatus=='%s'" % (_status))
+	# national priority
+	if request.args.has_key('priority'):
+		filters.append("NationalPriorityTaxa=='%d'" %(request.args.get('priority', type=int)))
+
+	if len(filters) > 0:
+		return " and ".join(filters)
+	else:
+		return None
