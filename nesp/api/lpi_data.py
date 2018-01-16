@@ -130,6 +130,9 @@ def get_dotplot_data(filtered_data):
 	"""
 	df = filtered_data
 
+	if len(df) == 0:
+		return []
+
 	# Get year columns
 	years = [col for col in df.columns if col.isdigit()]
 	int_years = [int(year) for year in years]
@@ -153,6 +156,12 @@ def get_summary_data(filtered_data):
 	"""Calculates the number of time-series and distinct taxa per year"""
 
 	df = filtered_data
+
+	if len(df) == 0:
+		return {
+			'timeseries': {},
+			'taxa': {}
+		}
 
 	# Get year columns
 	years = [col for col in df.columns if col.isdigit()]
