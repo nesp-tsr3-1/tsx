@@ -224,6 +224,7 @@ export default {
       data: that.dotPlotDataSet,
       // Configuration options go here
       options: {
+        animation: false,
         responsive: true,
         tooltips: {
           mode: 'point'
@@ -385,7 +386,6 @@ export default {
           for (year in timeSeriesCountData) {
             that.summaryPlotDataSet.datasets[1].data.push({'x': +year, 'y': +timeSeriesCountData[year]})
           }
-          // console.log(that.summaryPlotDataSet)
           that.dotPlot.update()
           // this will cause exception as the axis might be change
           // that.summaryPlot.update()
