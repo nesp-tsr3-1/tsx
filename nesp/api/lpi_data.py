@@ -9,6 +9,8 @@ import nesp.config
 import pandas as pd
 import os
 import json
+import numpy as np
+
 # this is going to use quite alot of RAM, but it is more responsive than using dask
 bp = Blueprint('lpi_data', __name__)
 export_dir = nesp.config.data_dir('export')
@@ -132,11 +134,18 @@ def get_dotplot_data(filtered_data):
 	years = [col for col in df.columns if col.isdigit()]
 	int_years = [int(year) for year in years]
 
+	# Experiment: order dot plot data to get a better visual indicator
+	df = df.loc[:,years]
+	m = (df >= 0).values
+	c = (2 ** np.arange(0, 70, dtype=object))
+	df = df.assign(x = m.dot(c)).sort_values(['x'])
+
 	# Convert Pandas data to numpy array so we can iterate over it efficiently
 	raw_data = df.loc[:,years].values
 	result = []
 	for i, row in enumerate(raw_data):
 		result.append([[int_years[j], 1 if value > 0 else 0] for j, value in enumerate(row) if value >= 0])
+
 
 	return result
 
@@ -153,6 +162,7 @@ def get_summary_data(filtered_data):
 		'timeseries': df.loc[:,years].count().to_dict(),
 
 		# Get number of unique taxa per year
+		#
 		# There is a bit to unpack in this line:
 		#    df.loc[:,['TaxonID'] + years]   -- Filter down to just year and taxon id columns
 		#    groupby('TaxonID').count() > 0  -- Group on taxon ID to get a matrix of Taxa x Year with True/False in each cell
