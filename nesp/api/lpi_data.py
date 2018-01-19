@@ -166,6 +166,13 @@ def get_summary_data(filtered_data):
 	# Get year columns
 	years = [col for col in df.columns if col.isdigit()]
 
+	# Fill in any gaps in time series
+	# We are being a bit tricky here. We do a back-fill and forward-fill of values, and then add them together.
+	# The NaNs propagate so that we end up with just the gaps filled with non-NaNs.
+	# Note: We don't care about the actual values - just whether they are NaN or not.
+	year_df = df.loc[:,years]
+	df[years] = year_df.fillna(method='bfill', axis=1) + year_df.fillna(method='ffill', axis=1)
+
 	return {
 		# Get number of time series per year
 		'timeseries': df.loc[:,years].count().to_dict(),
