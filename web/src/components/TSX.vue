@@ -330,6 +330,9 @@ export default {
       this.queryLPIData = true
       this.loadingData = false
       this.updatePlot()
+    },
+    selectedYear(val) {
+      this.updatePlot()
     }
   },
   computed: {
