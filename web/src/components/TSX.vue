@@ -238,6 +238,13 @@ export default {
               display: true,
               labelString: 'Time series'
             }
+          }],
+          xAxes: [{
+            type: 'linear',
+            ticks: {
+              min: 1950,
+              max: 2020
+            }
           }]
         }
       }
@@ -367,11 +374,12 @@ export default {
           // console.log(data)
           // dotplot
           var dotPlotData = data['dotplot']
+
           dotPlotData.forEach(function(timeSeries, i) {
             timeSeries.forEach(function(value) {
               var year = value[0]
               var count = value[1]
-              that.dotPlotDataSet.datasets[count].data.push({
+              that.dotPlotDataSet.datasets[count === 0 ? 1 : 0].data.push({
                 x: year,
                 y: i + 1,
                 r: 1
