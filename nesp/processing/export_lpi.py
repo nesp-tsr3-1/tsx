@@ -130,6 +130,8 @@ def process_database(species = None, monthly = False, filter_output = False):
 
         if filter_output:
             where_conditions += [
+                # Exclude surveys after 2015
+                'agg.start_date_y <= 2015',
                 # Exclude incidental surveys
                 'COALESCE(agg.search_type_id, 0) != 6',
                 # Exclude status = LC, EX or Blank
