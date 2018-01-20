@@ -188,7 +188,7 @@ def process_database(species = None, monthly = False, filter_output = False):
                     data_source.data_agreement_id AS DataAgreement,
                     MAX(ST_X(agg.centroid_coords)) AS SurveysCentroidLongitude,
                     MAX(ST_Y(agg.centroid_coords)) AS SurveysCentroidLatitude,
-                    MAX(agg.survey_count) AS SurveyCount
+                    SUM(agg.survey_count) AS SurveyCount
                 FROM
                     {aggregated_table} agg
                     INNER JOIN taxon ON taxon.id = agg.taxon_id
