@@ -15,7 +15,7 @@ import numpy as np
 bp = Blueprint('lpi_data', __name__)
 export_dir = nesp.config.data_dir('export')
 filename = 'lpi-filtered.csv'
-df = pd.read_csv(os.path.join(export_dir, filename), index_col = 'ID',quoting=csv.QUOTE_MINIMAL, 
+unfiltered_df = pd.read_csv(os.path.join(export_dir, filename), index_col = 'ID',quoting=csv.QUOTE_MINIMAL, 
 	dtype={'ID': int, 'Binomial': str, 'SpNo': int, 'TaxonID': str, 'CommonName': str, 
 		'Class': str, 'Order': str, 'Family': str, 'FamilyCommonName': str, 
 		'Genus': str, 'Species': str, 'Subspecies': str,  
@@ -177,7 +177,9 @@ def get_summary_data(filtered_data):
 	# The NaNs propagate so that we end up with just the gaps filled with non-NaNs.
 	# Note: We don't care about the actual values - just whether they are NaN or not.
 	year_df = df.loc[:,years]
-	df[years] = year_df.fillna(method='bfill', axis=1) + year_df.fillna(method='ffill', axis=1)
+	year_df[years] = year_df.fillna(method='bfill', axis=1) + year_df.fillna(method='ffill', axis=1)
+	year_df['TaxonID'] = df['TaxonID']
+	df = year_df
 
 	return {
 		# Get number of time series per year
@@ -195,9 +197,9 @@ def get_summary_data(filtered_data):
 def get_filtered_data():
 	filter_str = build_filter_string()
 	if filter_str:
-		return df.query(filter_str)
+		return unfiltered_df.query(filter_str)
 	else:
-		return df
+		return unfiltered_df.copy()
 
 def build_filter_string():
 	filter_str = ""
