@@ -9,6 +9,7 @@ import nesp.config
 from datetime import date
 import re
 import numpy as np
+import nesp.config
 
 log = logging.getLogger(__name__)
 
@@ -40,8 +41,9 @@ def process_database(species = None, monthly = False, filter_output = False):
         FROM region""")
 
     # Get year range
-    # TODO: Read min year from config file
-    min_year, max_year = 1950, date.today().year + 1
+    min_year = nesp.config.config.getint("processing", "min_year")
+    max_year = nesp.config.config.getint("processing", "max_year")
+
 
     # Without this, the GROUP_CONCAT in the export query produces rows that are too long
     session.execute("""SET SESSION group_concat_max_len = 50000;""")

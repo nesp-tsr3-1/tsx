@@ -12,6 +12,10 @@ port=8080
 [global]
 data_dir=/opt/nesp
 
+[processing]
+min_year=1950
+max_year=2015
+
 [processing.alpha_hull]
 thinning_distance=250
 alpha=1.6
