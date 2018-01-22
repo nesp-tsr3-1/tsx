@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import csv
 import StringIO
 from flask import request, make_response, g, jsonify, Blueprint
@@ -267,3 +268,167 @@ def build_filter_string():
 		return " and ".join(filters)
 	else:
 		return None
+
+@bp.route('/lpi-data/stats', methods = ['GET'])
+def stats():
+	# Filter data
+	df = get_filtered_data()
+
+	return json.dumps(get_stats(df))
+
+@bp.route('/lpi-data/stats.html', methods = ['GET'])
+def stats_html():
+	# Filter data
+	df = get_filtered_data()
+
+	stats = get_stats(df)
+
+	html = """
+	<html>
+		<head>
+		</head>
+		<body>
+			<p>
+				Time-series length (mean ± SD): {ts_length_mean:.1f} ± {ts_length_stddev:.1f}
+			</p>
+			<p>
+				Number of samples (years) per time series (mean ± SD): {ts_years_mean:.1f} ± {ts_years_stddev:.1f}
+			</p>
+			<p>
+				Number of data sources in Index: {num_sources}
+			</p>
+			<p>
+				Number of taxa in Index: {num_taxa}
+			</p>
+			<table>
+				<thead>
+					<tr>
+						<th>Taxon name</th>
+						<th>Taxon scientific name</th>
+						<th>Functional group</th>
+						<th>Functional sub-group</th>
+						<th>BirdLife Australia status</th>
+						<th>EPBC status</th>
+						<th># data sources</th>
+						<th># time series</th>
+						<th>Mean time-series length</th>
+						<th>Spatial representativeness</th>
+					</tr>
+				</thead>
+				<tbody>
+	""".format(
+		ts_length_mean = stats['ts_length']['mean'],
+		ts_length_stddev = stats['ts_length']['stddev'],
+		ts_years_mean = stats['ts_years']['mean'],
+		ts_years_stddev = stats['ts_years']['stddev'],
+		num_sources = stats['num_sources'],
+		num_taxa = stats['num_taxa']
+	)
+
+	for row in stats['taxa_with_data']:
+		html += """
+		<tr>
+			<td>{common_name}</td>
+			<td>{scientific_name}</td>
+			<td>{bird_group}</td>
+			<td>{bird_sub_group}</td>
+			<td>{aust_status}</td>
+			<td>{epbc_status}</td>
+			<td>{num_sources:.0f}</td>
+			<td>{num_ts:.0f}</td>
+			<td>{ts_length_mean:.1f}</td>
+			<td>{spatial_rep:.1f}</td>
+		</tr>""".format(**row)
+
+	for row in stats['taxa_without_data']:
+		html += """
+		<tr>
+			<td>{common_name}</td>
+			<td>{scientific_name}</td>
+			<td>{bird_group}</td>
+			<td>{bird_sub_group}</td>
+			<td>{aust_status}</td>
+			<td>{epbc_status}</td>
+			<td>0</td>
+			<td>0</td>
+			<td></td>
+			<td></td>
+		</tr>""".format(**row)
+
+	html += """
+				</tbody>
+			</table>
+		</body>
+	</html>
+	"""
+
+	return html
+
+def get_stats(filtered_data):
+	df = filtered_data
+
+	years = [col for col in df.columns if col.isdigit()]
+	int_years = [int(year) for year in years]
+
+	year_df = df.loc[:,years] * 0 + int_years
+
+	# Time series length
+	ts_length = df['TimeSeriesLength'] # year_df.max(axis = 1) - year_df.min(axis = 1) + 1
+
+	# Time series sample years
+	ts_years = df['TimeSeriesSampleYears'] # (year_df * 0 + 1).sum(axis = 1)
+
+	n_sources = df['SourceDesc'].nunique()
+	n_taxa = df['TaxonID'].nunique()
+
+	grouped_by_taxon = df.groupby('TaxonID').agg({
+		'TimeSeriesLength': np.mean,
+		'SourceDesc': lambda x: x.nunique(),
+		'TimeSeriesID': lambda x: x.nunique(),
+		'SpatialRepresentativeness': np.mean
+	}).rename(columns = {
+		'TimeSeriesLength': 'ts_length_mean',
+		'SourceDesc': 'num_sources',
+		'TimeSeriesID': 'num_ts',
+		'SpatialRepresentativeness': 'spatial_rep'
+	})
+
+	session = get_session()
+	result = session.execute("""SELECT
+			id AS 'TaxonID',
+			common_name,
+			scientific_name,
+			bird_group,
+			bird_sub_group,
+			(SELECT description FROM taxon_status WHERE taxon_status.id = aust_status_id) AS aust_status,
+			(SELECT description FROM taxon_status WHERE taxon_status.id = epbc_status_id) AS epbc_status
+		FROM taxon
+		WHERE GREATEST(COALESCE(aust_status_id, 0), COALESCE(epbc_status_id, 0), COALESCE(iucn_status_id, 0)) NOT IN (0,1,7)
+		AND (ultrataxon OR taxon.id IN :taxon_ids)""", {
+			'taxon_ids': list(df['TaxonID'].unique())
+		})
+	session.close()
+
+	all_taxa = pd.DataFrame.from_records(data = result.fetchall(), index = 'TaxonID', columns = result.keys())
+
+	joined = all_taxa.join(grouped_by_taxon, how='outer').sort_values(['bird_group', 'bird_sub_group', 'common_name'], na_position='first')
+	joined = joined.reset_index().rename(columns = { 'TaxonID': 'taxon_id' })
+	joined['spatial_rep'] *= 100
+
+	taxa_with_data = joined.query('num_ts > 0')
+	taxa_without_data = joined.query('num_ts != num_ts').drop(columns = ['ts_length_mean', 'num_sources', 'num_ts', 'spatial_rep'])
+
+	return {
+		'num_sources': df['SourceDesc'].nunique(),
+		'num_taxa': df['TaxonID'].nunique(),
+		'ts_length': {
+			'mean': ts_length.mean(),
+			'stddev': ts_length.std()
+		},
+		'ts_years': {
+			'mean': ts_years.mean(),
+			'stddev': ts_years.std()
+		},
+		'taxa_with_data': taxa_with_data.to_dict(orient='records'),
+		'taxa_without_data': taxa_without_data.to_dict(orient='records')
+	}

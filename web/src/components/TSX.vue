@@ -65,6 +65,9 @@
           <p>
             <button class='button is-primary' v-on:click='downloadCSV'>Download CSV</button>
           </p>
+          <p>
+            <button class='button is-primary' v-on:click='viewDataSummary'>Data Summary</button>
+          </p>
         </div>
       </div>
 
@@ -462,6 +465,11 @@ export default {
       filterParams['format'] = 'csv'
       filterParams['download'] = 'widetable.csv'
       var url = api.lpiDownloadURL(filterParams)
+      window.open(url)
+    },
+    viewDataSummary: function() {
+      var filterParams = this.getFilterParams()
+      var url = api.lpiSummaryURL(filterParams)
       window.open(url)
     },
     getFilterParams: function() {
