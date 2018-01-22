@@ -11,7 +11,7 @@
           <div class="field">
             <label class="label">Group</label>
             <div class="select is-fullwidth">
-              <select v-model='selectedGroup'>
+              <select v-model='selectedGroup' :disabled='prioritySelected'>
                 <option v-for="option in groupList" v-bind:value="option">{{option.text}}</option>
               </select>
             </div>
@@ -19,7 +19,7 @@
           <div class="field">
             <label class="label">Sub-group</label>
             <div class="select is-fullwidth">
-              <select v-model='selectedSubGroup'>
+              <select v-model='selectedSubGroup' :disabled='prioritySelected'>
                 <option v-for="option in subGroupList" v-bind:value="option">{{option.text}}</option>
               </select>
             </div>
@@ -27,7 +27,7 @@
           <div class="field">
             <label class="label">State</label>
             <div class="select is-fullwidth">
-              <select v-model='selectedState'>
+              <select v-model='selectedState' :disabled='prioritySelected'>
                 <option v-for="option in stateList" v-bind:value="option">{{option.text}}</option>
               </select>
             </div>
@@ -35,7 +35,7 @@
           <div class="field">
             <label class="label">Status authority</label>
             <div class="select is-fullwidth">
-              <select v-model='selectedStatusAuthority'>
+              <select v-model='selectedStatusAuthority' :disabled='prioritySelected'>
                 <option v-for="option in statusAuthorityList" v-bind:value="option">{{option.text}}</option>
               </select>
             </div>
@@ -43,7 +43,7 @@
           <div class="field">
             <label class="label">Status</label>
             <div class="select is-fullwidth">
-              <select v-model='selectedStatus'>
+              <select v-model='selectedStatus' :disabled='prioritySelected'>
                 <option v-for="option in statusList" v-bind:value="option">{{option.text}}</option>
               </select>
             </div>
@@ -55,6 +55,11 @@
                 <option v-for="option in yearList" v-bind:value="option">{{option.text}}</option>
               </select>
             </div>
+          </div>
+          
+          <div class="field">
+            <input type="checkbox" id="checkbox" v-model="prioritySelected">
+            <label for="checkbox">Priority Group</label>
           </div>
 
           <p>
@@ -144,7 +149,9 @@ export default {
       // need to query LPI rest service
       queryLPIData: true,
       // no data to show
-      noData: true
+      noData: true,
+      // prioritySelected
+      prioritySelected: false
     }
     // groups
     data.groupList.push({value: 'None', text: 'All'})
