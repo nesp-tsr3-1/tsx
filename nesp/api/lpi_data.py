@@ -15,7 +15,7 @@ import numpy as np
 bp = Blueprint('lpi_data', __name__)
 export_dir = nesp.config.data_dir('export')
 filename = 'lpi-filtered.csv'
-df = pd.read_csv(os.path.join(export_dir, filename), index_col = 'ID',quoting=csv.QUOTE_MINIMAL, 
+unfiltered_df = pd.read_csv(os.path.join(export_dir, filename), index_col = 'ID',quoting=csv.QUOTE_MINIMAL, 
 	dtype={'ID': int, 'Binomial': str, 'SpNo': int, 'TaxonID': str, 'CommonName': str, 
 		'Class': str, 'Order': str, 'Family': str, 'FamilyCommonName': str, 
 		'Genus': str, 'Species': str, 'Subspecies': str,  
@@ -136,19 +136,25 @@ def get_dotplot_data(filtered_data):
 	# Get year columns
 	years = [col for col in df.columns if col.isdigit()]
 	int_years = [int(year) for year in years]
-
-	# Experiment: order dot plot data to get a better visual indicator
 	df = df.loc[:,years]
+
+	# Get random sample
+	df = df.assign(x = np.random.randn(len(df))).sort_values(['x']).head(50)
+
+	# Sort time series
 	m = (df >= 0).values
-	c = (2 ** np.arange(0, 70, dtype=object))
-	df = df.assign(x = m.dot(c)).sort_values(['x'])
+	# c = (2 ** np.arange(0, len(df.columns), dtype=object)) # Order by last year surveyed
+	# c = np.arange(0, len(df.columns)) # Order by mean year surveyed
+	c = [1] * len(df.columns) # Order by time sample years
+	x = m.dot(c)
+	# x = np.random.randn(len(df))
+	df = df.assign(x = x).sort_values(['x'])
 
 	# Convert Pandas data to numpy array so we can iterate over it efficiently
 	raw_data = df.loc[:,years].values
 	result = []
 	for i, row in enumerate(raw_data):
 		result.append([[int_years[j], 1 if value > 0 else 0] for j, value in enumerate(row) if value >= 0])
-
 
 	return result
 
@@ -171,7 +177,9 @@ def get_summary_data(filtered_data):
 	# The NaNs propagate so that we end up with just the gaps filled with non-NaNs.
 	# Note: We don't care about the actual values - just whether they are NaN or not.
 	year_df = df.loc[:,years]
-	df[years] = year_df.fillna(method='bfill', axis=1) + year_df.fillna(method='ffill', axis=1)
+	year_df[years] = year_df.fillna(method='bfill', axis=1) + year_df.fillna(method='ffill', axis=1)
+	year_df['TaxonID'] = df['TaxonID']
+	df = year_df
 
 	return {
 		# Get number of time series per year
@@ -189,9 +197,9 @@ def get_summary_data(filtered_data):
 def get_filtered_data():
 	filter_str = build_filter_string()
 	if filter_str:
-		return df.query(filter_str)
+		return unfiltered_df.query(filter_str)
 	else:
-		return df
+		return unfiltered_df.copy()
 
 def build_filter_string():
 	filter_str = ""

@@ -10,6 +10,7 @@ import nesp.processing.t1_aggregation
 import nesp.processing.response_variable
 import nesp.processing.export_lpi
 import nesp.processing.spatial_rep
+import nesp.processing.filter_time_series
 import fiona
 from tqdm import tqdm
 import logging
@@ -52,6 +53,7 @@ def main():
     p.add_argument('--filter', '-f', action='store_true', dest='filter', help='Filter output')
 
     p = subparsers.add_parser('spatial_rep')
+    p = subparsers.add_parser('filter_time_series')
     p = subparsers.add_parser('all')
     args = parser.parse_args()
 
@@ -81,6 +83,14 @@ def main():
         nesp.processing.export_lpi.process_database(species = species, monthly = args.monthly, filter_output = args.filter)
     elif args.command == 'spatial_rep':
         nesp.processing.spatial_rep.process_database(species = species, commit = args.commit)
+    elif args.command == 'filter_time_series':
+        if not args.commit:
+            log.error("Dry-run mode not supported for 'filter_time_series'")
+            return
+        if args.species:
+            log.error("Passing species not supported for 'filter_time_series'")
+            return
+        nesp.processing.filter_time_series.process_database()
     elif args.command == 'all':
         if not args.commit:
             log.error("Dry-run mode not supported for 'all'")
@@ -98,7 +108,20 @@ def main():
         log.info("STEP 3 - GENERATE PSEUDO ABSENCES")
         nesp.processing.pseudo_absence.process_database(commit = True)
 
+        log.info("STEP 4 - TYPE 1 DATA AGGREGATION")
+        nesp.processing.t1_aggregation.process_database(commit = True)
+
+        log.info("STEP 5 - TYPE 2 DATA RESPONSE VARIABLE PROCESSING")
+        nesp.processing.response_variable.process_database(commit = True)
+
+        log.info("STEP 6 - CALCULATE SPATIAL REPRESENTATIVENESS")
+        nesp.processing.spatial_rep.process_database(commit = True)
+
+        log.info("STEP 7 - FILTER TIME SERIES")
+        nesp.processing.filter_time_series.process_database()
+
         log.info("PROCESSING COMPLETE")
+
 
 # ----- Export shapefiles showing processed data
 

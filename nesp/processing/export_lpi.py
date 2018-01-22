@@ -9,6 +9,7 @@ import nesp.config
 from datetime import date
 import re
 import numpy as np
+import nesp.config
 
 log = logging.getLogger(__name__)
 
@@ -40,8 +41,9 @@ def process_database(species = None, monthly = False, filter_output = False):
         FROM region""")
 
     # Get year range
-    # TODO: Read min year from config file
-    min_year, max_year = 1950, date.today().year + 1
+    min_year = nesp.config.config.getint("processing", "min_year")
+    max_year = nesp.config.config.getint("processing", "max_year")
+
 
     # Without this, the GROUP_CONCAT in the export query produces rows that are too long
     session.execute("""SET SESSION group_concat_max_len = 50000;""")
@@ -126,29 +128,9 @@ def process_database(species = None, monthly = False, filter_output = False):
         writer.writeheader()
 
         where_conditions = []
-        having_clause = ''
 
         if filter_output:
-            where_conditions += [
-                # Exclude surveys after 2015
-                'agg.start_date_y <= 2015',
-                # Exclude incidental surveys
-                'COALESCE(agg.search_type_id, 0) != 6',
-                # Exclude status = LC, EX or Blank
-                'GREATEST(COALESCE(taxon.epbc_status_id, 0), COALESCE(taxon.iucn_status_id, 0), COALESCE(taxon.aust_status_id, 0)) NOT IN (0,1,7)',
-                # Exclude blank region
-                'agg.region_id IS NOT NULL',
-                # Exclude data agreement = 0, 1
-                'COALESCE(data_source.data_agreement_id, -1) NOT IN (0, 1)',
-                # Exclude standardisation of monitoring/effort = 0, 1
-                'COALESCE(data_source.standardisation_of_method_effort_id, -1) NOT IN (0, 1)',
-                # Exclude consistency of monitoring = 0, 1
-                'COALESCE(data_source.consistency_of_monitoring_id, -1) NOT IN (0, 1)'
-            ]
-
-            # Exclude zero-only time series
-            # At least 5 years per time series
-            having_clause = "HAVING MAX(value) > 0 AND COUNT(DISTINCT start_date_y) >= 5"
+            where_conditions += ['include_in_analysis']
 
         if monthly:
             value_series = "GROUP_CONCAT(CONCAT(start_date_y, '_', LPAD(COALESCE(start_date_m, 0), 2, '0'), '=', value) ORDER BY start_date_y)"
@@ -206,7 +188,7 @@ def process_database(species = None, monthly = False, filter_output = False):
                     data_source.data_agreement_id AS DataAgreement,
                     MAX(ST_X(agg.centroid_coords)) AS SurveysCentroidLongitude,
                     MAX(ST_Y(agg.centroid_coords)) AS SurveysCentroidLatitude,
-                    MAX(agg.survey_count) AS SurveyCount
+                    SUM(agg.survey_count) AS SurveyCount
                 FROM
                     {aggregated_table} agg
                     INNER JOIN taxon ON taxon.id = agg.taxon_id
@@ -231,12 +213,10 @@ def process_database(species = None, monthly = False, filter_output = False):
                     agg.region_id,
                     agg.unit_id,
                     agg.data_type
-                {having_clause}
                     """.format(
                         value_series = value_series,
                         aggregated_table = aggregated_table,
-                        where_conditions = " ".join("AND %s" % cond for cond in where_conditions),
-                        having_clause = having_clause
+                        where_conditions = " ".join("AND %s" % cond for cond in where_conditions)
                     )
 
             result = session.execute(sql, {
