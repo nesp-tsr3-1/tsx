@@ -466,39 +466,47 @@ export default {
     },
     getFilterParams: function() {
       var filterParams = {}
-      if(this.selectedGroup.value !== 'None') {
-        filterParams['group'] = this.selectedGroup.value
-      }
-      if(this.selectedSubGroup.value !== 'None') {
-        filterParams['subgroup'] = this.selectedSubGroup.value
-      }
-      if(this.selectedState.value !== 'None') {
-        filterParams['state'] = this.selectedState.value
-      }
-      if(this.selectedStatusAuthority.value !== 'None') {
-        filterParams['statusauth'] = this.selectedStatusAuthority.value
-      }
-      if(this.selectedStatus.value !== 'None') {
-        filterParams['status'] = this.selectedStatus.value
+      if(this.prioritySelected) {
+        filterParams['priority'] = 1
+      } else {
+        if(this.selectedGroup.value !== 'None') {
+          filterParams['group'] = this.selectedGroup.value
+        }
+        if(this.selectedSubGroup.value !== 'None') {
+          filterParams['subgroup'] = this.selectedSubGroup.value
+        }
+        if(this.selectedState.value !== 'None') {
+          filterParams['state'] = this.selectedState.value
+        }
+        if(this.selectedStatusAuthority.value !== 'None') {
+          filterParams['statusauth'] = this.selectedStatusAuthority.value
+        }
+        if(this.selectedStatus.value !== 'None') {
+          filterParams['status'] = this.selectedStatus.value
+        }
       }
       return filterParams
     },
     getFilterString: function() {
       var filtersStr = ''
-      if(this.selectedGroup.value !== 'None') {
-        filtersStr = filtersStr + 'group-' + this.selectedGroup.value + '_'
-      }
-      if(this.selectedSubGroup.value !== 'None') {
-        filtersStr = filtersStr + 'subgroup-' + this.selectedSubGroup.value + '_'
-      }
-      if(this.selectedState.value !== 'None') {
-        filtersStr = filtersStr + 'state-' + this.selectedState.value + '_'
-      }
-      if(this.selectedStatusAuthority.value !== 'None') {
-        filtersStr = filtersStr + 'statusauth-' + this.selectedStatusAuthority.value + '_'
-      }
-      if(this.selectedStatus.value !== 'None') {
-        filtersStr = filtersStr + 'status-' + this.selectedStatus.value
+      if(this.prioritySelected) {
+        filtersStr = 'priority-1'
+      } else {
+        if(this.selectedGroup.value !== 'None') {
+          filtersStr = filtersStr + 'group-' + this.selectedGroup.value + '_'
+        }
+        if(this.selectedSubGroup.value !== 'None') {
+          filtersStr = filtersStr + 'subgroup-' + this.selectedSubGroup.value + '_'
+        }
+        if(this.selectedState.value !== 'None') {
+          filtersStr = filtersStr + 'state-' + this.selectedState.value + '_'
+        }
+        if(this.selectedStatusAuthority.value !== 'None') {
+          filtersStr = filtersStr + 'statusauth-' + this.selectedStatusAuthority.value + '_'
+        }
+        if(this.selectedStatus.value !== 'None') {
+          filtersStr = filtersStr + 'status-' + this.selectedStatus.value
+        }
       }
       return filtersStr
     },
