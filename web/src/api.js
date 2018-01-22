@@ -36,6 +36,10 @@ export function lpiDownloadURL(params) {
   return ROOT_URL + '/lpi-data?' + util.encodeParams(params)
 }
 
+export function lpiSummaryURL(params) {
+  return ROOT_URL + '/lpi-data/stats.html?' + util.encodeParams(params)
+}
+
 export function lpiPlot(params) {
   return get('/lpi-data/plot', params)
 }
