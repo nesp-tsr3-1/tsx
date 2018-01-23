@@ -5,7 +5,7 @@ import _ from 'underscore'
 
 // const ROOT_URL = 'http://192.168.168.4:5000'
 // const ROOT_URL = 'http://localhost:5000'
-export const NESP_URL = 'https://203.101.225.200'
+export const NESP_URL = 'https://nesp-dev1.coesra.org.au'
 export const ROOT_URL = NESP_URL + '/nespapi'
 
 export function createImport(dataImport) {
