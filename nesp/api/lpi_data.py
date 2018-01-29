@@ -29,6 +29,8 @@ unfiltered_df = pd.read_csv(os.path.join(export_dir, filename), index_col = 'ID'
 		'SpatialAccuracy':float,'ConsistencyOfMonitoring': float,'MonitoringFrequencyAndTiming': float, 'DataAgreement': str, 'SurveysCentroidLatitude': float, 
 		'SurveysCentroidLongitude': float, 'SurveyCount': int, 'TimeSeriesID': str, 'NationalPriorityTaxa': int})
 
+# Important: remove sensitive information that must not be exposed publicly
+unfiltered_df = unfiltered_df.drop(['SurveysCentroidLatitude', 'SurveysCentroidLongitude', 'DataAgreement'], axis=1)
 
 @bp.route('/lpi-data', methods = ['GET'])
 def lpi_data():
