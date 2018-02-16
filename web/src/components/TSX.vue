@@ -92,11 +92,12 @@
           </div>
           <div class="tile is-parent is-vertical">
             <div class="tile is-child card">
-              <canvas ref='intensityplot'></canvas>
-            </div>
-            <div class="tile is-child card">
               <canvas ref='sumplot'></canvas>
             </div>
+            <div class="tile is-child card">
+              <div id='intensityplot' ref='intensityplot' class='heatmap-div'></div>
+            </div>
+            
           </div>
         </div>
       </div>
@@ -111,12 +112,17 @@
 import * as api from '@/api'
 import Chart from 'chart.js'
 import Spinner from 'vue-simple-spinner'
-import { BasicSelect } from 'vue-search-select'
+import L from 'leaflet'
+import HeatmapOverlay from 'heatmap.js/plugins/leaflet-heatmap/leaflet-heatmap.js'
+// import GoogleMapsLoader from 'google-maps'
+// import h337 from 'heatmap.js'
+// import {HeatmapOverlay} from 'heatmap.js/plugins/gmaps-heatmap/gmaps-heatmap.js'
 // import _ from 'underscore'
+// var gmaps
 export default {
   name: 'TSX',
   components: {
-    Spinner, BasicSelect
+    Spinner
   },
   data () {
     var data = {
@@ -154,7 +160,12 @@ export default {
       // no data to show
       noData: true,
       // prioritySelected
-      prioritySelected: false
+      prioritySelected: false,
+      // heatmap
+      // intensity plot
+      heatmapLayer: null,
+      heatmapDataSet: {max: 0, min: 0, data: []},
+      map: null
     }
     // groups
     data.groupList.push({value: 'None', text: 'All'})
@@ -328,6 +339,36 @@ export default {
       }
     })
 
+    // -------intensity plot ----------------
+    var baseLayer = L.tileLayer(
+      'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+        maxZoom: 5
+      }
+    )
+    // TODO: might need to tweak some of these
+    var cfg = {
+      'radius': 0.5,
+      'maxOpacity': 0.8,
+      'minOpacity': 0,
+      'blur': 0.75,
+      'scaleRadius': true,
+      'useLocalExtrema': true,
+      latField: 'lat',
+      lngField: 'long',
+      valueField: 'count'
+    }
+    this.heatmapLayer = new HeatmapOverlay(cfg)
+    this.map = new L.Map('intensityplot', {
+      center: new L.LatLng(-20.917574, 142.702789),
+      zoom: 4,
+      layers: [baseLayer, this.heatmapLayer]
+    })
+    // this is a hack so that leaflet displays properlly
+    setTimeout(function() {
+      that.map.invalidateSize()
+      console.log('---update plot----')
+    }, 1000)
     this.updatePlot()
   },
   watch: {
@@ -370,6 +411,9 @@ export default {
       this.lpiPlotDataSet.datasets[0].data = []
       this.lpiPlotDataSet.datasets[1].data = []
       this.lpiPlotDataSet.datasets[2].data = []
+      this.heatmapDataSet.data = []
+      this.heatmapDataSet.max = 0
+      this.heatmapDataSet.min = 1000
       // filters
       var filtersStr = this.getFilterString()
       var filterParams = this.getFilterParams()
@@ -411,6 +455,19 @@ export default {
           // this will cause exception as the axis might be change
           // that.summaryPlot.update()
           that.refreshSummaryPlot()
+          // intensity plot
+          var intensityPlotData = data['intensity']
+          intensityPlotData.forEach(function(timeSerie) {
+            that.heatmapDataSet.data.push({
+              'lat': timeSerie[0],
+              'long': timeSerie[1],
+              'count': timeSerie[2]
+            })
+            if (timeSerie[2] > that.heatmapDataSet.max) that.heatmapDataSet.max = timeSerie[2]
+            if (timeSerie[2] < that.heatmapDataSet.min) that.heatmapDataSet.min = timeSerie[2]
+          })
+          that.heatmapLayer.setData(that.heatmapDataSet)
+          that.map.invalidateSize()
         }).finally(() => {
           this.queryLPIData = false
           that.loadingData = false
@@ -459,6 +516,7 @@ export default {
           that.loadingData = false
         }
       })
+      // ------- heatmap -------------
     }, // end updatePlot function
     downloadCSV: function() {
       var filterParams = this.getFilterParams()
@@ -573,5 +631,11 @@ export default {
 }
 </script>
 
+<style src='leaflet/dist/leaflet.css'>
+</style>
 <style>
+  .heatmap-div {
+    width: 100%;
+    height: 100%;
+  }
 </style>
