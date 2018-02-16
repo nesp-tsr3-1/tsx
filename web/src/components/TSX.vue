@@ -213,14 +213,10 @@ export default {
     data.yearList.push({value: '2000', text: '2000'})
     // status
     data.statusList.push({value: 'None', text: 'All'})
-    data.statusList.push({value: 'Least Concern', text: 'Least Concern'})
     data.statusList.push({value: 'Near Threatened', text: 'Near Threatened'})
     data.statusList.push({value: 'Vulnerable', text: 'Vulnerable'})
     data.statusList.push({value: 'Endangered', text: 'Endangered'})
     data.statusList.push({value: 'Critically Endangered', text: 'Critically Endangered'})
-    data.statusList.push({value: 'Critically Endangered (possibly extinct)', text: 'Critically Endangered (possibly extinct)'})
-    data.statusList.push({value: 'Extinct', text: 'Extinct'})
-    // return data
     return data
   },
   mounted: function() {
