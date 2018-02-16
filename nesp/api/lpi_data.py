@@ -30,7 +30,7 @@ unfiltered_df = pd.read_csv(os.path.join(export_dir, filename), index_col = 'ID'
 		'SurveysCentroidLongitude': float, 'SurveyCount': int, 'TimeSeriesID': str, 'NationalPriorityTaxa': int})
 
 # Important: remove sensitive information that must not be exposed publicly
-unfiltered_df = unfiltered_df.drop(['SurveysCentroidLatitude', 'SurveysCentroidLongitude', 'DataAgreement'], axis=1)
+#unfiltered_df = unfiltered_df.drop(['SurveysCentroidLatitude', 'SurveysCentroidLongitude', 'DataAgreement'], axis=1)
 
 @bp.route('/lpi-data', methods = ['GET'])
 def lpi_data():
@@ -118,10 +118,22 @@ def plot():
 	df = get_filtered_data()
 
 	return json.dumps({
+		'intensity': get_intensity_data(df), 
 		'dotplot': get_dotplot_data(df),
 		'summary': get_summary_data(df)
 	})
 
+def get_intensity_data(filtered_data):
+	""" Converts to [[Lat, Long, Count]]
+	"""
+	if len(filtered_data) == 0:
+		return []
+	dat = filtered_data.to_dict()
+	lats = dat['Latitude']
+	longs = dat['Longitude']
+	counts = dat['SurveyCount']
+	ids = [ i for i in lats ]
+	return [ [lats[id], longs[id], counts[id]] for id in ids ] 
 
 def get_dotplot_data(filtered_data):
 	"""Converts time-series to a minimal form for generating dot plots:
