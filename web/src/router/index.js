@@ -4,6 +4,7 @@ import ImportHome from '@/components/ImportHome'
 import ImportEdit from '@/components/ImportEdit'
 import Plot from '@/components/Plot'
 import TSX from '@/components/TSX'
+import Intensity from '@/components/Intensity'
 
 Vue.use(Router)
 
@@ -28,6 +29,11 @@ export default new Router({
       path: '/tsx',
       name: 'TSX',
       component: TSX
+    },
+    {
+      path: '/intensity',
+      name: 'Intensity',
+      component: Intensity
     }
   ]
 })

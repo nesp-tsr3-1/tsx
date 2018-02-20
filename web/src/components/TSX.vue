@@ -95,6 +95,7 @@
               <canvas ref='sumplot'></canvas>
             </div>
             <div class="tile is-child card">
+              <!-- vue-slider min=1960 max=2005></vue-slider -->
               <div id='intensityplot' ref='intensityplot' class='heatmap-div'></div>
             </div>
             
@@ -110,6 +111,7 @@
 </template>
 <script>
 import * as api from '@/api'
+import vueSlider from 'vue-slider-component'
 import Chart from 'chart.js'
 import Spinner from 'vue-simple-spinner'
 import L from 'leaflet'
@@ -122,7 +124,7 @@ import HeatmapOverlay from 'heatmap.js/plugins/leaflet-heatmap/leaflet-heatmap.j
 export default {
   name: 'TSX',
   components: {
-    Spinner
+    Spinner, vueSlider
   },
   data () {
     var data = {
@@ -338,7 +340,6 @@ export default {
     // -------intensity plot ----------------
     var baseLayer = L.tileLayer(
       'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
         maxZoom: 5
       }
     )
@@ -349,7 +350,7 @@ export default {
       'minOpacity': 0,
       'blur': 0.75,
       'scaleRadius': true,
-      'useLocalExtrema': true,
+      'useLocalExtrema': false,
       latField: 'lat',
       lngField: 'long',
       valueField: 'count'
@@ -364,7 +365,7 @@ export default {
     setTimeout(function() {
       that.map.invalidateSize()
       console.log('---update plot----')
-    }, 1000)
+    }, 2000)
     this.updatePlot()
   },
   watch: {
@@ -451,24 +452,25 @@ export default {
           // this will cause exception as the axis might be change
           // that.summaryPlot.update()
           that.refreshSummaryPlot()
-          // intensity plot
-          var intensityPlotData = data['intensity']
-          intensityPlotData.forEach(function(timeSerie) {
-            that.heatmapDataSet.data.push({
-              'lat': timeSerie[0],
-              'long': timeSerie[1],
-              'count': timeSerie[2]
-            })
-            if (timeSerie[2] > that.heatmapDataSet.max) that.heatmapDataSet.max = timeSerie[2]
-            if (timeSerie[2] < that.heatmapDataSet.min) that.heatmapDataSet.min = timeSerie[2]
-          })
-          that.heatmapLayer.setData(that.heatmapDataSet)
-          that.map.invalidateSize()
         }).finally(() => {
           this.queryLPIData = false
           that.loadingData = false
         })
       }
+      // intensity plot
+      api.intensityPlot(filterParams).then((data) => {
+        data.forEach(function(timeSerie) {
+          that.heatmapDataSet.data.push({
+            'lat': timeSerie[1],
+            'long': timeSerie[0],
+            'count': timeSerie[2]
+          })
+          if (timeSerie[2] > that.heatmapDataSet.max) that.heatmapDataSet.max = timeSerie[2]
+          if (timeSerie[2] < that.heatmapDataSet.min) that.heatmapDataSet.min = timeSerie[2]
+        })
+        that.heatmapLayer.setData(that.heatmapDataSet)
+        that.map.invalidateSize()
+      })
       // get files later
       var lpiResultFile = filtersStr + '/nesp_' + this.selectedYear.value + '_infile_Results.txt'
       console.log(lpiResultFile)

@@ -132,8 +132,30 @@ def get_intensity_data(filtered_data):
 	lats = dat['Latitude']
 	longs = dat['Longitude']
 	counts = dat['SurveyCount']
-	ids = [ i for i in lats ]
-	return [ [lats[id], longs[id], counts[id]] for id in ids ] 
+	ids = lats.keys()
+	return [ [lats[id], longs[id], counts[id]] for id in ids ]
+
+@bp.route('/lpi-data/intensity', methods = ['GET'])
+def get_intensity():
+	filtered_data = get_filtered_data()
+	if len(filtered_data) == 0:
+		return []
+	dat = filtered_data.to_dict()
+	ids = dat['TimeSeriesID'].values() 
+	session = get_session()
+	result = session.execute("""SELECT time_series_id, ST_X(centroid_coords) as Latitude, 
+				    ST_Y(centroid_coords) as Longitude, SUM(survey_count) as Count
+				    FROM aggregated_by_year
+				    WHERE include_in_analysis
+				    AND time_series_id in %s 
+				    GROUP BY time_series_id, Latitude, Longitude"""%str(tuple(ids)))
+	values = pd.DataFrame.from_records(data = result.fetchall(), columns = result.keys()).to_dict()
+	session.close()
+	# years = values['Year']
+	lats = values['Latitude']
+	longs = values['Longitude']
+	counts = values['Count']
+	return json.dumps([ [lats[id], longs[id], int(counts[id])] for id in lats.keys() ]) 
 
 def get_dotplot_data(filtered_data):
 	"""Converts time-series to a minimal form for generating dot plots:
