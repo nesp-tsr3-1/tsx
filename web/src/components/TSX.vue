@@ -71,7 +71,7 @@
         </div>
       </div>
 
-      <div class="modal is-active" v-show='loadingData'>
+      <div class="modal is-active" v-show='loadingData && !showFullMap'>
         <div class="modal-background"></div>
         <div class="modal-card">
           <section class="modal-card-body">
@@ -82,7 +82,7 @@
 
       <div class="tile is-vertical" v-show="!noData">
         <div class="tile">
-          <div class="tile is-parent is-vertical">
+          <div class="tile is-parent is-vertical" v-show="!showFullMap">
             <div class="tile is-child card">
                 <canvas ref='lpiplot'></canvas>
             </div>
@@ -92,11 +92,12 @@
           </div>
           <div class="tile is-parent is-vertical">
             <div class="tile is-child card">
-              <canvas ref='sumplot'></canvas>
-            </div>
-            <div class="tile is-child card">
-              <!-- vue-slider min=1960 max=2005></vue-slider -->
+              <vue-slider ref='slider' v-bind='sliderData' v-model='sliderRange' style="width: 100%"></vue-slider>
               <div id='intensityplot' ref='intensityplot' class='heatmap-div'></div>
+              <spinner size='large' message='Loading map....' v-show='loadingMap' class='heatmap-spinner'></spinner>
+            </div>
+            <div class="tile is-child card" v-show="!showFullMap">
+              <canvas ref='sumplot'></canvas>
             </div>
             
           </div>
@@ -111,20 +112,16 @@
 </template>
 <script>
 import * as api from '@/api'
-import vueSlider from 'vue-slider-component'
 import Chart from 'chart.js'
 import Spinner from 'vue-simple-spinner'
 import L from 'leaflet'
 import HeatmapOverlay from 'heatmap.js/plugins/leaflet-heatmap/leaflet-heatmap.js'
-// import GoogleMapsLoader from 'google-maps'
-// import h337 from 'heatmap.js'
-// import {HeatmapOverlay} from 'heatmap.js/plugins/gmaps-heatmap/gmaps-heatmap.js'
-// import _ from 'underscore'
-// var gmaps
+import easyButton from 'leaflet-easybutton/src/easy-button.js'
+import vueSlider from 'vue-slider-component/dist/index.js'
 export default {
   name: 'TSX',
   components: {
-    Spinner, vueSlider
+    Spinner, easyButton, vueSlider
   },
   data () {
     var data = {
@@ -165,9 +162,27 @@ export default {
       prioritySelected: false,
       // heatmap
       // intensity plot
+      loadingMap: false,
       heatmapLayer: null,
+      // this stores the data from the API, heatmapDataSet.data contains subset of it
+      surveyData: [],
       heatmapDataSet: {max: 0, min: 0, data: []},
-      map: null
+      map: null,
+      showFullMap: false,
+      sliderRange: [1960, 2017],
+      sliderData: {
+        eventType: 'auto',
+        width: 'auto',
+        height: 4,
+        dotSize: 14,
+        min: 1960,
+        max: 2020,
+        interval: 1,
+        disabled: false,
+        show: false,
+        lazy: true,
+        tooltip: 'always'
+      }
     }
     // groups
     data.groupList.push({value: 'None', text: 'All'})
@@ -345,15 +360,17 @@ export default {
     )
     // TODO: might need to tweak some of these
     var cfg = {
+      'fullscreenControl': true,
       'radius': 0.5,
-      'maxOpacity': 0.8,
-      'minOpacity': 0,
+      'maxOpacity': 0.7,
+      'minOpacity': 0.3,
       'blur': 0.75,
       'scaleRadius': true,
       'useLocalExtrema': false,
       latField: 'lat',
       lngField: 'long',
       valueField: 'count'
+      // gradient: {0.15: 'rgb(186,228,188)', 0.45: 'rgb(123,204,196)', 0.85: 'rgb(67,162,202)', 1.0: 'rgb(8,104,172)'}
     }
     this.heatmapLayer = new HeatmapOverlay(cfg)
     this.map = new L.Map('intensityplot', {
@@ -361,6 +378,44 @@ export default {
       zoom: 4,
       layers: [baseLayer, this.heatmapLayer]
     })
+    // /////////// map control /////////////////////////
+    // setupbutton
+    L.easyButton('<strong>&#9881;</strong>', function(buttonArg, mapArg) {
+      // do stuff
+      console.log('show settings')
+    },
+    { position: 'bottomleft' }).addTo(that.map)
+    L.easyButton({
+      id: 'expand',
+      position: 'bottomleft',
+      states: [{
+        icon: '<strong>&swarr;</strong>',
+        stateName: 'small',
+        onClick: function(btn, map) {
+          btn.state('big')
+          that.showFullMap = true
+          // this is to make the slider properlly align with the resize event
+          that.sliderData.max = that.sliderData.max + 1
+          setTimeout(function() {
+            that.map.invalidateSize()
+            that.sliderData.max = that.sliderData.max - 1
+          }, 500)
+        }
+      }, {
+        icon: '<strong>&nearr;</strong>',
+        stateName: 'big',
+        onClick: function(btn, map) {
+          btn.state('small')
+          that.showFullMap = false
+          that.sliderData.max = that.sliderData.max + 1
+          setTimeout(function() {
+            that.map.invalidateSize()
+            that.sliderData.max = that.sliderData.max - 1
+          }, 2000)
+        }
+      }]
+    }).addTo(that.map)
+    //
     // this is a hack so that leaflet displays properlly
     setTimeout(function() {
       that.map.invalidateSize()
@@ -388,6 +443,29 @@ export default {
     },
     selectedYear(val) {
       this.updatePlot()
+    },
+    sliderRange(range) {
+      if(this.loadingMap) {
+        return
+      }
+      var that = this
+      var minYear = range[0]
+      var maxYear = range[1]
+      that.heatmapDataSet.data = []
+      // color scale ramains the same
+      // var countMin = 10000
+      // var countMax = 0
+      that.surveyData.forEach(function(element) {
+        if(element['year'] >= minYear && element['year'] <= maxYear) {
+          that.heatmapDataSet.data.push(element)
+          // if (element['count'] > countMax) countMax = element['count']
+          // if (element['count'] < countMin) countMin = element['count']
+        }
+      })
+      // that.heatmapDataSet.min = countMin
+      // that.heatmapDataSet.max = countMax
+      that.heatmapLayer.setData(that.heatmapDataSet)
+      that.map.invalidateSize()
     }
   },
   computed: {
@@ -409,8 +487,7 @@ export default {
       this.lpiPlotDataSet.datasets[1].data = []
       this.lpiPlotDataSet.datasets[2].data = []
       this.heatmapDataSet.data = []
-      this.heatmapDataSet.max = 0
-      this.heatmapDataSet.min = 1000
+      this.surveyData = []
       // filters
       var filtersStr = this.getFilterString()
       var filterParams = this.getFilterParams()
@@ -453,23 +530,47 @@ export default {
           // that.summaryPlot.update()
           that.refreshSummaryPlot()
         }).finally(() => {
-          this.queryLPIData = false
+          that.queryLPIData = false
           that.loadingData = false
         })
       }
       // intensity plot
+      that.loadingMap = true
+      this.sliderData.show = false
       api.intensityPlot(filterParams).then((data) => {
+        console.log('--loading map data----')
+        var yearMin = 30000 // we should be in mars by then
+        var yearMax = 1000
+        var countMin = 10000
+        var countMax = 0
         data.forEach(function(timeSerie) {
-          that.heatmapDataSet.data.push({
-            'lat': timeSerie[1],
-            'long': timeSerie[0],
-            'count': timeSerie[2]
+          var lat = timeSerie[1]
+          var long = timeSerie[0]
+          var yearCount = timeSerie[2]
+          yearCount.forEach(function(element) {
+            that.surveyData.push({
+              'lat': lat,
+              'long': long,
+              'count': element[1],
+              'year': element[0]
+            })
+            if (element[1] > countMax) countMax = element[1]
+            if (element[1] < countMin) countMin = element[1]
+            if (element[0] < yearMin) yearMin = element[0]
+            if (element[0] > yearMax) yearMax = element[0]
           })
-          if (timeSerie[2] > that.heatmapDataSet.max) that.heatmapDataSet.max = timeSerie[2]
-          if (timeSerie[2] < that.heatmapDataSet.min) that.heatmapDataSet.min = timeSerie[2]
         })
+        that.sliderData.min = yearMin
+        that.sliderData.max = yearMax
+        that.heatmapDataSet.max = countMax
+        that.heatmapDataSet.min = countMin
+        that.sliderRange = [that.sliderData.min, that.sliderData.max]
+        that.heatmapDataSet.data = that.surveyData
         that.heatmapLayer.setData(that.heatmapDataSet)
         that.map.invalidateSize()
+      }).finally(() => {
+        that.loadingMap = false
+        that.sliderData.show = true
       })
       // get files later
       var lpiResultFile = filtersStr + '/nesp_' + this.selectedYear.value + '_infile_Results.txt'
@@ -514,7 +615,6 @@ export default {
           that.loadingData = false
         }
       })
-      // ------- heatmap -------------
     }, // end updatePlot function
     downloadCSV: function() {
       var filterParams = this.getFilterParams()
@@ -631,9 +731,20 @@ export default {
 
 <style src='leaflet/dist/leaflet.css'>
 </style>
+<style src='leaflet-easybutton/src/easy-button.css'>
+</style>
 <style>
   .heatmap-div {
     width: 100%;
-    height: 100%;
+    height: 90%;
+    z-index:1;
+  }
+  .heatmap-spinner{
+    z-index:2;
+    position:absolute;
+    top:0;
+    bottom:0;
+    left:0;
+    right:0;
   }
 </style>

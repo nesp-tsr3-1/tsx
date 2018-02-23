@@ -30,7 +30,7 @@ unfiltered_df = pd.read_csv(os.path.join(export_dir, filename), index_col = 'ID'
 		'SurveysCentroidLongitude': float, 'SurveyCount': int, 'TimeSeriesID': str, 'NationalPriorityTaxa': int})
 
 # Important: remove sensitive information that must not be exposed publicly
-#unfiltered_df = unfiltered_df.drop(['SurveysCentroidLatitude', 'SurveysCentroidLongitude', 'DataAgreement'], axis=1)
+unfiltered_df = unfiltered_df.drop(['SurveysCentroidLatitude', 'SurveysCentroidLongitude', 'DataAgreement'], axis=1)
 
 @bp.route('/lpi-data', methods = ['GET'])
 def lpi_data():
@@ -118,22 +118,9 @@ def plot():
 	df = get_filtered_data()
 
 	return json.dumps({
-		'intensity': get_intensity_data(df), 
 		'dotplot': get_dotplot_data(df),
 		'summary': get_summary_data(df)
 	})
-
-def get_intensity_data(filtered_data):
-	""" Converts to [[Lat, Long, Count]]
-	"""
-	if len(filtered_data) == 0:
-		return []
-	dat = filtered_data.to_dict()
-	lats = dat['Latitude']
-	longs = dat['Longitude']
-	counts = dat['SurveyCount']
-	ids = lats.keys()
-	return [ [lats[id], longs[id], counts[id]] for id in ids ]
 
 @bp.route('/lpi-data/intensity', methods = ['GET'])
 def get_intensity():
@@ -143,19 +130,24 @@ def get_intensity():
 	dat = filtered_data.to_dict()
 	ids = dat['TimeSeriesID'].values() 
 	session = get_session()
-	result = session.execute("""SELECT time_series_id, ST_X(centroid_coords) as Latitude, 
+	result = session.execute("""SELECT time_series_id, start_date_y as Year, ST_X(centroid_coords) as Latitude, 
 				    ST_Y(centroid_coords) as Longitude, SUM(survey_count) as Count
 				    FROM aggregated_by_year
 				    WHERE include_in_analysis
 				    AND time_series_id in %s 
-				    GROUP BY time_series_id, Latitude, Longitude"""%str(tuple(ids)))
+				    GROUP BY time_series_id, Year, Latitude, Longitude"""%str(tuple(ids)))
 	values = pd.DataFrame.from_records(data = result.fetchall(), columns = result.keys()).to_dict()
 	session.close()
 	# years = values['Year']
 	lats = values['Latitude']
 	longs = values['Longitude']
 	counts = values['Count']
-	return json.dumps([ [lats[id], longs[id], int(counts[id])] for id in lats.keys() ]) 
+	years = values['Year']
+	timeSeriesIDs = { id:[] for id in ids }
+	results = {}
+	for k, v in values['time_series_id'].iteritems():
+		timeSeriesIDs[v].append(k)
+	return json.dumps([ [lats[v[0]], longs[v[0]], [[years[i], int(counts[i])] for i in v]] for k, v in timeSeriesIDs.iteritems() if len(v) >0])
 
 def get_dotplot_data(filtered_data):
 	"""Converts time-series to a minimal form for generating dot plots:

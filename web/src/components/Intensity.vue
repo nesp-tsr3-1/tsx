@@ -91,14 +91,13 @@
 </template>
 <script>
 import * as api from '@/api'
-import vueSlider from 'vue-slider-component'
 import Spinner from 'vue-simple-spinner'
 import L from 'leaflet'
 import HeatmapOverlay from 'heatmap.js/plugins/leaflet-heatmap/leaflet-heatmap.js'
 export default {
   name: 'Intensity',
   components: {
-    Spinner, vueSlider
+    Spinner
   },
   data () {
     var data = {
