@@ -92,7 +92,7 @@
           </div>
           <div class="tile is-parent is-vertical">
             <div class="tile is-child card">
-              <vue-slider ref='slider' v-bind='sliderData' v-model='sliderRange' style="width: 100%"></vue-slider>
+              <vue-slider ref='slider' v-bind='sliderData' v-model='sliderRange' class='heatmap-slider'></vue-slider>
               <div id='intensityplot' ref='intensityplot' class='heatmap-div'></div>
               <spinner size='large' message='Loading map....' v-show='loadingMap' class='heatmap-spinner'></spinner>
             </div>
@@ -361,16 +361,16 @@ export default {
     // TODO: might need to tweak some of these
     var cfg = {
       'fullscreenControl': true,
-      'radius': 0.5,
-      'maxOpacity': 0.7,
-      'minOpacity': 0.3,
+      'radius': 0.45,
+      'maxOpacity': 0.8,
+      'minOpacity': 0.5,
       'blur': 0.75,
       'scaleRadius': true,
       'useLocalExtrema': false,
       latField: 'lat',
       lngField: 'long',
-      valueField: 'count'
-      // gradient: {0.15: 'rgb(186,228,188)', 0.45: 'rgb(123,204,196)', 0.85: 'rgb(67,162,202)', 1.0: 'rgb(8,104,172)'}
+      valueField: 'count',
+      gradient: {0.25: 'rgb(0,94,255)', 0.5: 'rgb(0,0,255)', 0.85: 'rgb(163,0,255)', 1.0: 'rgb(255,0,255)'}
     }
     this.heatmapLayer = new HeatmapOverlay(cfg)
     this.map = new L.Map('intensityplot', {
@@ -736,12 +736,22 @@ export default {
 <style>
   .heatmap-div {
     width: 100%;
-    height: 90%;
+    height: 100%;
     z-index:1;
   }
   .heatmap-spinner{
     z-index:2;
     position:absolute;
+    top:0;
+    bottom:0;
+    left:0;
+    right:0;
+  }
+  .heatmap-slider{
+    z-index:2;
+    width: 100%;
+    height: 16px;
+    position:absolute !important;
     top:0;
     bottom:0;
     left:0;
