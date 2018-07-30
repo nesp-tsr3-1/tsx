@@ -2,28 +2,28 @@ import os
 from setuptools import setup
 
 setup(
-	name='nesp',
+	name='tsx',
 	version='0.2',
-	description='NESP',
-	author='Hoang Anh Nguyen',
+	description='TSX',
+	author='Hoang Anh Nguyen, James Watmuff',
 	author_email='hoangnguyen177@gmail.com',
-	url='https://github.com/nesp-tsr/nesp',
+	url='https://github.com/nesp-tsr3-1/tsx',
 	packages=[
-		'nesp',
-		'nesp.api',
-		'nesp.db',
+		'tsx',
+		'tsx.api',
+		'tsx.db',
 		'twisted.plugins'
 	],
 	entry_points={
 		'console_scripts': [
-			'nespdbimport = nesp.importer:main'
+			'tsx-import = tsx.importer:main'
 		]
 	},
 	package_data={
 		'twisted': ['plugins/*',]
 	},
 	data_files=[
-		('/opt/nesp/conf', ['nesp.conf.example']),
+		('/opt/tsx/conf', ['tsx.conf.example']),
 		# The following breaks outside of Linux, so instead added I instructions to copy manually
 		# (installing init scripts doesn't belong in a Python install script anyway, it should go
 		# in an OS package e.g. .deb for Ubuntu)
@@ -57,9 +57,9 @@ The following native packages are required:
 
 To install as a Linux service:
 
-	sudo cp etc/init.d/nespapi /etc/init.d/
+	sudo cp etc/init.d/tsxapi /etc/init.d/
 
-Example configuration has been installed to /opt/nesp/conf/nesp.conf.example.
-Copy this to 'nesp.conf' and update configuration.
+Example configuration has been installed to /opt/tsx/conf/tsx.conf.example.
+Copy this to 'tsx.conf' and update configuration.
 
 """

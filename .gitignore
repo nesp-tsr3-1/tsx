@@ -13,5 +13,5 @@ __pycache__/
 .DS_Store
 env/
 
-nesp.conf
+tsx.conf
 *.egg-info/

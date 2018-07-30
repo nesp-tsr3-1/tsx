@@ -14,22 +14,22 @@ Getting started with a local development environment
 
 First create a new MySQL database.
 
-You can call it anything but the instructions below assume it is named "nesp".
+You can call it anything but the instructions below assume it is named "tsx".
 
 Initialise the database using the provided scripts:
 
 .. code:: bash
 
-	mysql nesp < data/sql/create.sql
-	mysql nesp < data/sql/init.sql
+	mysql tsx < data/sql/create.sql
+	mysql tsx < data/sql/init.sql
 
 Copy example configuration:
 
 .. code:: bash
 
-	cp nesp.conf.example nesp.conf
+	cp tsx.conf.example tsx.conf
 
-Then edit the ``[database]`` section in nesp.conf to match the database you just created.
+Then edit the ``[database]`` section in tsx.conf to match the database you just created.
 
 2. Setup python virtual environment and install dependencies
 ------------------------------------------------------------
@@ -46,7 +46,7 @@ Then edit the ``[database]`` section in nesp.conf to match the database you just
 
 .. code:: bash
 
-	python -m nesp.import_taxa [path to TaxonList.xlsx]
+	python -m tsx.import_taxa [path to TaxonList.xlsx]
 
 4. Import some sample data
 --------------------------
@@ -55,14 +55,14 @@ Via command line:
 
 .. code:: bash
 
-	python -m nesp.importer --type 1 --commit data/type-1-sample.csv
+	python -m tsx.importer --type 1 --commit data/type-1-sample.csv
 
 Or alternatively via web upload interface
 
 .. code:: bash
 
 	# Start back-end API:
-	FLASK_DEBUG=1 FLASK_APP=nesp/api/api.py python -m flask run
+	FLASK_DEBUG=1 FLASK_APP=tsx/api/api.py python -m flask run
 
 	# Start front-end (in a separate terminal):
 	cd web
@@ -74,15 +74,15 @@ Or alternatively via web upload interface
 
 .. code:: bash
 
-	python -m nesp.process alpha_hull
-	python -m nesp.process range_ultrataxon
-	python -m nesp.process pseudo_absence
+	python -m tsx.process alpha_hull
+	python -m tsx.process range_ultrataxon
+	python -m tsx.process pseudo_absence
 
 Or all at once:
 
 .. code:: bash
 
-	python -m nesp.process -c all
+	python -m tsx.process -c all
 
 
 Deployment
@@ -92,16 +92,16 @@ Deployment
 
 1. Setup database (see instructions for dev environment)
 
-2. Install nesp package::
+2. Install tsx package::
 
 	python setup.py install
 
-3. Edit configuration in ``/opt/nesp/conf/nesp.conf``
+3. Edit configuration in ``/opt/tsx/conf/tsx.conf``
 
 4. Setup as service (Linux)::
 
-	sudo cp etc/init.d/nespapi /etc/init.d/
-	sudo service nespapi start
+	sudo cp etc/init.d/tsxapi /etc/init.d/
+	sudo service tsxapi start
 
 5. Deploy static resources::
 
@@ -121,8 +121,8 @@ Deployment
 	npm install
 	(TODO - add step to point code to REST API base URL)
 	npm run build
-	sudo cp -r dist/ /var/www/nesp/
-	sudo chown -R www-data:www-data /var/www/nesp
+	sudo cp -r dist/ /var/www/tsx/
+	sudo chown -R www-data:www-data /var/www/tsx
 
 
 Documentation

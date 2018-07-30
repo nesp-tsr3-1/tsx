@@ -1,7 +1,7 @@
 {
-  "name": "nesp",
+  "name": "tsx",
   "version": "1.0.0",
-  "description": "NESP Web front-end",
+  "description": "TSX Web front-end",
   "author": "James Watmuff <james@planticle.com.au>",
   "private": true,
   "scripts": {

@@ -1,6 +1,6 @@
-# nesp
+# tsx
 
-> NESP Web front-end
+> TSX Web front-end
 
 ## Build Setup
 
