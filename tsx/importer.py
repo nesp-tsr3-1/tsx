@@ -266,8 +266,9 @@ class Importer:
 		else:
 			Site, Survey, Sighting = T2Site, T2Survey, T2Sighting
 
-		# If this gets set to false, we don't insert the row
-		ok = True
+		# If this gets set to false, we don't insert the row.
+		# We are using a list so that we can update it from a nested function (in Python 3 we would just use 'nonlocal')
+		ok = [True]
 
 		# Helper to avoid repetition when checking fields and logging errors
 		@contextmanager
@@ -276,7 +277,7 @@ class Importer:
 				yield row.get(key)
 			except ValueError as e:
 				log.error('%s: [%s] %s' % (key, row.get(key), str(e)))
-				ok = False
+				ok[0] = False
 
 		# Strip leading/trailing whitespace from all values, and convert empty strings to None
 		for key in row:
@@ -291,7 +292,7 @@ class Importer:
 		except ValueError as e:
 			log.error(str(e))
 			self.commit = False # serious error
-			ok = False
+			ok[0] = False
 
 		# Check if there is not sighting data at all (i.e. survey with no sightings)
 		sighting_empty = all(row.get(key) == None for key in self.sighting_keys)
@@ -316,13 +317,13 @@ class Importer:
 			if source.source_type == None:
 				if row.get('SourceType') != None:
 					log.error("SourceType: doesn't match database for this source")
-					ok = False
+					ok[0] = False
 			elif source.source_type.description != row.get('SourceType'):
 				log.error("SourceType: doesn't match database for this source")
-				ok = False
+				ok[0] = False
 			if source.provider != row.get('SourceProvider'):
 				log.error("SourceProvider: doesn't match database for this source")
-				ok = False
+				ok[0] = False
 
 		# SearchType
 		search_type = self.get_or_create_search_type(session, row.get('SearchTypeDesc'))
@@ -384,7 +385,7 @@ class Importer:
 
 			if row.get('FinishDate') and (survey.start_date_y, survey.start_date_m, survey.start_date_d) > (survey.finish_date_y, survey.finish_date_m, survey.finish_date_d):
 				log.error("Start date after finish date: %s > %s" % ((survey.start_date_y, survey.start_date_m, survey.start_date_d), (survey.finish_date_y, survey.finish_date_m, survey.finish_date_d)));
-				ok = False
+				ok[0] = False
 
 			# Duration, area, length, location, accuracy
 
@@ -422,7 +423,7 @@ class Importer:
 
 				if x < -180 or x > 180 or y < -90 or y > 90:
 					log.error('Invalid coordinates after projection: %s, %s' % (x, y))
-					ok = False
+					ok[0] = False
 				elif x == 0 or y == 0:
 					log.warning('Suspicious zero coordinate after projection: %s, %s' % (x, y))
 
@@ -472,7 +473,7 @@ class Importer:
 
 			sighting.comments = row.get('SightingComments')
 
-		if ok:
+		if ok[0]:
 			session.add(survey)
 			self.pending_sightings.append(sighting)
 			# session.add(sighting)
