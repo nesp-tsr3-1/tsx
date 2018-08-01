@@ -3,7 +3,7 @@ type=mysql
 host=localhost
 username=
 password=
-name=nesp
+name=tsx
 
 [api]
 secret_key=change_me

@@ -2,5 +2,5 @@
 Configuration helper
 ====================
 
-.. automodule:: nesp.config
+.. automodule:: tsx.config
 	:members:
