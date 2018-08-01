@@ -31,6 +31,10 @@ def process_grid(session):
 		AND experimental_design_type_id IN (2, 3)""").fetchall()
 	]
 
+	if len(taxa) == 0:
+		log.info("No taxa with grid experimental design types - skipping grid processing")
+		return
+
 	# Notes - times are with a warm buffer pool, first run was not so fast
 
 	run_sql(session, "Intersecting alpha hulls with grid",
