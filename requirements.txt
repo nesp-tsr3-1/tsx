@@ -9,7 +9,7 @@ cligj==0.4.0
 docutils==0.14
 enum34==1.1.6
 et-xmlfile==1.0.1
-Fiona==1.7.10.post1
+Fiona==1.7.13
 Flask==0.12.2
 Flask-Cors==3.0.3
 Flask-Login==0.4.0
@@ -32,7 +32,7 @@ python-dateutil==2.6.1
 pytz==2017.3
 requests==2.18.4
 scipy==1.0.0
-Shapely==1.6.2.post1
+Shapely==1.6.4.post1
 six==1.11.0
 snowballstemmer==1.2.1
 Sphinx==1.6.5
