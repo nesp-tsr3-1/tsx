@@ -84,6 +84,7 @@ import multiprocessing
 from threading import Thread
 from Queue import Queue, Empty
 import math
+import platform
 
 def run_parallel(target, tasks, n_workers = None, use_processes = False):
     """
@@ -99,7 +100,7 @@ def run_parallel(target, tasks, n_workers = None, use_processes = False):
 
     Example::
 
-        do_hard_work(a, b):
+        def do_hard_work(a, b):
             ...
 
         tasks = [(1,2), (5,2), (3,4) ....]
@@ -115,6 +116,10 @@ def run_parallel(target, tasks, n_workers = None, use_processes = False):
     """
     if n_workers is None:
         n_workers = multiprocessing.cpu_count()
+
+    # Multiprocessing has issues on Windows
+    if platform.system() == 'Windows':
+        use_processes = False
 
     Q = multiprocessing.Queue if use_processes else Queue
 
