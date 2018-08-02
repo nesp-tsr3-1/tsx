@@ -21,9 +21,9 @@ for url in wheels:
 	print("Downloading: %s" % url)
 	filename = url.split("/")[-1]
 	# Download it
-	urlretrieve('https://download.lfd.uci.edu/pythonlibs/l8ulg3xw/Shapely-1.6.4.post1-cp27-cp27m-win_amd64.whl', filename)
+	urlretrieve(url, filename)
 	# Install it
-	call(['pip', 'wheel', filename])
+	call(['pip', 'install', filename])
 	# Clean up
 	os.remove(filename)
 

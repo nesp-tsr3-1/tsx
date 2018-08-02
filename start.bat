@@ -9,7 +9,8 @@ set PATH=%PATH%;%PYTHON_HOME%;%PYTHON_HOME%\Scripts;%CD%\env\lib\python2.7\site-
 if not exist env (
 	pip install virtualenv
 	virtualenv env
-	call python setup\install_windows_deps.py
+	call env\Scripts\activate
+	python setup\install_windows_deps.py
 )
 
 call env\Scripts\activate
