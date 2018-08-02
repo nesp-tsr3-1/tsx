@@ -12,8 +12,8 @@ import csv
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 from shapely.geometry import Point
 import time
-from geoalchemy2 import shape
 from tqdm import tqdm
+from sqlalchemy import func
 
 # Ignore MySQL warning caused by binary geometry data
 import warnings
@@ -417,7 +417,9 @@ class Importer:
 
 				coords = create_point(x, y, row.get('ProjectionReference'))
 
-				survey.coords = shape.from_shape(coords, srid = 0)
+				# This produces the necessary SQL to insert WKB geometry with SQLAlchemy.
+				# Simpler than using GeoAlchemy in the end, which wasn't compatible with python-mysql-connector anyway.
+				survey.coords = func.ST_GeomFromWKB(coords.to_wkb())
 
 				x, y = coords.x, coords.y
 
