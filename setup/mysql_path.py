@@ -20,11 +20,10 @@ def find_mysql():
 
 	# Windows
 	for drive in all_drives():
-		print('%s:\\Program Files*\\MySQL\\*\\bin\\mysql' % drive)
-		matches = glob('%s:\\Program Files*\\MySQL\\*\\bin\\mysql' % drive)
+		matches = glob('%s:\\Program Files*\\MySQL\\*\\bin\\mysql.exe' % drive)
 		if matches:
 			return matches[0]
-		matches = glob('%s:\\MySQL\\bin\\mysql' % drive)
+		matches = glob('%s:\\MySQL\\bin\\mysql.exe' % drive)
 		if matches:
 			return matches[0]
 	raise Exception("mysql not found")
