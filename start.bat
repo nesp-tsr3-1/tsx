@@ -15,3 +15,8 @@ if not exist env (
 
 call env\Scripts\activate
 call pip install -r requirements.txt
+
+rem Add MySQL to PATH
+call python setup\mysql_path.py tmp.bat
+tmp.bat
+del tmp.bat
