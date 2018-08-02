@@ -13,6 +13,7 @@ import tsx.config
 from tqdm import tqdm
 import logging
 import shapely.wkb
+import binascii
 
 from tsx.db import get_session
 from tsx.processing.alpha_hull import make_alpha_hull
@@ -140,9 +141,9 @@ def reproject(geom, src_proj, dest_proj):
 
 
 def get_core_range_geometry(session, taxon_id):
-    rows = session.execute("""SELECT ST_AsBinary(geometry) FROM taxon_range WHERE taxon_id = :taxon_id AND range_id = 1""",
+    rows = session.execute("""SELECT HEX(ST_AsBinary(geometry)) FROM taxon_range WHERE taxon_id = :taxon_id AND range_id = 1""",
         { 'taxon_id': taxon_id }).fetchall()
-    geom = GeometryCollection([shapely.wkb.loads(row[0]) for row in rows])
+    geom = GeometryCollection([shapely.wkb.loads(binascii.unhexlify(row[0])) for row in rows])
     return to_multipolygon(geom)
 
 def get_taxa(session, data_type, species):

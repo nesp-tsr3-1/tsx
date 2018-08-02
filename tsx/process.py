@@ -18,6 +18,7 @@ import os
 from tsx.geo import to_multipolygon
 from tsx.db import get_session
 from shapely.geometry import Point
+import binascii
 
 log = logging.getLogger(__name__)
 
@@ -142,7 +143,7 @@ def export(layers, species = None):
         if export_alpha:
             filename = os.path.join(export_dir, '%s-alpha.shp' % spno)
 
-            alpha_hulls = session.execute("""SELECT taxon_id, range_id, breeding_range_id, ST_AsWKB(geometry)
+            alpha_hulls = session.execute("""SELECT taxon_id, range_id, breeding_range_id, HEX(ST_AsWKB(geometry))
                     FROM taxon_presence_alpha_hull, taxon
                     WHERE taxon_id = taxon.id
                     AND spno = :spno""", {
@@ -164,7 +165,7 @@ def export(layers, species = None):
                     }) as output:
 
                     for taxon_id, range_id, breeding_range_id, geom_wkb in alpha_hulls:
-                        geom = to_multipolygon(shapely.wkb.loads(geom_wkb))
+                        geom = to_multipolygon(shapely.wkb.loads(binascii.unhexlify(geom_wkb)))
 
                         if len(geom) == 0:
                             continue

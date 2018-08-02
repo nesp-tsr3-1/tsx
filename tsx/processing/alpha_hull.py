@@ -19,6 +19,7 @@ import tsx.config
 from tqdm import tqdm
 import logging
 import shapely.wkb
+import binascii
 
 import threading, sys, traceback
 
@@ -220,7 +221,7 @@ def process_database(species = None, commit = False):
             # Get range polygons to intersect with alpha shape
             for taxon_id, range_id, breeding_range_id, geom_wkb in get_species_range_polygons(session, spno):
                 # Intersect and insert into DB
-                geom = shapely.wkb.loads(geom_wkb).buffer(0)
+                geom = shapely.wkb.loads(binascii.unhexlify(geom_wkb)).buffer(0)
                 geom = to_multipolygon(geom.intersection(alpha_shp)) # slow
                 if len(geom) > 0:
                     session.execute("""INSERT INTO taxon_presence_alpha_hull (taxon_id, range_id, breeding_range_id, geometry)
@@ -289,7 +290,7 @@ def get_species_points(session, spno):
     return [Point(x,y) for x, y in session.execute(sql, { 'spno': spno }).fetchall()]
 
 def get_species_range_polygons(session, spno):
-    return session.execute("""SELECT taxon_id, range_id, breeding_range_id, ST_AsWKB(geometry)
+    return session.execute("""SELECT taxon_id, range_id, breeding_range_id, HEX(ST_AsWKB(geometry))
                         FROM taxon_range, taxon
                         WHERE taxon_id = taxon.id
                         AND spno = :spno

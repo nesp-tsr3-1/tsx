@@ -6,6 +6,7 @@ import tsx.db.connect
 from tsx.util import run_parallel
 from tsx.geo import point_intersects_geom
 import logging
+import binascii
 
 log = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ def process_database(species = None, commit = False):
 
 
 def get_taxon_range_polygons(session, taxon_id):
-    return session.execute("""SELECT range_id, breeding_range_id, ST_AsWKB(geometry)
+    return session.execute("""SELECT range_id, breeding_range_id, HEX(ST_AsWKB(geometry))
                         FROM taxon_range
                         WHERE taxon_id = :taxon_id
                         """, { 'taxon_id': taxon_id }).fetchall()
@@ -60,7 +61,7 @@ def process_taxon(taxon_id, commit):
 
             cache = {}
 
-            geom = shapely.wkb.loads(geom_wkb).buffer(0) # Ensure valid
+            geom = shapely.wkb.loads(binascii.unhexlify(geom_wkb)).buffer(0) # Ensure valid
 
             bounds_wkb = shapely.wkb.dumps(Polygon.from_bounds(*geom.bounds))
 
