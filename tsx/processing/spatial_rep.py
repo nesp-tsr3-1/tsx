@@ -6,7 +6,7 @@ import pyproj
 import sys, os, getopt
 from shapely.geometry import shape, Point, GeometryCollection
 from tsx.geo import to_multipolygon
-from tsx.util import run_parallel
+from tsx.util import run_parallel, sql_list_placeholder, sql_list_argument
 from tsx.db import get_session
 import tsx.db.connect
 import tsx.config
@@ -36,8 +36,8 @@ def process_database(species = None, commit = False):
             session.execute("DELETE FROM taxon_source_alpha_hull")
         else:
             session.execute("""DELETE FROM taxon_source_alpha_hull
-                WHERE taxon_id IN (SELECT id FROM taxon WHERE spno IN (:species))""",
-                { 'species': species })
+                WHERE taxon_id IN (SELECT id FROM taxon WHERE spno IN (%s))""" % sql_list_placeholder('species', species),
+                sql_list_argument('species', species))
         session.commit()
 
     db_proj = pyproj.Proj('+init=EPSG:4326') # Database always uses WGS84
@@ -152,8 +152,11 @@ def get_taxa(session, data_type, species):
     if species == None:
         taxa = session.execute("""SELECT DISTINCT taxon_id FROM {table}""".format(table = table)).fetchall()
     else:
-        sql = """SELECT DISTINCT taxon_id FROM t1_sighting, taxon WHERE taxon.id = taxon_id AND spno IN (:species)""".format(table = table)
-        taxa = session.execute(sql, { 'species': species }).fetchall()
+        sql = """SELECT DISTINCT taxon_id FROM {table}, taxon WHERE taxon.id = taxon_id AND spno IN ({species})""".format(
+            table = table,
+            species = sql_list_placeholder('species', species)
+        )
+        taxa = session.execute(sql, sql_list_placeholder('species', species)).fetchall()
 
     return [taxon_id for (taxon_id,) in taxa]
 

@@ -3,7 +3,7 @@ import time
 import functools
 from tqdm import tqdm
 from tsx.db import get_session
-from tsx.util import run_parallel
+from tsx.util import run_parallel, sql_list_placeholder, sql_list_argument
 
 
 log = logging.getLogger(__name__)
@@ -14,9 +14,8 @@ def process_database(species = None, commit = False):
         taxa = [taxon_id for (taxon_id,) in session.execute("SELECT DISTINCT taxon_id FROM t1_sighting").fetchall()]
     else:
         taxa = [taxon_id for (taxon_id,) in session.execute(
-            "SELECT DISTINCT taxon_id FROM t1_sighting, taxon WHERE taxon.id = taxon_id AND spno IN :species", {
-                'species': species
-            }).fetchall()]
+            "SELECT DISTINCT taxon_id FROM t1_sighting, taxon WHERE taxon.id = taxon_id AND spno IN (%s)" % sql_list_placeholder('species', species),
+            sql_list_argument('species', species)).fetchall()]
 
     create_region_lookup_table(session)
 

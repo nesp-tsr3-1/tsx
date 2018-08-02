@@ -80,6 +80,13 @@ def log_time(msg):
     t2 = time.time()
     log.info('%s: %0.2fs' % (msg, t2 - t1))
 
+# Helpers to inject lists of values into SQL queries
+def sql_list_placeholder(name, items):
+    return ', '.join([':%s%s' % (name, i) for i in range(len(items))])
+
+def sql_list_argument(name, items):
+    return dict(zip(['%s%s' % (name, i) for i in range(len(items))], items))
+
 import multiprocessing
 from threading import Thread
 from Queue import Queue, Empty

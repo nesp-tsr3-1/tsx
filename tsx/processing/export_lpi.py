@@ -1,7 +1,7 @@
 from tsx.db import get_session
 from tqdm import tqdm
 import logging
-from tsx.util import run_parallel
+from tsx.util import run_parallel, sql_list_placeholder, sql_list_argument
 import time
 import csv
 import os
@@ -20,9 +20,9 @@ def process_database(species = None, monthly = False, filter_output = False):
         taxa = [taxon_id for (taxon_id,) in session.execute("SELECT DISTINCT taxon_id FROM aggregated_by_year").fetchall()]
     else:
         taxa = [taxon_id for (taxon_id,) in session.execute(
-            "SELECT DISTINCT taxon_id FROM aggregated_by_year, taxon WHERE taxon.id = taxon_id AND spno IN :species", {
-                'species': species
-            }).fetchall()]
+                "SELECT DISTINCT taxon_id FROM aggregated_by_year, taxon WHERE taxon.id = taxon_id AND spno IN (%s)" % sql_list_placeholder('species', species),
+                sql_list_argument('species', species)
+            ).fetchall()]
 
     log.info("Generating numeric IDs")
 

@@ -3,7 +3,7 @@ import shapely.wkb
 from tqdm import tqdm
 from tsx.db import get_session, Taxon, T2UltrataxonSighting
 import tsx.db.connect
-from tsx.util import run_parallel
+from tsx.util import run_parallel, sql_list_placeholder, sql_list_argument
 from tsx.geo import point_intersects_geom
 import logging
 import binascii
@@ -17,15 +17,16 @@ def process_database(species = None, commit = False):
     if species == None:
         taxa = session.execute("SELECT DISTINCT taxon_id FROM taxon_range").fetchall()
     else:
-        taxa = session.execute("SELECT DISTINCT taxon_id FROM taxon_range, taxon WHERE taxon_id = taxon.id AND spno IN :species",
-            { 'species': species }).fetchall()
+        taxa = session.execute("SELECT DISTINCT taxon_id FROM taxon_range, taxon WHERE taxon_id = taxon.id AND spno IN (%s)" % sql_list_placeholder('species', species),
+            sql_list_argument('species', species)).fetchall()
 
     # Unwrap tuple
     taxa = [taxon_id for (taxon_id,) in taxa]
 
     # Delete old results
-    if commit:
-        session.execute("DELETE FROM t2_ultrataxon_sighting WHERE taxon_id IN :taxa", { 'taxa': taxa })
+    if commit and len(taxa) > 0:
+        # session.execute("DELETE FROM t2_ultrataxon_sighting WHERE taxon_id IN (:taxa)", { 'taxa': taxa })
+        session.execute("DELETE FROM t2_ultrataxon_sighting WHERE taxon_id IN (%s)" % sql_list_placeholder('taxa', taxa), sql_list_argument('taxa', taxa))
         session.commit()
 
     # Process in parallel
