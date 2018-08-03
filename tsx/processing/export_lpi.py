@@ -182,7 +182,7 @@ def process_database(species = None, monthly = False, filter_output = False):
                     (SELECT description FROM experimental_design_type WHERE agg.experimental_design_type_id = experimental_design_type.id) AS ExperimentalDesignType,
                     (SELECT description FROM response_variable_type WHERE agg.response_variable_type_id = response_variable_type.id) AS ResponseVariableType,
                     COALESCE(ROUND(alpha.alpha_hull_area_in_m2 / alpha.core_range_area_in_m2, 4), 0) AS SpatialRepresentativeness,
-                    data_source.no_absences_recorded AS NoAbsencesRecorded,
+                    data_source.absences_recorded AS AbsencesRecorded,
                     data_source.standardisation_of_method_effort_id AS StandardisationOfMethodEffort,
                     data_source.objective_of_monitoring_id AS ObjectiveOfMonitoring,
                     data_source.consistency_of_monitoring_id AS ConsistencyOfMonitoring,

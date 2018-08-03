@@ -26,7 +26,7 @@ def main():
 				'taxon_id': row['TaxonID'],
 				'data_agreement_id': row['DataAgreement'] or None,
 				'objective_of_monitoring_id': row['ObjectiveOfMonitoring'] or None,
-				'no_absences_recorded': row['NoAbsencesRecorded'] or 0,
+				'absences_recorded': row['AbsencesRecorded'] or 1,
 				'standardisation_of_method_effort_id': row['StandardisationOfMethodEffort'] or None,
 				'consistency_of_monitoring_id': row['ConsistencyOfMonitoring'] or None
 			}
@@ -45,7 +45,7 @@ def main():
 					taxon_id,
 					data_agreement_id,
 					objective_of_monitoring_id,
-					no_absences_recorded,
+					absences_recorded,
 					standardisation_of_method_effort_id,
 					consistency_of_monitoring_id
 				) VALUES (
@@ -53,7 +53,7 @@ def main():
 					:taxon_id,
 					:data_agreement_id,
 					:objective_of_monitoring_id,
-					:no_absences_recorded,
+					:absences_recorded,
 					:standardisation_of_method_effort_id,
 					:consistency_of_monitoring_id
 				)""",
