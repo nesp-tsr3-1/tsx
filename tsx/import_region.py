@@ -27,12 +27,13 @@ def main():
 
 			geometry = reproject(shape(feature['geometry']))
 
-			session.execute("""INSERT INTO region (id, name, geometry, state)
-					VALUES (:id, :name, ST_GeomFromWKB(_BINARY :geometry_wkb), :state)""", {
+			session.execute("""INSERT INTO region (id, name, geometry, state, positional_accuracy_in_m)
+					VALUES (:id, :name, ST_GeomFromWKB(_BINARY :geometry_wkb), :state, :positional_accuracy_in_m)""", {
 						'id': index,
 						'name': props['RegName'],
 						'geometry_wkb': shapely.wkb.dumps(to_multipolygon(geometry)),
-						'state': props['StateName']
+						'state': props['StateName'],
+						'positional_accuracy_in_m': int(props['Accuracy'])
 					})
 
 			for geometry in subdivide_geometry(geometry):

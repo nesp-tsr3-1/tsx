@@ -85,6 +85,7 @@ def process_database(species = None, monthly = False, filter_output = False):
             'Region',
             'Latitude',
             'Longitude',
+            'SpatialAccuracy',
             'SiteID',
             'SiteDesc',
             'SourceID',
@@ -113,12 +114,12 @@ def process_database(species = None, monthly = False, filter_output = False):
             'ObjectiveOfMonitoring',
             'SpatialRepresentativeness',
             'SeasonalConsistency', # TBD
-            'SpatialAccuracy',
             'ConsistencyOfMonitoring',
             'MonitoringFrequencyAndTiming',
             'DataAgreement',
             'SurveysCentroidLatitude',
             'SurveysCentroidLongitude',
+            'SurveysSpatialAccuracy',
             'SurveyCount',
             'TimeSeriesID',
             'NationalPriorityTaxa'
@@ -174,7 +175,7 @@ def process_database(species = None, monthly = False, filter_output = False):
                     region.state AS State,
                     region_centroid.x AS Longitude,
                     region_centroid.y AS Latitude,
-                    MAX(positional_accuracy_in_m) AS SpatialAccuracy,
+                    region.positional_accuracy_in_m AS SpatialAccuracy,
                     {value_series} AS value_series,
                     COUNT(*) AS value_count,
                     agg.data_type AS DataType,
@@ -188,6 +189,7 @@ def process_database(species = None, monthly = False, filter_output = False):
                     data_source.data_agreement_id AS DataAgreement,
                     MAX(ST_X(agg.centroid_coords)) AS SurveysCentroidLongitude,
                     MAX(ST_Y(agg.centroid_coords)) AS SurveysCentroidLatitude,
+                    MAX(agg.positional_accuracy_in_m) AS SurveysSpatialAccuracy,
                     SUM(agg.survey_count) AS SurveyCount
                 FROM
                     {aggregated_table} agg
