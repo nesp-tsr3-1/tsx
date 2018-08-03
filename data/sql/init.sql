@@ -1,5 +1,12 @@
 # Unfortunately MySQL Workbench doesn't support spatial indexes so I'm creating them here instead
 
+# MySQL 8 Requires SRID on geometry columns for spatial indexes to work
+/*!80000 ALTER TABLE t2_survey MODIFY COLUMN coords POINT NOT NULL SRID 0 */;
+/*!80000 ALTER TABLE taxon_presence_alpha_hull_subdiv MODIFY COLUMN geometry GEOMETRY NOT NULL SRID 0 */;
+/*!80000 ALTER TABLE taxon_range_subdiv MODIFY COLUMN geometry MULTIPOLYGON NOT NULL SRID 0 */;
+/*!80000 ALTER TABLE grid_cell MODIFY COLUMN geometry POLYGON NOT NULL SRID 0 */;
+/*!80000 ALTER TABLE region_subdiv MODIFY COLUMN geometry MULTIPOLYGON NOT NULL SRID 0 */;
+
 CREATE SPATIAL INDEX coords ON t2_survey (coords);
 CREATE SPATIAL INDEX geometry ON taxon_presence_alpha_hull_subdiv (geometry);
 CREATE SPATIAL INDEX geometry ON taxon_range_subdiv (geometry);
