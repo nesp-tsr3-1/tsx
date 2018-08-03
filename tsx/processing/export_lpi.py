@@ -122,7 +122,8 @@ def process_database(species = None, monthly = False, filter_output = False):
             'SurveysSpatialAccuracy',
             'SurveyCount',
             'TimeSeriesID',
-            'NationalPriorityTaxa'
+            'NationalPriorityTaxa',
+            'Citation'
         ]
 
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -190,7 +191,15 @@ def process_database(species = None, monthly = False, filter_output = False):
                     MAX(ST_X(agg.centroid_coords)) AS SurveysCentroidLongitude,
                     MAX(ST_Y(agg.centroid_coords)) AS SurveysCentroidLatitude,
                     MAX(agg.positional_accuracy_in_m) AS SurveysSpatialAccuracy,
-                    SUM(agg.survey_count) AS SurveyCount
+                    SUM(agg.survey_count) AS SurveyCount,
+                    CONCAT(
+                        COALESCE(CONCAT(source.author, ' '), ''),
+                        '(', YEAR(NOW()), '). ',
+                        COALESCE(CONCAT(source.description, '. '), ''),
+                        COALESCE(CONCAT(source.provider, ', '), ''),
+                        'Aggregated for National Environmental Science Program Threatened Species Recovery Hub Project 3.1. Generated on ',
+                        DATE(NOW())
+                    ) AS Citation
                 FROM
                     {aggregated_table} agg
                     INNER JOIN taxon ON taxon.id = agg.taxon_id
