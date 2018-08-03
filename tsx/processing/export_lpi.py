@@ -109,7 +109,7 @@ def process_database(species = None, monthly = False, filter_output = False):
             'TimeSeriesSampleYears',
             'TimeSeriesCompleteness',
             'TimeSeriesSamplingEvenness',
-            'NoAbsencesRecorded',
+            'AbsencesRecorded',
             'StandardisationOfMethodEffort',
             'ObjectiveOfMonitoring',
             'SpatialRepresentativeness',
