@@ -19,6 +19,8 @@ def main():
 	source_by_id = { source_id: desc for source_id, desc in session.execute("SELECT id, description FROM source").fetchall() }
 	search_type_by_id = { search_type_id: desc for search_type_id, desc in session.execute("SELECT id, description FROM search_type").fetchall() }
 
+	session.execute("DELETE FROM processing_method")
+
 	with open(args.filename) as f:
 		reader = csv.DictReader(f)
 		for row in reader:
@@ -29,24 +31,32 @@ def main():
 			if row['positional_accuracy_threshold_in_m'] == '':
 				row['positional_accuracy_threshold_in_m'] = None
 
-			if args.relax:
-				r = session.execute("SELECT id FROM source WHERE description = :description", { 'description': row['source_description'] }).fetchall()
-				if len(r) > 0:
-					row['source_id'] = r[0][0]
-				else:
-					continue
+			source_id = int(row['source_id'])
 
-				r = session.execute("SELECT id FROM search_type WHERE description = :description", { 'description': row['search_type_description'] }).fetchall()
-				if len(r) > 0:
-					row['search_type_id'] = r[0][0]
-				else:
-					continue
-			else:
-				if source_by_id.get(int(row['source_id']), None) != row['source_description']:
-					raise ValueError("Unrecognized source id/description combination (%s, %s)" % (row['source_id'], row['source_description']))
+			if source_id not in source_by_id:
+				raise ValueError("Unrecognized source_id: %s" % source_id)
 
-				if search_type_by_id.get(int(row['search_type_id']), None) != row['search_type_description']:
-					raise ValueError("Unrecognized search type id/description combination (%s, %s)" % (row['search_type_id'], row['search_type_description']))
+			if source_by_id[source_id] != row['source_description']:
+				msg = "Source description does not match (source_id: %s, source_description: %s, database description: %s)" % (
+					row['source_id'], row['source_description'], source_by_id[source_id])
+				if args.relax:
+					log.info(msg)
+				else:
+					raise ValueError(msg)
+
+			search_type_id = int(row['search_type_id'])
+
+
+			if search_type_id not in search_type_by_id:
+				raise ValueError("Unrecognized search_type_id: %s" % search_type_id)
+
+			if search_type_by_id[search_type_id] != row['search_type_description']:
+				msg = "Search type description does not match (search_type_id: %s, search_type_description: %s, database description: %s)" % (
+					row['search_type_id'], row['search_type_description'], search_type_by_id[search_type_id])
+				if args.relax:
+					log.info(msg)
+				else:
+					raise ValueError(msg)
 
 
 			if int(row['DataType']) not in (1,2):
