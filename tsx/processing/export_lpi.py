@@ -198,7 +198,7 @@ def process_database(species = None, monthly = False, filter_output = False):
                         COALESCE(CONCAT(source.authors, ' '), ''),
                         '(', YEAR(NOW()), '). ',
                         COALESCE(CONCAT(source.description, '. '), ''),
-                        COALESCE(CONCAT(source.provider, ', '), ''),
+                        COALESCE(CONCAT(source.provider, '. '), ''),
                         'Aggregated for National Environmental Science Program Threatened Species Recovery Hub Project 3.1. Generated on ',
                         DATE(NOW())
                     ) AS Citation
