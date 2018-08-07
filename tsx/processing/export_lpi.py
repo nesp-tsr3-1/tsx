@@ -195,7 +195,7 @@ def process_database(species = None, monthly = False, filter_output = False):
                     MAX(agg.positional_accuracy_in_m) AS SurveysSpatialAccuracy,
                     SUM(agg.survey_count) AS SurveyCount,
                     CONCAT(
-                        COALESCE(CONCAT(source.author, ' '), ''),
+                        COALESCE(CONCAT(source.authors, ' '), ''),
                         '(', YEAR(NOW()), '). ',
                         COALESCE(CONCAT(source.description, '. '), ''),
                         COALESCE(CONCAT(source.provider, ', '), ''),
