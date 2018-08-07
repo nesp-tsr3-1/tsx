@@ -48,7 +48,8 @@ t_aggregated_by_year = Table(
     Column('positional_accuracy_in_m', Float(asdecimal=True)),
     Column('centroid_coords', NullType, nullable=False),
     Column('survey_count', Integer, nullable=False),
-    Column('time_series_id', String(32))
+    Column('time_series_id', String(32)),
+    Column('include_in_analysis', Integer, nullable=False, server_default=text("'0'"))
 )
 
 
@@ -59,7 +60,7 @@ class DataSource(Base):
     taxon_id = Column(ForeignKey(u'taxon.id'), primary_key=True, nullable=False, index=True)
     data_agreement_id = Column(Integer)
     objective_of_monitoring_id = Column(Integer)
-    no_absences_recorded = Column(Integer)
+    absences_recorded = Column(Integer)
     standardisation_of_method_effort_id = Column(Integer)
     consistency_of_monitoring_id = Column(Integer)
 
@@ -117,6 +118,7 @@ class Region(Base):
     name = Column(String(255))
     geometry = Column(NullType, nullable=False)
     state = Column(String(255))
+    positional_accuracy_in_m = Column(Integer)
 
 
 t_region_subdiv = Table(
@@ -149,6 +151,7 @@ class Source(Base):
     provider = Column(String(255))
     description = Column(Text)
     notes = Column(Text)
+    authors = Column(Text)
 
     source_type = relationship(u'SourceType')
 
