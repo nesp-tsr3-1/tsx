@@ -58,6 +58,7 @@ def main():
 					iucn_status = session.query(TaxonStatus).filter_by(description = row['IUCNStatus']).one_or_none(),
 					bird_group = row['BirdGroup'],
 					bird_sub_group = row['BirdSubGroup'],
+					taxonomic_group = row['TaxonomicGroup'],
 					national_priority = str(row['NationalPriorityTaxa']) == '1'
 				)
 			except:

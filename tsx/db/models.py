@@ -367,6 +367,7 @@ class Taxon(Base):
     bird_group = Column(String(255))
     bird_sub_group = Column(String(255))
     national_priority = Column(Integer, nullable=False, server_default=text("'0'"))
+    taxonomic_group = Column(String(255))
 
     aust_status = relationship(u'TaxonStatus', primaryjoin='Taxon.aust_status_id == TaxonStatus.id')
     epbc_status = relationship(u'TaxonStatus', primaryjoin='Taxon.epbc_status_id == TaxonStatus.id')
