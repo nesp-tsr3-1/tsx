@@ -156,7 +156,7 @@ def get_taxa(session, data_type, species):
             table = table,
             species = sql_list_placeholder('species', species)
         )
-        taxa = session.execute(sql, sql_list_placeholder('species', species)).fetchall()
+        taxa = session.execute(sql, sql_list_argument('species', species)).fetchall()
 
     return [taxon_id for (taxon_id,) in taxa]
 
