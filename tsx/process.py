@@ -55,6 +55,7 @@ def main():
 
     p = subparsers.add_parser('spatial_rep')
     p = subparsers.add_parser('filter_time_series')
+    p = subparsers.add_parser('clear')
     p = subparsers.add_parser('all')
     args = parser.parse_args()
 
@@ -92,6 +93,11 @@ def main():
             log.error("Passing species not supported for 'filter_time_series'")
             return
         tsx.processing.filter_time_series.process_database()
+    elif args.command == 'clear':
+        if not args.commit:
+            log.error("Dry-run mode not supported for 'filter_time_series'")
+            return
+        clear_database()
     elif args.command == 'all':
         if not args.commit:
             log.error("Dry-run mode not supported for 'all'")
@@ -99,6 +105,9 @@ def main():
         if args.species:
             log.error("Passing species not supported for 'all'")
             return
+
+        log.info("STEP 0 - CLEARING PREVIOUS RESULTS")
+        clear_database()
 
         log.info("STEP 1 - ALPHA HULLS")
         tsx.processing.alpha_hull.process_database(commit = True)
@@ -122,6 +131,28 @@ def main():
         tsx.processing.filter_time_series.process_database()
 
         log.info("PROCESSING COMPLETE")
+
+
+def clear_database():
+    # Clears out all derived data from the database
+    session = get_session()
+    statements = [
+        "SET FOREIGN_KEY_CHECKS = 0;",
+        "TRUNCATE taxon_presence_alpha_hull;",
+        "TRUNCATE taxon_presence_alpha_hull_subdiv;",
+        "TRUNCATE t2_ultrataxon_sighting;",
+        "TRUNCATE t2_processed_survey;",
+        "TRUNCATE t2_processed_sighting;",
+        "TRUNCATE t2_survey_site;",
+        "TRUNCATE aggregated_by_year;",
+        "TRUNCATE aggregated_by_month;",
+        "SET FOREIGN_KEY_CHECKS = 1;"
+    ]
+
+    for sql in tqdm(statements):
+        session.execute(sql)
+
+    session.commit()
 
 
 # ----- Export shapefiles showing processed data
