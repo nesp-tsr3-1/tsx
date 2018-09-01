@@ -15,8 +15,8 @@ import numpy as np
 # this is going to use quite alot of RAM, but it is more responsive than using dask
 bp = Blueprint('lpi_data', __name__)
 export_dir = tsx.config.data_dir('export')
-# filename = 'lpi-filtered.csv'
-filename = '/Users/james/tmp/lpi-2018-01-13/lpi-filtered.csv'
+filename = 'lpi-filtered.csv'
+# filename = '/Users/james/tmp/lpi-2018-08-08/lpi-filtered.csv'
 unfiltered_df = pd.read_csv(os.path.join(export_dir, filename), index_col = 'ID',quoting=csv.QUOTE_MINIMAL, 
 	dtype={'ID': int, 'Binomial': str, 'SpNo': int, 'TaxonID': str, 'CommonName': str, 
 		'Class': str, 'Order': str, 'Family': str, 'FamilyCommonName': str, 
