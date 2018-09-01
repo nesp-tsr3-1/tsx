@@ -26,6 +26,7 @@ def main():
 			props = feature['properties']
 
 			geometry = reproject(shape(feature['geometry']))
+			geometry = geometry.buffer(0)
 
 			session.execute("""INSERT INTO region (id, name, geometry, state, positional_accuracy_in_m)
 					VALUES (:id, :name, ST_GeomFromWKB(_BINARY :geometry_wkb), :state, :positional_accuracy_in_m)""", {
