@@ -67,10 +67,16 @@ def process_database(species = None, commit = False):
                 core_range_geom = reproject(get_core_range_geometry(session, taxon_id), db_proj, working_proj).buffer(0).intersection(coastal_shape)
 
                 for source_id in get_source_ids(session, data_type, taxon_id):
+
+                    log.info("Processing taxon_id: %s, source_id: %s" % (taxon_id, source_id))
+
                     # Get raw points from DB
                     raw_points = get_raw_points(session, data_type, taxon_id, source_id)
 
                     empty = len(raw_points) < 4
+
+                    if empty:
+                        log.info("Taxon %s: not enough points to create alpha hull (%s)" % (taxon_id, len(raw_points)))
 
                     if not empty:
                         # Read points from database
@@ -89,6 +95,7 @@ def process_database(species = None, commit = False):
                         alpha_shp = alpha_shp.buffer(0)
 
                         if core_range_geom.area == 0:
+                            log.info("Core range geometry area is zero")
                             empty = True
 
                         else:
