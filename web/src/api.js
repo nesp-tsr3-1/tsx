@@ -51,7 +51,7 @@ export function intensityPlot(params) {
 
 // TODO: if files are in object stores, update this
 export function lpiRunData(path, filetype) {
-  var baseLPIRunURL = NESP_URL + '/lpi_runs/'
+  var baseLPIRunURL = TSX_URL + '/lpi_runs/'
   var url = ''
   if(!_.isEmpty(path)) {
     url += encodeURI(path)
