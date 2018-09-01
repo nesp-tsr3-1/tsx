@@ -56,17 +56,17 @@
               </select>
             </div>
           </div>
-          
+
           <div class="field">
             <input type="checkbox" id="checkbox" v-model="prioritySelected">
             <label for="checkbox">Priority Group</label>
           </div>
 
           <p>
-            <button class='button is-primary' v-on:click='downloadCSV'>Download CSV</button>
+            <button class='button is-primary is-small' v-on:click='downloadCSV'>Download CSV</button>
           </p>
           <p>
-            <button class='button is-primary' v-on:click='viewDataSummary'>Data Summary</button>
+            <button class='button is-primary is-small' v-on:click='viewDataSummary'>Data Summary</button>
           </p>
         </div>
       </div>
@@ -260,6 +260,7 @@ export default {
       options: {
         animation: false,
         responsive: true,
+        maintainAspectRatio: false,
         tooltips: {
           mode: 'point'
         },
@@ -328,6 +329,7 @@ export default {
       // Configuration options go here
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         scales: {
           yAxes: [{
             type: 'logarithmic',
@@ -684,6 +686,7 @@ export default {
         data: this.summaryPlotDataSet,
         options: {
           responsive: true,
+          maintainAspectRatio: false,
           hoverMode: 'nearest',
           intersect: true,
           // title: {
@@ -756,5 +759,9 @@ export default {
     bottom:0;
     left:0;
     right:0;
+  }
+  /* Important: the following line fixes the charts not resizing responsively */
+  .tile {
+    min-width: 0;
   }
 </style>
