@@ -129,26 +129,35 @@ def get_intensity():
 	if len(filtered_data) == 0:
 		return []
 	dat = filtered_data.to_dict()
-	ids = dat['TimeSeriesID'].values() 
-	session = get_session()
-	result = session.execute("""SELECT time_series_id, start_date_y as Year, ST_X(centroid_coords) as Latitude, 
-				    ST_Y(centroid_coords) as Longitude, SUM(survey_count) as Count
-				    FROM aggregated_by_year
-				    WHERE include_in_analysis
-				    AND time_series_id in %s 
-				    GROUP BY time_series_id, Year, Latitude, Longitude"""%str(tuple(ids)))
-	values = pd.DataFrame.from_records(data = result.fetchall(), columns = result.keys()).to_dict()
-	session.close()
-	# years = values['Year']
-	lats = values['Latitude']
-	longs = values['Longitude']
-	counts = values['Count']
-	years = values['Year']
-	timeSeriesIDs = { id:[] for id in ids }
-	results = {}
-	for k, v in values['time_series_id'].iteritems():
-		timeSeriesIDs[v].append(k)
-	return json.dumps([ [lats[v[0]], longs[v[0]], [[years[i], int(counts[i])] for i in v]] for k, v in timeSeriesIDs.iteritems() if len(v) >0])
+
+	source = request.args.get('source', type=str)
+	if source == 'lpi_wide_table':
+			lats = dat['SurveysCentroidLatitude']
+			longs = dat['SurveysCentroidLongitude']
+			counts = dat['SurveyCount']
+			ids = lats.keys()
+			return json.dumps([ [lats[id], longs[id], counts[id]] for id in ids ])
+	else: # get it from database
+		ids = dat['TimeSeriesID'].values()
+		session = get_session()
+		result = session.execute("""SELECT time_series_id, start_date_y as Year, ST_X(centroid_coords) as Latitude,
+						ST_Y(centroid_coords) as Longitude, SUM(survey_count) as Count
+						FROM aggregated_by_year
+						WHERE include_in_analysis
+						AND time_series_id in %s
+						GROUP BY time_series_id, Year, Latitude, Longitude"""%str(tuple(ids)))
+		values = pd.DataFrame.from_records(data = result.fetchall(), columns = result.keys()).to_dict()
+		session.close()
+		# years = values['Year']
+		lats = values['Latitude']
+		longs = values['Longitude']
+		counts = values['Count']
+		years = values['Year']
+		timeSeriesIDs = { id:[] for id in ids }
+		results = {}
+		for k, v in values['time_series_id'].iteritems():
+			timeSeriesIDs[v].append(k)
+		return json.dumps([ [lats[v[0]], longs[v[0]], [[years[i], int(counts[i])] for i in v]] for k, v in timeSeriesIDs.iteritems() if len(v) >0])
 
 def get_dotplot_data(filtered_data):
 	"""Converts time-series to a minimal form for generating dot plots:
@@ -276,8 +285,8 @@ def build_filter_string():
 		# find in database
 		session = get_session()
 		_search_type_desc = session.execute(
-            """SELECT * FROM search_type WHERE id = :searchtypeid""",
-            {'searchtypeid': _search_type}).fetchone()['description']
+			"""SELECT * FROM search_type WHERE id = :searchtypeid""",
+			{'searchtypeid': _search_type}).fetchone()['description']
 		filters.append("SearchTypeDesc=='%s'" % (_search_type_desc))
 		session.close()
 	#subibra

@@ -84,7 +84,7 @@
         <div class="tile">
           <div class="tile is-parent is-vertical" v-show="!showFullMap">
             <div class="tile is-child card">
-                <canvas ref='lpiplot'></canvas>
+              <canvas ref='lpiplot'></canvas>
             </div>
             <div class="tile is-child card">
                 <canvas ref='dotplot'></canvas>
@@ -92,14 +92,14 @@
           </div>
           <div class="tile is-parent is-vertical">
             <div class="tile is-child card">
-              <vue-slider ref='slider' v-bind='sliderData' v-model='sliderRange' class='heatmap-slider'></vue-slider>
+              <vue-slider ref='slider' v-bind='sliderData' v-model='sliderRange' v-if='sliderEnabled' class='heatmap-slider'></vue-slider>
               <div id='intensityplot' ref='intensityplot' class='heatmap-div'></div>
               <spinner size='large' message='Loading map....' v-show='loadingMap' class='heatmap-spinner'></spinner>
             </div>
             <div class="tile is-child card" v-show="!showFullMap">
               <canvas ref='sumplot'></canvas>
             </div>
-            
+
           </div>
         </div>
       </div>
@@ -118,6 +118,8 @@ import L from 'leaflet'
 import HeatmapOverlay from 'heatmap.js/plugins/leaflet-heatmap/leaflet-heatmap.js'
 import easyButton from 'leaflet-easybutton/src/easy-button.js'
 import vueSlider from 'vue-slider-component/dist/index.js'
+import { min, max, pluck } from '@/util'
+
 export default {
   name: 'TSX',
   components: {
@@ -182,7 +184,8 @@ export default {
         show: false,
         lazy: true,
         tooltip: 'always'
-      }
+      },
+      sliderEnabled: false
     }
     // groups
     data.groupList.push({value: 'None', text: 'All'})
@@ -313,15 +316,17 @@ export default {
         data: [] },
       {
         label: 'Confidence Interval (low)',
-        borderColor: '#3e9555',
-        backgroundColor: '#3e9555',
+        backgroundColor: '#eee',
         fill: 1,
+        pointRadius: 0,
+        borderColor: '#0000',
         data: [] },
       {
         label: 'Confidence Interval (high)',
-        borderColor: '#3e95cd',
-        backgroundColor: '#3e95cd',
+        backgroundColor: '#eee',
         fill: 1,
+        pointRadius: 0,
+        borderColor: '#0000',
         data: [] }]
     }
     this.lpiPlot = new Chart.Line(this.$refs.lpiplot.getContext('2d'), {
@@ -329,6 +334,9 @@ export default {
       // Configuration options go here
       options: {
         responsive: true,
+        legend: {
+          display: false
+        },
         maintainAspectRatio: false,
         scales: {
           yAxes: [{
@@ -382,11 +390,13 @@ export default {
     })
     // /////////// map control /////////////////////////
     // setupbutton
+    /*
     L.easyButton('<strong>&#9881;</strong>', function(buttonArg, mapArg) {
       // do stuff
       console.log('show settings')
     },
     { position: 'bottomleft' }).addTo(that.map)
+*/
     L.easyButton({
       id: 'expand',
       position: 'bottomleft',
@@ -396,12 +406,7 @@ export default {
         onClick: function(btn, map) {
           btn.state('big')
           that.showFullMap = true
-          // this is to make the slider properlly align with the resize event
-          that.sliderData.max = that.sliderData.max + 1
-          setTimeout(function() {
-            that.map.invalidateSize()
-            that.sliderData.max = that.sliderData.max - 1
-          }, 500)
+          setTimeout(function() { window.dispatchEvent(new Event('resize')) })
         }
       }, {
         icon: '<strong>&nearr;</strong>',
@@ -409,11 +414,7 @@ export default {
         onClick: function(btn, map) {
           btn.state('small')
           that.showFullMap = false
-          that.sliderData.max = that.sliderData.max + 1
-          setTimeout(function() {
-            that.map.invalidateSize()
-            that.sliderData.max = that.sliderData.max - 1
-          }, 2000)
+          setTimeout(function() { window.dispatchEvent(new Event('resize')) })
         }
       }]
     }).addTo(that.map)
@@ -447,27 +448,21 @@ export default {
       this.updatePlot()
     },
     sliderRange(range) {
-      if(this.loadingMap) {
+      if(!this.sliderEnabled || this.loadingMap) {
         return
       }
       var that = this
       var minYear = range[0]
       var maxYear = range[1]
-      that.heatmapDataSet.data = []
-      // color scale ramains the same
-      // var countMin = 10000
-      // var countMax = 0
-      that.surveyData.forEach(function(element) {
-        if(element['year'] >= minYear && element['year'] <= maxYear) {
-          that.heatmapDataSet.data.push(element)
-          // if (element['count'] > countMax) countMax = element['count']
-          // if (element['count'] < countMin) countMin = element['count']
-        }
+
+      this.heatmapDataSet.data = this.surveyData.filter(function(x) {
+        return x.year >= minYear && x.year <= maxYear
       })
-      // that.heatmapDataSet.min = countMin
-      // that.heatmapDataSet.max = countMax
+      // var counts = this.heatmapDataSet.data.map(function(x) { return x.count })
+      // this.heatmapDataSet.min = min(counts)
+      // this.heatmapDataSet.max = max(counts)
+
       that.heatmapLayer.setData(that.heatmapDataSet)
-      that.map.invalidateSize()
     }
   },
   computed: {
@@ -539,12 +534,17 @@ export default {
       // intensity plot
       that.loadingMap = true
       this.sliderData.show = false
+
+      // using lpi wide table per Elisa'request
+      // filterParams.source = 'lpi_wide_table'
+
       api.intensityPlot(filterParams).then((data) => {
+        if(data.length === 0) {
+          return
+        }
+
         console.log('--loading map data----')
-        var yearMin = 30000 // we should be in mars by then
-        var yearMax = 1000
-        var countMin = 10000
-        var countMax = 0
+
         data.forEach(function(timeSerie) {
           var lat = timeSerie[1]
           var long = timeSerie[0]
@@ -556,23 +556,26 @@ export default {
               'count': element[1],
               'year': element[0]
             })
-            if (element[1] > countMax) countMax = element[1]
-            if (element[1] < countMin) countMin = element[1]
-            if (element[0] < yearMin) yearMin = element[0]
-            if (element[0] > yearMax) yearMax = element[0]
           })
         })
-        that.sliderData.min = yearMin
-        that.sliderData.max = yearMax
-        that.heatmapDataSet.max = countMax
-        that.heatmapDataSet.min = countMin
-        that.sliderRange = [that.sliderData.min, that.sliderData.max]
+
+        if(that.sliderEnabled) {
+          var years = pluck(that.surveyData, 'year')
+          that.sliderData.min = min(years)
+          that.sliderData.max = max(years)
+          that.sliderRange = [that.sliderData.min, that.sliderData.max]
+        }
+
+        var counts = pluck(that.surveyData, 'count')
+        that.heatmapDataSet.max = max(counts)
+        that.heatmapDataSet.min = min(counts)
+
         that.heatmapDataSet.data = that.surveyData
         that.heatmapLayer.setData(that.heatmapDataSet)
-        that.map.invalidateSize()
+        // that.map.invalidateSize()
       }).finally(() => {
         that.loadingMap = false
-        that.sliderData.show = true
+        that.sliderData.show = that.sliderEnabled
       })
       // get files later
       var lpiResultFile = filtersStr + '/nesp_' + this.selectedYear.value + '_infile_Results.txt'
@@ -754,7 +757,7 @@ export default {
     z-index:2;
     width: 100%;
     height: 16px;
-    position:absolute !important;
+    position:absolute;
     top:0;
     bottom:0;
     left:0;

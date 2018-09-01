@@ -111,3 +111,19 @@ export function CSVToArray(strData, strDelimiter) {
   // Return the parsed data.
   return arrData
 }
+
+export function pluck(array, key) {
+  return array.map(function(x) { return x[key] })
+}
+
+export function min(array) {
+  return array.reduce(function(a, b) {
+    return (a === undefined || b < a) ? b : a
+  }, undefined)
+}
+
+export function max(array) {
+  return array.reduce(function(a, b) {
+    return (a === undefined || b > a) ? b : a
+  }, undefined)
+}
