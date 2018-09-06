@@ -23,7 +23,7 @@ import logging
 
 import tsx.config
 
-logger = logging.getLogger("tsxrestapi")
+logger = logging.getLogger("tsxapi")
 logger.setLevel(logging.DEBUG)
 
 
@@ -52,7 +52,7 @@ class Options(usage.Options):
 # in /etc and in the current directory
 # def read_config(clicfg):
 #     config = ConfigParser.SafeConfigParser()
-#     candidates = ['/opt/tsx/conf/tsxrestapi.conf','tsxrestapi.conf']
+#     candidates = ['/opt/tsx/conf/tsxapi.conf','tsxapi.conf']
 #     if clicfg['config'] != None:
 #         candidates = [clicfg['config'],]
 #     config.read(candidates)
@@ -66,19 +66,19 @@ class Options(usage.Options):
 # Twisted Application Framework setup:
 
 def makeService(cliconfig):
-    application = service.Application('Nesp REST API')
+    application = service.Application('TSX API')
 
     ch = logging.StreamHandler()
     ch.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     ch.setFormatter(formatter)
     logger.addHandler(ch)
-    observer = log.PythonLoggingObserver("tsxrestapi")
+    observer = log.PythonLoggingObserver("tsxapi")
     observer.start()
     # config = read_config(cliconfig) # JW - disabling this for now
     # setup python logging
 
-    log_file = tsx.config.get("api", "log_file", default = "/var/log/tsxrestapi.log")
+    log_file = tsx.config.get("api", "log_file", default = "/var/log/tsxapi.log")
 
     from logging.handlers import TimedRotatingFileHandler
     fh = TimedRotatingFileHandler(log_file, when='midnight',backupCount=7)
