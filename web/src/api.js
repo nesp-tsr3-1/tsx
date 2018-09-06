@@ -88,9 +88,6 @@ export function lpiRunData(path, filetype) {
     }
     return response
   })
-  .catch(function(e) {
-    console.log('Error:' + e)
-  })
 }
 
 export function region() {
