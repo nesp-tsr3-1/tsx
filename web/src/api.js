@@ -5,8 +5,8 @@ import _ from 'underscore'
 
 // const ROOT_URL = 'http://192.168.168.4:5000'
 const ROOT_URL = 'http://localhost:5000'
-// const TSX_URL = 'http://localhost:5000'
-// export const TSX_URL = 'https://nesp-dev1.coesra.org.au'
+// const TSX_URL = 'http://localhost:8080/static'
+const TSX_URL = 'https://nesp-dev1.coesra.org.au'
 // export const ROOT_URL = TSX_URL + '/tsxapi'
 
 export function createImport(dataImport) {
