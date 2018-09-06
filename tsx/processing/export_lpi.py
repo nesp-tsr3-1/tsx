@@ -114,9 +114,9 @@ def process_database(species = None, monthly = False, filter_output = False):
             'StandardisationOfMethodEffort',
             'ObjectiveOfMonitoring',
             'SpatialRepresentativeness',
-            'SeasonalConsistency', # TBD
+            # 'SeasonalConsistency', # TBD
             'ConsistencyOfMonitoring',
-            'MonitoringFrequencyAndTiming',
+            # 'MonitoringFrequencyAndTiming', # TBD
             'DataAgreement',
             'SurveysCentroidLatitude',
             'SurveysCentroidLongitude',
