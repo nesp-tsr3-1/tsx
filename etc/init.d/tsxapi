@@ -10,7 +10,7 @@
 # Description:       Threatened Species Index (TSX) API
 ### END INIT INFO
 service_dir="/opt/tsx"
-prog="tsxrestapi"
+prog="tsxapi"
 pidfile="/var/run/$prog.pid"
 logfile="/var/log/tsxapi.log"
 
