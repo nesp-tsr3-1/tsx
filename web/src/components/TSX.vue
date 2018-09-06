@@ -348,10 +348,13 @@ export default {
               labelString: 'Index'
             },
             ticks: {
-              min: 0.2,
-              max: 2.0,
-              callback: function(tick, index, ticks) {
-                return tick.toLocaleString()
+              // https://github.com/chartjs/Chart.js/issues/3121#issuecomment-390372093
+              callback: function(...args) {
+                const value = Chart.Ticks.formatters.logarithmic.call(this, ...args)
+                if (value.length) {
+                  return Number(value).toLocaleString()
+                }
+                return value
               }
             },
             gridLines: {
@@ -611,8 +614,6 @@ export default {
             }
           })
           // update lpi plot
-          that.lpiPlot.options.scales.yAxes[0].ticks.min = Number((lowestCI - 0.1).toFixed(1))
-          that.lpiPlot.options.scales.yAxes[0].ticks.max = Number((highestCI + 0.1).toFixed(1))
           that.lpiPlot.update()
         }
       }).finally(() => {
