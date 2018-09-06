@@ -84,7 +84,12 @@
         <div class="tile">
           <div class="tile is-parent is-vertical" v-show="!showFullMap">
             <div class="tile is-child card">
-              <canvas ref='lpiplot'></canvas>
+              <div class="plot-container" v-show="!noLPI">
+                <canvas ref='lpiplot'></canvas>
+              </div>
+              <div v-show="noLPI">
+                No LPI generated (e.g. due to less than 3 taxa present)
+              </div>
             </div>
             <div class="tile is-child card">
                 <canvas ref='dotplot'></canvas>
@@ -160,6 +165,8 @@ export default {
       queryLPIData: true,
       // no data to show
       noData: true,
+      // no LPI run to show
+      noLPI: false,
       // prioritySelected
       prioritySelected: false,
       // heatmap
@@ -614,8 +621,11 @@ export default {
             }
           })
           // update lpi plot
+          that.noLPI = false
           that.lpiPlot.update()
         }
+      }).catch((e) => {
+        that.noLPI = true
       }).finally(() => {
         if (!that.queryLPIData) {
           that.loadingData = false
@@ -740,7 +750,7 @@ export default {
 </style>
 <style src='leaflet-easybutton/src/easy-button.css'>
 </style>
-<style>
+<style scoped>
   .heatmap-div {
     width: 100%;
     height: 100%;
@@ -767,5 +777,14 @@ export default {
   /* Important: the following line fixes the charts not resizing responsively */
   .tile {
     min-width: 0;
+  }
+  .tile.card {
+    flex-basis: 18em;
+    max-height: 18em;
+    height: 18em;
+  }
+  .plot-container {
+    position: relative;
+    height: 18em;
   }
 </style>
