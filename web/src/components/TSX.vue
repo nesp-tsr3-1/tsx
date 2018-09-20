@@ -588,9 +588,7 @@ export default {
         that.sliderData.show = that.sliderEnabled
       })
       // get files later
-      var lpiResultFile = filtersStr + '/nesp_' + this.selectedYear.value + '_infile_Results.txt'
-      console.log(lpiResultFile)
-      api.lpiRunData(lpiResultFile, 'txt').then((data) => {
+      api.lpiRunData(filtersStr, this.selectedYear.value, 'txt').then((data) => {
         if(data) {
           // format:
           // 'LPI_final' 'CI_low' 'CI_low'

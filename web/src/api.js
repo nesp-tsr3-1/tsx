@@ -50,43 +50,31 @@ export function intensityPlot(params) {
 }
 
 // TODO: if files are in object stores, update this
-export function lpiRunData(path, filetype) {
-  var baseLPIRunURL = TSX_URL + '/lpi_runs/'
-  var url = ''
-  if(!_.isEmpty(path)) {
-    url += encodeURI(path)
-  } else { // default one
-    url += encodeURI('statusauth-Max_')
+export function lpiRunData(filterString, year) {
+  if(_.isEmpty(filterString)) {
+    filterString = 'statusauth-Max_'
   }
+
+  // URI Encode everything except spaces because that's how the files are named on the server
+  filterString = filterString.split(' ').map(encodeURIComponent).join(' ')
+
+  var url = encodeURI(TSX_URL + '/lpi_runs/' + filterString + '/nesp_' + year + '_infile_Results.txt')
+
   console.log(url)
+
   var xhr = new XMLHttpRequest()
-  xhr.open('GET', baseLPIRunURL + url)
-  console.log(baseLPIRunURL + url)
+  xhr.open('GET', url)
+
   // Used for debugging (e.g. in exceptions)
-  var params = {}
-  var options = {}
   xhr._meta = {
     url: url,
-    method: 'GET',
-    params: params,
-    options: options
+    method: 'GET'
   }
   xhr.responseType = ''
   xhr.withCredentials = true
 
-  _.each(options.headers || {}, function(v, k) {
-    xhr.setRequestHeader(k, v)
-  })
-  // var accessToken = util.store.get('accessToken');
-  // if(accessToken) {
-  //   xhr.setRequestHeader("Authorization", "Bearer " + accessToken);
-  // }
   return xhrPromise(xhr).then(function(xhr) {
-    var response = xhr.responseText
-    if(filetype === 'json') {
-      try { response = JSON.parse(response) } catch(e) {}
-    }
-    return response
+    return xhr.responseText
   })
 }
 
