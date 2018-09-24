@@ -373,7 +373,7 @@ export default {
 
     // -------intensity plot ----------------
     var baseLayer = L.tileLayer(
-      'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      '//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 5
       }
     )

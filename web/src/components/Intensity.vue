@@ -56,7 +56,6 @@
               </select>
             </div>
           </div>
-          
           <div class="field">
             <input type="checkbox" id="checkbox" v-model="prioritySelected">
             <label for="checkbox">Priority Group</label>
@@ -81,7 +80,6 @@
           <!-- vue-slider min=1960 max=2005></vue-slider -->
           <div id='intensityplot2' ref='intensityplot2' class='heatmap-div'></div>
         </div>
-      
 
       <div class="tile is-child" v-show="noData">
         <p style="margin: 0.8em">(No data to show)</p>
@@ -193,12 +191,12 @@ export default {
     var that = this
     // -------intensity plot ----------------
     var baseLayer1 = L.tileLayer(
-      'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      '//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 5
       }
     )
     var baseLayer2 = L.tileLayer(
-      'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      '//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 5
       }
     )
