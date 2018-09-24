@@ -12,7 +12,7 @@ opener = URLopener(context = ctx)
 
 print("Downloading sample data, please wait")
 filename = 'sample.zip'
-opener.retrieve('https://nesp-dev1.coesra.org.au/sample.zip', filename)
+opener.retrieve('https://tsx.org.au/sample.zip', filename)
 
 print("Extracting")
 zip_ref = zipfile.ZipFile(filename, 'r')

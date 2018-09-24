@@ -3,11 +3,8 @@ import Promise from 'bluebird' // We can drop this when browser support is bette
 import * as util from '@/util'
 import _ from 'underscore'
 
-// const ROOT_URL = 'http://192.168.168.4:5000'
-const ROOT_URL = 'http://localhost:5000'
-// const TSX_URL = 'http://localhost:8080/static'
-const TSX_URL = 'https://nesp-dev1.coesra.org.au'
-// export const ROOT_URL = TSX_URL + '/tsxapi'
+const TSX_URL = 'https://tsx.org.au'
+export const ROOT_URL = TSX_URL + '/tsxapi'
 
 export function createImport(dataImport) {
   return post('/imports', dataImport)
