@@ -24,12 +24,36 @@ $tsr-E: #b45a65;
 $tsr-F: #93b479;
 $tsr-G: #636968;
 
-$primary: $tsr-green;
+$primary: $tsr-E;
+$text: #fff;
+$text-strong: #fff;
+$label-color: #fff;
+$background: $tsr-green;
+
+body {
+  background-color: $tsr-green;
+}
+
+.container {
+  background-image: url('../static/images/bird-bg.png');
+  background-repeat: no-repeat;
+  background-position: top 1em left 2em;
+  background-size: 150px;
+}
 
 $family-sans-serif: "Museo Sans", "Arial", BlinkMacSystemFont, -apple-system, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", sans-serif;
 
 $modal-background-background-color: rgba($black, 0.1);
 
 @import "~bulma/bulma.sass";
+@import '~bulma-tooltip';
+
+.section {
+  padding-top: 1em;
+}
+
+h1 {
+  margin-top: 1em;
+}
 
 </style>

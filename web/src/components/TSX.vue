@@ -1,10 +1,5 @@
 <template>
   <div class='plot content'>
-    <h3 class='title'>TSX Plots</h3>
-    <router-link to='/'>Back to imports</router-link>
-
-    <hr>
-
     <div class="tile is-ancestor">
       <div class="tile is-2 is-parent">
         <div class="tile is-child">
@@ -84,6 +79,10 @@
         <div class="tile">
           <div class="tile is-parent is-vertical" v-show="!showFullMap">
             <div class="tile is-child card">
+              <h4 class="has-text-black">Main index</h4>
+              <span class="info-icon icon tooltip is-tooltip-bottom" data-tooltip="TODO: write explanatory text">
+                <i class="far fa-question-circle"></i>
+              </span>
               <div class="plot-container" v-show="!noLPI">
                 <canvas ref='lpiplot'></canvas>
               </div>
@@ -92,16 +91,28 @@
               </div>
             </div>
             <div class="tile is-child card">
+                <h4 class="has-text-black">Monitoring consistency</h4>
+                <span class="info-icon icon tooltip is-tooltip-bottom" data-tooltip="TODO: write explanatory text">
+                  <i class="far fa-question-circle"></i>
+                </span>
                 <canvas ref='dotplot'></canvas>
             </div>
           </div>
           <div class="tile is-parent is-vertical">
-            <div class="tile is-child card">
+            <div class="tile is-child card map-tile">
+              <h4 class="has-text-black">Spatial representativeness</h4>
+              <span class="info-icon icon tooltip is-tooltip-bottom" data-tooltip="TODO: write explanatory text">
+                <i class="far fa-question-circle"></i>
+              </span>
               <vue-slider ref='slider' v-bind='sliderData' v-model='sliderRange' v-if='sliderEnabled' class='heatmap-slider'></vue-slider>
               <div id='intensityplot' ref='intensityplot' class='heatmap-div'></div>
-              <spinner size='large' message='Loading map....' v-show='loadingMap' class='heatmap-spinner'></spinner>
+              <spinner size='medium' v-show='loadingMap' class='heatmap-spinner'></spinner>
             </div>
             <div class="tile is-child card" v-show="!showFullMap">
+              <h4 class="has-text-black">Time series and species accumulation</h4>
+              <span class="info-icon icon tooltip is-tooltip-bottom" data-tooltip="TODO: write explanatory text">
+                <i class="far fa-question-circle"></i>
+              </span>
               <canvas ref='sumplot'></canvas>
             </div>
 
@@ -410,7 +421,7 @@ export default {
       id: 'expand',
       position: 'bottomleft',
       states: [{
-        icon: '<strong>&swarr;</strong>',
+        icon: '<strong style="color: black">&swarr;</strong>',
         stateName: 'small',
         onClick: function(btn, map) {
           btn.state('big')
@@ -418,7 +429,7 @@ export default {
           setTimeout(function() { window.dispatchEvent(new Event('resize')) })
         }
       }, {
-        icon: '<strong>&nearr;</strong>',
+        icon: '<strong style="color: black">&nearr;</strong>',
         stateName: 'big',
         onClick: function(btn, map) {
           btn.state('small')
@@ -748,18 +759,20 @@ export default {
 <style src='leaflet-easybutton/src/easy-button.css'>
 </style>
 <style scoped>
+  h4 {
+    /*margin-top: 0.5em;*/
+    /*margin-left: 1em;*/
+  }
   .heatmap-div {
     width: 100%;
-    height: 100%;
+    height: 25.3em;
     z-index:1;
   }
   .heatmap-spinner{
     z-index:2;
     position:absolute;
-    top:0;
-    bottom:0;
-    left:0;
-    right:0;
+    top: 0.6em;
+    right: 4em;
   }
   .heatmap-slider{
     z-index:2;
@@ -779,9 +792,25 @@ export default {
     flex-basis: 18em;
     max-height: 18em;
     height: 18em;
+    padding: 1em;
   }
   .plot-container {
     position: relative;
     height: 18em;
+  }
+  .tile.card.map-tile {
+    padding: 0;
+    padding-top: 1em;
+  }
+  .tile.card.map-tile h4 {
+    margin-left: 1em;
+  }
+
+  .info-icon {
+    color: #aaa;
+    position: absolute;
+    top: 0.7em;
+    right: 1em;
+    font-size: 120%;
   }
 </style>
