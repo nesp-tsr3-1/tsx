@@ -11,7 +11,7 @@ Vue.use(Router)
 export default new Router({
   routes: [
     {
-      path: '/',
+      path: '/import',
       name: 'ImportHome',
       component: ImportHome
     },
@@ -26,9 +26,13 @@ export default new Router({
       component: Plot
     },
     {
-      path: '/tsx',
+      path: '/',
       name: 'TSX',
       component: TSX
+    },
+    {
+      path: '/tsx',
+      redirect: '/'
     },
     {
       path: '/intensity',
