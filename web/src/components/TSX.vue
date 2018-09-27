@@ -789,9 +789,9 @@ export default {
     min-width: 0;
   }
   .tile.card {
-    flex-basis: 18em;
-    max-height: 18em;
-    height: 18em;
+    flex-basis: 22.5em;
+    max-height: 22.5em;
+    height: 22.5em;
     padding: 1em;
   }
   .plot-container {
