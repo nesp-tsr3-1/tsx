@@ -95,7 +95,9 @@
                 <span class="info-icon icon tooltip is-tooltip-left" data-tooltip="TODO: write explanatory text">
                   <i class="far fa-question-circle"></i>
                 </span>
-                <canvas ref='dotplot'></canvas>
+                <div class="plot-container">
+                  <canvas ref='dotplot'></canvas>
+                </div>
             </div>
           </div>
           <div class="tile is-parent is-vertical">
@@ -113,7 +115,9 @@
               <span class="info-icon icon tooltip is-tooltip-left" data-tooltip="TODO: write explanatory text">
                 <i class="far fa-question-circle"></i>
               </span>
-              <canvas ref='sumplot'></canvas>
+              <div class="plot-container">
+                <canvas ref='sumplot'></canvas>
+              </div>
             </div>
 
           </div>
@@ -406,8 +410,8 @@ export default {
     }
     this.heatmapLayer = new HeatmapOverlay(cfg)
     this.map = new L.Map('intensityplot', {
-      center: new L.LatLng(-20.917574, 142.702789),
-      zoom: 4,
+      center: new L.LatLng(-25.917574, 132.702789),
+      zoom: 3,
       layers: [baseLayer, this.heatmapLayer]
     })
     // /////////// map control /////////////////////////
@@ -767,7 +771,7 @@ export default {
   }
   .heatmap-div {
     width: 100%;
-    height: 25.3em;
+    height: 25.5em;
     z-index:1;
   }
   .heatmap-spinner{
