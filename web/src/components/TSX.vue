@@ -211,7 +211,7 @@ export default {
     data.groupList.push({value: 'Wetland', text: 'Wetland'})
     data.groupList.push({value: 'Marine', text: 'Marine'})
     data.groupList.push({value: 'Shoreline (migratory)', text: 'Shoreline (migratory)'})
-    data.groupList.push({value: 'Shoreline (resident)', text: 'Shoreline (resident)'})
+    // data.groupList.push({value: 'Shoreline (resident)', text: 'Shoreline (resident)'})
     // subgroups
     data.subGroupList.push({value: 'None', text: 'All'})
     data.subGroupList.push({value: 'Tropicbirds Frigatebirds Gannets Boobies', text: 'Tropicbirds Frigatebirds Gannets Boobies'})
