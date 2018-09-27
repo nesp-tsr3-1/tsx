@@ -54,7 +54,7 @@
 
           <div class="field">
             <input type="checkbox" id="checkbox" v-model="prioritySelected">
-            <label for="checkbox">Priority Group</label>
+            <label for="checkbox">National priority species</label>
           </div>
 
           <p>
@@ -80,19 +80,19 @@
           <div class="tile is-parent is-vertical" v-show="!showFullMap">
             <div class="tile is-child card">
               <h4 class="has-text-black">Main index</h4>
-              <span class="info-icon icon tooltip is-tooltip-bottom" data-tooltip="TODO: write explanatory text">
+              <span class="info-icon icon tooltip is-tooltip-left" data-tooltip="TODO: write explanatory text">
                 <i class="far fa-question-circle"></i>
               </span>
               <div class="plot-container" v-show="!noLPI">
                 <canvas ref='lpiplot'></canvas>
               </div>
-              <div v-show="noLPI">
+              <div class="has-text-black" v-show="noLPI">
                 No LPI generated (e.g. due to less than 3 taxa present)
               </div>
             </div>
             <div class="tile is-child card">
                 <h4 class="has-text-black">Monitoring consistency</h4>
-                <span class="info-icon icon tooltip is-tooltip-bottom" data-tooltip="TODO: write explanatory text">
+                <span class="info-icon icon tooltip is-tooltip-left" data-tooltip="TODO: write explanatory text">
                   <i class="far fa-question-circle"></i>
                 </span>
                 <canvas ref='dotplot'></canvas>
@@ -101,7 +101,7 @@
           <div class="tile is-parent is-vertical">
             <div class="tile is-child card map-tile">
               <h4 class="has-text-black">Spatial representativeness</h4>
-              <span class="info-icon icon tooltip is-tooltip-bottom" data-tooltip="TODO: write explanatory text">
+              <span class="info-icon icon tooltip is-tooltip-left" data-tooltip="TODO: write explanatory text">
                 <i class="far fa-question-circle"></i>
               </span>
               <vue-slider ref='slider' v-bind='sliderData' v-model='sliderRange' v-if='sliderEnabled' class='heatmap-slider'></vue-slider>
@@ -110,7 +110,7 @@
             </div>
             <div class="tile is-child card" v-show="!showFullMap">
               <h4 class="has-text-black">Time series and species accumulation</h4>
-              <span class="info-icon icon tooltip is-tooltip-bottom" data-tooltip="TODO: write explanatory text">
+              <span class="info-icon icon tooltip is-tooltip-left" data-tooltip="TODO: write explanatory text">
                 <i class="far fa-question-circle"></i>
               </span>
               <canvas ref='sumplot'></canvas>
@@ -242,7 +242,7 @@ export default {
     data.statusAuthorityList.push({value: 'Max', text: 'Max'})
     data.statusAuthorityList.push({value: 'EPBC', text: 'EPBC'})
     data.statusAuthorityList.push({value: 'IUCN', text: 'IUCN'})
-    data.statusAuthorityList.push({value: 'BirdLifeAustralia', text: 'BifeLife Australia'})
+    data.statusAuthorityList.push({value: 'BirdLifeAustralia', text: 'BirdLife Australia'})
     // year
     data.yearList.push({value: '1970', text: '1970'})
     data.yearList.push({value: '1980', text: '1980'})
@@ -263,14 +263,14 @@ export default {
     this.dotPlotDataSet = {
       datasets: [{
         label: 'count > 0',
-        backgroundColor: 'black',
-        borderColor: 'black',
+        backgroundColor: '#7c5e77',
+        borderColor: '#7c5e77',
         borderWidth: 1,
         data: [] },
       {
         label: 'count = 0',
-        backgroundColor: 'grey',
-        borderColor: 'grey',
+        backgroundColor: '#ac9ea7',
+        borderColor: '#ac9ea7',
         borderWidth: 1,
         data: [] }]
     }
@@ -310,15 +310,15 @@ export default {
         label: 'Number of taxa',
         xAxisID: 'x-axis-1',
         yAxisID: 'y-axis-1',
-        borderColor: 'blue',
-        backgroundColor: 'blue',
+        borderColor: '#6899ae',
+        backgroundColor: '#6899ae',
         data: []
       }, {
         label: 'Number of time series',
         xAxisID: 'x-axis-1',
         yAxisID: 'y-axis-2',
-        borderColor: 'red',
-        backgroundColor: 'red',
+        borderColor: '#93b479',
+        backgroundColor: '#93b479',
         data: []
       }]
     }
@@ -327,20 +327,22 @@ export default {
       labels: [],
       datasets: [{
         label: 'TSX',
-        borderColor: 'black',
+        borderColor: '#36699e',
         backgroundColor: 'black',
         fill: false,
+        pointRadius: 0,
         data: [] },
       {
         label: 'Confidence Interval (low)',
-        backgroundColor: '#eee',
+        backgroundColor: 'rgba(230,230,230,0.5)',
         fill: 1,
         pointRadius: 0,
         borderColor: '#0000',
         data: [] },
       {
         label: 'Confidence Interval (high)',
-        backgroundColor: '#eee',
+        // backgroundColor: '#eee',
+        backgroundColor: 'rgba(230,230,230,0.5)',
         fill: 1,
         pointRadius: 0,
         borderColor: '#0000',
