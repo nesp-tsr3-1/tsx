@@ -28,7 +28,10 @@ def main():
 				'objective_of_monitoring_id': row['ObjectiveOfMonitoring'] or None,
 				'absences_recorded': row['AbsencesRecorded'] or 1,
 				'standardisation_of_method_effort_id': row['StandardisationOfMethodEffort'] or None,
-				'consistency_of_monitoring_id': row['ConsistencyOfMonitoring'] or None
+				'consistency_of_monitoring_id': row['ConsistencyOfMonitoring'] or None,
+				'start_year': row['StartYear'] or None,
+				'end_year': row['EndYear'] or None,
+				'exclude_from_analysis': row['Exclude'] or False
 			}
 
 			r = session.execute("SELECT 1 FROM source WHERE id = :id", { 'id': data['source_id'] }).fetchall()
@@ -47,7 +50,10 @@ def main():
 					objective_of_monitoring_id,
 					absences_recorded,
 					standardisation_of_method_effort_id,
-					consistency_of_monitoring_id
+					consistency_of_monitoring_id,
+					start_year,
+					end_year,
+					exclude_from_analysis
 				) VALUES (
 					:source_id,
 					:taxon_id,
@@ -55,7 +61,10 @@ def main():
 					:objective_of_monitoring_id,
 					:absences_recorded,
 					:standardisation_of_method_effort_id,
-					:consistency_of_monitoring_id
+					:consistency_of_monitoring_id,
+					:start_year,
+					:end_year,
+					:exclude_from_analysis
 				)""",
 				data
 			)
