@@ -17,21 +17,62 @@ bp = Blueprint('lpi_data', __name__)
 export_dir = tsx.config.data_dir('export')
 filename = 'lpi-filtered.csv'
 # filename = '/Users/james/tmp/lpi-2018-08-08/lpi-filtered.csv'
-unfiltered_df = pd.read_csv(os.path.join(export_dir, filename), index_col = 'ID',quoting=csv.QUOTE_MINIMAL, 
-	dtype={'ID': int, 'Binomial': str, 'SpNo': int, 'TaxonID': str, 'CommonName': str, 
-		'Class': str, 'Order': str, 'Family': str, 'FamilyCommonName': str, 
-		'Genus': str, 'Species': str, 'Subspecies': str,  
-		'FunctionalGroup': str, 'FunctionalSubGroup': str, 'EPBCStatus': str, 'IUCNStatus': str, 'BirdLifeAustraliaStatus': str,
-		'MaxStatus': str, 'State': str, 'Region': str, 'Latitude': float, 'Longitude': float, 'SiteID': int, 'SiteDesc': str,
-		'SourceID': int, 'SourceDesc': str, 'UnitID': int, 'Unit': str, 'SearchTypeID': str, 'SearchTypeDesc': str, 'ExperimentalDesignType': str,
-		'ExperimentalDesignType': str,'ResponseVariableType': str, 'DataType': int, 'TimeSeriesLength': float,
-		'TimeSeriesSampleYears': float ,'TimeSeriesCompleteness': float,'TimeSeriesSamplingEvenness': float,
-		'NoAbsencesRecorded': str,'StandardisationOfMethodEffort': str,'ObjectiveOfMonitoring': str,'SpatialRepresentativeness': float, 'SeasonalConsistency': float,
-		'SpatialAccuracy':float,'ConsistencyOfMonitoring': float,'MonitoringFrequencyAndTiming': float, 'DataAgreement': str, 'SurveysCentroidLatitude': float, 
-		'SurveysCentroidLongitude': float, 'SurveyCount': int, 'TimeSeriesID': str, 'NationalPriorityTaxa': int})
+unfiltered_df = pd.read_csv(os.path.join(export_dir, filename), index_col='ID', quoting=csv.QUOTE_MINIMAL, dtype={
+	'ID': int,
+	'Binomial': str,
+	'SpNo': int,
+	'TaxonID': str,
+	'CommonName': str,
+	'Class': str,
+	'Order': str,
+	'Family': str,
+	'FamilyCommonName': str,
+	'Genus': str,
+	'Species': str,
+	'Subspecies': str,
+	'FunctionalGroup': str,
+	'FunctionalSubGroup': str,
+	'EPBCStatus': str,
+	'IUCNStatus': str,
+	'BirdLifeAustraliaStatus': str,
+	'MaxStatus': str,
+	'State': str,
+	'Region': str,
+	'RegionCentroidLatitude': float,
+	'RegionCentroidLongitude': float,
+	'RegionCentroidAccuracy':float,
+	'SiteID': int,
+	'SiteDesc': str,
+	'SourceID': int,
+	'SourceDesc': str,
+	'UnitID': int,
+	'Unit': str,
+	'SearchTypeID': str,
+	'SearchTypeDesc': str,
+	'ExperimentalDesignType': str,
+	'ResponseVariableType': str,
+	'DataType': int,
+	'TimeSeriesLength': float,
+	'TimeSeriesSampleYears': float,
+	'TimeSeriesCompleteness': float,
+	'TimeSeriesSamplingEvenness': float,
+	'NoAbsencesRecorded': str,
+	'StandardisationOfMethodEffort': str,
+	'ObjectiveOfMonitoring': str,
+	'SpatialRepresentativeness': float,
+	'SeasonalConsistency': float,
+	'ConsistencyOfMonitoring': float,
+	'MonitoringFrequencyAndTiming': float,
+	'DataAgreement': str,
+	'SurveysCentroidLatitude': float,
+	'SurveysCentroidLongitude': float,
+	'SurveyCount': int,
+	'TimeSeriesID': str,
+	'NationalPriorityTaxa': int
+})
 
 # Important: remove sensitive information that must not be exposed publicly
-unfiltered_df = unfiltered_df.drop(['SurveysCentroidLatitude', 'SurveysCentroidLongitude', 'DataAgreement', 'SiteDesc'], axis=1)
+unfiltered_df = unfiltered_df.drop(['SurveysCentroidLatitude', 'SurveysCentroidLongitude', 'SurveysSpatialAccuracy', 'DataAgreement', 'SiteDesc'], axis=1)
 
 @bp.route('/lpi-data', methods = ['GET'])
 def lpi_data():
@@ -65,6 +106,8 @@ def lpi_data():
 		return jsonify(return_json)
 	elif output_format == 'json_pandas':
 		return filtered_dat.to_json()
+
+
 	# This will be removed
 	elif output_format == 'dotplot':
 		json_data = json.loads(unicode(filtered_dat.to_json(), errors='ignore'))
@@ -112,6 +155,8 @@ def lpi_data():
 		summaryplot_dat = {'species': species_count_year, 'timeseries': timeseries_year, 'taxa': taxa_count_year}
 		return_json={'summary': summaryplot_dat, 'dotplot': dotplot_dat}
 		return json.dumps(return_json)
+
+
 	else:
 		return jsonify("Unsupported format (Supported: csv, json)"), 400
 
