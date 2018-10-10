@@ -65,6 +65,11 @@ def get_source():
 	rows = session.execute("""SELECT id, source_type_id, provider, description FROM source ORDER BY description""").fetchall()
 	res_info = []
 	for id, source_type_id, provider, description in rows:
-		res_info.append({'id': int(id), "source_type_id": int(source_type_id), 'provider': provider, 'description': description})
+		res_info.append({
+			'id': int(id),
+			'source_type_id': None if source_type_id == None else int(source_type_id),
+			'provider': provider,
+			'description': description
+		})
 	session.close()
 	return jsonify(res_info)

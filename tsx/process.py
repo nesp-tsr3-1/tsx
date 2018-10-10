@@ -95,7 +95,7 @@ def main():
         tsx.processing.filter_time_series.process_database()
     elif args.command == 'clear':
         if not args.commit:
-            log.error("Dry-run mode not supported for 'filter_time_series'")
+            log.error("Dry-run mode not supported for 'clear'")
             return
         clear_database()
     elif args.command == 'all':

@@ -1,3 +1,5 @@
+# Clears out all derived data from the database
+
 SET FOREIGN_KEY_CHECKS = 0;
 
 TRUNCATE taxon_presence_alpha_hull;
