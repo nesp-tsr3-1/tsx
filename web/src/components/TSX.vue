@@ -20,7 +20,7 @@
             </div>
           </div>
           <div class="field">
-            <label class="label">State</label>
+            <label class="label">State / Territory</label>
             <div class="select is-fullwidth">
               <select v-model='selectedState' :disabled='prioritySelected'>
                 <option v-for="option in stateList" v-bind:value="option">{{option.text}}</option>
@@ -234,7 +234,7 @@ export default {
     // states filter
     data.stateList.push({value: 'None', text: 'All'})
     data.stateList.push({value: 'Australian Capital Territory', text: 'Australian Capital Territory'})
-    data.stateList.push({value: 'Commonwealth', text: 'Commonwealth'})
+    // data.stateList.push({value: 'Commonwealth', text: 'Commonwealth'})
     data.stateList.push({value: 'Queensland', text: 'Queensland'})
     data.stateList.push({value: 'New South Wales', text: 'New South Wales'})
     data.stateList.push({value: 'Northern Territory', text: 'Northern Territory'})
