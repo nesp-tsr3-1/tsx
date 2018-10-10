@@ -31,7 +31,8 @@ def main():
 				'consistency_of_monitoring_id': row['ConsistencyOfMonitoring'] or None,
 				'start_year': row['StartYear'] or None,
 				'end_year': row['EndYear'] or None,
-				'exclude_from_analysis': row['Exclude'] or False
+				'exclude_from_analysis': row['Exclude'] or False,
+				'suppress_aggregated_data': row['SuppressAggregatedData'] or False
 			}
 
 			r = session.execute("SELECT 1 FROM source WHERE id = :id", { 'id': data['source_id'] }).fetchall()
@@ -53,7 +54,8 @@ def main():
 					consistency_of_monitoring_id,
 					start_year,
 					end_year,
-					exclude_from_analysis
+					exclude_from_analysis,
+					suppress_aggregated_data
 				) VALUES (
 					:source_id,
 					:taxon_id,
@@ -64,7 +66,8 @@ def main():
 					:consistency_of_monitoring_id,
 					:start_year,
 					:end_year,
-					:exclude_from_analysis
+					:exclude_from_analysis,
+					:suppress_aggregated_data
 				)""",
 				data
 			)

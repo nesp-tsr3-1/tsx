@@ -44,6 +44,8 @@ def lpi_data():
 	filtered_dat = get_filtered_data()
 
 	if output_format == None or output_format == 'csv':
+		filtered_dat = suppress_aggregated_data(filtered_dat)
+
 		if download_file == None or download_file == "":
 			return filtered_dat.to_csv()
 		else:
@@ -258,6 +260,15 @@ def get_summary_data(filtered_data):
 		#    sum()                           -- Finally count up totals for each year
 		'taxa': (df.loc[:,['TaxonID'] + years].groupby('TaxonID').count() > 0).sum().to_dict()
 	}
+
+def suppress_aggregated_data(df):
+	df = df.copy()
+
+	years = [col for col in df.columns if col.isdigit()]
+	df[years] = df[years].multiply(df['SuppressAggregatedData'].apply(lambda x: np.nan if x== 1 else 1), axis="index")
+
+	return df
+
 
 def get_filtered_data():
 	filter_str = build_filter_string()
