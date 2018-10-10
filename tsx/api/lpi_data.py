@@ -261,10 +261,19 @@ def get_summary_data(filtered_data):
 
 def get_filtered_data():
 	filter_str = build_filter_string()
+
+	df = unfiltered_df
+
+	try:
+		reference_year = request.args.get('reference_year', type=int)
+		df = df.drop([col for col in df.columns if col.isdigit() and int(col) < reference_year], axis=1)
+	except:
+		pass
+
 	if filter_str:
-		return unfiltered_df.query(filter_str)
+		return df.query(filter_str)
 	else:
-		return unfiltered_df.copy()
+		return df.copy()
 
 def build_filter_string():
 	filter_str = ""

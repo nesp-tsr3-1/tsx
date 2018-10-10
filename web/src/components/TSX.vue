@@ -295,15 +295,11 @@ export default {
             position: 'left',
             scaleLabel: {
               display: true,
-              labelString: 'Time series'
+              labelString: 'Sites (time series)'
             }
           }],
           xAxes: [{
-            type: 'linear',
-            ticks: {
-              min: 1950,
-              max: 2020
-            }
+            type: 'linear'
           }]
         }
       }
@@ -342,6 +338,7 @@ export default {
         fill: 1,
         pointRadius: 0,
         borderColor: '#0000',
+        borderWidth: 0,
         data: [] },
       {
         label: 'Confidence Interval (high)',
@@ -350,6 +347,7 @@ export default {
         fill: 1,
         pointRadius: 0,
         borderColor: '#0000',
+        borderWidth: 0,
         data: [] }]
     }
     this.lpiPlot = new Chart.Line(this.$refs.lpiplot.getContext('2d'), {
@@ -363,23 +361,8 @@ export default {
         maintainAspectRatio: false,
         scales: {
           yAxes: [{
-            type: 'logarithmic',
             display: true,
             position: 'left',
-            scaleLabel: {
-              display: true,
-              labelString: 'Index'
-            },
-            ticks: {
-              // https://github.com/chartjs/Chart.js/issues/3121#issuecomment-390372093
-              callback: function(...args) {
-                const value = Chart.Ticks.formatters.logarithmic.call(this, ...args)
-                if (value.length) {
-                  return Number(value).toLocaleString()
-                }
-                return value
-              }
-            },
             gridLines: {
               drawOnChartArea: true
             }
@@ -470,9 +453,6 @@ export default {
       this.loadingData = false
       this.updatePlot()
     },
-    selectedYear(val) {
-      this.updatePlot()
-    },
     sliderRange(range) {
       if(!this.sliderEnabled || this.loadingMap) {
         return
@@ -537,6 +517,7 @@ export default {
               })
             })
           })
+          that.dotPlot.options.scales.xAxes[0].ticks.min = +that.selectedYear.value
           // summary plot
           // var speciesCountData = data['summary']['species']
           var taxaCountData = data['summary']['taxa']
@@ -607,38 +588,27 @@ export default {
       api.lpiRunData(filtersStr, this.selectedYear.value, 'txt').then((data) => {
         if(data) {
           // format:
-          // 'LPI_final' 'CI_low' 'CI_low'
-          // '1980' float float float
-          var lowestCI = 1.0
-          var highestCI = 1.0
-          var lines = data.split('\n')
-          // ignore first line
-          lines = lines.slice(1)
-          lines.map(function(currentValue) {
-            if(currentValue.trim()) {
-              var values = currentValue.split(' ')
-              var year = values[0].replace(/"/g, '')
-              if(values[1] !== 'NA' && values[2] !== 'NA' && values[3] !== 'NA') {
-                that.lpiPlotDataSet.labels.push(parseInt(year))
-                that.lpiPlotDataSet.datasets[0].data.push(parseFloat(values[1]))
-                var lowCIVal = parseFloat(values[2])
-                that.lpiPlotDataSet.datasets[1].data.push(lowCIVal)
-                if(lowCIVal < lowestCI) {
-                  lowestCI = lowCIVal
-                }
-                var highCIVal = parseFloat(values[3])
-                that.lpiPlotDataSet.datasets[2].data.push(highCIVal)
-                if(highCIVal > highestCI) {
-                  highestCI = highCIVal
-                }
-              }
-            }
-          })
+          // "LPI_final" "CI_low" "CI_low"
+          // "1980" float float float
+
+          let plotData = that.lpiPlotDataSet
+
+          let series = data.split('\n')
+            .slice(1) // Ignore first line
+            .filter(line => line.trim().length > 0 && !/NA/.test(line)) // Ignore empty or NA lines
+            .map(line => line.split(' '))
+
+          plotData.labels = series.map(x => parseInt(x[0].replace(/"/g, '')))
+          plotData.datasets[0].data = series.map(x => parseFloat(x[1]))
+          plotData.datasets[1].data = series.map(x => parseFloat(x[2]))
+          plotData.datasets[2].data = series.map(x => parseFloat(x[3]))
+
           // update lpi plot
           that.noLPI = false
           that.lpiPlot.update()
         }
       }).catch((e) => {
+        console.log(e)
         that.noLPI = true
       }).finally(() => {
         if (!that.queryLPIData) {
@@ -678,6 +648,7 @@ export default {
         if(this.selectedStatus.value !== 'None') {
           filterParams['status'] = this.selectedStatus.value
         }
+        filterParams['reference_year'] = this.selectedYear.value
       }
       return filterParams
     },
