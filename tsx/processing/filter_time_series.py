@@ -39,7 +39,17 @@ def process_database():
 
 	log.info("Step 2/2 - Updating aggregated_by_year table")
 
-	session.execute("""UPDATE aggregated_by_year SET include_in_analysis = time_series_id IN (SELECT time_series_id FROM tmp_filtered_ts)""")
+	session.execute("""UPDATE aggregated_by_year agg
+		LEFT JOIN data_source ON data_source.taxon_id = agg.taxon_id AND data_source.source_id = agg.source_id
+		SET agg.include_in_analysis =
+			agg.time_series_id IN (SELECT time_series_id FROM tmp_filtered_ts)
+			AND agg.start_date_y <= COALESCE(data_source.end_year, :max_year)
+			AND agg.start_date_y >= COALESCE(data_source.start_year, :min_year)
+	""", {
+		'min_year': min_year,
+		'max_year': max_year
+	})
+
 	session.execute("""DROP TABLE tmp_filtered_ts""")
 
 	log.info("Done")
