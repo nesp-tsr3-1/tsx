@@ -59,7 +59,8 @@ def main():
 					bird_group = row['BirdGroup'],
 					bird_sub_group = row['BirdSubGroup'],
 					taxonomic_group = row['TaxonomicGroup'],
-					national_priority = str(row['NationalPriorityTaxa']) == '1'
+					national_priority = str(row['NationalPriorityTaxa']) == '1',
+					suppress_spatial_representativeness = str(row['SuppressSpatialRep']) == '1'
 				)
 			except:
 				print row
