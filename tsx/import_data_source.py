@@ -32,7 +32,9 @@ def main():
 				'start_year': row['StartYear'] or None,
 				'end_year': row['EndYear'] or None,
 				'exclude_from_analysis': row['Exclude'] or False,
-				'suppress_aggregated_data': row['SuppressAggregatedData'] or False
+				'suppress_aggregated_data': row['SuppressAggregatedData'] or False,
+				'authors': row['Authors'],
+				'provider': row['Providers']
 			}
 
 			r = session.execute("SELECT 1 FROM source WHERE id = :id", { 'id': data['source_id'] }).fetchall()
@@ -71,6 +73,9 @@ def main():
 				)""",
 				data
 			)
+
+			# TODO: Not sure if SourceName should be imported into source.description?
+			session.execute("""UPDATE source SET authors = :authors, provider = :provider WHERE id = :source_id""", data)
 
 
 	session.commit()
