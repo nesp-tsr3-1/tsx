@@ -34,7 +34,7 @@ def main():
 				'exclude_from_analysis': row['Exclude'] or False,
 				'suppress_aggregated_data': row['SuppressAggregatedData'] or False,
 				'authors': row['Authors'],
-				'provider': row['Providers']
+				'provider': row['Provider']
 			}
 
 			r = session.execute("SELECT 1 FROM source WHERE id = :id", { 'id': data['source_id'] }).fetchall()
