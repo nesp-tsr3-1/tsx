@@ -63,6 +63,10 @@ class DataSource(Base):
     absences_recorded = Column(Integer)
     standardisation_of_method_effort_id = Column(Integer)
     consistency_of_monitoring_id = Column(Integer)
+    exclude_from_analysis = Column(Integer, nullable=False)
+    start_year = Column(Integer)
+    end_year = Column(Integer)
+    suppress_aggregated_data = Column(Integer, nullable=False)
 
     source = relationship(u'Source')
     taxon = relationship(u'Taxon')
@@ -371,6 +375,7 @@ class Taxon(Base):
     bird_sub_group = Column(String(255))
     national_priority = Column(Integer, nullable=False, server_default=text("'0'"))
     taxonomic_group = Column(String(255))
+    suppress_spatial_representativeness = Column(Integer, nullable=False, server_default=text("'0'"))
 
     aust_status = relationship(u'TaxonStatus', primaryjoin='Taxon.aust_status_id == TaxonStatus.id')
     epbc_status = relationship(u'TaxonStatus', primaryjoin='Taxon.epbc_status_id == TaxonStatus.id')
