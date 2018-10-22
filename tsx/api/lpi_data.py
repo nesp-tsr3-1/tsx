@@ -174,7 +174,7 @@ def plot():
 def get_intensity():
 	filtered_data = get_filtered_data()
 	if len(filtered_data) == 0:
-		return []
+		return json.dumps([])
 	dat = filtered_data.to_dict()
 
 	source = request.args.get('source', type=str)
