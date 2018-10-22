@@ -4,7 +4,7 @@ import * as util from '@/util'
 import _ from 'underscore'
 
 const TSX_URL = 'https://tsx.org.au'
-export const ROOT_URL = 'http://localhost:5000' // TSX_URL + '/tsxapi'
+export const ROOT_URL = TSX_URL + '/tsxapi'
 
 export function createImport(dataImport) {
   return post('/imports', dataImport)
