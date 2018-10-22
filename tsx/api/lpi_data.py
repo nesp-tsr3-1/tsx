@@ -374,21 +374,12 @@ def build_filter_string():
 		_subgroup = request.args.get('subgroup', type=str)
 		filters.append("FunctionalSubGroup=='%s'" % (_subgroup))
 
-	#statusauth
-	_status = None
-	if request.args.has_key('status'):
-		_status = request.args.get('status', type=str)
-
-	if _status!= None and request.args.has_key('statusauth'): #IUCN, EPBC, BirdLifeAustralia, Max
+	# status/statusauth
+	if request.args.has_key('status') and request.args.has_key('statusauth'): #IUCN, EPBC, BirdLifeAustralia, Max
+		_statusList = request.args.get('status', type=str).split('+')
 		_statusauth = request.args.get('statusauth', type=str)
-		if _statusauth == "IUCN" :
-			filters.append("IUCNStatus=='%s'" % (_status))
-		elif _statusauth == "EPBC":
-			filters.append("EPBCStatus=='%s'" % (_status))
-		elif _statusauth == "BirdLifeAustralia":
-			filters.append("BirdLifeAustraliaStatus=='%s'" % (_status))
-		else:
-			filters.append("MaxStatus=='%s'" % (_status))
+		filters.append("(%s)" % " or ".join(["%sStatus=='%s'" % (_statusauth, s) for s in _statusList]))
+
 	# national priority
 	if request.args.has_key('priority'):
 		filters.append("NationalPriorityTaxa=='%d'" %(request.args.get('priority', type=int)))

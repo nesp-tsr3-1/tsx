@@ -161,10 +161,10 @@ export default {
       selectedStatusAuthority: {value: 'Max', text: 'Max'},
       // status
       statusList: [],
-      selectedStatus: {value: 'None', text: 'All'},
+      selectedStatus: {value: 'Vulnerable+Endangered+Critically Endangered', text: 'Threatened species (all Vulnerable + Endangered + Critically Endangered)'},
       // year
       yearList: [],
-      selectedYear: {value: '1970', text: '1970'},
+      selectedYear: {value: '1985', text: '1985'},
       // charts
       dotPlot: null,
       dotPlotDataSet: null,
@@ -237,6 +237,7 @@ export default {
     // data.stateList.push({value: 'Commonwealth', text: 'Commonwealth'})
     data.stateList.push({value: 'Queensland', text: 'Queensland'})
     data.stateList.push({value: 'New South Wales', text: 'New South Wales'})
+    data.stateList.push({value: 'Australian Capital Territory+New South Wales', text: 'Australian Capital Territory + New South Wales'})
     data.stateList.push({value: 'Northern Territory', text: 'Northern Territory'})
     data.stateList.push({value: 'South Australia', text: 'South Australia'})
     data.stateList.push({value: 'Western Australia', text: 'Western Australia'})
@@ -248,16 +249,18 @@ export default {
     data.statusAuthorityList.push({value: 'IUCN', text: 'IUCN'})
     data.statusAuthorityList.push({value: 'BirdLifeAustralia', text: 'BirdLife Australia'})
     // year
-    data.yearList.push({value: '1970', text: '1970'})
-    data.yearList.push({value: '1980', text: '1980'})
+    data.yearList.push({value: '1985', text: '1985'})
     data.yearList.push({value: '1990', text: '1990'})
+    data.yearList.push({value: '1995', text: '1995'})
     data.yearList.push({value: '2000', text: '2000'})
     // status
-    data.statusList.push({value: 'None', text: 'All'})
-    data.statusList.push({value: 'Near Threatened', text: 'Near Threatened'})
-    data.statusList.push({value: 'Vulnerable', text: 'Vulnerable'})
-    data.statusList.push({value: 'Endangered', text: 'Endangered'})
-    data.statusList.push({value: 'Critically Endangered', text: 'Critically Endangered'})
+    data.statusList.push({value: 'Vulnerable+Endangered+Critically Endangered', text: 'Threatened species (all Vulnerable + Endangered + Critically Endangered)'})
+    data.statusList.push({value: 'Near Threatened+Vulnerable+Endangered+Critically Endangered', text: 'All (all Near Threatened + Vulnerable + Endangered + Critically Endangered)'})
+    data.statusList.push({value: 'Near Threatened', text: 'Near threatened species (Near Threatened species only)'})
+    // data.statusList.push({value: 'Near Threatened', text: 'Near Threatened'})
+    // data.statusList.push({value: 'Vulnerable', text: 'Vulnerable'})
+    // data.statusList.push({value: 'Endangered', text: 'Endangered'})
+    // data.statusList.push({value: 'Critically Endangered', text: 'Critically Endangered'})
     return data
   },
   mounted: function() {
@@ -670,7 +673,7 @@ export default {
           filtersStr = filtersStr + 'statusauth-' + this.selectedStatusAuthority.value + '_'
         }
         if(this.selectedStatus.value !== 'None') {
-          filtersStr = filtersStr + 'status-' + this.selectedStatus.value
+          filtersStr = filtersStr + 'status-' + this.selectedStatus.value + '_'
         }
       }
       return filtersStr
