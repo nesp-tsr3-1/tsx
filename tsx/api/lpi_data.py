@@ -343,7 +343,8 @@ def build_filter_string():
 		filters.append("DataType=='%d'" % (_sp_no))
 	#state
 	if request.args.has_key('state'):
-		filters.append("State=='%s'" % (request.args.get('state', type=str)))
+		_stateList = request.args.get('state', type=str).split('+')
+		filters.append("(%s)" % " or ".join(["State=='%s'" % s for s in _stateList]))
 	#searchtypedesc
 	if request.args.has_key('searchtype'):
 		_search_type = request.args.get('searchtype', type=int)
