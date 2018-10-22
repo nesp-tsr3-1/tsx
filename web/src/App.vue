@@ -45,8 +45,14 @@ $family-sans-serif: "Museo Sans", "Arial", BlinkMacSystemFont, -apple-system, "S
 
 $modal-background-background-color: rgba($black, 0.1);
 
+$input-disabled-background-color: white;
+
 @import "~bulma/bulma.sass";
 @import '~bulma-tooltip';
+
+input[disabled], select[disabled], textarea[disabled] {
+  opacity: 0.7;
+}
 
 .section {
   padding-top: 1em;
