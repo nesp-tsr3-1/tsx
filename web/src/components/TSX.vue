@@ -633,6 +633,7 @@ export default {
     },
     getFilterParams: function() {
       var filterParams = {}
+      filterParams['reference_year'] = this.selectedYear.value
       if(this.prioritySelected) {
         filterParams['priority'] = 1
       } else {
@@ -651,7 +652,6 @@ export default {
         if(this.selectedStatus.value !== 'None') {
           filterParams['status'] = this.selectedStatus.value
         }
-        filterParams['reference_year'] = this.selectedYear.value
       }
       return filterParams
     },
