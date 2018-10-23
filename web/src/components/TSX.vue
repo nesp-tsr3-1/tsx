@@ -334,12 +334,14 @@ export default {
         backgroundColor: 'black',
         fill: false,
         pointRadius: 0,
+        lineTension: 0,
         data: [] },
       {
         label: 'Confidence Interval (low)',
         backgroundColor: 'rgba(230,230,230,0.5)',
         fill: 1,
         pointRadius: 0,
+        lineTension: 0,
         borderColor: '#0000',
         borderWidth: 0,
         data: [] },
@@ -349,6 +351,7 @@ export default {
         backgroundColor: 'rgba(230,230,230,0.5)',
         fill: 1,
         pointRadius: 0,
+        lineTension: 0,
         borderColor: '#0000',
         borderWidth: 0,
         data: [] }]
