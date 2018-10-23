@@ -467,9 +467,9 @@ export default {
       var minYear = range[0]
       var maxYear = range[1]
 
-      this.heatmapDataSet.data = this.surveyData.filter(function(x) {
+      this.heatmapDataSet.data = Object.freeze(this.surveyData.filter(function(x) {
         return x.year >= minYear && x.year <= maxYear
-      })
+      }))
       // var counts = this.heatmapDataSet.data.map(function(x) { return x.count })
       // this.heatmapDataSet.min = min(counts)
       // this.heatmapDataSet.max = max(counts)
@@ -558,19 +558,22 @@ export default {
 
         console.log('--loading map data----')
 
-        data.forEach(function(timeSerie) {
-          var lat = timeSerie[1]
-          var long = timeSerie[0]
-          var yearCount = timeSerie[2]
-          yearCount.forEach(function(element) {
-            that.surveyData.push({
-              'lat': lat,
-              'long': long,
-              'count': element[1],
-              'year': element[0]
+        var surveyData = []
+        data.forEach(function(timeSeries) {
+          var lat = timeSeries[1]
+          var long = timeSeries[0]
+          var yearCounts = timeSeries[2]
+          yearCounts.forEach(function(yearCount) {
+            surveyData.push({
+              lat: lat,
+              long: long,
+              count: yearCount[1],
+              year: yearCount[0]
             })
           })
         })
+        Object.freeze(surveyData) // Prevent Vue trying to observe survey data for changes
+        that.surveyData = surveyData
 
         if(that.sliderEnabled) {
           var years = pluck(that.surveyData, 'year')
