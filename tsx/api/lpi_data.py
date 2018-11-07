@@ -284,6 +284,10 @@ def get_summary_data(filtered_data):
 	# Get year columns
 	years = [col for col in df.columns if col.isdigit()]
 
+	# Get only years that have data
+	m = df[years].max()
+	years = list(m.index[(m.fillna(method='bfill') + m.fillna(method='ffill')).isna() == False])
+
 	# Fill in any gaps in time series
 	# We are being a bit tricky here. We do a back-fill and forward-fill of values, and then add them together.
 	# The NaNs propagate so that we end up with just the gaps filled with non-NaNs.
