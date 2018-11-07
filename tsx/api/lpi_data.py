@@ -320,12 +320,6 @@ def get_filtered_data():
 
 	df = unfiltered_df
 
-	try:
-		reference_year = request.args.get('reference_year', type=int)
-		df = df.drop([col for col in df.columns if col.isdigit() and int(col) < reference_year], axis=1)
-	except:
-		pass
-
 	if filter_str:
 		return df.query(filter_str)
 	else:
