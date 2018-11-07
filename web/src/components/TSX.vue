@@ -523,7 +523,6 @@ export default {
               })
             })
           })
-          that.dotPlot.options.scales.xAxes[0].ticks.min = +that.selectedYear.value
           // summary plot
           // var speciesCountData = data['summary']['species']
           var taxaCountData = data['summary']['taxa']
