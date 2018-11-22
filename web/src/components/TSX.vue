@@ -643,7 +643,7 @@ export default {
       })
       // get files later
       api.lpiRunData(filtersStr, this.selectedYear.value, 'txt').then((data) => {
-        if(data && data.startsWith('"LPI_final"')) {
+        if(data && data.indexOf('"LPI_final"') === 0) {
           // format:
           // "LPI_final" "CI_low" "CI_low"
           // "1980" float float float
