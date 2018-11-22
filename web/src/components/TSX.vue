@@ -80,9 +80,28 @@
           <div class="tile is-parent is-vertical" v-show="!showFullMap">
             <div class="tile is-child card">
               <h4 class="has-text-black">Main index</h4>
-              <span class="info-icon icon tooltip is-tooltip-left" data-tooltip="TODO: write explanatory text">
+              <span class="info-icon icon"
+                data-tippy-html="#popup-main-index"
+                data-tippy-interactive="true"
+                data-tippy-arrow="true"
+                data-tippy-placement="left"
+                v-tippy>
                 <i class="far fa-question-circle"></i>
               </span>
+              <div id="popup-main-index" style="display: none" v-tippy-html>
+                  <div class="popup-content">
+                      <p>The index shows the average change in populations compared to a base year. It shows a relative change and not population numbers themselves. At the reference year, the index gets an index score of one. A score of 1.2 would mean a 20% increase on average compared to the reference year, while a score of 0.8 would mean a 20% decrease on average compared to the reference year.</p>
+                      <p>Check this index:</p>
+                      <ol>
+                        <li>Look at <b>Spatial representativeness</b> map to see how much data there are and where these data come from.</li>
+                        <li>Look at <b>Monitoring consistency</b> to see how consistently each monitoring location was visited over time.</li>
+                        <li>Go to <b>Time series and species accumulation</b> plot to see how many time series and species/subspecies were used to calculate this index in each year</li>
+                        <li>Adjust the <b>Reference year</b> to let the index start at a year with more data</li>
+                        <li>Go to <b>Data Summary</b> to see which species/subspecies were included in this index</li>
+                        <li>Go to <b>Download CSV</b> to get the aggregated data used to calculate this index.</li>
+                      </ol>
+                  </div>
+              </div>
               <div class="plot-container" v-show="!noLPI">
                 <canvas ref='lpiplot'></canvas>
               </div>
@@ -92,9 +111,19 @@
             </div>
             <div class="tile is-child card">
                 <h4 class="has-text-black">Monitoring consistency</h4>
-                <span class="info-icon icon tooltip is-tooltip-left" data-tooltip="TODO: write explanatory text">
+                <span class="info-icon icon"
+                data-tippy-html="#popup-monitoring-consistency"
+                data-tippy-interactive="true"
+                data-tippy-arrow="true"
+                data-tippy-placement="left"
+                v-tippy>
                   <i class="far fa-question-circle"></i>
                 </span>
+                <div id="popup-monitoring-consistency" style="display: none" v-tippy-html>
+                    <div class="popup-content">
+                      This dot plot shows the particular years for which monitoring data were available. Each row represents a time series where a species/subspecies was monitored with a consistent method at a single site. The dots represent count values for the metric used to quantify the species/subspecies while zeros indicate absences (non-detections) of those species at the site.
+                    </div>
+                </div>
                 <div class="plot-container">
                   <canvas ref='dotplot'></canvas>
                 </div>
@@ -103,18 +132,38 @@
           <div class="tile is-parent is-vertical">
             <div class="tile is-child card map-tile">
               <h4 class="has-text-black">Spatial representativeness</h4>
-              <span class="info-icon icon tooltip is-tooltip-left" data-tooltip="TODO: write explanatory text">
+              <span class="info-icon icon"
+                data-tippy-html="#popup-spatial-rep"
+                data-tippy-interactive="true"
+                data-tippy-arrow="true"
+                data-tippy-placement="left"
+                v-tippy>
                 <i class="far fa-question-circle"></i>
               </span>
+              <div id="popup-spatial-rep" style="display: none" v-tippy-html>
+                  <div class="popup-content">
+                    This map shows where threatened species data to calculate this index are recorded in Australia. Light blue indicates less data (fewer sites monitored), pink indicates more data (more sites monitored).
+                  </div>
+              </div>
               <vue-slider ref='slider' v-bind='sliderData' v-model='sliderRange' v-if='sliderEnabled' class='heatmap-slider'></vue-slider>
               <div id='intensityplot' ref='intensityplot' class='heatmap-div'></div>
               <spinner size='medium' v-show='loadingMap' class='heatmap-spinner'></spinner>
             </div>
             <div class="tile is-child card" v-show="!showFullMap">
               <h4 class="has-text-black">Time series and species accumulation</h4>
-              <span class="info-icon icon tooltip is-tooltip-left" data-tooltip="TODO: write explanatory text">
+              <span class="info-icon icon"
+                data-tippy-html="#popup-summary-plot"
+                data-tippy-interactive="true"
+                data-tippy-arrow="true"
+                data-tippy-placement="left"
+                v-tippy>
                 <i class="far fa-question-circle"></i>
               </span>
+              <div id="popup-summary-plot" style="display: none" v-tippy-html>
+                  <div class="popup-content">
+                    This plot shows the number of species/subspecies (in blue) and the number of time series (in green) used to calculate the index for each year.
+                  </div>
+              </div>
               <div class="plot-container">
                 <canvas ref='sumplot'></canvas>
               </div>
@@ -811,5 +860,18 @@ export default {
     top: 0.7em;
     right: 1em;
     font-size: 120%;
+  }
+  .popup-content {
+    max-width: 30em;
+    text-align: left;
+  }
+  .popup-content p {
+    margin-bottom: 1em;
+  }
+  .popup-content ol {
+    padding-left: 1em;
+  }
+  .popup-content li {
+    margin-bottom: 0.5em;
   }
 </style>
