@@ -161,7 +161,7 @@ export default {
       selectedStatusAuthority: {value: 'Max', text: 'Max'},
       // status
       statusList: [],
-      selectedStatus: {value: 'Vulnerable+Endangered+Critically Endangered', text: 'Threatened species (all Vulnerable + Endangered + Critically Endangered)'},
+      selectedStatus: {value: 'Near Threatened+Vulnerable+Endangered+Critically Endangered', text: 'All (all Near Threatened + Vulnerable + Endangered + Critically Endangered)'},
       // year
       yearList: [],
       selectedYear: {value: '1985', text: '1985'},
@@ -256,7 +256,7 @@ export default {
     // status
     data.statusList.push({value: 'Vulnerable+Endangered+Critically Endangered', text: 'Threatened species (all Vulnerable + Endangered + Critically Endangered)'})
     data.statusList.push({value: 'Near Threatened+Vulnerable+Endangered+Critically Endangered', text: 'All (all Near Threatened + Vulnerable + Endangered + Critically Endangered)'})
-    data.statusList.push({value: 'Near Threatened', text: 'Near threatened species (Near Threatened species only)'})
+    data.statusList.push({value: 'Near Threatened', text: 'Near Threatened species (Near Threatened species only)'})
     // data.statusList.push({value: 'Near Threatened', text: 'Near Threatened'})
     // data.statusList.push({value: 'Vulnerable', text: 'Vulnerable'})
     // data.statusList.push({value: 'Endangered', text: 'Endangered'})
