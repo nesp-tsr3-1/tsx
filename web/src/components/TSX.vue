@@ -270,14 +270,14 @@ export default {
     this.dotPlotDataSet = {
       datasets: [{
         label: 'count > 0',
-        backgroundColor: '#7c5e77',
-        borderColor: '#7c5e77',
+        backgroundColor: '#333',
+        borderColor: '#333',
         borderWidth: 1,
         data: [] },
       {
         label: 'count = 0',
-        backgroundColor: '#ac9ea7',
-        borderColor: '#ac9ea7',
+        backgroundColor: '#ccc',
+        borderColor: '#ccc',
         borderWidth: 1,
         data: [] }]
     }
@@ -313,15 +313,15 @@ export default {
         label: 'Number of taxa',
         xAxisID: 'x-axis-1',
         yAxisID: 'y-axis-1',
-        borderColor: '#6899ae',
-        backgroundColor: '#6899ae',
+        borderColor: '#58899e',
+        backgroundColor: '#58899e',
         data: []
       }, {
         label: 'Number of time series',
         xAxisID: 'x-axis-1',
         yAxisID: 'y-axis-2',
-        borderColor: '#93b479',
-        backgroundColor: '#93b479',
+        borderColor: '#a3c489',
+        backgroundColor: '#a3c489',
         data: []
       }]
     }
