@@ -594,7 +594,7 @@ export default {
       })
       // get files later
       api.lpiRunData(filtersStr, this.selectedYear.value, 'txt').then((data) => {
-        if(data) {
+        if(data && data.startsWith('"LPI_final"')) {
           // format:
           // "LPI_final" "CI_low" "CI_low"
           // "1980" float float float
@@ -614,6 +614,8 @@ export default {
           // update lpi plot
           that.noLPI = false
           that.lpiPlot.update()
+        } else {
+          that.noLPI = true
         }
       }).catch((e) => {
         console.log(e)
