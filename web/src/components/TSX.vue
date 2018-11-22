@@ -717,7 +717,13 @@ export default {
                 display: true,
                 labelString: 'Number of taxa'
               },
-              id: 'y-axis-1'
+              id: 'y-axis-1',
+              ticks: {
+                // precision: 1 // Doesn't seem to work (contrary to documentation) so we use callback as a workaround
+                callback: function(label, index, labels) {
+                  return Math.floor(label) === label ? label : ''
+                }
+              }
             }, {
               type: 'linear',
               display: true,
@@ -731,6 +737,12 @@ export default {
               // grid line settings
               gridLines: {
                 drawOnChartArea: false
+              },
+              ticks: {
+                // See comment for other axis
+                callback: function(label, index, labels) {
+                  return Math.floor(label) === label ? label : ''
+                }
               }
             }]
           }
