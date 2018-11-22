@@ -75,7 +75,7 @@
         </div>
       </div>
 
-      <div class="tile is-vertical" v-show="!noData">
+      <div class="tile is-vertical ie11-bugfix" v-show="!noData">
         <div class="tile">
           <div class="tile is-parent is-vertical" v-show="!showFullMap">
             <div class="tile is-child card">
@@ -873,5 +873,11 @@ export default {
   }
   .popup-content li {
     margin-bottom: 0.5em;
+  }
+  @media screen and (min-width: 768px) {
+    .ie11-bugfix {
+      /* Fix flexbox bug */
+      height: 48em;
+    }
   }
 </style>
