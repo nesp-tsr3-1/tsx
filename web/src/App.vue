@@ -34,7 +34,7 @@ body {
   background-color: $tsr-green;
 }
 
-.container {
+.bird-background {
   background-image: url('../static/images/bird-bg.png');
   background-repeat: no-repeat;
   background-position: top 1em left 2em;
