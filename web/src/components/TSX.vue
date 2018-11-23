@@ -14,7 +14,7 @@
           <div class="field">
             <label class="label">Sub-group</label>
             <div class="select is-fullwidth">
-              <select v-model='selectedSubGroup' :disabled='prioritySelected'>
+              <select v-model='selectedSubGroup' :disabled='prioritySelected || !subGroupEnabled'>
                 <option v-for="option in subGroupList" v-bind:value="option">{{option.text}}</option>
               </select>
             </div>
@@ -189,6 +189,23 @@ import easyButton from 'leaflet-easybutton/src/easy-button.js'
 import vueSlider from 'vue-slider-component/dist/index.js'
 import { min, max, pluck } from '@/util'
 
+const subGroups = [
+    {value: 'None', text: 'All'},
+    // {value: 'Tropicbirds Frigatebirds Gannets Boobies', text: 'Tropicbirds Frigatebirds Gannets Boobies'},
+    // {value: 'Gulls Terns Noddies Skuas Jaegers', text: 'Gulls Terns Noddies Skuas Jaegers'},
+    // {value: 'Rainforest', text: 'Rainforest'},
+    // {value: 'Penguins', text: 'Penguins'},
+    {value: 'Tropical savanna woodland', text: 'Tropical savanna woodland', group: 'Terrestrial'},
+    // {value: 'Island endemic', text: 'Island endemic'},
+    // {value: 'Petrels and Shearwaters', text: 'Petrels and Shearwaters'},
+    // {value: 'Grassland', text: 'Grassland'},
+    {value: 'Albatrosses and Giant-Petrels', text: 'Albatrosses and Giant-Petrels', group: 'Marine'},
+    {value: 'Dry sclerophyll woodland/forest', text: 'Dry sclerophyll woodland/forest', group: 'Terrestrial'}
+    // {value: 'Arid Woodland/ shrubland', text: 'Arid Woodland/ shrubland'},
+    // {value: 'Heathland', text: 'Heathland'},
+    // {value: 'Mallee woodland', text: 'Mallee woodland'}
+]
+
 export default {
   name: 'TSX',
   components: {
@@ -201,7 +218,8 @@ export default {
       selectedGroup: {value: 'None', text: 'All'},
       // subgroup
       subGroupList: [],
-      selectedSubGroup: {value: 'None', text: 'All'},
+      selectedSubGroup: subGroups[0],
+      subGroupEnabled: true,
       // states
       stateList: [],
       selectedState: {value: 'None', text: 'All'},
@@ -266,20 +284,7 @@ export default {
     data.groupList.push({value: 'Shoreline (migratory)', text: 'Shoreline (migratory)'})
     // data.groupList.push({value: 'Shoreline (resident)', text: 'Shoreline (resident)'})
     // subgroups
-    data.subGroupList.push({value: 'None', text: 'All'})
-    // data.subGroupList.push({value: 'Tropicbirds Frigatebirds Gannets Boobies', text: 'Tropicbirds Frigatebirds Gannets Boobies'})
-    // data.subGroupList.push({value: 'Gulls Terns Noddies Skuas Jaegers', text: 'Gulls Terns Noddies Skuas Jaegers'})
-    // data.subGroupList.push({value: 'Rainforest', text: 'Rainforest'})
-    // data.subGroupList.push({value: 'Penguins', text: 'Penguins'})
-    data.subGroupList.push({value: 'Tropical savanna woodland', text: 'Tropical savanna woodland'})
-    data.subGroupList.push({value: 'Island endemic', text: 'Island endemic'})
-    // data.subGroupList.push({value: 'Petrels and Shearwaters', text: 'Petrels and Shearwaters'})
-    // data.subGroupList.push({value: 'Grassland', text: 'Grassland'})
-    data.subGroupList.push({value: 'Albatrosses and Giant-Petrels', text: 'Albatrosses and Giant-Petrels'})
-    data.subGroupList.push({value: 'Dry sclerophyll woodland/forest', text: 'Dry sclerophyll woodland/forest'})
-    // data.subGroupList.push({value: 'Arid Woodland/ shrubland', text: 'Arid Woodland/ shrubland'})
-    // data.subGroupList.push({value: 'Heathland', text: 'Heathland'})
-    data.subGroupList.push({value: 'Mallee woodland', text: 'Mallee woodland'})
+    data.subGroupList = subGroups
     // states filter
     data.stateList.push({value: 'None', text: 'All'})
     data.stateList.push({value: 'Australian Capital Territory', text: 'Australian Capital Territory'})
@@ -492,10 +497,11 @@ export default {
   },
   watch: {
     selectedGroup(val) {
-      if(val.value === 'None') {
-        this.selectedSubGroupDisabled = true
-        this.selectedSubGroup = {value: 'None', text: 'All'}
+      this.subGroupList = subGroups.filter(x => val.value === 'None' || x.value === 'None' || x.group === val.value)
+      if(this.selectedSubGroup && this.selectedSubGroup.group !== val.value) {
+        this.selectedSubGroup = subGroups[0]
       }
+      this.subGroupEnabled = this.subGroupList.length > 1
     },
     selectedStatusAuthority(val) {
       if(val.value === 'None') {
