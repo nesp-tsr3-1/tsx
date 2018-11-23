@@ -224,32 +224,6 @@ def get_dotplot_data(filtered_data):
 	int_years = [int(year) for year in years]
 	df = df.loc[:,years]
 
-	# Experiment - see email 'Dot plots - Random sampling of time series'
-
-	# print sum(unfiltered_df.values >= 0)
-
-	# sum_df = (df.fillna(0) * 0).head(50).values
-
-	# n_runs = 100
-
-	# for i in range(0,n_runs):
-	# 	# Get random sample
-	# 	df2 = df.assign(x = np.random.randn(len(df))).sort_values(['x']).head(50)
-
-	# 	# Sort time series
-	# 	m = (df2 >= 0).values
-	# 	# c = (2 ** np.arange(0, len(df.columns), dtype=object)) # Order by last year surveyed
-	# 	# c = np.arange(0, len(df.columns)) # Order by mean year surveyed
-	# 	c = [1] * len(df2.columns) # Order by time sample years
-	# 	x = m.dot(c)
-	# 	# x = np.random.randn(len(df))
-	# 	df2 = df2.assign(x = x).sort_values(['x'])
-
-	# 	sum_df += (df2.loc[:,years] >= 0).values
-
-	# raw_data = sum_df - (n_runs / 2)
-
-
 	# Get random sample
 	df = df.assign(x = np.random.randn(len(df))).sort_values(['x']).head(50)
 
