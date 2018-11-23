@@ -400,6 +400,9 @@ def stats_html():
 	# Filter data
 	df = get_filtered_data()
 
+	if df.size == 0:
+		return "<html><head></head><body><p>No data available</p></body></html>"
+
 	stats = get_stats(df)
 
 	html = """
