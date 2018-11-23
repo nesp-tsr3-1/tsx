@@ -106,7 +106,8 @@
                 <canvas ref='lpiplot'></canvas>
               </div>
               <div class="has-text-black" v-show="noLPI">
-                No LPI generated (e.g. due to less than 3 taxa present in reference year)
+                <p>No index generated – less than 3 taxa present in the range of reference years.</p>
+                <p>Try changing the reference year to build an index</p>
               </div>
             </div>
             <div class="tile is-child card">
