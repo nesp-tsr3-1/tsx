@@ -43,8 +43,6 @@ body {
 
 $family-sans-serif: "Museo Sans", "Arial", BlinkMacSystemFont, -apple-system, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", sans-serif;
 
-$modal-background-background-color: rgba($black, 0.1);
-
 $input-disabled-background-color: white;
 
 @import "~bulma/bulma.sass";

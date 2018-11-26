@@ -67,7 +67,7 @@
       </div>
 
       <div class="modal is-active" v-show='loadingData && !showFullMap'>
-        <div class="modal-background"></div>
+        <div class="modal-background" style="background: rgba(0,0,0,0.2)"></div>
         <div class="modal-card">
           <section class="modal-card-body">
             <spinner size='large' message='Loading data....'></spinner>
@@ -178,6 +178,26 @@
         <p style="margin: 0.8em">(No data to show)</p>
       </div>
     </div>
+
+    <!-- warning dialog -->
+    <div class="modal is-active" v-show="!hasAcceptedWarning">
+      <div class="modal-background"></div>
+      <div class="modal-card">
+        <header class="modal-card-head">
+          <span class="modal-card-title">Caution</span>
+        </header>
+        <section class="modal-card-body" style="color:black">
+          <p>The trends produced by this tool vary in reliability.</p>
+          <p>A trend is only as good as the data used to generate it.</p>
+          <p>We have developed diagnostic tools to help assess the reliability of each trend. <a target="_blank" rel="noopener noreferrer" href="https://tsx.org.au/visualising-the-index/how-good/">(Click here for more details on how to assess reliability of trends)</a></p>
+          <p>By using this tool you acknowledge these precautions and agree to apply common sense whenever using the TSX.</p>
+        </section>
+        <footer class="modal-card-foot">
+          <button class="button" v-on:click='acceptWarning'>I Accept</button>
+          <button class="button" v-on:click='goBack'>Cancel</button>
+        </footer>
+      </div>
+    </div>
   </div>
 </template>
 <script>
@@ -275,7 +295,8 @@ export default {
         lazy: true,
         tooltip: 'always'
       },
-      sliderEnabled: false
+      sliderEnabled: false,
+      hasAcceptedWarning: localStorage.getItem('hasAcceptedWarning') || false
     }
     // groups
     data.groupList.push({value: 'None', text: 'All'})
@@ -693,6 +714,13 @@ export default {
       var filterParams = this.getFilterParams()
       var url = api.lpiSummaryURL(filterParams)
       window.open(url)
+    },
+    acceptWarning: function() {
+      localStorage.setItem('hasAcceptedWarning', true)
+      this.hasAcceptedWarning = true
+    },
+    goBack: function() {
+      window.history.back()
     },
     getFilterParams: function() {
       var filterParams = {}
