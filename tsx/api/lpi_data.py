@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 import csv
 import StringIO
-from flask import request, make_response, g, jsonify, Blueprint
+from flask import request, make_response, g, jsonify, Blueprint, Response
 from tsx.api.util import csv_response
 from tsx.db import get_session
 from datetime import datetime
@@ -11,6 +11,8 @@ import pandas as pd
 import os
 import json
 import numpy as np
+import tempfile
+from zipfile import ZipFile, ZIP_DEFLATED
 
 # this is going to use quite alot of RAM, but it is more responsive than using dask
 bp = Blueprint('lpi_data', __name__)
@@ -94,6 +96,45 @@ def lpi_data():
 			output.headers["Content-Disposition"] = "attachment; filename=%s" % download_file
 			output.headers["Content-type"] = "text/csv"
 			return output
+	elif output_format == 'zip':
+		filtered_dat = suppress_aggregated_data(filtered_dat)
+
+		# Create temporary file
+		zip_filename = tempfile.mkstemp()[1]
+
+		# Write zip file to temporary file
+		with ZipFile(zip_filename, 'w', ZIP_DEFLATED) as zip_file:
+			# Write out data
+			zip_file.writestr('lpi.csv', filtered_dat.to_csv())
+			# Write out extra files
+			try:
+				extra_dir = tsx.config.data_dir('download-extras')
+				for filename in os.listdir(extra_dir):
+					zip_file.write(os.path.join(extra_dir, filename), filename)
+			except:
+				# Directory may not exist etc. - carry on
+				pass
+
+		# A response generator that streams the temporary file and then immediately deletes it
+		# TODO - make a utility function "stream_and_delete(path)"
+		def generate():
+			with open(zip_filename, 'rb') as f:
+				while True:
+					data = f.read(65536) # 64k chunks
+					if not data:
+						break
+					yield data
+			os.remove(zip_filename)
+
+		# Send streaming response + appropriate headers
+		return Response(
+			generate(),
+			mimetype="application/zip",
+			headers={
+				"Content-Disposition": "attachment; filename=%s" % (download_file or "lpi.zip")
+			}
+		)
+
 	elif output_format == "json":
 		#pandas index data a bit different, so need to unfold it, can use json_pandas for direct export
 		json_data = json.loads(unicode(filtered_dat.to_json(), errors='ignore'))
@@ -158,7 +199,7 @@ def lpi_data():
 
 
 	else:
-		return jsonify("Unsupported format (Supported: csv, json)"), 400
+		return jsonify("Unsupported format (Supported: csv, json, zip)"), 400
 
 @bp.route('/lpi-data/plot', methods = ['GET'])
 def plot():

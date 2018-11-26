@@ -705,8 +705,8 @@ export default {
     }, // end updatePlot function
     downloadCSV: function() {
       var filterParams = this.getFilterParams()
-      filterParams['format'] = 'csv'
-      filterParams['download'] = 'widetable.csv'
+      filterParams['format'] = 'zip'
+      filterParams['download'] = 'widetable.zip'
       var url = api.lpiDownloadURL(filterParams)
       window.open(url)
     },
