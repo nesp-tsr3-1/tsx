@@ -706,7 +706,7 @@ export default {
     downloadCSV: function() {
       var filterParams = this.getFilterParams()
       filterParams['format'] = 'zip'
-      filterParams['download'] = 'widetable.zip'
+      filterParams['download'] = 'tsxdata.zip'
       var url = api.lpiDownloadURL(filterParams)
       window.open(url)
     },

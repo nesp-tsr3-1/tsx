@@ -105,7 +105,7 @@ def lpi_data():
 		# Write zip file to temporary file
 		with ZipFile(zip_filename, 'w', ZIP_DEFLATED) as zip_file:
 			# Write out data
-			zip_file.writestr('lpi.csv', filtered_dat.to_csv())
+			zip_file.writestr('tsxdata.csv', filtered_dat.to_csv())
 			# Write out extra files
 			try:
 				extra_dir = tsx.config.data_dir('download-extras')
@@ -131,7 +131,7 @@ def lpi_data():
 			generate(),
 			mimetype="application/zip",
 			headers={
-				"Content-Disposition": "attachment; filename=%s" % (download_file or "lpi.zip")
+				"Content-Disposition": "attachment; filename=%s" % (download_file or "tsxdata.zip")
 			}
 		)
 
