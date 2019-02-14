@@ -14,5 +14,8 @@ __pycache__/
 .DS_Store
 env/
 
+.vagrant
+vagrant-env/
+
 tsx.conf
 *.egg-info/
