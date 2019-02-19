@@ -1,0 +1,29 @@
+{
+    "builders": [
+    {
+      "type": "virtualbox-ovf",
+      "source_path": "build/ubuntu1804/ubuntu1804.ova",
+      "vm_name": "tsx",
+      "shutdown_command": "echo tsx | sudo -S shutdown -P now",
+      "ssh_password": "{{ user `ssh_password` }}",
+      "ssh_username": "{{ user `ssh_username` }}",
+      "ssh_wait_timeout": "10000s",
+      "format": "ova",
+      "output_directory": "build/tsx"
+    }
+  ],
+  "provisioners": [
+    {
+      "execute_command": "echo '{{ user `ssh_password` }}' | {{.Vars}} sudo -E -S bash '{{.Path}}'",
+      "scripts": [
+        "../ubuntu-setup-tsx.sh"
+      ],
+      "type": "shell",
+      "expect_disconnect": "true"
+    }
+  ],
+  "variables": {
+    "ssh_password": "tsx",
+    "ssh_username": "tsx"
+  }
+}
