@@ -2,10 +2,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-/build/
+build/
 /dist/
 /misc/
 /sample-data/
+sample.zip
 
 *.bak
 *.log

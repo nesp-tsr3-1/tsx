@@ -1,0 +1,185 @@
+[appendix]
+= Import File Formats
+
+=== Taxonomic list file format
+
+File format: Excel Spreadsheet (xlsx)
+
+Sample file: `TaxonList.xlsx`
+
+|===
+|Column	|Notes
+|TaxonID	|Required, alphanumeric, unique
+|UltrataxonID	|Boolean: “u” = is an ultrataxon, blank = is not an ultrataxon
+|SpNo	|Numeric species identifier (must be the same for all subspecies of a given species, and must be part of the TaxonID)
+|Taxon name	|Text, common name of taxon
+|Taxon scientific name	|Text
+|Family common name	|Text
+|Family scientific name	|Text
+|Order	|Text
+|Population	|Text, e.g. Endemic, Australian, Vagrant, Introduced
+|AustralianStatus	a|Text, optional, one of:
+
+- Least Concern
+- Near Threatened
+- Vulnerable
+- Endangered
+- Critically Endangered
+- Critically Endangered (possibly extinct)
+- Extinct
+
+|EPBCStatus	|As above
+|IUCNStatus	|As above
+|BirdGroup	|Text, e.g. Terrestrial, Wetland
+|BirdSubGroup	|Text, e.g. Heathland, Tropical savanna woodland
+|NationalPriorityTaxa	|Boolean (1 = true, 0 = false)
+|===
+
+
+=== Processing methods file format
+
+File format:  CSV
+
+Sample file: `processing_methods.csv`
+
+|===
+|Column	|Notes
+|taxon_id	|Alphanumeric, must match taxonomic list
+|unit_id	|Numeric, must match IDs in the `unit` database table
+|source_id	|Numeric, must match IDs in the `source` database table
+|source_description	|Text, must match description in the `source` database table
+|search_type_id	|Numeric, must match IDs in the `search_type` database table
+|search_type_description	|Text, must match description in the `search_type` database table
+|experimental_design_type_id	a|Numeric
+
+- 0 = Do not process
+- 1 = Standardised site (All type-1 data should use this)
+- 2 = Standardised grid
+- 3 = Unstandardised grid
+
+|response_variable_type_id	a|Numeric
+
+- 0 = Do not process
+- 1 = Average count
+- 2 = Maximum count
+- 3 = Reporting rate
+
+|positional_accuracy_threshold_in_m	|Numeric, optional
+
+Any data with positional accuracy greater than this threshold will be excluded from processing
+|===
+
+
+=== Incidental sightings file format
+
+File format: CSV
+
+Sample file: `incidental_sightings.csv`
+
+|===
+|Column	|Notes
+|SpNo	|Numeric species identifier as per taxonomic list
+|Latitude	|Decimal degrees latitude (WGS84 or GDA94)
+|Longitude	|Decimal degrees longitude (WGS84 or GDA94)
+|===
+
+
+=== Range polygons file format
+
+File format: Shapefile
+
+Sample files: `spatial/species-range/*`
+
+|===
+|Column	|Notes
+|SPNO	|Numeric species identifier as per taxonomic list
+|TAXONID	|Taxon ID as per taxonomic list (this should be an ultrataxon), or for hybrid zones an ID of the form
+u385a.c which denotes a hybrid zone of subspecies u385a and u385c
+|RNGE	a|Numeric
+
+- 1 = Core range
+- 2 = Suspect
+- 3 = Vagrant
+- 4 = Historical
+- 5 = Irruptive
+- 6 = Introduced
+|===
+
+=== Type 2 Sites file format
+
+Format: Shapefile
+
+Sample file: `spatial/t2_site.shp`
+
+|===
+|Column	|Notes
+|SiteType	|Numeric, must match IDs in the search_type database table
+|===
+
+=== Grid Polygons file format
+
+Format: Shapefile
+
+Sample file: `spatial/10min_mainland.shp`
+
+No columns required
+
+=== SubIBRA Region Polygons file format
+
+Citation: Australian Government Department of the Environment and Energy, and State Territory land management agencies. 2012. IBRA version 7. Australian Government Department of the Environment and Energy and State/Territory land management agencies, Australia.
+
+Format: Shapefile
+
+Sample file: `spatial/Regions.shp`
+
+|===
+|Column	|Notes
+|RegName	|Text, name of region
+|StateName	|Text, name of state/territory
+|===
+
+
+=== Data sources file format
+
+Format: CSV
+
+Sample file: `data_sources.csv`
+
+|===
+|Column	|Notes
+|SourceID	|Numeric, must match id in source database table
+|TaxonID	|Alphanumeric, must match id in taxon database table
+|DataAgreement	a|Numeric
+
+- 0 = No
+- 1 = Yes, preliminary agreement
+- 2 = Yes, final agreement executed
+
+|ObjectiveOfMonitoring	a|Numeric
+
+- 1 = Monitoring for community engagement
+- 2 = Baseline monitoring
+- 3 = Monitoring for general conservation management – ‘surveillance’ monitoring
+- 4 = Monitoring for targeted conservation management
+
+|NoAbsencesRecorded	a|Numeric
+
+- 0 = absences of species were recorded (non-detections)
+- 1 = absences of species were observed in the field but not recorded
+
+|StandardisationOfMethodEffort	a|Numeric
+
+- 1 = Unstandardised methods/effort, surveys not site-based.
+- 2 = Data collection using standardised methods and effort
+but surveys not site-based (i.e. surveys spatially ad-hoc). Post-hoc site grouping not possible.
+- 3 = Data collection using standardised methods and effort but surveys not site-based (i.e. surveys spatially ad-hoc). Post-hoc site grouping possible - e.g. a lot of fixed area/time searches conducted within a region but not at predefined sites.
+- 4 = Pre-defined sites/plots surveyed repeatedly through time with varying methods and effort
+- 5 = Pre-defined sites/plots surveyed repeatedly through time with methods and effort standardised within site units, but not across program - i.e. different sites surveyed have different survey effort/methods
+- 6 = Pre-defined sites plots surveyed repeatedly through time using a single standardised method and effort across the whole monitoring program
+
+|ConsistencyOfMonitoring	|Numeric
+- 1 = Highly imbalanced because different sites are surveyed in different sampling periods and sites are not surveyed consistently through time (highly biased).
+- 2 = Imbalanced because new sites are surveyed with time but monitoring of older sites is not maintained. Imbalanced survey design may result in spurious trends
+- 3 = Imbalanced because new sites are added to existing ones monitored consistency through time
+- 4 = Balanced; all (>90%) sites surveyed in each year sampled
+|===
