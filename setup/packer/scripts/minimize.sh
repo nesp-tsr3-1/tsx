@@ -17,14 +17,14 @@ echo "==> Removing all linux kernels except the currrent one"
 dpkg --list | awk '{ print $2 }' | grep -e 'linux-\(headers\|image\)-.*[0-9]\($\|-generic\)' | grep -v "$(uname -r | sed 's/-generic//')" | xargs apt-get -y purge
 echo "==> Removing linux source"
 dpkg --list | awk '{ print $2 }' | grep linux-source | xargs apt-get -y purge
-echo "==> Removing development packages"
-dpkg --list | awk '{ print $2 }' | grep -- '-dev$' | xargs apt-get -y purge
-echo "==> Removing documentation"
-dpkg --list | awk '{ print $2 }' | grep -- '-doc$' | xargs apt-get -y purge
-echo "==> Removing development tools"
+# echo "==> Removing development packages"
+# dpkg --list | awk '{ print $2 }' | grep -- '-dev$' | xargs apt-get -y purge
+# echo "==> Removing documentation"
+# dpkg --list | awk '{ print $2 }' | grep -- '-doc$' | xargs apt-get -y purge
+# echo "==> Removing development tools"
 #dpkg --list | grep -i compiler | awk '{ print $2 }' | xargs apt-get -y purge
-#apt-get -y purge cpp gcc g++ 
-apt-get -y purge build-essential git
+#apt-get -y purge cpp gcc g++
+# apt-get -y purge build-essential
 echo "==> Removing default system Ruby"
 apt-get -y purge ruby ri doc
 echo "==> Removing default system Python"
@@ -48,12 +48,12 @@ while [ -n "$(deborphan --guess-all --libdevel)" ]; do
 done
 apt-get -y purge deborphan dialog
 
-echo "==> Removing man pages"
-rm -rf /usr/share/man/*
-echo "==> Removing APT files"
-find /var/lib/apt -type f | xargs rm -f
-echo "==> Removing any docs"
-rm -rf /usr/share/doc/*
+# echo "==> Removing man pages"
+# rm -rf /usr/share/man/*
+# echo "==> Removing APT files"
+# find /var/lib/apt -type f | xargs rm -f
+# echo "==> Removing any docs"
+# rm -rf /usr/share/doc/*
 echo "==> Removing caches"
 find /var/cache -type f -exec rm -rf {} \;
 # delete any logs that have built up during the install

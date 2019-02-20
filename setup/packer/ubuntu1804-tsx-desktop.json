@@ -22,6 +22,9 @@
         ],
         [
           "modifyvm", "{{.Name}}", "--rtcuseutc", "on"
+        ],
+        [
+          "modifyvm", "{{.Name}}", "--clipboard", "bidirectional"
         ]
       ]
     }
