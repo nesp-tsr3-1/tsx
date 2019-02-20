@@ -1,0 +1,69 @@
+
+==== Install Prerequisite software
+
+*MySQL Community Edition 5.7 or later*
+
+Download: https://dev.mysql.com/downloads/mysql/
+
+Choose the ‘Developer Default’ Setup Type which includes MySQL Workbench - a graphical user interface to the database (not required to run the workflow but makes it easier to inspect the database). At the ‘Check Requirements’ installation menu click ‘next’. Follow the default installation settings unless indicated otherwise. Under ‘Authentication Method’ select ‘Use Legacy Authentication Method (Retain MySQL 5.x Compatibility)’. Under ‘Accounts and Roles’ choose a password and make sure to remember it later on.
+
+*Python 2.7+* (Workflow is not Python 3 compatible at this stage)
+
+Download: https://www.python.org/downloads/release/python-2715/
+For Windows choose ‘Windows x86-64 MSI installer’.
+
+*Microsoft Visual C++ Compiler for Python 2.7 (Windows only)*
+
+Download: http://aka.ms/vcpython27
+
+*R 3.4+*
+
+Download: https://cran.r-project.org/bin/windows/base/
+
+You may also wish to install https://www.rstudio.com/products/rstudio/download/#download[R Studio], which provides a graphical user interface and integrated development environment for running R scripts. This is not required to run the workflow.
+
+==== Download TSX Workflow and Sample Data
+
+The latest version of the TSX workflow software can be downloaded at: https://github.com/nesp-tsr3-1/tsx/archive/master.zip .
+
+Download and unzip into a directory of your choosing (or clone using Git if you prefer). To make it easier to follow this guide, rename the `tsx-master` directory to `TSX_HOME`. (Depending on how you unzip the file, you may end up with a `tsx-master` directory containing another `tsx-master` directory – it is the innermost directory that should be renamed.)
+
+For Windows, double click on the start file. This should bring up a Command Prompt window that is configured to run the TSX workflow. The first time you run this command the necessary Python libraries will be downloaded and installed, which can take some time.
+
+
+This guide will make extensive use of the command line. All commands assume that your current working directory is `TSX_HOME`.
+
+To download TSX workflow sample data that is referred to throughout this guide, run the following command:
+
+----
+python setup\download_sample_data.py
+----
+
+This will place the sample data into a directory under `TSX_HOME` called `sample-data`.
+
+==== Database Setup
+
+Start the MySQL command-line client and create a database called “tsx”. In this guide we will simply be accessing MySQL as the default “root” user. (Note that in a shared environment it is advised to create a separate user that has limited access to the tsx database only.)
+
+----
+mysql –u root
+mysql> create database tsx;
+mysql> quit;
+----
+
+Now run the following commands to populate the database structure and lookup tables.
+----
+mysql –u root tsx < data\sql\create.sql
+mysql –u root tsx < data\sql\init.sql
+mysql –u root tsx < sample-data\seed.sql
+----
+
+Understanding the database schema is not essential to following the steps in this guide, but is recommended if you want to gain an in-depth understanding of the processing.
+// TODO: link to database schema
+
+==== Update Workflow Configuration File
+
+Copy the sample configuration file from `TSX_HOME\tsx.conf.example.windows` to `TSX_HOME\tsx.conf`.
+----
+copy tsx.conf.example.windows tsx.conf
+----

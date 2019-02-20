@@ -1,0 +1,53 @@
+==== Install Prerequisite software
+
+The following instructions have been tested on Ubuntu Linux 18.04. If you are using a different Linux distribution you will need to adapt these commands for your system. If you are using macOS, we recommend using homebrew (https://brew.sh) to install dependencies.
+
+Run the following commands to install prerequisite software:
+
+----
+sudo apt-get update
+sudo apt-get install -y nginx mysql-server python python-pip virtualenv git
+----
+
+==== Download TSX Workflow and Sample Data
+
+Run the following command to download the TSX workflow into a folder named `tsx`
+
+----
+git clone https://github.com/nesp-tsr3-1/tsx.git
+----
+
+Then enter the `tsx` directory and run the following commands:
+
+----
+pip install virtualenv
+virtualenv env
+env/bin/activate
+pip install –r requirements.txt
+----
+
+To download TSX workflow sample data that is referred to throughout this guide, run the following command:
+
+----
+python setup/download_sample_data.py
+----
+
+This will place the sample data into a directory called `sample-data`.
+
+==== Database Setup
+
+Initialise the database by running:
+----
+sudo setup/setup-database.sh
+mysql tsx < sample-data/seed.sql
+----
+
+Understanding the database schema is not essential to following the steps in this guide, but is recommended if you want to gain an in-depth understanding of the processing.
+// TODO: link to database schema
+
+==== Update Workflow Configuration File
+
+Copy the sample configuration file from `TSX_HOME\tsx.conf.example` to `TSX_HOME\tsx.conf`.
+----
+cp tsx.conf.example tsx.conf
+----

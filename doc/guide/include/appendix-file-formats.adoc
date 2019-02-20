@@ -33,6 +33,9 @@ Sample file: `TaxonList.xlsx`
 |BirdGroup	|Text, e.g. Terrestrial, Wetland
 |BirdSubGroup	|Text, e.g. Heathland, Tropical savanna woodland
 |NationalPriorityTaxa	|Boolean (1 = true, 0 = false)
+|SuppressSpatialRep	|Boolean (1 = true, 0 = false), optional (defaults to false)
+
+If true, spatial representativeness will not be calculated for this taxon
 |===
 
 
@@ -182,4 +185,10 @@ but surveys not site-based (i.e. surveys spatially ad-hoc). Post-hoc site groupi
 - 2 = Imbalanced because new sites are surveyed with time but monitoring of older sites is not maintained. Imbalanced survey design may result in spurious trends
 - 3 = Imbalanced because new sites are added to existing ones monitored consistency through time
 - 4 = Balanced; all (>90%) sites surveyed in each year sampled
+|StartYear	|Numeric, optional, records before this year will be omitted from filtered output
+|EndYear	|Numeric, optional, records after this year will be omitted from filtered output
+|Exclude	|
+|SuppressAggregatedData	|
+|Authors	|Used to generate citations for this data source
+|Provider	|Used to generate citations for this data source
 |===

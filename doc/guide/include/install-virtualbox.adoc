@@ -1,0 +1,17 @@
+These instructions will assume a Windows environment, but note that these steps can be easily adapted for macOS or Linux.
+
+==== Download & Install VirtualBox
+
+Browse to https://www.virtualbox.org/wiki/Downloads and click on 'Windows hosts' to download the VirtualBox installer. Run the installer to install VirtualBox using the default installation options.
+
+==== Download & Run TSX Virtual Machine
+
+Download the TSX workflow virtual machine at: https://tsx.org.au/tsx-desktop.ova
+
+Open the virtual machine image using Virtual Box, and follow the prompts to import the image. On the "Appliance Settings" screen you can use the defaults, or for better performance adjust the CPU setting to match the number of CPU cores on your system.
+
+After importing the virtual machine into Virtual Box, double click to start it. After a few seconds it should start up and display a terminal:
+
+image::vm-start.png[Virtual machine after startup, 600]
+
+That's it! You can now skip straight to <<Running the workflow>>.

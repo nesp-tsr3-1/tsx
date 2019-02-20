@@ -29,6 +29,7 @@ James Watmuff <james@planticle.com.au>; Elisa Bayraktarov <e.bayraktarov@uq.edu.
 :underscore: _
 :adp: AsciiDoc Python
 :adr: Asciidoctor
+
 // Refs
 :uri-home: https://tsx.org.au
 :uri-github: https://github.com/nesp-tsr3-1/tsx
@@ -55,7 +56,7 @@ The TSX is produced using a workflow that begins with raw observation data colla
 
 image::workflow-overview.png[Workflow Overview,400]
 
-The observation data must be provided to the workflow in a specific format and are classified as either Type 1 or Type 2 data. (TODO: Reference paper to describe Type 1 vs Type 2 data). The workflow performs much more complex processing on Type 2 data than Type 1 data, so if your data meets the Type 1 requirements then running the workflow will be quicker and easier.
+The observation data must be provided to the workflow in a specific format and are classified as either Type 1 or Type 2 data (see <<Data Classification>>).  The workflow performs much more complex processing on Type 2 data than Type 1 data, so if your data meets the Type 1 requirements then running the workflow will be quicker and easier.
 
 == Architecture
 
@@ -77,69 +78,15 @@ The workflow was primarily designed to run on Linux and macOS, and requires seve
 
 === Installation using a Virtual Machine (recommended)
 
-These instructions will assume a Windows environment, but note that these steps can be easily adapted for macOS or Linux.
-
-==== Download & Install VirtualBox
-
-Browse to https://www.virtualbox.org/wiki/Downloads and click on 'Windows hosts' to download the VirtualBox installer. Run the installer to install VirtualBox using the default installation options.
-
-==== Download & Run TSX Virtual Machine
-
-Download the TSX workflow virtual machine at: https://tsx.org.au/tsx-desktop.ova
-
-Open the virtual machine image using Virtual Box, and follow the prompts to import the image. On the "Appliance Settings" screen you can use the defaults, but for better performance adjust the CPU setting to match the number of CPU cores on your system.
-
-After importing the virtual machine into Virtual Box, double click to start it. After a few seconds it should start up and display a terminal:
-
-image::vm-start.png[Virtual machine after startup, 600]
-
-That's it! You can now skip straight to <<Running the workflow>>.
+include::include/install-virtualbox.adoc[]
 
 === Installation on Linux/macOS
 
-==== Install Prerequisite software
-
-The following instructions have been tested on Ubuntu Linux 18.04. If you are using a different Linux distribution you will need to adapt these commands for your system. If you are using macOS, we recommend using homebrew (https://brew.sh) to install dependencies.
-
-Run the following commands to install prerequisite software:
-
-----
-sudo apt-get update
-sudo apt-get install -y nginx mysql-server python python-pip virtualenv git
-----
-
-==== Download TSX workflow
-
-Run the following command to download the TSX workflow into a folder named `tsx`
-
-----
-git clone https://github.com/nesp-tsr3-1/tsx.git
-----
+include::include/install-linux.adoc[]
 
 === Installation on Windows (advanced)
 
-==== Install Prerequisite software
-
-*MySQL Community Edition 5.7 or later*
-
-Download: https://dev.mysql.com/downloads/mysql/
-
-Choose the ‘Developer Default’ Setup Type which includes MySQL Workbench - a graphical user interface to the database (not required to run the workflow but makes it easier to inspect the database). At the ‘Check Requirements’ installation menu click ‘next’. Follow the default installation settings unless indicated otherwise. Under ‘Authentication Method’ select ‘Use Legacy Authentication Method (Retain MySQL 5.x Compatibility)’. Under ‘Accounts and Roles’ choose a password and make sure to remember it later on.
-
-*Python 2.7+* (Workflow is not Python 3 compatible at this stage)
-
-Download: https://www.python.org/downloads/release/python-2715/
-For Windows choose ‘Windows x86-64 MSI installer’.
-
-*Microsoft Visual C++ Compiler for Python 2.7 (Windows only)*
-
-Download: http://aka.ms/vcpython27
-
-*R 3.4+*
-
-Download: https://cran.r-project.org/bin/windows/base/
-
-You may also wish to install R Studio, which provides a graphical user interface and integrated development environment for running R scripts. This is not required to run the workflow. (https://www.rstudio.com/products/rstudio/download/#download)
+include::include/install-windows.adoc[]
 
 = Running the workflow
 
@@ -149,27 +96,27 @@ The database and workflow tools are now configured and ready for auxiliary and o
 
 === Taxonomic List
 
-Before observation data can be imported, a taxonomic list must first be imported which identifies all valid taxa that will be processed by the workflow. A sample taxonomic list containing Australian birds can be found in `sample-data\TaxonList.xlsx`.
+Before observation data can be imported, a taxonomic list must first be imported which identifies all valid taxa that will be processed by the workflow. A sample taxonomic list containing Australian birds can be found in `sample-data/TaxonList.xlsx`.
 
 The <<Taxonomic list file format>> is a useful reference if you want to build your own taxonomic lists for use in the workflow.
 
 Import the sample taxonomic list:
 
 ----
-python -m tsx.import_taxa sample-data\TaxonList.xlsx
+python -m tsx.import_taxa sample-data/TaxonList.xlsx
 ----
 
 If the import is successful, the command will complete without any output.
 
 === Import Type 1 data
 
-Type 1 observation data may now be imported into the database. Some sample Type 1 data can be found in `sample-data\type_1_sample.csv`. Import this data, by running the following command:
+Type 1 observation data may now be imported into the database. Some sample Type 1 data can be found in `sample-data/type_1_sample.csv`. Import this data, by running the following command:
 
 ----
-python -m tsx.importer --type 1 -c sample-data\type_1_sample.csv
+python -m tsx.importer --type 1 -c sample-data/type_1_sample.csv
 ----
 
-The `--type 1` part of the command tells the import script that you are import Type 1 data, which is important because Type 1 data has different requirements and is put into a separate database table compared to Type 2 data. The `-c` flag is short for “commit” and causes the imported data to be committed to the database; without this flag, the command only performs a “dry-run” and does not modify the database. This feature is also present in most of the data processing scripts, and is a useful way to test whether the data/processing is valid without actually making any change to the database.
+The `--type 1` part of the command tells the import script that you are import Type 1 data, which is important because Type 1 data has different requirements and is put into a separate database table compared to Type 2 data. The `-c` flag is short for “commit” and causes the imported data to be committed to the database; without this flag, the command only performs a “dry run” and does not modify the database. This feature is also present in most of the data processing scripts, and is a useful way to test whether the data/processing is valid without actually making any change to the database.
 
 The import script will run a range of checks on the imported data, which will generate warnings and/or errors. Warnings are advisory, while errors will prevent the data from being imported until they are fixed. This helps to ensure data quality.
 
@@ -177,10 +124,10 @@ The Type 1 data is now imported into the `t1_survey`, `t1_sighting` and `t1_site
 
 === Import Type 2 data
 
-Type 2 data is imported in much the same way as Type 1 data. Sample Type 2 data can be found in `sample-data\type_2_sample.csv`. Import this data by running the following command:
+Type 2 data is imported in much the same way as Type 1 data. Sample Type 2 data can be found in `sample-data/type_2_sample.csv`. Import this data by running the following command:
 
 ----
-python -m tsx.importer --type 2 -c sample-data\type_2_sample.csv
+python -m tsx.importer --type 2 -c sample-data/type_2_sample.csv
 ----
 
 This imports data into the `t2_survey` and `t2_sighting` tables. (Note that the `t2_site` table is populated in a separate step because Type 2 data does not have sites defined in the raw observation data).
@@ -210,10 +157,9 @@ For further information, see <<Processing methods file format>>.
 
 After monthly aggregation, the data is then aggregated to yearly by averaging the monthly aggregated values.
 
-A sample processing methods file is available at `sample-data\processing_methods.csv`. Import this by running:
+A sample processing methods file is available at `sample-data/processing_methods.csv`. Import this by running:
 ----
-python -m tsx.import_processing_method
-sample-data\processing_method.csv
+python -m tsx.import_processing_method sample-data/processing_method.csv
 ----
 
 To aggregate the Type 1 data by month and year, run the following command:
@@ -224,6 +170,35 @@ python -m tsx.process -c t1_aggregation
 This will aggregate the data and put the result into the `aggregated_by_year` and `aggregated_by_month` tables.
 
 You may now choose to skip to <<Calculate spatial representativeness (Type 1 & 2 data)>> if you are not processing Type 2 data at this stage.
+
+=== Generate taxon alpha hulls (Type 2 data only)
+
+image::workflow-preprocessing-alpha-hull.png[Flow diagram - attribute range and ultrataxon,400,float="right"]
+
+Type 2 data typically contains presence-only data, however the LPI analysis requires time series based on data that include absences. To solve this we need to generate (pseudo-)absences for surveys where a taxon was not recorded but is known to be sometimes present at that location. In order to identify areas where the pseudo absences should be allocated for a species, we first generate an alpha hull based on all known observations of the species. The alpha hulls are drawn from all Type 1 and 2 data, as well as an auxiliary “Incidental sightings” input file which contains observation data that did not meet the Type 1 or Type 2 criteria but is still useful for determining potential presence of a taxon.
+
+After generating these alpha hulls at the species level they are trimmed down to ultrataxon polygons by intersecting with expert-curated polygons of known taxon ranges that are defined in an auxiliary “Range Polygons” input file.
+
+There is a sample incidental sightings auxiliary input file at `sample-data/incidental_sightings.csv`, which can be imported by running:
+----
+python -m tsx.import_incidental sample-data/incidental_sightings.csv
+----
+
+There are sample range polygons at `sample-data/spatial/species-range/`, which can be imported by running:
+----
+python -m tsx.import_range sample-data/spatial/species-range
+----
+(Ignore any messages saying `Failed to auto identify EPSG: 7`)
+
+The specifications for both the incidental sightings file and the species range polygons can be found in the Appendix.
+// TODO: Link to appendicies
+
+After importing these files, you can then run the alpha hull processing script:
+----
+python -m tsx.process -c alpha_hull
+----
+
+This will perform the alpha hull calculations, intersect the result with the range polygons, and places the result into the `taxon_presence_alpha_hull` database table.
 
 
 === Attribute range and ultrataxon (Type 2 data only)
@@ -258,12 +233,12 @@ The experimental design type that is used for a given taxon/source/unit/method c
 
 To import the sample Type 2 sites auxiliary input (see Appendix 1 for specification), run:
 ----
-python -m tsx.import_t2_site sample-data\spatial\t2_site.shp
+python -m tsx.import_t2_site sample-data/spatial/t2_site.shp
 ----
 
 To import the sample grid polygons, run:
 ----
-python -m tsx.import_grid sample-data\spatial\10min_mainland.shp
+python -m tsx.import_grid sample-data/spatial/10min_mainland.shp
 ----
 
 Now the processing script can be run:
@@ -273,7 +248,7 @@ python -m tsx.process -c pseudo_absence
 
 This will generate pseudo absences and put them into `t2_processed_survey` and `t2_processed_sighting` tables along with presence records. At this point the Type 2 data has been transformed into a form the meets the Type 1 data requirements because taxa are defined to the ultrataxon level and presences and absences are both included.
 
-#(TODO: Add some sample data that actually uses grid processing)
+// (TODO: Add some sample data that actually uses grid processing)
 
 === Calculate response variable & aggregate by year/month (Type 2 data only)
 
@@ -305,7 +280,7 @@ Spatial representativeness is a measure of how much of the known range of a taxo
 
 This step requires the range polygons auxiliary file to be imported first. If you skipped to this section from the Type 1 Data aggregation step, then you will need to import this now. A set of sample range polygons can be imported by running:
 ----
-python -m tsx.import_range sample-data\spatial\species-range
+python -m tsx.import_range sample-data/spatial/species-range
 ----
 
 The spatial representativeness processing can now be run with this command:
@@ -340,8 +315,8 @@ In order to calculate these filtering criteria two auxiliary data files must be 
 
 Sample data for these files can be imported by running:
 ----
-python -m tsx.import_region sample-data\spatial\Regions.shp
-python -m tsx.import_data_source sample-data\data_source.csv
+python -m tsx.import_region sample-data/spatial/Regions.shp
+python -m tsx.import_data_source sample-data/data_source.csv
 ----
 
 The time series can then be filtered by running:
@@ -360,9 +335,9 @@ To export the data, run:
 python -m tsx.process export_lpi --filter
 ----
 
-This will place an output file into `sample-data\export\lpi-filtered.csv`.
+This will place an output file into `sample-data/export/lpi-filtered.csv`.
 
-(TODO: for some reason the filtering removes out all of the sample data – probably none of the sample data passes the criteria)
+// (TODO: for some reason we end up with an empty result, but when running python -m tsx.process -c all, we get a non-empty result). Need to figure out what is going on here.
 
 This file is ready for LPI analysis!
 
@@ -376,7 +351,7 @@ or a version aggregated by month instead of year:
 python -m tsx.process export_lpi –-monthly
 ----
 
-=== TODO: Generate LPI from wide table
+// === TODO: Generate LPI from wide table
 
 === Run it all at once
 
@@ -387,17 +362,44 @@ python -m tsx.process -c all
 
 This is useful when you import some updated input files and wish to re-run all the data processing again.
 
-#== Extra diagnostic workflow outputs
-#
-#TODO brief explanation of these commands
-#----
-#python -m tsx.process export alpha
-#
-#python -m tsx.process export pa
-#
-#python -m tsx.process export ultrataxa
-#
-#python -m tsx.process export grid
-#----
+// == Extra diagnostic workflow outputs
+// 
+// TODO brief explanation of these commands
+// ----
+// python -m tsx.process export alpha
+// 
+// python -m tsx.process export pa
+// 
+// python -m tsx.process export ultrataxa
+// 
+// python -m tsx.process export grid
+// ----
 
-include::appendix-file-formats.adoc[]
+include::include/appendix-file-formats.adoc[]
+
+[appendix]
+= Data Classification
+
+=== Type 1 data
+
+Type 1 data must satisfy the following requirements:
+
+- All taxa defined to ultrataxon level (see definition below)
+- Survey methods clearly defined
+- Unit of measurement defined
+- Data recorded to the temporal scale of at least a year
+- Spatial data for pre-defined (fixed) sites with defined accuracy
+- Consistent survey methods/effort used within sites
+- Non-detections of taxa (i.e. absence or 0 counts) recorded
+
+=== Type 2 data
+
+Type 2 data must satisfy the following requirements:
+
+- Taxon defined at least to species level
+- Survey methods defined
+- Unit of measurement defined
+- Consistent measure/methods used through time
+- Data recorded to the temporal scale of at least a year
+- Recorded absences of taxa _not_ required, i.e. presence-only data are allowed
+- Spatial coordinates for all data points
