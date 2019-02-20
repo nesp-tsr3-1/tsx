@@ -21,4 +21,4 @@ thinning_distance=250
 alpha=1.6
 hullbuffer_distance=1000
 isolatedbuffer_distance=1000
-coastal_shp=sample-data/spatial/AusCoast_Islands_1kmBuffer.shp
+coastal_shp=sample-data\spatial\AusCoast_Islands_1kmBuffer.shp
