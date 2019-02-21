@@ -2,12 +2,16 @@
 
 # Run as root
 
-# For some reason MySQL seems to stop system from shutting down correctly, so we just stop it right off the bat
-
 # Minimal desktop environment - https://askubuntu.com/a/954271/521491
 apt-get update
 apt-get install -y lightdm lightdm-gtk-greeter lubuntu-default-settings lxappearance lxterminal virtualbox-guest-x11
 apt-get install -y lxde  --no-install-recommends
+
+# R studio
+wget https://download1.rstudio.org/rstudio-xenial-1.1.463-amd64.deb
+apt-get install -y gdebi-core
+gdebi -n rstudio-xenial-1.1.463-amd64.deb
+rm rstudio-xenial-1.1.463-amd64.deb
 
 # Autologin:
 cat > /etc/lightdm/lightdm.conf.d/10-autologin.conf <<EOF
@@ -25,6 +29,9 @@ usermod -a -G nopasswdlogin tsx
 sudo -u tsx mkdir -p ~tsx/.config/lxsession/Lubuntu
 sudo -u tsx touch ~tsx/.config/lxsession/Lubuntu/autostart
 echo "@lxterminal" >> ~tsx/.config/lxsession/Lubuntu/autostart
+
+# Screen resolution
+echo "xrandr -s 1280x768" >> ~tsx/.config/lxsession/Lubuntu/autostart
 
 # Auto enter tsx and enable environment
 sudo -u tsx touch ~/tsx/start.sh
