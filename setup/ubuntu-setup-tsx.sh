@@ -38,7 +38,7 @@ sudo -u tsx cp tsx.conf.example tsx.conf
 sudo -u tsx python setup/download_sample_data.py
 
 setup/setup-database.sh
-sudo mysql tsx < data/sql/init.sql
+sudo mysql tsx < sample-data/seed.sql
 
 # Autologin to MySQL as tsx
 sudo -u tsx cat > ~tsx/.my.cnf <<EOF
