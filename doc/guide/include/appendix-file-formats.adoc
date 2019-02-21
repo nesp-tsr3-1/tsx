@@ -187,8 +187,8 @@ but surveys not site-based (i.e. surveys spatially ad-hoc). Post-hoc site groupi
 - 4 = Balanced; all (>90%) sites surveyed in each year sampled
 |StartYear	|Numeric, optional, records before this year will be omitted from filtered output
 |EndYear	|Numeric, optional, records after this year will be omitted from filtered output
-|Exclude	|
-|SuppressAggregatedData	|
+|Exclude	|Boolean (0 = no, 1 = yes), all records will be omitted from filtered output
+|SuppressAggregatedData	|Boolean (0 = no, 1 = yes), does not affect processing but is simply copied to the final output to indicate that aggregated data from this data source should not be published.
 |Authors	|Used to generate citations for this data source
 |Provider	|Used to generate citations for this data source
 |===

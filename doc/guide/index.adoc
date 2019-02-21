@@ -371,22 +371,24 @@ python -m tsx.process export_lpi --filter
 
 This is useful when you import some updated input files and wish to re-run all the data processing again.
 
-== Generate TSX output
+== Living Planet Index Calculation
+
+The Living Planet Index is used to generate the main final output of the TSX workflow.
 
 The data pre-processing & filtering generates a CSV file in a format suitable for the Living Planet Index R package, https://github.com/Zoological-Society-of-London/rlpi[`rlpi`].
 
-To open R studio and open an example script for generating the TSX output:
+To open RStudio and open an example script for generating the TSX output:
 ----
 (cd r; rstudio lpi.R)
 ----
 
-After a short delay, R studio should appear.
+After a short delay, RStudio should appear.
 
-//image::vm-rstudio.png[R studio screenshot - start up, 600]
+image::vm-rstudio.png[RStudio screenshot - start up, 600]
 
-Press `Shift + Ctrl + S` to run the LPI and generate the TSX.
+Press kbd:[Shift + Ctrl + S] to run the LPI. After running successfully, a plot should appear in the bottom left window (you may need to click on the 'Plots' tab):
 
-//image::vm-rstudio-plot.png[R studio screenshot, 600]
+image::vm-rstudio-plot.png[RStudio screenshot - with plot, 600]
 
 Congratulations! You have now run the entire TSX workflow.
 

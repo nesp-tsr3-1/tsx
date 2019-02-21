@@ -20,7 +20,7 @@ Download: http://aka.ms/vcpython27
 
 Download: https://cran.r-project.org/bin/windows/base/
 
-You may also wish to install https://www.rstudio.com/products/rstudio/download/#download[R Studio], which provides a graphical user interface and integrated development environment for running R scripts. This is not required to run the workflow.
+You may also wish to install https://www.rstudio.com/products/rstudio/download/#download[RStudio], which provides a graphical user interface and integrated development environment for running R scripts. This is not required to run the workflow.
 
 ==== Download TSX Workflow and Sample Data
 
