@@ -48,7 +48,7 @@ The TSX is the world’s first Threatened Species Index. It will do for Australi
 
 == How to use this guide
 
-This guide explains how to install and setup the TSX workflow, and then walks through the process of running the workflow on a provided sample dataset. It is highly recommended to run through this guide using the sample dataset to gain familiarity with the workflow before attempting to use it to process your own dataset. Many of the sample files provided will be useful starting points for modifying to suit your dataset.
+This guide explains how to install and setup the TSX workflow, and then walks through the process of running the workflow on a provided sample dataset. It is highly recommended to run through this guide using the sample dataset to gain familiarity with the workflow before attempting to use it to process your own dataset. Many of the sample files provided will be useful starting points to modify to suit your dataset.
 
 == Workflow Concepts
 
@@ -64,7 +64,7 @@ The data import, pre-processing and filtering steps are performed using Python s
 
 image::workflow-implementation.png[Workflow Architecture,600]
 
-A web interface can be used to import data and view the generated indices, diagnostics and processed data. This is not an essential element of the workflow and is covered in a separate section.
+A web interface can be used to import data and view the generated indices, diagnostics and processed data. This is not an essential element of the workflow and is not covered in this guide.
 
 = Installation and Setup
 
@@ -160,7 +160,7 @@ image::workflow-preprocessing-t1-aggregation.png[Flow diagram - Type 1 data aggr
 
 Observation data is aggregated to monthly resolution by grouping all records with the same month, taxon, data source, site, method (search type) and units of measurement.
 
-Each group of records is aggregated by calculating the average value, maximum value or reporting rate (proportion of records with a non-zero value) of the individual records. Which of these three aggregation methods are used for each grouping is determined by an auxiliary “Processing methods” input which specifies which aggregation method should be used for each taxon/source/method/unit combination.
+Each group of records is aggregated by calculating the average value, maximum value or reporting rate (proportion of records with a non-zero value) of the individual records. Which of these three aggregation methods are used for each grouping is determined by a “Processing methods” file which specifies which aggregation method should be used for each taxon/source/method/unit combination.
 
 For further information, see <<Processing methods file format>>.
 
@@ -184,11 +184,11 @@ You may now choose to skip to <<Calculate spatial representativeness (Type 1 & 2
 
 image::workflow-preprocessing-alpha-hull.png[Flow diagram - attribute range and ultrataxon,400,float="right"]
 
-Type 2 data typically contains presence-only data, however the LPI analysis requires time series based on data that include absences. To solve this we need to generate (pseudo-)absences for surveys where a taxon was not recorded but is known to be sometimes present at that location. In order to identify areas where the pseudo absences should be allocated for a species, we first generate an alpha hull based on all known observations of the species. The alpha hulls are drawn from all Type 1 and 2 data, as well as an auxiliary “Incidental sightings” input file which contains observation data that did not meet the Type 1 or Type 2 criteria but is still useful for determining potential presence of a taxon.
+Type 2 data typically contains presence-only data, however the LPI analysis requires time series based on data that include absences. To solve this we need to generate (pseudo-)absences for surveys where a taxon was not recorded but is known to be sometimes present at that location. In order to identify areas where the pseudo absences should be allocated for a species, we first generate an alpha hull based on all known observations of the species. The alpha hulls are drawn from all Type 1 and 2 data, as well as an “Incidental sightings” file which contains observation data that did not meet the Type 1 or Type 2 criteria but is still useful for determining potential presence of a taxon.
 
 After generating these alpha hulls at the species level they are trimmed down to ultrataxon polygons by intersecting with expert-curated polygons of known taxon ranges that are defined in an auxiliary “Range Polygons” input file.
 
-There is a sample incidental sightings auxiliary input file at `sample-data/incidental_sightings.csv`, which can be imported by running:
+There is a sample incidental sightings input file at `sample-data/incidental_sightings.csv`, which can be imported by running:
 ----
 python -m tsx.import_incidental sample-data/incidental_sightings.csv
 ----
@@ -216,7 +216,7 @@ image::workflow-preprocessing-range-ultrataxon.png[Flow diagram - attribute rang
 
 Type-2 data is typically defined to the species level, however we need to generate pseudo-absences and ultimately aggregated time series that are at the ultrataxon level.
 
-This step of processing converts the species level observations to ultrataxon level observations using the range polygons auxiliary input that was imported in the previous step. In hybrid zones where a species maps to multiple subspecies we simply duplicate each species record for each potential subspecies.
+This step of processing converts the species level observations to ultrataxon level observations using the range polygons that were imported in the previous step. In hybrid zones where a species maps to multiple subspecies we simply duplicate each species record for each potential subspecies.
 
 Since the range polygons required for this step have already been imported in the previous step, the only command that needs to be run for this step is:
 ----
@@ -238,9 +238,9 @@ There are three “experimental design types” which correspond to different wa
 . Standardised grid: surveys are assigned to grid cells, which are also defined in an auxiliary input. Pseudo-absences are generated for surveys within grid cells that intersect with alpha hulls.
 . Unstandardised grid: processed exactly the same as standardised grid for the purposes of generating pseudo-absences, but handled differently in the subsequent aggregation step.
 
-The experimental design type that is used for a given taxon/source/unit/method combination is defined in the processing methods auxiliary input which was previously imported in the “Aggregate by year/month” step for Type 1 data.
+The experimental design type that is used for a given taxon/source/unit/method combination is defined in the processing methods file which was previously imported in the step entitled <<Aggregate by year/month (Type 1 data)>>.
 
-To import the sample Type 2 sites auxiliary input (see Appendix 1 for specification), run:
+To import the sample Type 2 sites (see Appendix for specification), run:
 ----
 python -m tsx.import_t2_site sample-data/spatial/t2_site.shp
 ----
@@ -256,8 +256,6 @@ python -m tsx.process -c pseudo_absence
 ----
 
 This will generate pseudo absences and put them into `t2_processed_survey` and `t2_processed_sighting` tables along with presence records. At this point the Type 2 data has been transformed into a form the meets the Type 1 data requirements because taxa are defined to the ultrataxon level and presences and absences are both included.
-
-// (TODO: Add some sample data that actually uses grid processing)
 
 === Calculate response variable & aggregate by year/month (Type 2 data only)
 
@@ -287,7 +285,7 @@ image::workflow-preprocessing-spatial-rep.png[Flow diagram - Calculate spatial r
 
 Spatial representativeness is a measure of how much of the known range of a taxon is covered by a given data source. It is calculated by generating an alpha hull based on the records for each taxon/source combination, and then measuring the proportion of the known species range that is covered by that alpha hull.
 
-This step requires the range polygons auxiliary file to be imported first. If you skipped to this section from the Type 1 Data aggregation step, then you will need to import this now. A set of sample range polygons can be imported by running:
+This step requires the range polygons file to be imported first. If you skipped to this section from the Type 1 Data aggregation step, then you will need to import this now. A set of sample range polygons can be imported by running:
 ----
 python -m tsx.import_range sample-data/spatial/species-range
 ----
