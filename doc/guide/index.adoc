@@ -132,6 +132,15 @@ python -m tsx.importer --type 2 -c sample-data/type_2_sample.csv
 
 This imports data into the `t2_survey` and `t2_sighting` tables. (Note that the `t2_site` table is populated in a separate step because Type 2 data does not have sites defined in the raw observation data).
 
+=== Import Region Polygons
+
+During data processing, all observations are matched to SubIBRA regions. Observations outside of SubIBRA regions are suppressed from the final output.
+
+Import the SubIBRA regions into the database:
+----
+python -m tsx.import_region sample-data/spatial/Regions.shp
+----
+
 == Data Pre-processing & Filtering
 
 Now that the observation data has been imported into the database, it is now ready to be processed and filtered into an aggregated form that is suitable for LPI analysis.
@@ -311,11 +320,10 @@ The filtering criteria applied at the time of writing are:
 - Data sources with certain data agreement, standardisation of method and consistency of monitoring values in the metadata are excluded
 - Time series with less than 5 data points are excluded
 
-In order to calculate these filtering criteria two auxiliary data files must be imported: SubIBRA region polygons, and data source metadata. See the appendix for specifications of these files.
+In order to calculate these filtering criteria, data source metadata must be imported (See <<Data sources file format>>).
 
-Sample data for these files can be imported by running:
+Sample metadata can be imported by running:
 ----
-python -m tsx.import_region sample-data/spatial/Regions.shp
 python -m tsx.import_data_source sample-data/data_source.csv
 ----
 
@@ -337,8 +345,6 @@ python -m tsx.process export_lpi --filter
 
 This will place an output file into `sample-data/export/lpi-filtered.csv`.
 
-// (TODO: for some reason we end up with an empty result, but when running python -m tsx.process -c all, we get a non-empty result). Need to figure out what is going on here.
-
 This file is ready for LPI analysis!
 
 It is also possible to export an unfiltered version:
@@ -351,8 +357,6 @@ or a version aggregated by month instead of year:
 python -m tsx.process export_lpi –-monthly
 ----
 
-// === TODO: Generate LPI from wide table
-
 === Run it all at once
 
 It is possible to run all the data pre-processing & filtering in a single command:
@@ -360,7 +364,31 @@ It is possible to run all the data pre-processing & filtering in a single comman
 python -m tsx.process -c all
 ----
 
+After which you must export the data again, e.g.:
+----
+python -m tsx.process export_lpi --filter
+----
+
 This is useful when you import some updated input files and wish to re-run all the data processing again.
+
+== Generate TSX output
+
+The data pre-processing & filtering generates a CSV file in a format suitable for the Living Planet Index R package, https://github.com/Zoological-Society-of-London/rlpi[`rlpi`].
+
+To open R studio and open an example script for generating the TSX output:
+----
+(cd r; rstudio lpi.R)
+----
+
+After a short delay, R studio should appear.
+
+//image::vm-rstudio.png[R studio screenshot - start up, 600]
+
+Press `Shift + Ctrl + S` to run the LPI and generate the TSX.
+
+//image::vm-rstudio-plot.png[R studio screenshot, 600]
+
+Congratulations! You have now run the entire TSX workflow.
 
 // == Extra diagnostic workflow outputs
 // 
