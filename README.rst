@@ -2,12 +2,18 @@
 Welcome to the Australian Threatened Species Index (TSX) Repository
 ===================================================================
 
-For information about the Australian Threatened Species Index project, see http://www.nespthreatenedspecies.edu.au/projects/national-and-regional-monitoring-for-threatened-species
+For information about the Australian Threatened Species Index project, see https://tsx.org.au
 
-The code in this repository is responsible for data-import and pre-processing of data, and visualsation of the generated trend graphs and associated data. It does not (yet) contain the code for generating the actual trends.
+The code in this repository is responsible for data-import and pre-processing of data, and visualsation of the generated trend graphs and associated data.
 
-Getting started with a local development environment
-====================================================
+
+User Guide
+==========
+
+The easiest way to learn about running the TSX workflow is to check out the User Guide at https://tsx.org.au/user-guide/
+
+Developer Guide
+===============
 
 1. Setup database (MySQL)
 -------------------------
