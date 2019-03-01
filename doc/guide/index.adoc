@@ -1,5 +1,5 @@
-= Theatened Species Index (TSX) Workflow User Guide
-James Watmuff <james@planticle.com.au>; Elisa Bayraktarov <e.bayraktarov@uq.edu.au>
+= Threatened Species Index (TSX) Workflow User Guide
+James Watmuff <james@planticle.com.au>; Elisa Bayraktarov <tsx@uq.edu.au>
 :description: This guide describes how to install, setup and run the Threatened Species Index (TSX).
 :doctype: book
 :page-layout!:
@@ -34,21 +34,17 @@ James Watmuff <james@planticle.com.au>; Elisa Bayraktarov <e.bayraktarov@uq.edu.
 :uri-home: https://tsx.org.au
 :uri-github: https://github.com/nesp-tsr3-1/tsx
 
-
-[NOTE]
-====
-If you find errors or omissions in this document, please don't hesitate to {uri-github}/issues[submit an issue].
-====
+NOTE: If you find errors or omissions in this document, please don't hesitate to {uri-github}/issues[submit an issue].
 
 = Introduction
 
 == What is the TSX?
 
-The TSX is the world’s first Threatened Species Index. It will do for Australia’s threatened species what the ASX does for Australia’s stock market. The TSX comprises a set of indices that provide reliable and robust measures of population trends across Australia’s threatened species. It will allow users to look at threatened species trends, for all of Australia and all species altogether, or for individual regions or groups, for example migratory birds. This will enable more coherent and transparent reporting of changes in biodiversity at national, state and regional levels. The index constitutes a multi-species composite index calculated from processed and quality controlled Australian threatened and Near Threatened species time-series data based on the Living Planet Index (Collen et al. 2009) approach. The Living Planet Index method requires input on species population data repeatedly recorded for a species at a survey site carried out with the same monitoring method quantifying the same unit of measurement and aggregated from raw data into a yearly time series data through time. This guide exemplifies how to use an automated processing workflow to streamline all processing steps required to convert raw species population data into consistent time series for the calculation of composite multi-species trends.
+The TSX is the world’s first Threatened Species Index. It will do for Australia’s threatened species what the ASX does for Australia’s stock market. The TSX comprises a set of indices that provide reliable and robust measures of population trends across Australia’s threatened species. It will allow users to look at threatened species trends, for all of Australia and all species altogether, or for individual regions or groups, for example migratory birds. This will enable more coherent and transparent reporting of changes in biodiversity at national, state and regional levels. The index constitutes a multi-species composite index calculated from processed and quality controlled Australian threatened and near-threatened species time-series data based on the Living Planet Index (Collen et al. 2009) approach. The Living Planet Index method requires input on species population data repeatedly recorded for a species at a survey site carried out with the same monitoring method quantifying the same unit of measurement and aggregated from raw data into a yearly time series through time. This guide exemplifies how to use an automated processing workflow pipeline to streamline all processing steps required to convert raw species population data into consistent time series for the calculation of composite multi-species trends.
 
 == How to use this guide
 
-This guide explains how to install and setup the TSX workflow, and then walks through the process of running the workflow on a provided sample dataset. It is highly recommended to run through this guide using the sample dataset to gain familiarity with the workflow before attempting to use it to process your own dataset. Many of the sample files provided will be useful starting points to modify to suit your dataset.
+This guide explains how to install and setup the TSX workflow, and then walks through the process of running the workflow on a provided sample dataset. It is highly recommended to run through this guide using the sample dataset to gain familiarity with the workflow before attempting to use it to process your own dataset. Many of the sample files provided will be useful starting points which you can modify to suit your particular dataset.
 
 == Workflow Concepts
 
@@ -56,7 +52,7 @@ The TSX is produced using a workflow that begins with raw observation data colla
 
 image::workflow-overview.png[Workflow Overview,400]
 
-The observation data must be provided to the workflow in a specific format and are classified as either Type 1 or Type 2 data (see <<Data Classification>>).  The workflow performs much more complex processing on Type 2 data than Type 1 data, so if your data meets the Type 1 requirements then running the workflow will be quicker and easier.
+The observation data must be provided to the workflow in a specific format and is classified as either Type 1 or Type 2 data (see <<Data Classification>>).  The workflow performs much more complex processing on Type 2 data than Type 1 data, so if your data meets the Type 1 requirements then running the workflow will be quicker and easier.
 
 == Architecture
 
@@ -116,11 +112,11 @@ Type 1 observation data may now be imported into the database. Some sample Type 
 python -m tsx.importer --type 1 -c sample-data/type_1_sample.csv
 ----
 
-The `--type 1` part of the command tells the import script that you are import Type 1 data, which is important because Type 1 data has different requirements and is put into a separate database table compared to Type 2 data. The `-c` flag is short for “commit” and causes the imported data to be committed to the database; without this flag, the command only performs a “dry run” and does not modify the database. This feature is also present in most of the data processing scripts, and is a useful way to test whether the data/processing is valid without actually making any change to the database.
+The `--type 1` part of the command tells the import script that you are importing Type 1 data. This is important because Type 1 data has different requirements and is stored in a separate database table compared to Type 2 data. The `-c` flag is short for “commit” and causes the imported data to be committed to the database; without this flag, the command only performs a “dry run” and does not modify the database. This feature is also present in most of the data processing scripts, and is a useful way to test whether the data/processing is valid without actually making any change to the database.
 
 The import script will run a range of checks on the imported data, which will generate warnings and/or errors. Warnings are advisory, while errors will prevent the data from being imported until they are fixed. This helps to ensure data quality.
 
-The Type 1 data is now imported into the `t1_survey`, `t1_sighting` and `t1_site` database tables ready for data processing. You may choose to skip the rest of this section, which deals with importing Type 2 data, and proceed directly to <<Data Pre-processing & Filtering>>.
+The Type 1 data is now imported into the `t1_survey`, `t1_sighting` and `t1_site` database tables and is ready for data processing. You may choose to skip the rest of this section, which deals with importing Type 2 data, and proceed directly to <<Data Pre-processing & Filtering>>.
 
 === Import Type 2 data
 
@@ -134,22 +130,24 @@ This imports data into the `t2_survey` and `t2_sighting` tables. (Note that the 
 
 === Import Region Polygons
 
-During data processing, all observations are matched to SubIBRA regions. Observations outside of SubIBRA regions are suppressed from the final output.
+During data processing, all observations are matched to Interim Biogeographic Regionalisation subregions (SubIBRA regions). The Interim Biogeographic Regionalisation for Australia (IBRA), Version 7 classify Australia’s landscapes into 89 large geographically distinct bioregions based on common climate, geology, landform, native vegetation and species information. Within these, there are 419 subregions which are more localised and homogenous geomorphological units in each bioregion. Observations outside of SubIBRA regions are suppressed from the final output.
 
 Import the SubIBRA regions into the database:
 ----
 python -m tsx.import_region sample-data/spatial/Regions.shp
 ----
 
+NOTE: Calling this command can take up to 20–30 minutes to process depending on you computer.
+
 == Data Pre-processing & Filtering
 
-Now that the observation data has been imported into the database, it is now ready to be processed and filtered into an aggregated form that is suitable for LPI analysis.
+Now that the observation data has been imported into the database, it is ready to be processed and filtered into an aggregated form that is suitable for LPI (Living Planet Index) analysis.
 
 The figure below illustrates the individual steps required to process Type 1 and 2 data. Each processing step is a separate Python script that needs to be run. It is possible to run all of the scripts in a single command, however it is often useful to be able to run the steps individually especially when tweaking processing parameters and inputs. Each command stores its output in the database, so all intermediate results in the processing pipeline can be inspected and analysed.
 
 image::workflow-preprocessing.png[Flow diagram - Data Processing Overview,400]
 
-It can be seen that Type 1 data processing is much simpler than Type 2 data processing. Type 1 data only requires 4 processing steps and 3 auxiliary input files, while Type 2 data requires 7 processing steps and 7 auxiliary input files.
+This flow diagram shows that Type 1 data processing is much simpler than Type 2 data processing. Type 1 data only requires 4 processing steps and 3 auxiliary input files, while Type 2 data requires 7 processing steps and 7 auxiliary input files.
 
 In the documentation below, all steps that specific to Type 2 data only are clearly marked and can be safely skipped if you only want to process Type 1 data.
 
@@ -160,13 +158,13 @@ image::workflow-preprocessing-t1-aggregation.png[Flow diagram - Type 1 data aggr
 
 Observation data is aggregated to monthly resolution by grouping all records with the same month, taxon, data source, site, method (search type) and units of measurement.
 
-Each group of records is aggregated by calculating the average value, maximum value or reporting rate (proportion of records with a non-zero value) of the individual records. Which of these three aggregation methods are used for each grouping is determined by a “Processing methods” file which specifies which aggregation method should be used for each taxon/source/method/unit combination.
+Each group of records is aggregated by calculating the average value, maximum value or reporting rate (proportion of records with a non-zero value) of the individual records. Which of these three aggregation methods are used for each grouping is determined by the “Processing methods” file which specifies which aggregation method should be used for each taxon/source/method/unit combination.
 
 For further information, see <<Processing methods file format>>.
 
 After monthly aggregation, the data is then aggregated to yearly by averaging the monthly aggregated values.
 
-A sample processing methods file is available at `sample-data/processing_methods.csv`. Import this by running:
+The sample processing methods file is available at `sample-data/processing_methods.csv`. Import this by running:
 ----
 python -m tsx.import_processing_method sample-data/processing_method.csv
 ----
@@ -184,7 +182,7 @@ You may now choose to skip to <<Calculate spatial representativeness (Type 1 & 2
 
 image::workflow-preprocessing-alpha-hull.png[Flow diagram - attribute range and ultrataxon,400,float="right"]
 
-Type 2 data typically contains presence-only data, however the LPI analysis requires time series based on data that include absences. To solve this we need to generate (pseudo-)absences for surveys where a taxon was not recorded but is known to be sometimes present at that location. In order to identify areas where the pseudo absences should be allocated for a species, we first generate an alpha hull based on all known observations of the species. The alpha hulls are drawn from all Type 1 and 2 data, as well as an “Incidental sightings” file which contains observation data that did not meet the Type 1 or Type 2 criteria but is still useful for determining potential presence of a taxon.
+Type 2 data typically contains presence-only data, however the LPI analysis requires time series based on data that include absences (or true zeros indicating non-detections). To solve this problem we need to generate (pseudo-)absences for surveys where a taxon was not recorded but is known to be sometimes present at that location. In order to identify areas where the pseudo-absences should be allocated for a species, we first generate an alpha hull based on all known observations of the species. The alpha hulls are drawn from all Type 1 and 2 data, as well as an “Incidental sightings” file which contains observation data that did not meet the Type 1 or Type 2 criteria but is still useful for determining potential presences of a taxon.
 
 After generating these alpha hulls at the species level they are trimmed down to ultrataxon polygons by intersecting with expert-curated polygons of known taxon ranges that are defined in an auxiliary “Range Polygons” input file.
 
@@ -197,7 +195,7 @@ There are sample range polygons at `sample-data/spatial/species-range/`, which c
 ----
 python -m tsx.import_range sample-data/spatial/species-range
 ----
-(Ignore any messages saying `Failed to auto identify EPSG: 7`)
+NOTE: Ignore the warning ‘Failed to auto identify EPSG: 7’ popping up while this processing step is running.
 
 The specifications for both the incidental sightings file and the species range polygons can be found in the Appendix.
 // TODO: Link to appendicies
@@ -207,6 +205,8 @@ After importing these files, you can then run the alpha hull processing script:
 python -m tsx.process -c alpha_hull
 ----
 
+NOTE: Calling this command may take a few minutes depending on your computer.
+
 This will perform the alpha hull calculations, intersect the result with the range polygons, and places the result into the `taxon_presence_alpha_hull` database table.
 
 
@@ -214,9 +214,9 @@ This will perform the alpha hull calculations, intersect the result with the ran
 
 image::workflow-preprocessing-range-ultrataxon.png[Flow diagram - attribute range and ultrataxon,400,float="right"]
 
-Type-2 data is typically defined to the species level, however we need to generate pseudo-absences and ultimately aggregated time series that are at the ultrataxon level.
+Type-2 data is typically defined to the species level, however we need to generate pseudo-absences and ultimately aggregate time series that are at the ultrataxon level.
 
-This step of processing converts the species level observations to ultrataxon level observations using the range polygons that were imported in the previous step. In hybrid zones where a species maps to multiple subspecies we simply duplicate each species record for each potential subspecies.
+This step of processing converts the species level observations to ultrataxon level observations using the range polygons that were imported in the previous step. In hybrid zones, where a species maps to multiple subspecies, we simply duplicate each species record for each potential subspecies.
 
 Since the range polygons required for this step have already been imported in the previous step, the only command that needs to be run for this step is:
 ----
@@ -236,26 +236,32 @@ There are three “experimental design types” which correspond to different wa
 
 . Standardised site: surveys which were not associated with sites in the raw data are assigned to sites where possible based on a set of known site polygons which are defined in the “Type 2 Sites” auxiliary input. Pseudo-absences are generated for surveys at sites that fall within alpha hulls.
 . Standardised grid: surveys are assigned to grid cells, which are also defined in an auxiliary input. Pseudo-absences are generated for surveys within grid cells that intersect with alpha hulls.
-. Unstandardised grid: processed exactly the same as standardised grid for the purposes of generating pseudo-absences, but handled differently in the subsequent aggregation step.
+. Unstandardised grid: surveys are processed exactly the same as standardised grid for the purposes of generating pseudo-absences, but are handled differently in the subsequent aggregation step.
 
-The experimental design type that is used for a given taxon/source/unit/method combination is defined in the processing methods file which was previously imported in the step entitled <<Aggregate by year/month (Type 1 data)>>.
+The experimental design type that is used for a given taxon/source/method/unit combination is defined in the processing methods file which was previously imported in the step entitled <<Aggregate by year/month (Type 1 data)>>.
 
 To import the sample Type 2 sites (see Appendix for specification), run:
 ----
 python -m tsx.import_t2_site sample-data/spatial/t2_site.shp
 ----
 
+NOTE: Ignore the warning ‘Failed to auto identify EPSG: 7’ popping up while this processing step is running.
+
 To import the sample grid polygons, run:
 ----
 python -m tsx.import_grid sample-data/spatial/10min_mainland.shp
 ----
+
+NOTE: Ignore the warning ‘Failed to auto identify EPSG: 7’ popping up while this processing step is running.
 
 Now the processing script can be run:
 ----
 python -m tsx.process -c pseudo_absence
 ----
 
-This will generate pseudo absences and put them into `t2_processed_survey` and `t2_processed_sighting` tables along with presence records. At this point the Type 2 data has been transformed into a form the meets the Type 1 data requirements because taxa are defined to the ultrataxon level and presences and absences are both included.
+NOTE: Running this command may take a few minutes which will depend on your computer and how much data you are processing.
+
+This will generate pseudo-absences and put them into `t2_processed_survey` and `t2_processed_sighting` tables along with presence records. At this point, the Type 2 data has been transformed into a form that meets the Type 1 data requirements because taxa are now defined to the ultrataxon level and presences and absences are both included.
 
 === Calculate response variable & aggregate by year/month (Type 2 data only)
 
@@ -265,7 +271,7 @@ The processed Type 2 data is now ready to be aggregated in a similar manner to t
 
 The data is aggregated by month and then by year, with the monthly aggregation using an average count, maximum count or reporting rate depending on the response variable type specified in the processing methods auxiliary input file.
 
-The aggregation of Type 2 data is affected by the experimental design type which has been specified for a given taxon/source/unit/method combination:
+The aggregation of Type 2 data is affected by the experimental design type which has been specified for a given taxon/source/method/unit combination:
 
 . Standardised site: Only surveys associated with sites are aggregated and incidental surveys are excluded. Surveys with different search types (methods) are aggregated separately.
 . Standardised grid: Incidental surveys are excluded. Surveys with different search types (methods) are aggregated separately.
@@ -276,7 +282,7 @@ To perform the response variable calculation and aggregation, run:
 python -m tsx.process -c response_variable
 ----
 
-This will add the aggregated results into the `aggregated_by_month` and `aggregated_by_year` database tables, which also contains the previously aggregated Type 1 data.
+This will add the aggregated results into the `aggregated_by_month` and `aggregated_by_year` database tables, which also contain the previously aggregated Type 1 data.
 
 
 === Calculate spatial representativeness (Type 1 & 2 data)
@@ -285,7 +291,7 @@ image::workflow-preprocessing-spatial-rep.png[Flow diagram - Calculate spatial r
 
 Spatial representativeness is a measure of how much of the known range of a taxon is covered by a given data source. It is calculated by generating an alpha hull based on the records for each taxon/source combination, and then measuring the proportion of the known species range that is covered by that alpha hull.
 
-This step requires the range polygons file to be imported first. If you skipped to this section from the Type 1 Data aggregation step, then you will need to import this now. A set of sample range polygons can be imported by running:
+This step requires the range polygons file to be imported first. If you skipped to this section from the Type 1 data aggregation step, then you will need to import this now. A set of sample range polygons can be imported by running:
 ----
 python -m tsx.import_range sample-data/spatial/species-range
 ----
@@ -312,11 +318,11 @@ The filtering criteria applied at the time of writing are:
 
 - Time series are limited to min/max year as defined in config file (1950-2015)
 - Time series based on incidental surveys are excluded
-- Taxa are excluded if the most severe EBPC/UICN/Australian classification is Least Concern, Extinct, or not listed.
+- Taxa are excluded if the most severe EBPC/IUCN/Australian classification is Least Concern, Extinct, or not listed.
 - Surveys outside of any SubIBRA region are excluded
 - All-zero time series are excluded
 - Data sources with certain data agreement, standardisation of method and consistency of monitoring values in the metadata are excluded
-- Time series with less than 5 data points are excluded
+- Time series with less than 4 data points are excluded
 
 In order to calculate these filtering criteria, data source metadata must be imported (See <<Data sources file format>>).
 
@@ -412,22 +418,22 @@ include::include/appendix-file-formats.adoc[]
 
 Type 1 data must satisfy the following requirements:
 
-- All taxa defined to ultrataxon level (see definition below)
-- Survey methods clearly defined
-- Unit of measurement defined
-- Data recorded to the temporal scale of at least a year
-- Spatial data for pre-defined (fixed) sites with defined accuracy
-- Consistent survey methods/effort used within sites
-- Non-detections of taxa (i.e. absence or 0 counts) recorded
+- Species are defined to the ultrataxon level (i.e. terminal taxonomic unit of species such as species or a subspecies, hereafter referred to as ‘taxa’
+- The survey methods (e.g. capture-mark-recapture surveys) are clearly defined
+- The unit of measurement (e.g. number of individuals, nests, traps counted) is defined
+- Data is recorded to the temporal scale of at least a year
+- Spatial data for have defined accuracy of pre-defined (fixed) sites where the taxon was monitored through time
+- Consistent survey methods and monitoring effort are used to monitor the taxon
+- Non-detections of taxa (i.e. absence or 0 counts) are recorded and identifiable within the data
 
 === Type 2 data
 
 Type 2 data must satisfy the following requirements:
 
-- Taxon defined at least to species level
-- Survey methods defined
-- Unit of measurement defined
-- Consistent measure/methods used through time
-- Data recorded to the temporal scale of at least a year
-- Recorded absences of taxa _not_ required, i.e. presence-only data are allowed
-- Spatial coordinates for all data points
+- Taxon is defined at least to species level
+- Survey methods are clearly defined
+- The unit of measurement is defined
+- Consistent survey methods and monitoring effort are used to monitor the taxon through time
+- Data are recorded to the temporal scale of at least a year
+- Non-detections of taxa are _not_ required, i.e. presence-only data are allowed
+- Spatial coordinates are available for all sighting data points

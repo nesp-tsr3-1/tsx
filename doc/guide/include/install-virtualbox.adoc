@@ -8,9 +8,11 @@ Browse to https://www.virtualbox.org/wiki/Downloads and click on 'Windows hosts'
 
 Download the TSX workflow virtual machine at: https://tsx.org.au/tsx-desktop.ova
 
-Open the virtual machine image using VirtualBox, and follow the prompts to import the image. On the "Appliance Settings" screen you can use the defaults, or for better performance adjust the CPU setting to match the number of CPU cores on your system.
+Go to the folder where the TSX workflow virtual machine was downloaded and double-click to open it. If you have installed VirtualBox correctly, a screen with "Appliance Settings" should open up. Use the defaults, or for better performance adjust the CPU setting to match the number of CPU cores on your system. Click on the Import button. This process may take several minutes (up to 10 minutes depending on your computer).
 
-After importing the virtual machine into VirtualBox, double click to start it. After a few seconds it should start up and display a terminal:
+image::vm-import.png[VirtualBox Appliance Settings screen]
+
+After importing the virtual machine into VirtualBox, double click on tsx-desktop to start it. After a few seconds to minutes (depending on computer), it should start up and display a terminal:
 
 image::vm-start.png[Virtual machine after startup, 600]
 
