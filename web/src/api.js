@@ -3,7 +3,7 @@ import Promise from 'bluebird' // We can drop this when browser support is bette
 import * as util from '@/util'
 import _ from 'underscore'
 
-const TSX_URL = 'http://localhost'
+const TSX_URL = 'http://guest'
 export const ROOT_URL = TSX_URL + '/tsxapi'
 
 export function createImport(dataImport) {

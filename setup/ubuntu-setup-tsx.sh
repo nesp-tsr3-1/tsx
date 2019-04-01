@@ -38,8 +38,9 @@ cd tsx
 sudo -u tsx git checkout local
 
 sudo mkdir -p /opt/tsx
+sudo mkdir -p /opt/tsx/conf
 sudo mkdir -p /opt/tsx/data
-sudo cp tsx.conf.example /opt/tsx/tsx.conf
+sudo cp tsx.conf.example /opt/tsx/conf/tsx.conf
 
 sudo -u tsx python setup/download_sample_data.py
 
@@ -71,5 +72,16 @@ sudo service apache2 restart
 sudo sed -i "s/|\s*\((count(\$analyzed_sql_results\['select_expr'\]\)/| (\1)/g" /usr/share/phpmyadmin/libraries/sql.lib.php
 sudo service apache2 restart
 ### install tsx
-sudo -u tsx cd ~/tsx && python setup.py install && sudo cp etc/init.d/tsxapi /etc/init.d/
+sudo -u tsx bash -c "cd /home/tsx/tsx && sudo python setup.py install && sudo cp etc/init.d/tsxapi /etc/init.d/"
 /etc/init.d/tsxapi start
+update-rc.d tsxapi defaults
+### install the web app
+sudo -u tsx bash -c "cd /home/tsx/tsx/web && npm install && npm run build && sudo cp -rf dist /var/www/html/tsx"
+cp -rf /home/tsx/tsx/
+### apache stuff
+a2enmod proxy proxy_http
+systemctl restart apache2
+### point to tsxapi
+grep -q "<Location /tsxapi>" /etc/apache2/sites-enabled/000-default.conf && echo "---Exists---" || 
+sed -i '/<VirtualHost/a<Location /tsxapi>\nProxyPass http://localhost:8080/\nProxyPassReverse http://localhost:8080/\n</Location>' /etc/apache2/sites-enabled/000-default.conf
+systemctl restart apache2
