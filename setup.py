@@ -31,9 +31,12 @@ setup(
 	],
 	zip_safe=False,
 	install_requires=[
+		"Twisted>=17.9.0",
+		"pyOpenSSL>=17.5.0",
 		"Flask>=0.12.2",
 		"Flask-Cors>=3.0.6",
 		"MySQL-python>=1.2.5",
+		"mysql-connector",
 		"openpyxl>=2.4.9",
 		"pyproj>=1.9.5.1",
 		"python-dateutil>=2.6.1",
