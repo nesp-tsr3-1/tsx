@@ -10,7 +10,7 @@ secret_key=change_me
 port=8080
 
 [global]
-data_dir=sample-data
+data_dir=/opt/tsx/data
 
 [processing]
 min_year=1950

@@ -27,8 +27,8 @@ export default new Router({
     },
     {
       path: '/',
-      name: 'TSX',
-      component: TSX
+      name: 'ImportHome',
+      component: ImportHome
     },
     {
       path: '/tsx',

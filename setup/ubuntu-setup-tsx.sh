@@ -34,10 +34,12 @@ EOF
 cd ~tsx
 
 sudo -u tsx git clone https://github.com/nesp-tsr3-1/tsx.git
-
 cd tsx
+sudo -u tsx git checkout local
 
-sudo -u tsx cp tsx.conf.example tsx.conf
+sudo mkdir -p /opt/tsx
+sudo mkdir -p /opt/tsx/data
+sudo cp tsx.conf.example /opt/tsx/tsx.conf
 
 sudo -u tsx python setup/download_sample_data.py
 
@@ -50,6 +52,9 @@ sudo -u tsx cat > ~tsx/.my.cnf <<EOF
 user=tsx
 password=tsx
 EOF
+### import some sample things
+python -m tsx.import_taxa sample-data/TaxonList.xlsx
+python -m tsx.import_region sample-data/spatial/Regions.shp
 
 # Setup environment
 sudo -u tsx bash <<EOF
@@ -62,7 +67,9 @@ EOF
 sudo su -c "DEBIAN_FRONTEND=noninteractive apt install -y phpmyadmin php-mbstring php-gettext"
 sudo ln -s /usr/share/phpmyadmin /var/www/html
 sudo service apache2 restart
-
+## fix the stupid warning by phpmyadmin
+sudo sed -i "s/|\s*\((count(\$analyzed_sql_results\['select_expr'\]\)/| (\1)/g" /usr/share/phpmyadmin/libraries/sql.lib.php
+sudo service apache2 restart
 ### install tsx
 sudo -u tsx cd ~/tsx && python setup.py install && sudo cp etc/init.d/tsxapi /etc/init.d/
 /etc/init.d/tsxapi start
