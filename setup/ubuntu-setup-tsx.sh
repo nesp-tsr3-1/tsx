@@ -72,7 +72,7 @@ sudo service apache2 restart
 sudo sed -i "s/|\s*\((count(\$analyzed_sql_results\['select_expr'\]\)/| (\1)/g" /usr/share/phpmyadmin/libraries/sql.lib.php
 sudo service apache2 restart
 ### install tsx
-sudo -u tsx bash -c "cd /home/tsx/tsx && sudo python setup.py install && sudo cp etc/init.d/tsxapi /etc/init.d/"
+sudo -u tsx bash -c "cd /home/tsx/tsx && sudo pip install -r requirements.txt &&sudo python setup.py install && sudo cp etc/init.d/tsxapi /etc/init.d/"
 /etc/init.d/tsxapi start
 update-rc.d tsxapi defaults
 ### install the web app
