@@ -3,6 +3,15 @@
 # Allow tsx to sudo without password
 echo "tsx ALL=NOPASSWD: ALL" > /etc/sudoers.d/tsx
 
+# Make sure apt-get doesn't ask questions
+export DEBIAN_FRONTEND=noninteractive
+
+# Autoconfigure host-only network
+cat >> /etc/netplan/01-netcfg.yaml <<EOF
+    enp0s8:
+      dhcp4: yes
+EOF
+
 # Set hostname
 hostnamectl set-hostname tsx
 
@@ -13,7 +22,7 @@ add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran
 
 apt-get update
 
-apt-get install -y mysql-server python python-pip virtualenv r-base git
+apt-get install -y mysql-server python python-pip virtualenv r-base git samba
 
 # For some reason I seem to have to install these one by one
 apt-get install -y libssl-dev
@@ -55,4 +64,18 @@ sudo -u tsx bash <<EOF
 virtualenv env
 source env/bin/activate
 pip install -r requirements.txt
+EOF
+
+# Configure Samba Share
+cat >> /etc/samba/smb.conf <<EOF
+
+security = share
+guest account = nobody
+
+[tsx]
+  comment = TSX Shared Files
+  path = /home/tsx
+  read only = no
+  browsable = yes
+  guest ok = yes
 EOF
