@@ -29,14 +29,12 @@ apt-get install -y libssl-dev
 apt-get install -y libgit2-dev
 apt-get install -y libcurl4-openssl-dev
 
-apt install -y libssl1.0-dev nodejs-dev node-gyp npm
-
 # Install R packages
 R --no-save <<EOF
 install.packages("devtools")
 library(devtools)
 install.packages("ggplot2")
-install_github("Zoological-Society-of-London/rlpi", dependencies=TRUE)
+install_github("nesp-tsr3-1/rlpi", dependencies=TRUE)
 EOF
 
 cd ~tsx
