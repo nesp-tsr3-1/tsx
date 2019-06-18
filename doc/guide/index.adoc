@@ -409,6 +409,59 @@ Congratulations! You have now run the entire TSX workflow.
 // python -m tsx.process export grid
 // ----
 
+= Working with your own data
+
+== Starting afresh
+
+Up to this point we have been working with sample data in order to gain familiarity with the TSX workflow. The purpose of this section is to explain how to run the workflow with your own input data.
+
+If you have been working through the guide with the sample data, clear out all data from the database by running these two commands:
+----
+mysql tsx < data/sql/create.sql
+mysql tsx < data/sql/init.sql
+----
+
+Now, work again through each step in the <<Running the workflow>> section, this time adapting each command for your particular use case. For every command that involves a file from the `sample-data` directory, you will need to evaluate whether the sample-data is appropriate for your use case, and if not, edit it or supply your own file as necessary. The <<Import File Formats>> section will be useful when working with these files.
+
+NOTE: If you get stuck, you can get in touch by {uri-github}/issues[submitting an issue here].
+
+== Accessing files in VirtualBox
+
+If you have installed the TSX workflow using VirtualBox, then the entire workflow is running inside a _virtual machine_. This virtual machine saves you the hassle of installing and configuring all the different components of the TSX workflow, but it does have a drawback: *you can't access the files inside the virtual machine like the same way as ordinary files on your computer*. This presents a problem when you want to provide your own files as inputs to the workflow, or edit the sample data using the usual methods.
+
+Fortunately, however, there are a couple of ways to get around this limitation.
+
+=== Accessing files via network sharing
+
+The TSX virtual machine shares its files using network sharing so that you can access them in the same way that you would access files from another computer on your network. Don't worry if your computer isn't connected to an actual network, these steps should work regardless.
+
+To access the TSX files, open *File Explorer* and go to *Network*. If you see an error message ("Network discovery is turned off…."), you'll need to turn on Network discovery to see devices on the network that are sharing files. To turn it on, select the *Network discovery is turned off* banner, then select *Turn on network discovery and file sharing*.
+
+You may see a TSX icon appear immediately, but if not, try typing `\\TSX` into the location bar near the top of the window and pressing enter. 
+
+You should now be able to browse and edit files in the TSX virtual machine. If not, try the following:
+ - If you have only just started the virtual machine, try waiting for a few minutes before retrying the steps above.
+ - Report an issue at https://github.com/nesp-tsr3-1/tsx/issues
+ - Try the alternative method, <<Accessing files via SFTP>>
+
+=== Accessing files via SFTP
+
+An alternative to network sharing is to access the files over SFTP.
+
+First you will need to download an SFTP program, such as WinSCP. (https://winscp.net/eng/download.php[Download WinSCP])
+
+Start WinSCP, and in the Login Dialog, enter the following details:
+
+ - File protocol: `SFTP`
+ - Host name: `localhost`
+ - Port number: `1322`
+ - User name: `tsx`
+ - Password: `tsx`
+
+Then click *Login* to connect.
+
+You should now be able to browse the TSX files. Unlike the networking sharing method, you can't edit the files directly on the virtual machine. Instead you will have to edit the files in a folder on your computer's hard drive, and download and upload files from the virtual machine as necessary.
+
 include::include/appendix-file-formats.adoc[]
 
 [appendix]
