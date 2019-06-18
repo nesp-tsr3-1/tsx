@@ -21,5 +21,6 @@ python -m tsx.process -c spatial_rep
 python -m tsx.import_data_source sample-data/data_source.csv
 python -m tsx.process -c filter_time_series
 python -m tsx.process export_lpi
+python -m tsx.process export_lpi --filter
 
 echo "WORKFLOW TEST SUCCESSFUL"
