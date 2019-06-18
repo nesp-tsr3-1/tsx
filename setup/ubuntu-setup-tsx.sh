@@ -12,10 +12,9 @@ apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB
 add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/'
 
 apt-get update
-#apt-get install -y nginx mysql-server python python-pip virtualenv r-base git 
-# phpmyadmin seems to like apache better
-apt-get install -y apache2 mysql-server python python-pip virtualenv r-base git
-apt-get install -y libmysqlclient-dev libgeos-dev
+
+apt-get install -y mysql-server python python-pip virtualenv r-base git
+
 # For some reason I seem to have to install these one by one
 apt-get install -y libssl-dev
 apt-get install -y libgit2-dev
@@ -57,12 +56,3 @@ virtualenv env
 source env/bin/activate
 pip install -r requirements.txt
 EOF
-
-### set up phpmyadmin
-sudo su -c "DEBIAN_FRONTEND=noninteractive apt install -y phpmyadmin php-mbstring php-gettext"
-sudo ln -s /usr/share/phpmyadmin /var/www/html
-sudo service apache2 restart
-
-### install tsx
-sudo -u tsx cd ~/tsx && python setup.py install && sudo cp etc/init.d/tsxapi /etc/init.d/
-/etc/init.d/tsxapi start

@@ -10,6 +10,9 @@ build/tsx/tsx.ova: ubuntu1804-tsx.json build/ubuntu1804/ubuntu1804.ova ../ubuntu
 build/tsx-desktop/tsx-desktop.ova: ubuntu1804-tsx-desktop.json build/tsx/tsx.ova scripts/*.sh ../ubuntu-setup-desktop.sh
 	packer build -force ubuntu1804-tsx-desktop.json
 
+build/tsx-desktop/tsx-web.ova: ubuntu1804-tsx-web.json build/tsx/tsx.ova scripts/*.sh ../ubuntu-setup-web.sh
+	packer build -force ubuntu1804-tsx-web.json
+
 .PHONY: clean
 
 clean:
