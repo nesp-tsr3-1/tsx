@@ -396,6 +396,20 @@ image::vm-rstudio-plot.png[RStudio screenshot - with plot, 600]
 
 Congratulations! You have now run the entire TSX workflow.
 
+=== LPI calculation via command line
+
+Alternatively, you can run the LPI calculation directly on the command line:
+----
+(cd r; Rscript lpi.R)
+----
+
+This will generate the result data in a file named `infile_infile_Results.txt`, but it will not display a plot.
+
+To run the entire workflow, including the LPI calculation, run the following command:
+----
+python -m tsx.process -c all && python -m tsx.process export_lpi --filter && (cd r; Rscript lpi.R)
+----
+
 // == Extra diagnostic workflow outputs
 // 
 // TODO brief explanation of these commands
