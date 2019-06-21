@@ -29,6 +29,14 @@ $text: #fff;
 $text-strong: #fff;
 $label-color: #fff;
 $background: $tsr-green;
+$body-background-color: $tsr-green;
+$table-background-color: $tsr-green;
+$table-color: #fff;
+$subtitle-color: #fff;
+$title-color: #fff;
+$table-striped-row-even-background-color: rgba(255,255,255,0.1) !default
+$table-striped-row-even-hover-background-color: rgba(255,255,255,0.2) !default
+
 
 body {
   background-color: $tsr-green;
