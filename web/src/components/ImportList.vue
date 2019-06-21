@@ -1,28 +1,40 @@
 <template>
   <div class="import-list">
-    <p class="table is-fullwidth is-striped is-hoverable" v-if="imports.length == 0">
-      None
-    </p>
-    <table class="table is-fullwidth is-striped is-hoverable" v-if="imports.length > 0">
-      <thead>
-        <tr>
-          <th>Description</th>
-          <th>Created</th>
-          <th>Status</th>
-          <th>Errors</th>
-          <th>Warnings</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="i in imports" v-on:click='$router.push("import/" + i.id)'>
-          <td>{{i.name}}</td>
-          <td><timeago :since='i.created' :auto-update="60"></timeago></td>
-          <td>{{humanizeStatus(i.status)}}</td>
-          <td>{{i.errors}}</td>
-          <td>{{i.warnings}}</td>
-        </tr>
-      </tbody>
-    </table>
+    <div v-if="status == 'loading'">
+      <p>
+        Loading…
+      </p>
+    </div>
+    <div v-if="status == 'error'">
+      <p>
+        Failed to load imports.
+      </p>
+    </div>
+    <div v-if="status == 'loaded'">
+      <p class="table is-fullwidth is-striped is-hoverable" v-if="imports.length == 0">
+        None
+      </p>
+      <table class="table is-fullwidth is-striped is-hoverable" v-if="imports.length > 0">
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Created</th>
+            <th>Status</th>
+            <th>Errors</th>
+            <th>Warnings</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="i in imports" v-on:click='$router.push("import/" + i.id)'>
+            <td>{{i.name}}</td>
+            <td><timeago :since='i.created' :auto-update="60"></timeago></td>
+            <td>{{humanizeStatus(i.status)}}</td>
+            <td>{{i.errors}}</td>
+            <td>{{i.warnings}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
 </template>
@@ -44,10 +56,17 @@ Vue.use(VueTimeago, {
 export default {
   name: 'ImportList',
   data () {
-    var data = { imports: [] }
+    var data = {
+      imports: [],
+      status: 'loading'
+    }
 
     api.dataImports().then((imports) => {
       data.imports = imports.filter(i => (i.status === 'imported') === this.completed)
+      data.status = 'loaded'
+    }).catch((error) => {
+      console.log(error)
+      data.status = 'error'
     })
 
     return data
