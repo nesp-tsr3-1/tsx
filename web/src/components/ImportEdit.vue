@@ -32,7 +32,8 @@
       </p>
 
       <p v-if='fileURL && filename && !uploading'>
-        File uploaded: {{filename}}
+        File uploaded: <a v-bind:href='fileURL'>{{filename}}</a>
+        <!-- File uploaded: {{filename}} -->
       </p>
     </div>
 
