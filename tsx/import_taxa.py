@@ -1,9 +1,11 @@
-from tsx.db import Taxon, TaxonLevel, TaxonStatus, get_session
+from tsx.db import Taxon, TaxonGroup, TaxonLevel, TaxonStatus, get_session
 import os
 import logging
 import sys
 import argparse
 import openpyxl
+from tqdm import tqdm
+from six import text_type
 
 log = logging.getLogger(__name__)
 
@@ -16,35 +18,41 @@ def main():
 
 	session = get_session()
 
+	# We temporarily disable foreign key checks so that we don't have to delete all data from the database
 	session.execute("SET FOREIGN_KEY_CHECKS = 0")
 	session.execute("DELETE FROM taxon")
+	session.execute("DELETE FROM taxon_group")
 
-	wb = openpyxl.load_workbook(args.filename)
+	print("Loading workbook...")
+
+	wb = openpyxl.load_workbook(args.filename, read_only=True)
 	ws = wb['TaxonList']
 
-	for i, row in enumerate(ws.rows):
+	for i, row in tqdm(enumerate(ws.rows), total=ws.max_row):
 		row = [cell.value for cell in row]
 		if i == 0:
 			headers = row
 		else:
-			row = dict(zip(headers, row))
+			row = dict(list(zip(headers, row)))
 
 			for key in row:
-				if type(row[key]) in (str, unicode):
+				if type(row[key]) in (str, text_type):
 					row[key] = row[key].strip()
 
-			if len(str(row['TaxonID'])) > 6:
+			if len(str(row['TaxonID'])) > 8:
 				log.info("Skipping long taxon id %s" % row['TaxonID'])
 				continue
 
-			if str(row['SpNo']) not in str(row['TaxonID']):
+			if row['SpNo'] and str(row['SpNo']) not in str(row['TaxonID']):
 				raise ValueError("Invalid SpNo/TaxonID combination: %s/%s" % (row['SpNo'], row['TaxonID']))
+
+			taxon_groups = []
 
 			try:
 				taxon = Taxon(
 					id = row['TaxonID'],
 					ultrataxon = row['UltrataxonID'] == 'u',
-					taxon_level = get_or_create(session, TaxonLevel, description = row['Taxon Level']),
+					taxon_level = get_or_create(session, TaxonLevel, description = row['Taxon Level']) if row['Taxon Level'] else None,
 					spno = row['SpNo'],
 					common_name = row['Taxon name'],
 					scientific_name = row['Taxon scientific name'],
@@ -56,17 +64,32 @@ def main():
 					aust_status = session.query(TaxonStatus).filter_by(description = row['AustralianStatus']).one_or_none(),
 					epbc_status = session.query(TaxonStatus).filter_by(description = row['EPBCStatus']).one_or_none(),
 					iucn_status = session.query(TaxonStatus).filter_by(description = row['IUCNStatus']).one_or_none(),
-					bird_group = row['BirdGroup'],
-					bird_sub_group = row['BirdSubGroup'],
+					state_status = session.query(TaxonStatus).filter_by(description = row['StatePlantStatus']).one_or_none(),
 					taxonomic_group = row['TaxonomicGroup'],
 					national_priority = str(row['NationalPriorityTaxa']) == '1',
 					suppress_spatial_representativeness = str(row.get('SuppressSpatialRep', '0')) == '1'
 				)
+
+				groups = row['FunctionalGroup']
+
+				if groups:
+					for group_pair in groups.split(","):
+						if ":" in group_pair:
+							group, subgroup = group_pair.split(":", 1)
+						else:
+							group, subgroup = group_pair, None
+						taxon_groups.append(TaxonGroup(
+							taxon_id = taxon.id,
+							group_name = group,
+							subgroup_name = subgroup
+						))
+
 			except:
-				print row
+				print(row)
 				raise
 
 			session.add(taxon)
+			session.add_all(taxon_groups)
 
 	session.execute("SET FOREIGN_KEY_CHECKS = 1")
 

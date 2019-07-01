@@ -415,7 +415,8 @@ class Importer:
 				if x == 0 or y == 0:
 					log.warning('Suspicious zero coordinate before projection: %s, %s' % (x, y))
 
-				coords = create_point(x, y, row.get('ProjectionReference'))
+				projection_ref = get_projection_ref(row.get('ProjectionReference'))
+				coords = create_point(x, y, projection_ref)
 
 				# This produces the necessary SQL to insert WKB geometry with SQLAlchemy.
 				# Simpler than using GeoAlchemy in the end, which wasn't compatible with python-mysql-connector anyway.
@@ -518,6 +519,10 @@ class Importer:
 	def get_or_create_search_type(self, session, description):
 		return self.get_cached('search_type', description,
 			lambda: get_or_create(session, SearchType, description = description))
+
+	def get_projection_ref(self, session, projection_name_or_ref):
+		return self.get_cached('projection_name', projection_name,
+			lambda session.query(ProjectionName).filter(name = projection_name_or_ref).one_or_none()) or projection_name_or_ref
 
 	def get_cached(self, group, key, fn, cacheNone = False):
 		if group not in self.cache:
