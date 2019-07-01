@@ -94,6 +94,13 @@ t_incidental_sighting = Table(
 )
 
 
+class IntensiveManagement(Base):
+    __tablename__ = 'intensive_management'
+
+    id = Column(Integer, primary_key=True)
+    description = Column(String(255))
+
+
 t_processing_method = Table(
     'processing_method', metadata,
     Column('taxon_id', ForeignKey('taxon.id'), nullable=False),

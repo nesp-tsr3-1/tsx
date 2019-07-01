@@ -67,6 +67,18 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
+-- Table `intensive_management`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `intensive_management` ;
+
+CREATE TABLE IF NOT EXISTS `intensive_management` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `description` VARCHAR(255) NULL,
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
 -- Table `t1_site`
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `t1_site` ;
@@ -77,9 +89,11 @@ CREATE TABLE IF NOT EXISTS `t1_site` (
   `name` VARCHAR(255) NULL,
   `search_type_id` INT NOT NULL,
   `notes` TEXT NULL,
+  `intensive_management_id` INT NULL,
   PRIMARY KEY (`id`),
   INDEX `fk_T1Site_Source1_idx` (`source_id` ASC),
   INDEX `fk_T1Site_SearchType1_idx` (`search_type_id` ASC),
+  INDEX `fk_t1_site_intensive_management1_idx` (`intensive_management_id` ASC),
   CONSTRAINT `fk_T1Site_Source1`
     FOREIGN KEY (`source_id`)
     REFERENCES `source` (`id`)
@@ -88,6 +102,11 @@ CREATE TABLE IF NOT EXISTS `t1_site` (
   CONSTRAINT `fk_T1Site_SearchType1`
     FOREIGN KEY (`search_type_id`)
     REFERENCES `search_type` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_t1_site_intensive_management1`
+    FOREIGN KEY (`intensive_management_id`)
+    REFERENCES `intensive_management` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;

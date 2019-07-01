@@ -328,11 +328,14 @@ class Importer:
 		# SearchType
 		search_type = self.get_or_create_search_type(session, row.get('SearchTypeDesc'))
 
+		# IntensiveManagement
+		intensive_management = self.get_or_create_intensive_management(session, row.get('IntensiveManagement'))
+
 		site = None
 		# Site
 		if self.data_type == 1 or row.get('SiteName') != None:
 			last_site = self.cache.get('last_site')
-			if last_site != None and last_site.name == row.get('SiteName') and last_site.search_type == search_type and last_site.source == source:
+			if last_site != None and last_site.name == row.get('SiteName') and last_site.search_type == search_type and last_site.source == source and last_site.intensive_management = intensive_management:
 				# Same site as last row - no need to process site
 				site = last_site
 			else:
@@ -340,7 +343,8 @@ class Importer:
 					site = get_or_create(session, Site,
 						name = row.get('SiteName'),
 						search_type = search_type,
-						source = source)
+						source = source,
+						intensive_management = intensive_management)
 				except MultipleResultsFound:
 					log.error("Found duplicate sites in DB - this must be fixed before import can continue")
 					self.commit = False # serious error
@@ -519,6 +523,12 @@ class Importer:
 	def get_or_create_search_type(self, session, description):
 		return self.get_cached('search_type', description,
 			lambda: get_or_create(session, SearchType, description = description))
+
+	def get_or_create_intensive_management(self, session, description):
+		if description == None:
+			return None
+		return self.get_cached('intensive_management', description,
+			lambda: get_or_create(session, IntensiveManagement, description = description))
 
 	def get_projection_ref(self, session, projection_name_or_ref):
 		return self.get_cached('projection_name', projection_name,
