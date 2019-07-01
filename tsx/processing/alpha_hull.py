@@ -75,7 +75,7 @@ def alpha_shape(coords, alpha):
     try:
         tri = Delaunay(coords)
     except:
-        print coords
+        print(coords)
         raise
     alledges=set() #Use a set so lines are not duplicated
     for ia, ib, ic in tri.vertices:
@@ -259,7 +259,7 @@ def process_database(species = None, commit = False):
     # Process all the species in parallel
     for result, error in tqdm(run_parallel(process_spno, species, use_processes = True), total = len(species)):
         if error:
-            print error
+            print(error)
 
 def reproject(geom, src_proj, dest_proj):
     fn = partial(pyproj.transform, src_proj, dest_proj)
@@ -341,15 +341,15 @@ def generate_alphashape(infile, outfile, inproj, outproj, coastal_shape,
 
 def usage():
     """
-    Print the usaga
+    Print the usage
     """
-    print "alpha hull script"
-    print "To print help:"
-    print "                 alphahull.py -h"
-    print "To create alpha hulls:"
-    print "                 alphahull.py -i infile -o outfile -t thinning_distance"
-    print "                              -a alpha -b alpha_hull_buffer -s isolated_distance"
-    print "                              -p outproj -q inproj"
+    print("alpha hull script")
+    print("To print help:")
+    print("                 alphahull.py -h")
+    print("To create alpha hulls:")
+    print("                 alphahull.py -i infile -o outfile -t thinning_distance")
+    print("                              -a alpha -b alpha_hull_buffer -s isolated_distance")
+    print("                              -p outproj -q inproj")
 
 def main(argv):
     """

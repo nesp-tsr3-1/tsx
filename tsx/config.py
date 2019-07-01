@@ -14,11 +14,11 @@ The underlying ConfigParser instance can be accessed as ``tsx.config.config``.
 See the standard Python ConfigParser documentation for further details.
 """
 
-import ConfigParser
+import configparser
 import os
 import errno
 
-config = ConfigParser.SafeConfigParser()
+config = configparser.SafeConfigParser()
 config.read(["tsx.conf", os.environ.get("TSX_CONFIG", ""), "/opt/tsx/conf/tsx.conf"])
 
 def get(section, option, default = None):

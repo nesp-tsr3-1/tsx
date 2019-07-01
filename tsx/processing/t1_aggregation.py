@@ -26,13 +26,13 @@ def process_database(species = None, commit = False):
 
     for result, error in tqdm(run_parallel(aggregate_monthly, tasks), total=len(tasks)):
         if error:
-            print error
+            print(error)
 
     log.info("Step 1/2: Yearly aggregation")
 
     for result, error in tqdm(run_parallel(aggregate_yearly, tasks), total=len(tasks)):
         if error:
-            print error
+            print(error)
 
     cleanup_region_lookup_table(session)
 

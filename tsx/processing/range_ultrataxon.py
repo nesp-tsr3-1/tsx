@@ -38,7 +38,7 @@ def process_database(species = None, commit = False):
     tsx.db.connect.engine.dispose()
     for result, error in tqdm(run_parallel(process_taxon, tasks, use_processes = True), total=len(tasks)):
         if error:
-            print error
+            print(error)
 
 
 def get_taxon_range_polygons(session, taxon_id):
