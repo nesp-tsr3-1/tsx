@@ -101,7 +101,7 @@ INSERT INTO `projection_name` VALUES
   ("GDA94", 4283),
   ("AGD66", 4202),
   ("AGD84", 4203),
-  ("WSG84", 4326),
+  ("WGS84", 4326),
   ("AGD66 / AMG zone 48", 20248),
   ("AGD66 / AMG zone 49", 20249),
   ("AGD66 / AMG zone 50", 20250),
