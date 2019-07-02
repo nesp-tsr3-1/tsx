@@ -1,6 +1,5 @@
 # -*- coding: UTF-8 -*-
 import csv
-import StringIO
 from flask import request, make_response, g, jsonify, Blueprint, Response
 from tsx.api.util import csv_response
 from tsx.db import get_session

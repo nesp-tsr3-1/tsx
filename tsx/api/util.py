@@ -1,6 +1,6 @@
 import json, csv
 import csv
-import StringIO
+from io import StringIO
 from flask import make_response, g, jsonify, _app_ctx_stack
 from tsx.db.connect import Session
 from sqlalchemy import orm
@@ -9,7 +9,7 @@ def csv_response(rows, filename="export.csv"):
 	"""Generate CSV response from a list of row values"""
 	# Unfortunately Flask doesn't let you output response as an IO Stream, so you have
 	# buffer the entire response to a string first.
-	si = StringIO.StringIO()
+	si = StringIO()
 	cw = csv.writer(si)
 	cw.writerow(header)
 	for row in rows:
