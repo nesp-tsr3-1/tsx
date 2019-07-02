@@ -1,6 +1,6 @@
 import pyproj
 from pyproj import Proj
-from tsx.db import T1Survey, T1Sighting, T1Site, T2Survey, T2Sighting, T2Site, Taxon, Source, SourceType, SearchType, Unit, get_session
+from tsx.db import T1Survey, T1Sighting, T1Site, T2Survey, T2Sighting, T2Site, Taxon, Source, SourceType, SearchType, Unit, IntensiveManagement, ProjectionName, get_session
 import tsx.util
 import os
 import logging
@@ -14,6 +14,8 @@ from shapely.geometry import Point
 import time
 from tqdm import tqdm
 from sqlalchemy import func
+import openpyxl
+from six import text_type
 
 # Ignore MySQL warning caused by binary geometry data
 import warnings
@@ -98,8 +100,20 @@ class Importer:
 		# fast mode doesn't update sightings, just inserts
 		self.fast_mode = True
 
-		# list of columns that must not be blank
-		self.non_empty_keys = ['SearchTypeDesc', 'SourceDesc', 'SiteName', 'TaxonID', 'Count', 'StartDate', 'SpNo', 'X', 'Y', 'UnitID', 'SourcePrimaryKey']
+		# list of columns that must not be blank if present
+		self.non_empty_keys = [
+			'SearchTypeDesc',
+			'SourceDesc',
+			'SiteName',
+			'TaxonID',
+			'Count',
+			'StartDate',
+			'X',
+			'Y',
+			'SourcePrimaryKey',
+			'UnitID',
+			'UnitOfMeasurement'
+		]
 		if self.data_type == 2:
 			self.non_empty_keys.remove('SiteName')
 			self.non_empty_keys.remove('Count')
@@ -131,21 +145,28 @@ class Importer:
 		try:
 			if extension.lower() in ('.xls', '.xlsx'):
 				#excel file
-				wb = openpyxl.load_workbook(self.filename)
-				for name in wb.get_sheet_names():
+				wb = openpyxl.load_workbook(self.filename, read_only=True)
+				for name in wb.sheetnames:
 					# Skip any worksheets with 'template' in the name
-					if "template" in name.lower():
-						continue
+					# if "template" in name.lower():
+						# continue
 
-					self.row_count = len(wb[name].rows)
+					ws = wb[name]
 
-					for i, row in wb[name].rows:
+					self.row_count = ws.max_row
+
+					for i, row in self.progress_wrapper(enumerate(ws.rows)):
+					# self.row_count = len(wb[name].rows)
+
+					# for i, row in wb[name].rows:
 						row = [cell.value for cell in row]
 						if i == 0:
 							headers = row
 							self.check_headers(row)
 						else:
 							self.process_row(session, dict(zip(headers, row)), i + 1)
+
+					break
 
 			else:
 				#assume it is csv file
@@ -197,7 +218,6 @@ class Importer:
 			"FinishDate",
 			"StartTime",
 			"FinishTime",
-			"DurationInMinutes",
 			"AreaInM2",
 			"LengthInKm",
 			"LocationName",
@@ -205,16 +225,22 @@ class Importer:
 			"X",
 			"ProjectionReference",
 			"PositionalAccuracyInM",
-			"SpNo",
 			"TaxonID",
-			"Breeding",
+			# "Breeding",
 			"Count",
-			"UnitID",
 			"SurveyComments",
 			"SightingComments",
 		])
 
-		optional_headers = set()
+		optional_headers = set([
+			"CommonName",
+			"ScientificName",
+			"IntensiveManagement",
+			"DurationInMinutes",
+			"DurationInDays/Nights",
+			"UnitID",
+			"UnitOfMeasurement"
+		])
 
 		if self.data_type == 2:
 			required_headers -= set(['SourceType', 'TaxonID'])
@@ -224,9 +250,15 @@ class Importer:
 		missing_headers = required_headers - set(headers)
 
 		if len(missing_headers) > 0:
-			raise ImportError("Missing required header(s): %s" % ', '.join(missing_headers))
+			raise ImportError("Missing required columns(s): %s" % ', '.join(missing_headers))
 
-		unrecognized_headers = set(headers) - required_headers - optional_headers
+		if set(["UnitID", "UnitOfMeasurement"]).isdisjoint(set(headers)):
+			raise ImportError("Either UnitID or UnitOfMeasurement column is required")
+
+		if set(["DurationInMinutes", "DurationInDays/Nights"]).isdisjoint(set(headers)):
+			raise ImportError("Either DurationInMinutes or DurationInDays/Nights column is required")
+
+		unrecognized_headers = set(headers) - required_headers - optional_headers - set([None])
 
 		if len(unrecognized_headers) > 0:
 			self.log.warning("Unrecognized column(s) - will be ignored: %s" % ', '.join(unrecognized_headers))
@@ -281,7 +313,7 @@ class Importer:
 
 		# Strip leading/trailing whitespace from all values, and convert empty strings to None
 		for key in row:
-			if type(row[key]) in (str, unicode):
+			if type(row[key]) in (str, text_type):
 				row[key] = row[key].strip()
 			if row[key] == '':
 				row[key] = None
@@ -299,7 +331,7 @@ class Importer:
 
 		# Check for empty values
 		for key in self.non_empty_keys:
-			if row.get(key) == None and not (sighting_empty and key in self.sighting_keys):
+			if key in row and row.get(key) == None and not (sighting_empty and key in self.sighting_keys):
 				log.error("%s: must not be empty" % key)
 				return False
 
@@ -335,7 +367,7 @@ class Importer:
 		# Site
 		if self.data_type == 1 or row.get('SiteName') != None:
 			last_site = self.cache.get('last_site')
-			if last_site != None and last_site.name == row.get('SiteName') and last_site.search_type == search_type and last_site.source == source and last_site.intensive_management = intensive_management:
+			if last_site != None and last_site.name == row.get('SiteName') and last_site.search_type == search_type and last_site.source == source and last_site.intensive_management == intensive_management:
 				# Same site as last row - no need to process site
 				site = last_site
 			else:
@@ -393,8 +425,20 @@ class Importer:
 
 			# Duration, area, length, location, accuracy
 
+			if (row.get('DurationInMinutes') is None) == (row.get('DurationInDays/Nights') is None):
+				log.error("Either DurationInMinutes or DurationInDays/Nights must be specified (and not both)")
+				ok[0] = False
+
 			with field('DurationInMinutes') as value:
-				survey.duration_in_minutes = validate(value, validate_int, validate_greater_than(0))
+				if value is not None:
+					survey.duration_in_minutes = validate(value, validate_int, validate_greater_than(0))
+
+			with field('DurationInDays/Nights') as value:
+				if value is not None:
+					survey.duration_in_minutes = validate(value, validate_int, validate_greater_than(0)) * 24 * 60
+
+			# with field('DurationInMinutes') as value:
+			# 	survey.duration_in_minutes = validate(value, validate_int, validate_greater_than(0))
 
 			with field('AreaInM2') as value:
 				survey.area_in_m2 = validate(value, validate_float, validate_greater_than(0))
@@ -419,7 +463,7 @@ class Importer:
 				if x == 0 or y == 0:
 					log.warning('Suspicious zero coordinate before projection: %s, %s' % (x, y))
 
-				projection_ref = get_projection_ref(row.get('ProjectionReference'))
+				projection_ref = self.get_projection_ref(session, row.get('ProjectionReference'))
 				coords = create_point(x, y, projection_ref)
 
 				# This produces the necessary SQL to insert WKB geometry with SQLAlchemy.
@@ -434,27 +478,64 @@ class Importer:
 				elif x == 0 or y == 0:
 					log.warning('Suspicious zero coordinate after projection: %s, %s' % (x, y))
 
-		# Taxon
+
 		if not sighting_empty:
+			# Taxon
+			# There are a few different ways to identify the taxon, which are tried in the following order:
+			# 1. Taxon ID
+			# 2. SpNo (legacy)
+			# 3. Scientific name
+			# 4. Common name
 			taxon_id = row.get('TaxonID')
-			if taxon_id == None:
-				# Get Taxon ID from SpNo
-				taxon_id = self.get_species_taxon(session, row.get('SpNo'))
-				if taxon_id == None:
-					log.error("Invalid Spno: %s" % (row.get('SpNo')))
+			spno = row.get('SpNo')
+			common_name = row.get('CommonName')
+			scientific_name = row.get('ScientificName')
+
+			if taxon_id is not None:
+				taxon = self.get_taxon(session, taxon_id)
+				if not taxon:
+					log.error("Invalid TaxonID: %s" % taxon_id)
 					return False
-			else:
-				if not self.check_taxon(session, row.get('SpNo'), taxon_id):
-					log.error("Invalid TaxonID/Spno: %s, %s" % (row.get('TaxonID'), row.get('SpNo')))
-					return False
+
+			if 'SpNo' in row:
+				if taxon is None:
+					# Get Taxon ID from SpNo
+					taxon = self.get_species_taxon(session, spno)
+					if taxon is None:
+						log.error("Invalid Spno: %s" % spno)
+						return False
+				else:
+					if taxon.spno != spno:
+						log.error("Invalid TaxonID/Spno: %s, %s" % (taxon_id, spno))
+						return False
+
+			if taxon is None and common_name:
+				taxon = self.get_taxon_by_common_name(session, common_name)
+				if not taxon:
+					log.warning("Unrecognized common name: %s", common_name)
+
+			if taxon is None and scientific_name:
+				taxon = self.get_taxon_by_scientific_name(session, scientific_name)
+				if not taxon:
+					log.warning("Unrecognized scientific name: %s", scientific_name)
+
+			if taxon is None:
+				log.error("Could not identify taxon from TaxonID, CommonName or ScientificName")
+				return False
+
+			# Now check consistency of common/scientific names
+			if common_name and taxon.common_name != common_name:
+				log.warning("Common name (%s) does not match expected (%s)" % (common_name, taxon.common_name))
+			if scientific_name and taxon.scientific_name != scientific_name:
+				log.warning("Scientific name (%s) does not match expected (%s)" % (scientific_name, taxon.scientific_name))
 
 			if self.fast_mode:
 				sighting = None
 			else:
-				sighting = session.query(Sighting).filter_by(survey = survey, taxon_id = taxon_id).one_or_none()
+				sighting = session.query(Sighting).filter_by(survey = survey, taxon_id = taxon.id).one_or_none()
 
 			if sighting == None:
-				sighting = Sighting(survey = survey, taxon_id = taxon_id)
+				sighting = Sighting(survey = survey, taxon_id = taxon.id)
 
 			with field('Breeding') as value:
 				if value in (None, '0'):
@@ -471,12 +552,21 @@ class Importer:
 					sighting.count = validate(value, validate_float, validate_greater_than_or_equal(0))
 
 			# Unit
+			if (row.get('UnitID') is None) == (row.get('UnitOfMeasurement') is None):
+				log.error("Only one of UnitID and UnitOfMeasurement may be specified (and not both)")
+				return False
+
 			with field('UnitID') as value:
-				unit_id = validate(value, validate_int)
-				try:
-					sighting.unit = self.get_unit(session, unit_id)
-				except NoResultFound:
-					raise ValueError('Unrecognized ID')
+				if value is not None:
+					unit_id = validate(value, validate_int)
+					try:
+						sighting.unit = self.get_unit(session, unit_id)
+					except NoResultFound:
+						raise ValueError('Unrecognized ID')
+
+			with field('UnitOfMeasurement') as value:
+				if value is not None:
+					sighting.unit = self.get_or_create_unit(session, value)
 
 			sighting.comments = row.get('SightingComments')
 
@@ -504,17 +594,29 @@ class Importer:
 
 	def get_species_taxon(self, session, spno):
 		if 'species_taxon' not in self.cache:
-			self.cache['species_taxon'] = { taxon.spno: taxon.id for taxon in session.query(Taxon).all() if taxon.taxon_level.description == 'sp' }
+			self.cache['species_taxon'] = { taxon.spno: taxon for taxon in session.query(Taxon).all() if taxon.taxon_level.description == 'sp' }
 		return self.cache['species_taxon'].get(int(spno))
 
-	def check_taxon(self, session, spno, taxon_id):
+	def get_taxon(self, session, taxon_id):
 		if 'taxa' not in self.cache:
-			self.cache['taxa'] = { taxon.id: taxon.spno for taxon in session.query(Taxon).all() }
-		return self.cache['taxa'].get(taxon_id) == int(spno)
+			self.cache['taxa'] = { taxon.id: taxon for taxon in session.query(Taxon).all() }
+		return self.cache['taxa'].get(taxon_id)
+
+	def get_taxon_by_common_name(self, session, common_name):
+		return self.get_cached('taxon_by_common_name', common_name,
+			lambda: session.query(Taxon).filter(Taxon.common_name == common_name).one_or_none())
+
+	def get_taxon_by_scientific_name(self, session, scientific_name):
+		return self.get_cached('taxon_by_scientific_name', scientific_name,
+			lambda: session.query(Taxon).filter(Taxon.scientific_name == scientific_name).one_or_none())
 
 	def get_unit(self, session, unit_id):
-		return self.get_cached('unit', unit_id,
+		return self.get_cached('unit_by_id', unit_id,
 			lambda: session.query(Unit).filter(Unit.id==unit_id).one())
+
+	def get_or_create_unit(self, session, description):
+		return self.get_cached('unit', description,
+			lambda: get_or_create(session, Unit, description = description))
 
 	def get_source(self, session, description):
 		return self.get_cached('source', description,
@@ -531,8 +633,12 @@ class Importer:
 			lambda: get_or_create(session, IntensiveManagement, description = description))
 
 	def get_projection_ref(self, session, projection_name_or_ref):
-		return self.get_cached('projection_name', projection_name,
-			lambda session.query(ProjectionName).filter(name = projection_name_or_ref).one_or_none()) or projection_name_or_ref
+		return self.get_cached('projection_name', projection_name_or_ref,
+			lambda: self.get_projection_ref_uncached(session, projection_name_or_ref))
+
+	def get_projection_ref_uncached(self, session, projection_name_or_ref):
+		epsg_srid = session.query(ProjectionName.epsg_srid).filter(ProjectionName.name == projection_name_or_ref).one_or_none()
+		return "EPSG:%s" % epsg_srid if epsg_srid else projection_name_or_ref
 
 	def get_cached(self, group, key, fn, cacheNone = False):
 		if group not in self.cache:
@@ -669,7 +775,7 @@ def parse_date(raw_date):
 	if type(raw_date) == datetime:
 		return raw_date.day, raw_date.month, raw_date.year
 
-	if type(raw_date) in (str, unicode):
+	if type(raw_date) in (str, text_type):
 		parts = raw_date.split('/')
 		if len(parts) != 3:
 			raise ValueError("Invalid date format (expected DD/MM/YYYY)")
@@ -711,7 +817,7 @@ def parse_time(raw_time):
 	if type(raw_time) == time:
 		return raw_time
 
-	if type(raw_time) in (str, unicode):
+	if type(raw_time) in (str, text_type):
 		return datetime.strptime(raw_time, '%H:%M:%S').time()
 
 	raise ValueError("Unable to process time: %s" % raw_time)

@@ -218,7 +218,9 @@ class T1Site(Base):
     name = Column(String(255))
     search_type_id = Column(ForeignKey('search_type.id'), nullable=False, index=True)
     notes = Column(Text)
+    intensive_management_id = Column(ForeignKey('intensive_management.id'), index=True)
 
+    intensive_management = relationship('IntensiveManagement')
     search_type = relationship('SearchType')
     source = relationship('Source')
 

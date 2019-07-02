@@ -89,7 +89,7 @@ def sql_list_argument(name, items):
 
 import multiprocessing
 from threading import Thread
-from Queue import Queue, Empty
+from six.moves.queue import Queue, Empty
 import math
 import platform
 
