@@ -140,7 +140,7 @@ def process_database(species = None, commit = False):
         # Process all the species in parallel
         for result, error in tqdm(run_parallel(process, taxa, use_processes = True), total = len(taxa)):
             if error:
-                print error
+                print(error)
 
 def reproject(geom, src_proj, dest_proj):
     fn = partial(pyproj.transform, src_proj, dest_proj)

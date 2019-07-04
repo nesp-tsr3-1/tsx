@@ -76,7 +76,7 @@ def process_database(species = None, monthly = False, filter_output = False):
             'Species',
             'Subspecies',
             'FunctionalGroup',
-            'FunctionalSubGroup',
+            # 'FunctionalSubGroup',
             'TaxonomicGroup',
             'EPBCStatus',
             'IUCNStatus',
@@ -154,8 +154,14 @@ def process_database(species = None, monthly = False, filter_output = False):
                     taxon.scientific_name AS scientific_name,
                     taxon.family_scientific_name AS Family,
                     taxon.family_common_name AS FamilyCommonName,
-                    taxon.bird_group AS FunctionalGroup,
-                    taxon.bird_sub_group AS FunctionalSubGroup,
+                    (SELECT
+                        GROUP_CONCAT(
+                            CONCAT(taxon_group.group_name, COALESCE(CONCAT(':', taxon_group.subgroup_name)))
+                            SEPARATOR ','
+                        )
+                        FROM taxon_group
+                        WHERE taxon_group.taxon_id = taxon.id
+                    ) AS FunctionalGroup,
                     taxon.taxonomic_group AS TaxonomicGroup,
                     taxon.national_priority AS NationalPriorityTaxa,
                     (SELECT description FROM taxon_status WHERE taxon_status.id = taxon.epbc_status_id) AS EPBCStatus,

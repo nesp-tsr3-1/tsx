@@ -226,13 +226,13 @@ class Importer:
 			"ProjectionReference",
 			"PositionalAccuracyInM",
 			"TaxonID",
-			# "Breeding",
 			"Count",
 			"SurveyComments",
 			"SightingComments",
 		])
 
 		optional_headers = set([
+			"Breeding",
 			"CommonName",
 			"ScientificName",
 			"IntensiveManagement",
@@ -367,16 +367,21 @@ class Importer:
 		# Site
 		if self.data_type == 1 or row.get('SiteName') != None:
 			last_site = self.cache.get('last_site')
-			if last_site != None and last_site.name == row.get('SiteName') and last_site.search_type == search_type and last_site.source == source and last_site.intensive_management == intensive_management:
+			if last_site != None and last_site.name == row.get('SiteName') and last_site.search_type == search_type and last_site.source == source and (self.data_type != 1 or last_site.intensive_management == intensive_management):
 				# Same site as last row - no need to process site
 				site = last_site
 			else:
 				try:
-					site = get_or_create(session, Site,
-						name = row.get('SiteName'),
-						search_type = search_type,
-						source = source,
-						intensive_management = intensive_management)
+					site_params = {
+						'name': row.get('SiteName'),
+						'search_type': search_type,
+						'source': source
+					}
+					if self.data_type == 1:
+						site_params['intensive_management'] = intensive_management # This property only present for type 1 sites
+
+					site = get_or_create(session, Site, **site_params)
+
 				except MultipleResultsFound:
 					log.error("Found duplicate sites in DB - this must be fixed before import can continue")
 					self.commit = False # serious error
@@ -425,8 +430,8 @@ class Importer:
 
 			# Duration, area, length, location, accuracy
 
-			if (row.get('DurationInMinutes') is None) == (row.get('DurationInDays/Nights') is None):
-				log.error("Either DurationInMinutes or DurationInDays/Nights must be specified (and not both)")
+			if row.get('DurationInMinutes') is not None and row.get('DurationInDays/Nights') is not None:
+				log.error("Only one of DurationInMinutes or DurationInDays/Nights may be specified, not both")
 				ok[0] = False
 
 			with field('DurationInMinutes') as value:
@@ -505,7 +510,7 @@ class Importer:
 						log.error("Invalid Spno: %s" % spno)
 						return False
 				else:
-					if taxon.spno != spno:
+					if str(taxon.spno) != spno:
 						log.error("Invalid TaxonID/Spno: %s, %s" % (taxon_id, spno))
 						return False
 

@@ -48,6 +48,10 @@ def main():
 
 			taxon_groups = []
 
+			status_lookup = { taxon.description: taxon for taxon in session.query(TaxonStatus) }
+			def get_status(column):
+				return status_lookup.get(row.get(column))
+
 			try:
 				taxon = Taxon(
 					id = row['TaxonID'],
@@ -61,17 +65,16 @@ def main():
 					order = row['Order'],
 					population = row['Population'],
 					# TODO - there are status in WLAB like 'Introduced' and 'Vagrant' not in Glenn's list - for now importing as NULL
-					aust_status = session.query(TaxonStatus).filter_by(description = row['AustralianStatus']).one_or_none(),
-					epbc_status = session.query(TaxonStatus).filter_by(description = row['EPBCStatus']).one_or_none(),
-					iucn_status = session.query(TaxonStatus).filter_by(description = row['IUCNStatus']).one_or_none(),
-					state_status = session.query(TaxonStatus).filter_by(description = row['StatePlantStatus']).one_or_none(),
+					aust_status = get_status('AustralianStatus'),
+					epbc_status = get_status('EPBCStatus'),
+					iucn_status = get_status('IUCNStatus'),
+					state_status = get_status('StatePlantStatus'),
 					taxonomic_group = row['TaxonomicGroup'],
 					national_priority = str(row['NationalPriorityTaxa']) == '1',
 					suppress_spatial_representativeness = str(row.get('SuppressSpatialRep', '0')) == '1'
 				)
 
-				groups = row['FunctionalGroup']
-
+				groups = row.get('FunctionalGroup')
 				if groups:
 					for group_pair in groups.split(","):
 						if ":" in group_pair:
