@@ -97,7 +97,20 @@ INSERT INTO `range` (id, description) VALUES
   (5, "Irruptive"),
   (6, "Introduced");
 
-INSERT INTO `projection_name` VALUES
+INSERT INTO `data_import_status` (id, description) VALUES
+  (1, "Checking"),
+  (2, "Checked - OK"),
+  (3, "Checked - Error"),
+  (4, "Importing"),
+  (5, "Import Error"),
+  (6, "Imported - Awaiting Approval"),
+  (7, "Imported - Approved");
+
+INSERT INTO `role` (id, description) VALUES
+  (1, "Administrator"),
+  (2, "Custodian");
+
+INSERT INTO `projection_name` (name, epsg_srid) VALUES
   ("GDA94", 4283),
   ("AGD66", 4202),
   ("AGD84", 4203),

@@ -1033,6 +1033,161 @@ CREATE TABLE IF NOT EXISTS `taxon_group` (
 ENGINE = InnoDB;
 
 
+-- -----------------------------------------------------
+-- Table `user`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `user` ;
+
+CREATE TABLE IF NOT EXISTS `user` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `email` VARCHAR(255) NULL COMMENT '	',
+  `password_hash` TEXT NULL,
+  `first_name` TEXT NULL,
+  `last_name` TEXT NULL,
+  `phone_number` VARCHAR(32) NULL,
+  `password_reset_code` VARCHAR(32) NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `email_UNIQUE` (`email` ASC))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `role`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `role` ;
+
+CREATE TABLE IF NOT EXISTS `role` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `description` VARCHAR(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `name_UNIQUE` (`description` ASC))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `user_role`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `user_role` ;
+
+CREATE TABLE IF NOT EXISTS `user_role` (
+  `user_id` INT NOT NULL,
+  `role_id` INT NOT NULL,
+  PRIMARY KEY (`user_id`, `role_id`),
+  INDEX `fk_user_role_role1_idx` (`role_id` ASC),
+  CONSTRAINT `fk_user_role_user1`
+    FOREIGN KEY (`user_id`)
+    REFERENCES `user` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_user_role_role1`
+    FOREIGN KEY (`role_id`)
+    REFERENCES `role` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `user_source`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `user_source` ;
+
+CREATE TABLE IF NOT EXISTS `user_source` (
+  `user_id` INT NOT NULL,
+  `source_id` INT NOT NULL,
+  PRIMARY KEY (`user_id`, `source_id`),
+  INDEX `fk_user_source_source1_idx` (`source_id` ASC),
+  CONSTRAINT `fk_user_source_user1`
+    FOREIGN KEY (`user_id`)
+    REFERENCES `user` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_user_source_source1`
+    FOREIGN KEY (`source_id`)
+    REFERENCES `source` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `data_import_status`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `data_import_status` ;
+
+CREATE TABLE IF NOT EXISTS `data_import_status` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `description` VARCHAR(255) NULL,
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `data_import`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `data_import` ;
+
+CREATE TABLE IF NOT EXISTS `data_import` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `source_id` INT NULL,
+  `status_id` INT NULL,
+  `upload_uuid` VARCHAR(36) NULL,
+  `filename` TEXT NULL,
+  `error_count` INT NULL,
+  `warning_count` INT NULL,
+  `data_type` INT NOT NULL,
+  `time_created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `user_id` INT NULL,
+  `source_desc` VARCHAR(255) NULL,
+  PRIMARY KEY (`id`),
+  INDEX `fk_data_import_source1_idx` (`source_id` ASC),
+  INDEX `fk_data_import_data_import_status1_idx` (`status_id` ASC),
+  INDEX `fk_data_import_user1_idx` (`user_id` ASC),
+  CONSTRAINT `fk_data_import_source1`
+    FOREIGN KEY (`source_id`)
+    REFERENCES `source` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_data_import_data_import_status1`
+    FOREIGN KEY (`status_id`)
+    REFERENCES `data_import_status` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_data_import_user1`
+    FOREIGN KEY (`user_id`)
+    REFERENCES `user` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `data_processing_notes`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `data_processing_notes` ;
+
+CREATE TABLE IF NOT EXISTS `data_processing_notes` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `user_id` INT NOT NULL,
+  `source_id` INT NOT NULL,
+  `time_created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `notes` TEXT NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `fk_data_processing_notes_user1_idx` (`user_id` ASC),
+  INDEX `fk_data_processing_notes_source1_idx` (`source_id` ASC),
+  CONSTRAINT `fk_data_processing_notes_user1`
+    FOREIGN KEY (`user_id`)
+    REFERENCES `user` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_data_processing_notes_source1`
+    FOREIGN KEY (`source_id`)
+    REFERENCES `source` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;

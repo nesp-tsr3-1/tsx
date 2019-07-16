@@ -1,5 +1,5 @@
 # coding: utf-8
-from sqlalchemy import Column, Date, Float, ForeignKey, Index, Integer, SmallInteger, String, Table, Text, Time, text
+from sqlalchemy import Column, Date, DateTime, Float, ForeignKey, Index, Integer, SmallInteger, String, Table, Text, Time, text
 from sqlalchemy.sql.sqltypes import NullType
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
@@ -51,6 +51,46 @@ t_aggregated_by_year = Table(
     Column('time_series_id', String(32)),
     Column('include_in_analysis', Integer, nullable=False, server_default=text("'0'"))
 )
+
+
+class DataImport(Base):
+    __tablename__ = 'data_import'
+
+    id = Column(Integer, primary_key=True)
+    source_id = Column(ForeignKey('source.id'), index=True)
+    status_id = Column(ForeignKey('data_import_status.id'), index=True)
+    upload_uuid = Column(String(36))
+    filename = Column(Text)
+    error_count = Column(Integer)
+    warning_count = Column(Integer)
+    data_type = Column(Integer, nullable=False)
+    time_created = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+    user_id = Column(ForeignKey('user.id'), index=True)
+    source_desc = Column(String(255))
+
+    source = relationship('Source')
+    status = relationship('DataImportStatus')
+    user = relationship('User')
+
+
+class DataImportStatus(Base):
+    __tablename__ = 'data_import_status'
+
+    id = Column(Integer, primary_key=True)
+    description = Column(String(255))
+
+
+class DataProcessingNotes(Base):
+    __tablename__ = 'data_processing_notes'
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(ForeignKey('user.id'), nullable=False, index=True)
+    source_id = Column(ForeignKey('source.id'), nullable=False, index=True)
+    time_created = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+    notes = Column(Text, nullable=False)
+
+    source = relationship('Source')
+    user = relationship('User')
 
 
 class DataSource(Base):
@@ -154,6 +194,15 @@ class ResponseVariableType(Base):
     description = Column(String(255))
 
 
+class Role(Base):
+    __tablename__ = 'role'
+
+    id = Column(Integer, primary_key=True)
+    description = Column(String(255), nullable=False, unique=True)
+
+    users = relationship('User', secondary='user_role')
+
+
 class SearchType(Base):
     __tablename__ = 'search_type'
 
@@ -172,6 +221,7 @@ class Source(Base):
     authors = Column(Text)
 
     source_type = relationship('SourceType')
+    users = relationship('User', secondary='user_source')
 
 
 class SourceType(Base):
@@ -495,3 +545,29 @@ class Unit(Base):
 
     id = Column(Integer, primary_key=True)
     description = Column(String(255), nullable=False)
+
+
+class User(Base):
+    __tablename__ = 'user'
+
+    id = Column(Integer, primary_key=True)
+    email = Column(String(255), unique=True)
+    password_hash = Column(Text)
+    first_name = Column(Text)
+    last_name = Column(Text)
+    phone_number = Column(String(32))
+    password_reset_code = Column(String(32))
+
+
+t_user_role = Table(
+    'user_role', metadata,
+    Column('user_id', ForeignKey('user.id'), primary_key=True, nullable=False),
+    Column('role_id', ForeignKey('role.id'), primary_key=True, nullable=False, index=True)
+)
+
+
+t_user_source = Table(
+    'user_source', metadata,
+    Column('user_id', ForeignKey('user.id'), primary_key=True, nullable=False),
+    Column('source_id', ForeignKey('source.id'), primary_key=True, nullable=False, index=True)
+)
