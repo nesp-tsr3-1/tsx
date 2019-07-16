@@ -166,9 +166,8 @@ def process_database(species = None, monthly = False, filter_output = False):
                     taxon.national_priority AS NationalPriorityTaxa,
                     (SELECT description FROM taxon_status WHERE taxon_status.id = taxon.epbc_status_id) AS EPBCStatus,
                     (SELECT description FROM taxon_status WHERE taxon_status.id = taxon.iucn_status_id) AS IUCNStatus,
-                    (SELECT description FROM taxon_status WHERE taxon_status.id = taxon.aust_status_id) AS BirdLifeAustraliaStatus,
-                    (SELECT description FROM taxon_status WHERE taxon_status.id =
-                        GREATEST(COALESCE(taxon.epbc_status_id, 0), COALESCE(taxon.iucn_status_id, 0), COALESCE(taxon.aust_status_id, 0))) AS MaxStatus,
+                    (SELECT description FROM taxon_status WHERE taxon_status.id = taxon.state_status_id) AS StatePlantStatus,
+                    (SELECT description FROM taxon_status WHERE taxon_status.id = taxon.max_status_id) AS MaxStatus,
                     search_type.id AS SearchTypeID,
                     search_type.description AS SearchTypeDesc,
                     COALESCE(site_id, grid_cell_id) AS SiteID,
