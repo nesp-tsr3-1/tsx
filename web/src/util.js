@@ -57,20 +57,20 @@ export function CSVToArray(strData, strDelimiter) {
   strDelimiter = (strDelimiter || ',')
   // Create a regular expression to parse the CSV values.
   var objPattern = new RegExp(
-      (
-          // Delimiters.
-          '(\\' + strDelimiter + '|\\r?\\n|\\r|^)' +
+    (
+      // Delimiters.
+      '(\\' + strDelimiter + '|\\r?\\n|\\r|^)' +
 
-          // Quoted fields.
-          // '(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|' +
-          '(?:"([^"]*(?:""[^"]*)*)"|' +
+      // Quoted fields.
+      // '(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|' +
+      '(?:"([^"]*(?:""[^"]*)*)"|' +
 
-          // Standard fields.
-          // '([^\"\\' + strDelimiter + '\\r\\n]*))'
-          '([^"\\' + strDelimiter + '\\r\\n]*))'
-      ),
-      'gi'
-      )
+      // Standard fields.
+      // '([^\"\\' + strDelimiter + '\\r\\n]*))'
+      '([^"\\' + strDelimiter + '\\r\\n]*))'
+    ),
+    'gi'
+  )
   // Create an array to hold our data. Give the array
   // a default empty first row.
   var arrData = [[]]

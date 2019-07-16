@@ -211,20 +211,20 @@ import vueSlider from 'vue-slider-component/dist/index.js'
 import { min, max, pluck } from '@/util'
 
 const subGroups = [
-    {value: 'None', text: 'All'},
-    // {value: 'Tropicbirds Frigatebirds Gannets Boobies', text: 'Tropicbirds Frigatebirds Gannets Boobies'},
-    // {value: 'Gulls Terns Noddies Skuas Jaegers', text: 'Gulls Terns Noddies Skuas Jaegers'},
-    // {value: 'Rainforest', text: 'Rainforest'},
-    // {value: 'Penguins', text: 'Penguins'},
-    {value: 'Tropical savanna woodland', text: 'Tropical savanna woodland', group: 'Terrestrial'},
-    // {value: 'Island endemic', text: 'Island endemic'},
-    // {value: 'Petrels and Shearwaters', text: 'Petrels and Shearwaters'},
-    // {value: 'Grassland', text: 'Grassland'},
-    {value: 'Albatrosses and Giant-Petrels', text: 'Albatrosses and Giant-Petrels', group: 'Marine'},
-    {value: 'Dry sclerophyll woodland/forest', text: 'Dry sclerophyll woodland/forest', group: 'Terrestrial'}
-    // {value: 'Arid Woodland/ shrubland', text: 'Arid Woodland/ shrubland'},
-    // {value: 'Heathland', text: 'Heathland'},
-    // {value: 'Mallee woodland', text: 'Mallee woodland'}
+  {value: 'None', text: 'All'},
+  // {value: 'Tropicbirds Frigatebirds Gannets Boobies', text: 'Tropicbirds Frigatebirds Gannets Boobies'},
+  // {value: 'Gulls Terns Noddies Skuas Jaegers', text: 'Gulls Terns Noddies Skuas Jaegers'},
+  // {value: 'Rainforest', text: 'Rainforest'},
+  // {value: 'Penguins', text: 'Penguins'},
+  {value: 'Tropical savanna woodland', text: 'Tropical savanna woodland', group: 'Terrestrial'},
+  // {value: 'Island endemic', text: 'Island endemic'},
+  // {value: 'Petrels and Shearwaters', text: 'Petrels and Shearwaters'},
+  // {value: 'Grassland', text: 'Grassland'},
+  {value: 'Albatrosses and Giant-Petrels', text: 'Albatrosses and Giant-Petrels', group: 'Marine'},
+  {value: 'Dry sclerophyll woodland/forest', text: 'Dry sclerophyll woodland/forest', group: 'Terrestrial'}
+  // {value: 'Arid Woodland/ shrubland', text: 'Arid Woodland/ shrubland'},
+  // {value: 'Heathland', text: 'Heathland'},
+  // {value: 'Mallee woodland', text: 'Mallee woodland'}
 ]
 
 export default {
