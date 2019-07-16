@@ -238,6 +238,7 @@ class Importer:
 			"IntensiveManagement",
 			"DurationInMinutes",
 			"DurationInDays/Nights",
+			"NumberOfTrapsPerDay/Night"
 			"UnitID",
 			"UnitOfMeasurement"
 		])
@@ -442,8 +443,9 @@ class Importer:
 				if value is not None:
 					survey.duration_in_minutes = validate(value, validate_int, validate_greater_than(0)) * 24 * 60
 
-			# with field('DurationInMinutes') as value:
-			# 	survey.duration_in_minutes = validate(value, validate_int, validate_greater_than(0))
+			with field('NumberOfTrapsPerDay/Night') as value:
+				if self.data_type == 1 and value is not None:
+					survey.number_of_traps = validate(value, validate_int, validate_greater_than(0))
 
 			with field('AreaInM2') as value:
 				survey.area_in_m2 = validate(value, validate_float, validate_greater_than(0))

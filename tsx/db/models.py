@@ -243,6 +243,7 @@ class T1Survey(Base):
     duration_in_minutes = Column(Integer)
     area_in_m2 = Column(Float(asdecimal=True))
     length_in_km = Column(Float(asdecimal=True))
+    number_of_traps_per_day = Column(Integer)
     coords = Column(NullType, nullable=False)
     location = Column(Text)
     positional_accuracy_in_m = Column(Float(asdecimal=True))

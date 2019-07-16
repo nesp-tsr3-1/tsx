@@ -133,6 +133,7 @@ CREATE TABLE IF NOT EXISTS `t1_survey` (
   `duration_in_minutes` INT NULL,
   `area_in_m2` DOUBLE NULL,
   `length_in_km` DOUBLE NULL,
+  `number_of_traps_per_day` INT NULL,
   `coords` POINT NOT NULL,
   `location` TEXT NULL,
   `positional_accuracy_in_m` DOUBLE NULL,
