@@ -46,7 +46,8 @@ setup(
 		"Shapely>=1.6.2.post1",
 		"tzlocal>=1.4",
 		"tqdm>=4.19.4",
-		"pandas>=0.21.0"
+		"pandas>=0.21.0",
+		"configparser==3.7.4"
 	]
 )
 
