@@ -6,6 +6,10 @@ import _ from 'underscore'
 const LPI_RUNS_URL = 'https://tsx.org.au/lpi_runs'
 export const ROOT_URL = 'https://tsx.org.au/tsxapi'
 
+export function isLoggedIn() {
+  return get('/is_logged_in')
+}
+
 export function createImport(dataImport) {
   return post('/imports', dataImport)
 }
@@ -44,6 +48,18 @@ export function lpiPlot(params) {
 
 export function intensityPlot(params) {
   return get('/lpi-data/intensity', params)
+}
+
+export function createUser(user) {
+  return post('/users', user)
+}
+
+export function login(email, password) {
+  return post('/login', { email, password })
+}
+
+export function logout() {
+  return post('/logout')
 }
 
 // TODO: if files are in object stores, update this
@@ -148,6 +164,8 @@ function putOrPost(method, url, data, contentType, progressCallback) {
       }
     })
   }
+
+  xhr.withCredentials = true
 
   return xhrPromise(xhr, data).then(function(xhr) {
     var response = xhr.responseText

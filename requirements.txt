@@ -28,6 +28,7 @@ mysql-connector-python==8.0.12
 numpy==1.16.4
 openpyxl==2.6.2
 pandas==0.24.2
+passlib==1.7.1
 protobuf==3.6.0
 Pygments==2.2.0
 pyproj==2.1.3

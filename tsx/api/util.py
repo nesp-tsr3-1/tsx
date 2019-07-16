@@ -1,8 +1,9 @@
 import json, csv
 import csv
 from io import StringIO
-from flask import make_response, g, jsonify, _app_ctx_stack
+from flask import make_response, g, jsonify, _app_ctx_stack, session
 from tsx.db.connect import Session
+from tsx.db import User
 from sqlalchemy import orm
 
 def csv_response(rows, filename="export.csv"):
@@ -33,6 +34,13 @@ def csv_response(rows, filename="export.csv"):
 #
 #    db_session.execute(sql)
 db_session = orm.scoped_session(Session, scopefunc=_app_ctx_stack.__ident_func__)
+
+def get_user():
+	try:
+		user_id = session['user_id']
+	except KeyError:
+		return None
+	return db_session.query(User).get(user_id)
 
 # I would have used Flask-SQLAlchemy, but it requires you to make your database model dependent on Flask
 # which makes no sense when you want to use the database in other contexts e.g. from a CLI script.

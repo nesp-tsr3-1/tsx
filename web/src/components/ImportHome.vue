@@ -13,7 +13,7 @@
 </template>
 
 <script>
-// import * as api from '@/api'
+import * as api from '@/api'
 import ImportList from '@/components/ImportList'
 
 export default {
@@ -28,6 +28,13 @@ export default {
 
     // return data
     return {}
+  },
+  created() {
+    api.isLoggedIn().then(isLoggedIn => {
+      if(!isLoggedIn) {
+        this.$router.replace({ path: '/login', query: { after_login: this.$route.path } })
+      }
+    })
   }
 }
 </script>

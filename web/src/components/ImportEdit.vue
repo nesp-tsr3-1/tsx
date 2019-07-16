@@ -132,6 +132,12 @@ export default {
     }
   },
   created: function() {
+    api.isLoggedIn().then(isLoggedIn => {
+      if(!isLoggedIn) {
+        this.$router.replace({ path: '/login', query: { after_login: this.$route.path } })
+      }
+    })
+
     if(this.$route.params.id !== 'new') {
       this.importId = this.$route.params.id
       this.monitorImport()

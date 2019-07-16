@@ -1,10 +1,10 @@
-from flask import Blueprint, jsonify, request, send_file
+from flask import Blueprint, jsonify, request, send_file, session
 from tsx.util import next_path, local_iso_datetime
-from tsx.api.util import db_session
-# from tsx.api.auth import get_user_id
+from tsx.api.util import db_session, get_user
 from tsx.api.upload import get_upload_path, get_upload_name
 from tsx.importer import Importer
 from tsx.config import data_dir
+from tsx.db import User
 import logging
 import os
 from threading import Thread, Lock
@@ -20,8 +20,34 @@ running_imports = {} # Holds information about running imports
 
 lock = Lock() # Used to sync data between import thread and main thread
 
+def roles(user):
+	query = db.execute("""SELECT role.description
+		FROM role
+		JOIN user_role ON role.id = user_role.role_id
+		WHERE user_role.user_id = :user_id
+	""", {
+		'user_id': user.id
+	})
+
+	return set(role for (role,) in query.fetchall())
+
+def is_admin(user):
+	return 'Administrator' in roles(user)
+
+@bp.route('/import/sources', methods = ['GET'])
+def get_sources():
+	user = get_user()
+
+	if user == None:
+		return "Not authorized", 401
+
 @bp.route('/imports', methods = ['POST'])
 def post_import():
+	user = get_user()
+
+	if user == None or not is_admin(user):
+		return "Not authorized", 401
+
 	body = request.json
 
 	# Check upload parameter
