@@ -4,7 +4,7 @@ from flask import request, make_response, g, jsonify, Blueprint, Response
 from tsx.api.util import csv_response
 from tsx.db import get_session
 from datetime import datetime
-from tsx.util import run_parallel
+from tsx.util import run_parallel, log_time
 import tsx.config
 import pandas as pd
 import os
@@ -215,36 +215,83 @@ def get_intensity():
 	filtered_data = get_filtered_data()
 	if len(filtered_data) == 0:
 		return json.dumps([])
-	dat = filtered_data.to_dict()
 
 	source = request.args.get('source', type=str)
 	if source == 'lpi_wide_table':
-			lats = dat['SurveysCentroidLatitude']
-			longs = dat['SurveysCentroidLongitude']
-			counts = dat['SurveyCount']
-			ids = lats.keys()
-			return json.dumps([ [lats[id], longs[id], counts[id]] for id in ids ])
+		"""
+		Gets data in format:
+		[
+			[lat, lon, count], ...
+		]
+		"""
+		dat = filtered_data.to_dict()
+		lats = dat['SurveysCentroidLatitude']
+		longs = dat['SurveysCentroidLongitude']
+		counts = dat['SurveyCount']
+		ids = lats.keys()
+		return json.dumps([ [lats[id], longs[id], counts[id]] for id in ids ])
 	else: # get it from database
-		ids = dat['TimeSeriesID'].values()
+		"""
+		Gets data in format:
+		[
+			[lon, lat, [
+				[year, count], [year, count], [year, count], ...
+			]],
+			...
+		]
+		"""
+
+		enable_consistency_check = False # for testing that DB query and CSV queries match up
+
+		if enable_consistency_check:
+			dat = filtered_data.to_dict()
+			csv_ids = dat['TimeSeriesID'].values()
+
 		session = get_session()
-		result = session.execute("""SELECT time_series_id, start_date_y as Year, ST_X(centroid_coords) as Latitude,
-						ST_Y(centroid_coords) as Longitude, SUM(survey_count) as Count
-						FROM aggregated_by_year
-						WHERE include_in_analysis
-						AND time_series_id in %s
-						GROUP BY time_series_id, Year, Latitude, Longitude"""%str(tuple(ids)))
-		values = pd.DataFrame.from_records(data = result.fetchall(), columns = result.keys()).to_dict()
+
+		sql_where_expressions, sql_values = build_filter_sql()
+
+		with log_time("Query database"):
+			# Note '.bind' is necessary to run query with positional parameters
+			# STRAIGHT_JOIN is necessary to stop MySQL from choosing a very slow query plan
+			result = session.bind.execute("""SELECT
+							time_series_id,
+							start_date_y as Year,
+							# 1 as Year, # this is much faster but slightly changes intensity map
+							ANY_VALUE(ST_Y(centroid_coords)) as Latitude,
+							ANY_VALUE(ST_X(centroid_coords)) as Longitude,
+							SUM(survey_count) as Count
+							FROM aggregated_by_year
+							STRAIGHT_JOIN region ON region.id = aggregated_by_year.region_id
+							STRAIGHT_JOIN taxon ON taxon.id = aggregated_by_year.taxon_id
+							WHERE include_in_analysis
+							AND taxon.taxonomic_group = 'Birds'
+							AND %s
+							GROUP BY time_series_id, start_date_y""" % sql_where_expressions, sql_values)
+
+		with log_time("Create dataframe"):
+			values = pd.DataFrame.from_records(data = result.fetchall(), columns = result.keys())
+
+		if enable_consistency_check:
+			csv_ids = set(dat['TimeSeriesID'].values())
+			db_ids = set(values['time_series_id'])
+			print("CSV: %s time series" % len(csv_ids))
+			print("DB:  %s time series" % len(db_ids))
+
+			if csv_ids != db_ids:
+				print("csv_ids - db_ids = %s" % (csv_ids - db_ids))
+				print("db_ids - csv_ids = %s" % (db_ids - csv_ids))
+
 		session.close()
-		# years = values['Year']
-		lats = values['Latitude']
-		longs = values['Longitude']
-		counts = values['Count']
-		years = values['Year']
-		timeSeriesIDs = { id:[] for id in ids }
-		results = {}
-		for k, v in values['time_series_id'].iteritems():
-			timeSeriesIDs[v].append(k)
-		return json.dumps([ [lats[v[0]], longs[v[0]], [[years[i], int(counts[i])] for i in v]] for k, v in timeSeriesIDs.iteritems() if len(v) >0])
+
+		with log_time("Reshape data"):
+			# Combine year and count into one column
+			values['YearCount'] = list(zip(values['Year'], pd.to_numeric(values['Count'])))
+			# Group by lat/lon
+			result = values.groupby(['Longitude', 'Latitude'])['YearCount'].apply(list).reset_index()
+
+		with log_time("Generate JSON"):
+			return json.dumps(result.values.tolist())
 
 def get_dotplot_data(filtered_data):
 	"""Converts time-series to a minimal form for generating dot plots:
@@ -339,26 +386,46 @@ def get_filtered_data():
 	df = unfiltered_df
 
 	if filter_str:
-		return df.query(filter_str)
+		df = df.query(filter_str)
 	else:
-		return df.copy()
+		df = df.copy()
+
+	# Functional group filtering is a special case because we use a regular expression and can't do this filtering using the 'query' method
+	group = request.args.get('group')
+	subgroup = request.args.get('subgroup')
+	if 'FunctionalSubGroup' in df:
+		# Legacy code to support TSX Visualisation until new wide table file is generated
+		if group:
+			df = df[df.FunctionalGroup == group]
+		if subgroup:
+			df = df[df.FunctionalSubGroup == subgroup]
+	else:
+		if group:
+			if subgroup:
+				regex = "(?:^|,)%s:%s(?:,|$)" % (group, subgroup)
+			else:
+				regex = "(?:^|,)%s(?:[:,]|$)" % group
+
+			df = df[df.FunctionalGroup.str.contains(regex)]
+
+	return df
+
 
 def build_filter_string():
-	filter_str = ""
 	#spno
 	filters = []
-	if request.args.has_key('spno'):
+	if 'spno' in request.args:
 		_sp_no = request.args.get('spno', type=int)
 		filters.append("SpNo=='%d'" % (_sp_no))
-	if request.args.has_key('datatype'):
+	if 'datatype' in request.args:
 		_sp_no = request.args.get('datatype', type=int)
 		filters.append("DataType=='%d'" % (_sp_no))
 	#state
-	if request.args.has_key('state'):
+	if 'state' in request.args:
 		_stateList = request.args.get('state', type=str).split('+')
 		filters.append("(%s)" % " or ".join(["State=='%s'" % s for s in _stateList]))
 	#searchtypedesc
-	if request.args.has_key('searchtype'):
+	if 'searchtype' in request.args:
 		_search_type = request.args.get('searchtype', type=int)
 		# find in database
 		session = get_session()
@@ -368,39 +435,97 @@ def build_filter_string():
 		filters.append("SearchTypeDesc=='%s'" % (_search_type_desc))
 		session.close()
 	#subibra
-	if request.args.has_key('subibra'):
+	if 'subibra' in request.args:
 		_subibra = request.args.get('subibra', type=str)
 		filters.append("SubIBRA=='%s'" % (_subibra))
 
 	#sourceid
-	if request.args.has_key('sourceid'):
+	if 'sourceid' in request.args:
 		_sourceid = request.args.get('sourceid', type=int)
 		filters.append("SourceID=='%d'" % (_sourceid))
 
-	# Functional group
-	if request.args.has_key('group'):
-		_group = request.args.get('group', type=str)
-		filters.append("FunctionalGroup=='%s'" % (_group))
-
-	# functional subgroup
-	if request.args.has_key('subgroup'):
-		_subgroup = request.args.get('subgroup', type=str)
-		filters.append("FunctionalSubGroup=='%s'" % (_subgroup))
-
 	# status/statusauth
-	if request.args.has_key('status') and request.args.has_key('statusauth'): #IUCN, EPBC, BirdLifeAustralia, Max
+	if 'status' in request.args and 'statusauth' in request.args: #IUCN, EPBC, Max
 		_statusList = request.args.get('status', type=str).split('+')
 		_statusauth = request.args.get('statusauth', type=str)
 		filters.append("(%s)" % " or ".join(["%sStatus=='%s'" % (_statusauth, s) for s in _statusList]))
 
 	# national priority
-	if request.args.has_key('priority'):
+	if 'priority' in request.args:
 		filters.append("NationalPriorityTaxa=='%d'" %(request.args.get('priority', type=int)))
 
 	if len(filters) > 0:
 		return " and ".join(filters)
 	else:
 		return None
+
+#SQL version of build_filter_string so that we can filter data directly in the database, which is much faster in certain scenarios
+def build_filter_sql(taxon_only=False):
+	expressions = []
+	values = []
+
+	#spno
+	if 'spno' in request.args:
+		expressions.append("taxon.spno = %s")
+		values.append(request.args.get('spno', type=int))
+
+	# Functional group
+	if 'group' in request.args:
+		expressions.append("taxon.id IN (SELECT taxon_id FROM taxon_group WHERE group_name = %s)")
+		values.append(request.args.get('group', type=str))
+
+	# functional subgroup
+	if 'subgroup' in request.args:
+		expressions.append("taxon.id IN (SELECT taxon_id FROM taxon_group WHERE subgroup_name = %s)")
+		values.append(request.args.get('subgroup', type=str))
+
+	# status/statusauth
+	if 'status' in request.args and 'statusauth' in request.args: #IUCN, EPBC, Max
+		status_authority = request.args.get('statusauth', type=str).lower()
+		statuses = request.args.get('status', type=str).split('+')
+		if status_authority in ["uicn", "epbc", "aust", "max"] and len(statuses) > 0:
+			expressions.append("taxon.%s_status_id IN (SELECT id FROM taxon_status WHERE description IN (%s))" % (status_authority, in_clause_placeholders(statuses)))
+			values.extend(statuses)
+
+	# national priority
+	if 'priority' in request.args:
+		expressions.append("taxon.national_priority = %s")
+		values.append(request.args.get('priority', type=int))
+
+	if not taxon_only:
+		# data type
+		if 'datatype' in request.args:
+			expressions.append("data_type = %s")
+			values.append(request.args.get('datatype', type=int))
+
+		#state
+		if 'state' in request.args:
+			states = request.args.get('state', type=str).split('+')
+			expressions.append("region.state IN (%s)" % in_clause_placeholders(states))
+			values.extend(states)
+
+		#searchtypedesc
+		if 'searchtype' in request.args:
+			expressions.append("search_type_id = %s")
+			values.append(request.args.get('searchtype', type=int))
+
+		#subibra
+		if 'subibra' in request.args:
+			expressions.append("region.name = %s")
+			values.append(request.args.get('subibra', type=str))
+
+		#sourceid
+		if 'sourceid' in request.args:
+			expressions.append("source_id = %s")
+			values.append(request.args.get('sourceid', type=int))
+
+	if len(expressions):
+		return (" AND ".join(expressions), tuple(values))
+	else:
+		return ("TRUE", ())
+
+def in_clause_placeholders(items):
+	return ", ".join(["%s"] * len(items))
 
 @bp.route('/lpi-data/stats', methods = ['GET'])
 def stats():
@@ -442,8 +567,7 @@ def stats_html():
 						<th>Taxon name</th>
 						<th>Taxon scientific name</th>
 						<th>Functional group</th>
-						<th>Functional sub-group</th>
-						<th>BirdLife Australia status</th>
+						<th>IUCN status</th>
 						<th>EPBC status</th>
 						<th># data sources</th>
 						<th># time series</th>
@@ -466,9 +590,8 @@ def stats_html():
 		<tr>
 			<td>{common_name}</td>
 			<td>{scientific_name}</td>
-			<td>{bird_group}</td>
-			<td>{bird_sub_group}</td>
-			<td>{aust_status}</td>
+			<td>{functional_group}</td>
+			<td>{iucn_status}</td>
 			<td>{epbc_status}</td>
 			<td>{num_sources:.0f}</td>
 			<td>{num_ts:.0f}</td>
@@ -481,9 +604,8 @@ def stats_html():
 		<tr>
 			<td>{common_name}</td>
 			<td>{scientific_name}</td>
-			<td>{bird_group}</td>
-			<td>{bird_sub_group}</td>
-			<td>{aust_status}</td>
+			<td>{functional_group}</td>
+			<td>{iucn_status}</td>
 			<td>{epbc_status}</td>
 			<td>0</td>
 			<td>0</td>
@@ -529,25 +651,32 @@ def get_stats(filtered_data):
 		'SpatialRepresentativeness': 'spatial_rep'
 	})
 
+	# Get just the relevant taxa
+
+	sql_where_expressions, sql_values = build_filter_sql(taxon_only=True)
+
 	session = get_session()
-	result = session.execute("""SELECT
+	result = session.bind.execute("""SELECT
 			id AS 'TaxonID',
 			common_name,
 			scientific_name,
-			bird_group,
-			bird_sub_group,
-			(SELECT description FROM taxon_status WHERE taxon_status.id = aust_status_id) AS aust_status,
+			(	SELECT
+				GROUP_CONCAT(CONCAT(taxon_group.group_name, COALESCE(CONCAT(' – ', taxon_group.subgroup_name))))
+				FROM taxon_group
+				WHERE taxon_group.taxon_id = taxon.id
+			) AS functional_group,
+			(SELECT description FROM taxon_status WHERE taxon_status.id = iucn_status_id) AS iucn_status,
 			(SELECT description FROM taxon_status WHERE taxon_status.id = epbc_status_id) AS epbc_status
 		FROM taxon
-		WHERE GREATEST(COALESCE(aust_status_id, 0), COALESCE(epbc_status_id, 0), COALESCE(iucn_status_id, 0)) NOT IN (0,1,7)
-		AND (ultrataxon OR taxon.id IN :taxon_ids)""", {
-			'taxon_ids': list(df['TaxonID'].unique())
-		})
+		WHERE COALESCE(taxon.max_status_id, 0) NOT IN (0,1,7)
+		AND taxon.taxonomic_group = 'Birds'
+		AND %s
+	""" % sql_where_expressions, sql_values)
 	session.close()
 
 	all_taxa = pd.DataFrame.from_records(data = result.fetchall(), index = 'TaxonID', columns = result.keys())
 
-	joined = all_taxa.join(grouped_by_taxon, how='outer').sort_values(['bird_group', 'bird_sub_group', 'common_name'], na_position='first')
+	joined = all_taxa.join(grouped_by_taxon, how='outer').sort_values(['functional_group', 'common_name'], na_position='first')
 	joined = joined.reset_index().rename(columns = { 'TaxonID': 'taxon_id' })
 	joined['spatial_rep'] *= 100
 
