@@ -7,7 +7,8 @@ bp = Blueprint('misc', __name__)
 
 def query_to_json(query):
 	session = get_session()
-	result = [{**row} for row in session.execute(query).fetchall()]
+	result = [dict(zip(row.keys(), row.values())) for row in session.execute(query).fetchall()]
+	# result = [{**row} for row in session.execute(query).fetchall()] # Python 3 version
 	session.close()
 	return jsonify(result)
 
