@@ -65,9 +65,8 @@ def main():
 					order = row['Order'],
 					population = row['Population'],
 					# TODO - there are status in WLAB like 'Introduced' and 'Vagrant' not in Glenn's list - for now importing as NULL
-					aust_status = get_status('AustralianStatus'),
 					epbc_status = get_status('EPBCStatus'),
-					iucn_status = get_status('IUCNStatus'),
+					iucn_status = get_status('IUCNStatus') or get_status('AustralianStatus'),
 					state_status = get_status('StatePlantStatus'),
 					taxonomic_group = row['TaxonomicGroup'],
 					national_priority = str(row['NationalPriorityTaxa']) == '1',

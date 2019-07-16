@@ -195,28 +195,21 @@ CREATE TABLE IF NOT EXISTS `taxon` (
   `family_scientific_name` VARCHAR(255) NULL,
   `order` VARCHAR(255) NULL,
   `population` VARCHAR(255) NULL,
-  `aust_status_id` INT NULL,
   `epbc_status_id` INT NULL,
   `iucn_status_id` INT NULL,
   `state_status_id` INT NULL,
-  `max_status_id` INT GENERATED ALWAYS AS (NULLIF(GREATEST(COALESCE(taxon.epbc_status_id, 0), COALESCE(taxon.iucn_status_id, 0), COALESCE(taxon.aust_status_id, 0), COALESCE(taxon.state_status_id, 0)), 0)),
+  `max_status_id` INT GENERATED ALWAYS AS (NULLIF(GREATEST(COALESCE(taxon.epbc_status_id, 0), COALESCE(taxon.iucn_status_id, 0), COALESCE(taxon.state_status_id, 0)), 0)),
   `national_priority` TINYINT(1) NOT NULL DEFAULT 0,
   `taxonomic_group` VARCHAR(255) NOT NULL,
   `suppress_spatial_representativeness` TINYINT(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   INDEX `fk_Taxon_TaxonLevel1_idx` (`taxon_level_id` ASC),
-  INDEX `fk_taxon_taxon_status1_idx` (`aust_status_id` ASC),
   INDEX `fk_taxon_taxon_status2_idx` (`epbc_status_id` ASC),
   INDEX `fk_taxon_taxon_status3_idx` (`iucn_status_id` ASC),
   INDEX `fk_taxon_taxon_status4_idx` (`state_status_id` ASC),
   CONSTRAINT `fk_Taxon_TaxonLevel1`
     FOREIGN KEY (`taxon_level_id`)
     REFERENCES `taxon_level` (`id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION,
-  CONSTRAINT `fk_taxon_taxon_status1`
-    FOREIGN KEY (`aust_status_id`)
-    REFERENCES `taxon_status` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_taxon_taxon_status2`
