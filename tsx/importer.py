@@ -240,7 +240,8 @@ class Importer:
 			"DurationInDays/Nights",
 			"NumberOfTrapsPerDay/Night"
 			"UnitID",
-			"UnitOfMeasurement"
+			"UnitOfMeasurement",
+			"SpNo"
 		])
 
 		if self.data_type == 2:
