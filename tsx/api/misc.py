@@ -15,8 +15,9 @@ def query_to_json(query):
 def get_region():
 	return query_to_json("""SELECT id, name, state FROM region""")
 
+@bp.route('/search_type', methods = ['GET'])
 @bp.route('/searchtype', methods = ['GET'])
-def get_searchtype():
+def get_search_type():
 	return query_to_json("""SELECT id, description AS name FROM search_type""")
 
 @bp.route('/species', methods = ['GET'])
@@ -28,8 +29,9 @@ def get_species():
 		ORDER BY common_name
 	""")
 
+@bp.route('/response_variable_type', methods = ['GET'])
 @bp.route('/responsevariabletype', methods = ['GET'])
-def get_responsevariable():
+def get_response_variable():
 	return query_to_json("""SELECT id, description FROM response_variable_type""")
 
 @bp.route('/status', methods = ['GET'])
