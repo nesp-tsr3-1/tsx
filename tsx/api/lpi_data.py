@@ -661,7 +661,7 @@ def get_stats(filtered_data):
 			common_name,
 			scientific_name,
 			(	SELECT
-				GROUP_CONCAT(CONCAT(taxon_group.group_name, COALESCE(CONCAT(' – ', taxon_group.subgroup_name))))
+				GROUP_CONCAT(CONCAT(taxon_group.group_name, COALESCE(CONCAT(' – ', taxon_group.subgroup_name), '')))
 				FROM taxon_group
 				WHERE taxon_group.taxon_id = taxon.id
 			) AS functional_group,
