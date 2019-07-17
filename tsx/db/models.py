@@ -435,7 +435,6 @@ class Taxon(Base):
     family_scientific_name = Column(String(255))
     order = Column(String(255))
     population = Column(String(255))
-    aust_status_id = Column(ForeignKey('taxon_status.id'), index=True)
     epbc_status_id = Column(ForeignKey('taxon_status.id'), index=True)
     iucn_status_id = Column(ForeignKey('taxon_status.id'), index=True)
     state_status_id = Column(ForeignKey('taxon_status.id'), index=True)
@@ -443,7 +442,6 @@ class Taxon(Base):
     taxonomic_group = Column(String(255), nullable=False)
     suppress_spatial_representativeness = Column(Integer, nullable=False, server_default=text("'0'"))
 
-    aust_status = relationship('TaxonStatus', primaryjoin='Taxon.aust_status_id == TaxonStatus.id')
     epbc_status = relationship('TaxonStatus', primaryjoin='Taxon.epbc_status_id == TaxonStatus.id')
     iucn_status = relationship('TaxonStatus', primaryjoin='Taxon.iucn_status_id == TaxonStatus.id')
     state_status = relationship('TaxonStatus', primaryjoin='Taxon.state_status_id == TaxonStatus.id')
