@@ -28,6 +28,21 @@ def main():
 	wb = openpyxl.load_workbook(args.filename, read_only=True)
 	ws = wb['TaxonList']
 
+	status_lookup = { status.description.lower(): status for status in session.query(TaxonStatus) }
+	unknown_statuses = set()
+	def get_status(column):
+		status = row.get(column)
+		if status is None:
+			return None
+		else:
+			try:
+				return status_lookup[status.lower()]
+			except KeyError:
+				if status not in unknown_statuses:
+					log.info("Unknown status: %s" % status)
+					unknown_statuses.add(status)
+				return None
+
 	for i, row in tqdm(enumerate(ws.rows), total=ws.max_row):
 		row = [cell.value for cell in row]
 		if i == 0:
@@ -47,10 +62,6 @@ def main():
 				raise ValueError("Invalid SpNo/TaxonID combination: %s/%s" % (row['SpNo'], row['TaxonID']))
 
 			taxon_groups = []
-
-			status_lookup = { taxon.description: taxon for taxon in session.query(TaxonStatus) }
-			def get_status(column):
-				return status_lookup.get(row.get(column))
 
 			try:
 				taxon = Taxon(
