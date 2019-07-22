@@ -40,7 +40,7 @@ def data_dir(path):
 
 	The path will be created if it does not already exist.
 	"""
-	path = os.path.join(config.get("global", "data_dir"), path)
+	path = os.path.abspath(os.path.join(config.get("global", "data_dir"), path))
 
 	try:
 		os.makedirs(path)

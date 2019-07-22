@@ -27,7 +27,7 @@ def post_upload():
 	"""
 
 	result = []
-	files = request.files.values()
+	files = list(request.files.values())
 
 	if len(files) > 0:
 		file = files[0]

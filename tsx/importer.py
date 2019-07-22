@@ -15,6 +15,8 @@ import time
 from tqdm import tqdm
 from sqlalchemy import func
 import openpyxl
+import zipfile
+
 from six import text_type
 
 # Ignore MySQL warning caused by binary geometry data
@@ -139,13 +141,17 @@ class Importer:
 		session = get_session()
 		self.session = session
 
-		# check the extension of the to determine what file it is
-		extension = os.path.splitext(self.filename)[1]
-
 		try:
-			if extension.lower() in ('.xls', '.xlsx'):
-				#excel file
-				wb = openpyxl.load_workbook(self.filename, read_only=True)
+			# Autodetect excel files
+			if zipfile.is_zipfile(self.filename):
+				self.log.info('Guessing file format: Excel Spreadsheet')
+				format = 'excel'
+			else:
+				self.log.info('Guessing file format: CSV')
+				format = 'csv'
+
+			if format is 'excel':
+				wb = openpyxl.load_workbook(open(self.filename, 'rb'), read_only=True)
 				for name in wb.sheetnames:
 					# Skip any worksheets with 'template' in the name
 					# if "template" in name.lower():
@@ -168,9 +174,7 @@ class Importer:
 
 					break
 
-			else:
-				#assume it is csv file
-
+			elif format is 'csv':
 				# Count rows first - this is used so we can track progress
 				with open(self.filename, "r") as csvfile:
 					reader = csv.DictReader(csvfile)

@@ -268,5 +268,8 @@ function poll(promiseFn, delay, callback) {
 .error { color: $red; }
 .info { color: $blue; }
 .warning { color: orange; }
+code {
+  background: white !important;
+}
 
 </style>
