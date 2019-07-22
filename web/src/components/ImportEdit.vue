@@ -1,7 +1,7 @@
 <template>
   <div class="import-edit content">
     <h3 class="title">{{title}}</h3>
-    <router-link to='/'>Back to imports</router-link>
+    <router-link to='/import'>Back to imports</router-link>
     <hr>
 
     <div class="field">
