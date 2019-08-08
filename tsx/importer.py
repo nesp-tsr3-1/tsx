@@ -5,13 +5,12 @@ import tsx.util
 import os
 import logging
 import sys
-from datetime import date, datetime
+from datetime import date, datetime, time
 import argparse
 from contextlib import contextmanager
 import csv
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 from shapely.geometry import Point
-import time
 from tqdm import tqdm
 from sqlalchemy import func
 import openpyxl
