@@ -62,7 +62,9 @@ export default {
     }
 
     api.dataImports().then((imports) => {
-      data.imports = imports.filter(i => (i.status === 'imported') === this.completed)
+      data.imports = imports
+        .filter(i => (i.status === 'imported') === this.completed)
+        .sort((a, b) => b.created.localeCompare(a.created))
       data.status = 'loaded'
     }).catch((error) => {
       console.log(error)
