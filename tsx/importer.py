@@ -358,13 +358,15 @@ class Importer:
 			session.add(source)
 			session.flush()
 		else:
-			if source.source_type == None:
-				if row.get('SourceType') != None:
+			# Existing source
+			if 'SourceType' in row: # 'SourceType' is optional for type 2/3 data
+				if source.source_type == None:
+					if row.get('SourceType') != None:
+						log.error("SourceType: doesn't match database for this source")
+						ok[0] = False
+				elif source.source_type.description != row.get('SourceType'):
 					log.error("SourceType: doesn't match database for this source")
 					ok[0] = False
-			elif source.source_type.description != row.get('SourceType'):
-				log.error("SourceType: doesn't match database for this source")
-				ok[0] = False
 			if source.provider != row.get('SourceProvider'):
 				log.error("SourceProvider: doesn't match database for this source")
 				ok[0] = False
