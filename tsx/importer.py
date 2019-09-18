@@ -507,6 +507,8 @@ class Importer:
 				if not taxon:
 					log.error("Invalid TaxonID: %s" % taxon_id)
 					return False
+			else:
+				taxon = None
 
 			if 'SpNo' in row:
 				if taxon is None:
