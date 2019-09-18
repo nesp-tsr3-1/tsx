@@ -616,7 +616,7 @@ class Importer:
 
 	def get_species_taxon(self, session, spno):
 		if 'species_taxon' not in self.cache:
-			self.cache['species_taxon'] = { taxon.spno: taxon for taxon in session.query(Taxon).all() if taxon.taxon_level.description == 'sp' }
+			self.cache['species_taxon'] = { taxon.spno: taxon for taxon in session.query(Taxon).all() if taxon.taxon_level is not None and taxon.taxon_level.description == 'sp' }
 		return self.cache['species_taxon'].get(int(spno))
 
 	def get_taxon(self, session, taxon_id):
