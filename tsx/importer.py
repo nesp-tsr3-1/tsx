@@ -277,7 +277,7 @@ class Importer:
 			if isinstance(ex, IntegrityError):
 				msg = ex.orig.args[1] # Took me along time to figure out this line. Doesn't seem to be documented anywhere.
 				if 'Duplicate entry' in msg and 'source_primary_key_UNIQUE' in msg:
-					raise ImportError("Error: %s" % msg)
+					raise ImportError("Error: %s [NOTE: Please ensure that your data is sorted by the SourcePrimaryKey column]" % msg)
 
 			self.log.exception("Fatal error during import")
 			raise ImportError("Unexpected error - probably a bug (see above)")
