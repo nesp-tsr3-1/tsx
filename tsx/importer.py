@@ -10,6 +10,7 @@ import argparse
 from contextlib import contextmanager
 import csv
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
+from sqlalchemy.exc import IntegrityError
 from shapely.geometry import Point
 from tqdm import tqdm
 from sqlalchemy import func
@@ -271,7 +272,13 @@ class Importer:
 	def process_row(self, session, row, row_index):
 		try:
 			self.ingest_row(session, row, row_index)
-		except:
+		except Exception as ex:
+			# Detect duplicate source primary key and give a more friendly error message
+			if isinstance(ex, IntegrityError):
+				msg = ex.orig.args[1] # Took me along time to figure out this line. Doesn't seem to be documented anywhere.
+				if 'Duplicate entry' in msg and 'source_primary_key_UNIQUE' in msg:
+					raise ImportError("Error: %s" % msg)
+
 			self.log.exception("Fatal error during import")
 			raise ImportError("Unexpected error - probably a bug (see above)")
 
