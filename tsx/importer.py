@@ -184,7 +184,7 @@ class Importer:
 					reader = csv.DictReader(csvfile)
 					self.check_headers(reader.fieldnames)
 					for i, row in enumerate(self.progress_wrapper(reader)):
-						self.process_row(session, row, i + 1)
+						self.process_row(session, row, i + 2)
 
 			self.flush_sightings(session) # flush any left over sightings not yet committed
 
