@@ -7,7 +7,7 @@ log = logging.getLogger(__name__)
 def process_database():
 	session = get_session()
 
-	log.info("Step 1/1 - Building list of filtered time series")
+	log.info("Step 1/2 - Building list of filtered time series")
 
 	# Get year range
 	min_year = tsx.config.config.getint("processing", "min_year")
