@@ -358,7 +358,7 @@ python -m tsx.process export_lpi
 
 or a version aggregated by month instead of year:
 ----
-python -m tsx.process export_lpi –-monthly
+python -m tsx.process export_lpi --monthly
 ----
 
 === Run it all at once
