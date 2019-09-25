@@ -587,6 +587,8 @@ class Importer:
 						raise ValueError('Unrecognized ID')
 
 			with field('UnitOfMeasurement') as value:
+				if value == 'Sample: Occupancy (# presences/# absences)':
+					raise ValueError('Sample: Occupancy (# presences/# absences) is no longer a permitted unit. Instead, please use: Sample: Occupancy (# presences/# surveys)')
 				if value is not None:
 					sighting.unit = self.get_or_create_unit(session, value)
 

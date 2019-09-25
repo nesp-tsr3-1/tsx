@@ -24,7 +24,7 @@ INSERT INTO response_variable_type (id, description) VALUES
 (3, "Reporting rate");
 
 INSERT INTO unit (id, description) VALUES
-(1, "Sample: Occupancy (# presences/# absences)"),
+(1, "Sample: Occupancy (# presences/# surveys)"),
 (2, "Sample: abundance (counts)"),
 (3, "Sample: density (counts/fixed areas)"),
 (4, "Index"),
