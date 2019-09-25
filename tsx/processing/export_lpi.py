@@ -80,7 +80,7 @@ def process_database(species = None, monthly = False, filter_output = False):
             'TaxonomicGroup',
             'EPBCStatus',
             'IUCNStatus',
-            'BirdLifeAustraliaStatus',
+            'StatePlantStatus',
             'MaxStatus',
             'State',
             'Region',
