@@ -6,6 +6,8 @@ import time
 from contextlib import contextmanager
 import logging
 
+from tsx.config import config
+
 log = logging.getLogger(__name__)
 
 # https://stackoverflow.com/a/47087513/165783
@@ -93,7 +95,12 @@ from six.moves.queue import Queue, Empty
 import math
 import platform
 
-def run_parallel(target, tasks, n_workers = None, use_processes = False):
+try:
+    default_num_workers = config.getint("processing","num_workers")
+except:
+    default_num_workers = None
+
+def run_parallel(target, tasks, n_workers = default_num_workers, use_processes = False):
     """
     Runs tasks in parallel
 
