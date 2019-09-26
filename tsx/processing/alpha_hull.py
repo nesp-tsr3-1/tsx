@@ -159,20 +159,26 @@ def process_database(species = None, commit = False):
     """
     session = get_session()
 
-    if species is None:
-        species = get_all_spno(session)
 
     if commit:
-        for spno in species:
-            session.execute("""
-                DELETE FROM taxon_presence_alpha_hull
-                WHERE taxon_id IN (SELECT id FROM taxon WHERE spno = :spno)
-                """, { 'spno': spno })
-            session.execute("""
-                DELETE FROM taxon_presence_alpha_hull_subdiv
-                WHERE taxon_id IN (SELECT id FROM taxon WHERE spno = :spno)
-                """, { 'spno': spno })
+        log.info("Deleting previous alpha hulls")
+        if species is None:
+            session.execute("""DELETE FROM taxon_presence_alpha_hull""")
+            session.execute("""DELETE FROM taxon_presence_alpha_hull_subdiv""")
+        else:
+            for spno in tqdm(species):
+                session.execute("""
+                    DELETE FROM taxon_presence_alpha_hull
+                    WHERE taxon_id IN (SELECT id FROM taxon WHERE spno = :spno)
+                    """, { 'spno': spno })
+                session.execute("""
+                    DELETE FROM taxon_presence_alpha_hull_subdiv
+                    WHERE taxon_id IN (SELECT id FROM taxon WHERE spno = :spno)
+                    """, { 'spno': spno })
         session.commit()
+
+    if species is None:
+        species = get_all_spno(session)
 
     db_proj = pyproj.Proj('+init=EPSG:4326') # Database always uses WGS84
     working_proj = pyproj.Proj('+init=EPSG:3112') # GDA94 / Geoscience Australia Lambert - so that we can buffer in metres
