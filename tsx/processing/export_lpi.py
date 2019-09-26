@@ -163,6 +163,11 @@ def process_database(species = None, monthly = False, filter_output = False):
                         WHERE taxon_group.taxon_id = taxon.id
                     ) AS FunctionalGroup,
                     taxon.taxonomic_group AS TaxonomicGroup,
+                    CASE taxon.taxonomic_group
+                        WHEN 'Birds' THEN 'Aves'
+                        WHEN 'Mammals' THEN 'Mammalia'
+                        ELSE ''
+                    END AS Class,
                     taxon.national_priority AS NationalPriorityTaxa,
                     (SELECT description FROM taxon_status WHERE taxon_status.id = taxon.epbc_status_id) AS EPBCStatus,
                     (SELECT description FROM taxon_status WHERE taxon_status.id = taxon.iucn_status_id) AS IUCNStatus,
@@ -262,7 +267,6 @@ def process_database(species = None, monthly = False, filter_output = False):
 
                 # Taxonomic columns
                 data['Binomial'] = re.sub(r'[^\w]', '_', data['CommonName'])
-                data['Class'] = 'Aves'
                 name_parts = data['scientific_name'].split(' ')
                 data['Genus'] = name_parts[0]
                 if len(name_parts) > 1:
