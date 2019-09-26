@@ -117,6 +117,7 @@ def process_database(species = None, monthly = False, filter_output = False):
             # 'SeasonalConsistency', # TBD
             'ConsistencyOfMonitoring',
             # 'MonitoringFrequencyAndTiming', # TBD
+            'IntensiveManagement',
             'DataAgreement',
             'SuppressAggregatedData',
             'SurveysCentroidLatitude',
@@ -177,10 +178,11 @@ def process_database(species = None, monthly = False, filter_output = False):
                     search_type.description AS SearchTypeDesc,
                     COALESCE(site_id, grid_cell_id) AS SiteID,
                     COALESCE(
-                        (SELECT name FROM t1_site WHERE site_id = t1_site.id AND agg.data_type = 1),
-                        (SELECT name FROM t2_site WHERE site_id = t2_site.id AND agg.data_type = 2),
+                        t1_site.name,
+                        t2_site.name,
                         CONCAT('site_', agg.data_type, '_', site_id),
                         CONCAT('grid_', grid_cell_id)) AS SiteDesc,
+                    (SELECT description FROM intensive_management WHERE t1_site.intensive_management_id = intensive_management.id) AS IntensiveManagement,
                     source.id AS SourceID,
                     source.description AS SourceDesc,
                     unit.id AS UnitID,
@@ -224,6 +226,8 @@ def process_database(species = None, monthly = False, filter_output = False):
                     LEFT JOIN region_centroid ON region_centroid.id = region_id
                     LEFT JOIN taxon_source_alpha_hull alpha ON alpha.taxon_id = agg.taxon_id AND alpha.source_id = agg.source_id AND alpha.data_type = agg.data_type
                     LEFT JOIN data_source ON data_source.taxon_id = agg.taxon_id AND data_source.source_id = agg.source_id
+                    LEFT JOIN t1_site ON site_id = t1_site.id AND agg.data_type = 1
+                    LEFT JOIN t2_site ON site_id = t2_site.id AND agg.data_type = 2
                 WHERE agg.taxon_id = :taxon_id
                 AND start_date_y >= :min_year
                 AND start_date_y <= :max_year
