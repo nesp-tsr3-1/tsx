@@ -270,8 +270,8 @@ def process_database(species = None, monthly = False, filter_output = False):
                 data.update(year_data)
 
                 # Taxonomic columns
-                data['Binomial'] = re.sub(r'[^\w]', '_', data['CommonName'])
-                name_parts = data['scientific_name'].split(' ')
+                data['Binomial'] = re.sub(r'[^A-Za-z]+', '_', data['scientific_name']).strip('_')[0:40]
+                name_parts = data['scientific_name'].split(' ', 2)
                 data['Genus'] = name_parts[0]
                 if len(name_parts) > 1:
                     data['Species'] = name_parts[1]
