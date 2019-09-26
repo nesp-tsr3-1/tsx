@@ -15,6 +15,7 @@ data_dir=sample-data
 [processing]
 min_year=1950
 max_year=2015
+min_time_series_sample_years=2
 
 [processing.alpha_hull]
 thinning_distance=250

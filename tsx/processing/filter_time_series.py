@@ -12,6 +12,7 @@ def process_database():
 	# Get year range
 	min_year = tsx.config.config.getint("processing", "min_year")
 	max_year = tsx.config.config.getint("processing", "max_year")
+	min_tssy = tsx.config.config.getint("processing", "min_time_series_sample_years")
 
 	session.execute("""CREATE TEMPORARY TABLE tmp_filtered_ts
 		( INDEX (time_series_id) )
@@ -31,10 +32,11 @@ def process_database():
 		AND experimental_design_type_id = 1
 		GROUP BY agg.time_series_id
 		HAVING MAX(value) > 0
-		AND COUNT(DISTINCT start_date_y) >= 4;
+		AND COUNT(DISTINCT start_date_y) >= :min_tssy;
 	""", {
 		'min_year': min_year,
-		'max_year': max_year
+		'max_year': max_year,
+		'min_tssy': min_tssy
 	})
 
 	log.info("Step 2/2 - Updating aggregated_by_year table")
