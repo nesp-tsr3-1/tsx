@@ -5,6 +5,7 @@ import logging
 import time
 from contextlib import contextmanager
 import logging
+import faulthandler
 
 from tsx.config import config
 
@@ -100,6 +101,8 @@ try:
 except:
     default_num_workers = None
 
+StopWorking = object()
+
 def run_parallel(target, tasks, n_workers = default_num_workers, use_processes = False):
     """
     Runs tasks in parallel
@@ -154,21 +157,24 @@ def run_parallel(target, tasks, n_workers = default_num_workers, use_processes =
 
     # Setup worker threads
     def worker(work_q, result_q):
+        faulthandler.enable()
         while True:
             task = next(work_q)
-            if task is None:
+            if task is StopWorking:
                 break
             try:
                 if type(task) != tuple:
                     task = (task,)
                 result_q.put((target(*task), None))
-            except Exception as e:
+            except:
+                e = sys.exc_info()[0]
                 log.exception("Exception in worker")
                 result_q.put((None, e))
 
     for i in range(0, n_workers):
             if use_processes:
                 p = multiprocessing.Process(target = worker, args = (work_q, result_q))
+                p.daemon = True # Kill process if parent terminates early
                 p.start()
             else:
                 t = Thread(target = worker, args = (work_q, result_q))
@@ -187,7 +193,7 @@ def run_parallel(target, tasks, n_workers = default_num_workers, use_processes =
 
     # Signal threads to stop
     for j in range(0, n_workers):
-        work_q.put(None)
+        work_q.put(StopWorking)
 
     # Finish collecting results
     while i > 0:
