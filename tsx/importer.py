@@ -546,7 +546,7 @@ class Importer:
 				return False
 
 			# Now check consistency of common/scientific names
-			if common_name and taxon.common_name != common_name:
+			if common_name and taxon.common_name and taxon.common_name != common_name:
 				log.warning("Common name (%s) does not match expected (%s)" % (common_name, taxon.common_name))
 			if scientific_name and taxon.scientific_name != scientific_name:
 				log.warning("Scientific name (%s) does not match expected (%s)" % (scientific_name, taxon.scientific_name))
