@@ -101,8 +101,6 @@ try:
 except:
     default_num_workers = None
 
-StopWorking = object()
-
 def run_parallel(target, tasks, n_workers = default_num_workers, use_processes = False):
     """
     Runs tasks in parallel
@@ -160,11 +158,9 @@ def run_parallel(target, tasks, n_workers = default_num_workers, use_processes =
         faulthandler.enable()
         while True:
             task = next(work_q)
-            if task is StopWorking:
+            if task is None:
                 break
             try:
-                if type(task) != tuple:
-                    task = (task,)
                 result_q.put((target(*task), None))
             except:
                 e = sys.exc_info()[0]
@@ -184,6 +180,9 @@ def run_parallel(target, tasks, n_workers = default_num_workers, use_processes =
     # Feed in tasks and yield results
     i = 0
     for task in tasks:
+        # Tasks must always be tuples
+        if type(task) != tuple:
+            task = (task,)
         work_q.put(task)
         i += 1
         # Start getting results once all threads have something to do
@@ -193,7 +192,7 @@ def run_parallel(target, tasks, n_workers = default_num_workers, use_processes =
 
     # Signal threads to stop
     for j in range(0, n_workers):
-        work_q.put(StopWorking)
+        work_q.put(None)
 
     # Finish collecting results
     while i > 0:
