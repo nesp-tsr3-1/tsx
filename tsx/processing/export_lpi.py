@@ -157,7 +157,7 @@ def process_database(species = None, monthly = False, filter_output = False):
                     taxon.family_common_name AS FamilyCommonName,
                     (SELECT
                         GROUP_CONCAT(
-                            CONCAT(taxon_group.group_name, COALESCE(CONCAT(':', taxon_group.subgroup_name)))
+                            CONCAT(taxon_group.group_name, COALESCE(CONCAT(':', taxon_group.subgroup_name), ''))
                             SEPARATOR ','
                         )
                         FROM taxon_group
