@@ -544,7 +544,7 @@ def stats_html():
 
 	stats = get_stats(df)
 
-	html = """
+	html = u"""
 	<html>
 		<head>
 		</head>
@@ -586,7 +586,7 @@ def stats_html():
 	)
 
 	for row in stats['taxa_with_data']:
-		html += """
+		html += u"""
 		<tr>
 			<td>{common_name}</td>
 			<td>{scientific_name}</td>
@@ -600,7 +600,7 @@ def stats_html():
 		</tr>""".format(**row)
 
 	for row in stats['taxa_without_data']:
-		html += """
+		html += u"""
 		<tr>
 			<td>{common_name}</td>
 			<td>{scientific_name}</td>
