@@ -18,6 +18,34 @@ export function updateImport(id, dataImport) {
   return put('/imports/' + id, dataImport)
 }
 
+export function dataSources() {
+  return get('/data_sources')
+}
+
+export function dataSource(id) {
+  return get('/data_sources/' + id)
+}
+
+export function dataSourceImports(id) {
+  return get('/data_sources/' + id + '/imports')
+}
+
+export function dataSourceNotes(id) {
+  return get('/data_sources/' + id + '/notes')
+}
+
+export function createDataSourceNotes(id, notes) {
+  return post('/data_sources/' + id + '/notes', { notes })
+}
+
+export function createDataSource(source) {
+  return post('/data_sources', source)
+}
+
+export function updateDataSource(source) {
+  return put('/data_sources/' + source.id, source)
+}
+
 export function dataImports() {
   return get('/imports')
 }
@@ -60,6 +88,29 @@ export function login(email, password) {
 
 export function logout() {
   return post('/logout')
+}
+
+export function currentUser() {
+  if(!currentUser.cached) {
+    currentUser.cached = get('/users/me')
+  }
+  return currentUser.cached
+}
+
+export function users() {
+  return get('/users')
+}
+
+export function updateUserRole(userId, role) {
+  return put('/users/' + userId + '/role', { role })
+}
+
+export function requestPasswordReset(email) {
+  return post('/reset_password', { email })
+}
+
+export function resetPassword(code, password) {
+  return post('/reset_password', { code, password })
 }
 
 // TODO: if files are in object stores, update this

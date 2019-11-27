@@ -75,7 +75,7 @@ class ImportError(Exception):
 	pass
 
 class Importer:
-	def __init__(self, filename, data_type = None, commit = False, logger = log, progress_callback = None):
+	def __init__(self, filename, data_type = None, commit = False, logger = log, progress_callback = None, source_id = None):
 		if data_type not in (1,2):
 			raise ValueError("Invalid type (must be 1 or 2)")
 
@@ -123,6 +123,8 @@ class Importer:
 
 		self.sighting_keys = set(["SpNo", "TaxonID", "Breeding", "Count", "UnitID", "SightingComments"])
 
+		self.source_id = source_id
+
 
 	def progress_wrapper(self, iterable):
 		# Show a progress bar only if we are running as a script
@@ -142,6 +144,8 @@ class Importer:
 		self.session = session
 
 		try:
+			self.clear_previous_data(session)
+
 			# Autodetect excel files
 			if zipfile.is_zipfile(self.filename):
 				self.log.info('Guessing file format: Excel Spreadsheet')
@@ -206,6 +210,15 @@ class Importer:
 		self.log.info("Processed %s/%s rows" % (self.processed_rows, self.row_count))
 		self.log.info("Import processing complete. Errors: %s, Warnings: %s" % (self.error_count, self.warning_count))
 
+	def clear_previous_data(self, session):
+		if self.source_id:
+			self.log.info('Deleting all previous data for this source')
+			session.execute('DELETE FROM t1_survey WHERE source_id = :source_id', { 'source_id': self.source_id })
+			session.execute('DELETE FROM t1_site WHERE source_id = :source_id', { 'source_id': self.source_id })
+			session.execute('DELETE FROM t2_survey WHERE source_id = :source_id', { 'source_id': self.source_id })
+			session.execute('DELETE FROM t2_site WHERE source_id = :source_id', { 'source_id': self.source_id })
+
+
 	def update_log_counts(self):
 		self.error_count = self.log_counter.count('ERROR')
 		self.warning_count = self.log_counter.count('WARNING')
@@ -268,6 +281,9 @@ class Importer:
 
 		if len(unrecognized_headers) > 0:
 			self.log.warning("Unrecognized column(s) - will be ignored: %s" % ', '.join(unrecognized_headers))
+
+		if self.source_id:
+			self.log.info("Note: SourceDesc, SourceType and SourceProvider will be ignored since this information is specified via the web interface")
 
 	def process_row(self, session, row, row_index):
 		try:
@@ -348,28 +364,31 @@ class Importer:
 				return False
 
 		# Source
-		source = self.get_source(session, row.get('SourceDesc'))
+		if self.source_id == None:
+			source = self.get_source(session, row.get('SourceDesc'))
 
-		if source == None:
-			source = Source(
-				description = row.get('SourceDesc'),
-				provider = row.get('SourceProvider'),
-				source_type = get_or_create(session, SourceType, description = row.get('SourceType')) if row.get('SourceType') else None)
-			session.add(source)
-			session.flush()
-		else:
-			# Existing source
-			if 'SourceType' in row: # 'SourceType' is optional for type 2/3 data
-				if source.source_type == None:
-					if row.get('SourceType') != None:
+			if source == None:
+				source = Source(
+					description = row.get('SourceDesc'),
+					provider = row.get('SourceProvider'),
+					source_type = get_or_create(session, SourceType, description = row.get('SourceType')) if row.get('SourceType') else None)
+				session.add(source)
+				session.flush()
+			else:
+				# Existing source
+				if 'SourceType' in row: # 'SourceType' is optional for type 2/3 data
+					if source.source_type == None:
+						if row.get('SourceType') != None:
+							log.error("SourceType: doesn't match database for this source")
+							ok[0] = False
+					elif source.source_type.description != row.get('SourceType'):
 						log.error("SourceType: doesn't match database for this source")
 						ok[0] = False
-				elif source.source_type.description != row.get('SourceType'):
-					log.error("SourceType: doesn't match database for this source")
+				if source.provider != row.get('SourceProvider'):
+					log.error("SourceProvider: doesn't match database for this source")
 					ok[0] = False
-			if source.provider != row.get('SourceProvider'):
-				log.error("SourceProvider: doesn't match database for this source")
-				ok[0] = False
+		else:
+			source = session.query(Source).get(self.source_id)
 
 		# SearchType
 		search_type = self.get_or_create_search_type(session, row.get('SearchTypeDesc'))

@@ -12,6 +12,9 @@ import tsx.api.lpi_data
 import tsx.api.data_import
 import tsx.api.misc
 import tsx.api.user
+
+import json
+import datetime
 # import tsx.api.auth
 
 app = Flask('tsx')
@@ -35,3 +38,15 @@ app.register_blueprint(tsx.api.lpi_data.bp)
 app.register_blueprint(tsx.api.data_import.bp)
 app.register_blueprint(tsx.api.misc.bp)
 app.register_blueprint(tsx.api.user.bp)
+
+
+class DateTimeEncoder(json.JSONEncoder):
+	def default(self, obj):
+		if isinstance(obj, (datetime.datetime, datetime.date, datetime.time)):
+			return obj.isoformat()
+		elif isinstance(obj, datetime.timedelta):
+			return (datetime.datetime.min + obj).time().isoformat()
+
+		return super(DateTimeEncoder, self).default(obj)
+
+app.json_encoder = DateTimeEncoder

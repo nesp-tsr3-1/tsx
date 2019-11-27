@@ -26,7 +26,7 @@ def csv_response(rows, filename="export.csv"):
 # at startup - see below)
 #
 # For example:
-#    from nes.api.util import db_session
+#    from tsx.api.util import db_session
 #
 #    db_session.query(Model)
 #
@@ -41,6 +41,17 @@ def get_user():
 	except KeyError:
 		return None
 	return db_session.query(User).get(user_id)
+
+def get_roles(user):
+	query = db_session.execute("""SELECT role.description
+		FROM role
+		JOIN user_role ON role.id = user_role.role_id
+		WHERE user_role.user_id = :user_id
+	""", {
+		'user_id': user.id
+	})
+
+	return set(role for (role,) in query.fetchall())
 
 # I would have used Flask-SQLAlchemy, but it requires you to make your database model dependent on Flask
 # which makes no sense when you want to use the database in other contexts e.g. from a CLI script.

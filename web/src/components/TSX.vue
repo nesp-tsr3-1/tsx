@@ -26,29 +26,29 @@
                 <option v-for="option in subgroupList" v-bind:value="option">{{option.text}}</option>
               </select>
             </div>
-          </div>
-          <div class="field">
-            <label class="label">State / Territory</label>
-            <div class="select is-fullwidth">
-              <select v-model='selectedState' :disabled='prioritySelected'>
-                <option v-for="option in stateList" v-bind:value="option">{{option.text}}</option>
-              </select>
+            <div class="field">
+              <label class="label">State / Territory</label>
+              <div class="select is-fullwidth">
+                <select v-model='selectedState' :disabled='prioritySelected'>
+                  <option v-for="option in stateList" v-bind:value="option">{{option.text}}</option>
+                </select>
+              </div>
             </div>
-          </div>
-          <div class="field">
-            <label class="label">Status authority</label>
-            <div class="select is-fullwidth">
-              <select v-model='selectedStatusAuthority' :disabled='prioritySelected'>
-                <option v-for="option in statusAuthorityList" v-bind:value="option">{{option.text}}</option>
-              </select>
+            <div class="field">
+              <label class="label">Status authority</label>
+              <div class="select is-fullwidth">
+                <select v-model='selectedStatusAuthority' :disabled='prioritySelected'>
+                  <option v-for="option in statusAuthorityList" v-bind:value="option">{{option.text}}</option>
+                </select>
+              </div>
             </div>
-          </div>
-          <div class="field">
-            <label class="label">Status</label>
-            <div class="select is-fullwidth">
-              <select v-model='selectedStatus' :disabled='prioritySelected'>
-                <option v-for="option in statusList" v-bind:value="option">{{option.text}}</option>
-              </select>
+            <div class="field">
+              <label class="label">Status</label>
+              <div class="select is-fullwidth">
+                <select v-model='selectedStatus' :disabled='prioritySelected'>
+                  <option v-for="option in statusList" v-bind:value="option">{{option.text}}</option>
+                </select>
+              </div>
             </div>
           </div>
           <div class="field">
@@ -74,26 +74,24 @@
                 <option v-for="option in yearList" v-bind:value="option">{{option.text}}</option>
               </select>
             </div>
+
+            <p>
+              <button class='button is-primary is-small' v-on:click='downloadCSV'>Download CSV</button>
+            </p>
+            <p>
+              <button class='button is-primary is-small' v-on:click='viewDataSummary'>Data Summary</button>
+            </p>
           </div>
-
-
-          <p>
-            <button class='button is-primary is-small' v-on:click='downloadCSV'>Download CSV</button>
-          </p>
-          <p>
-            <button class='button is-primary is-small' v-on:click='viewDataSummary'>Data Summary</button>
-          </p>
         </div>
-      </div>
 
-      <div class="modal is-active" v-show='loadingData && !showFullMap'>
-        <div class="modal-background" style="background: rgba(0,0,0,0.2)"></div>
-        <div class="modal-card">
-          <section class="modal-card-body">
-            <spinner size='large' message='Loading data....'></spinner>
-          </section>
+        <div class="modal is-active" v-show='loadingData && !showFullMap'>
+          <div class="modal-background" style="background: rgba(0,0,0,0.2)"></div>
+          <div class="modal-card">
+            <section class="modal-card-body">
+              <spinner size='large' message='Loading data....'></spinner>
+            </section>
+          </div>
         </div>
-      </div>
 
       <div class="tile is-vertical ie11-bugfix" v-show="!noData">
         <div class="tile">
@@ -133,89 +131,122 @@
             <div class="tile is-child card">
                 <h4 class="has-text-black">Monitoring consistency</h4>
                 <span class="info-icon icon"
-                data-tippy-html="#popup-monitoring-consistency"
-                data-tippy-interactive="true"
-                data-tippy-arrow="true"
-                data-tippy-placement="left"
-                v-tippy>
+                  data-tippy-html="#popup-main-index"
+                  data-tippy-interactive="true"
+                  data-tippy-arrow="true"
+                  data-tippy-placement="left"
+                  v-tippy>
                   <i class="far fa-question-circle"></i>
                 </span>
-                <div id="popup-monitoring-consistency" style="display: none" v-tippy-html>
+                <div id="popup-main-index" style="display: none" v-tippy-html>
                     <div class="popup-content">
-                      This dot plot shows the particular years for which monitoring data were available. Each row represents a time series where a species/subspecies was monitored with a consistent method at a single site. The dots represent count values for the metric used to quantify the species/subspecies while zeros indicate absences (non-detections) of those species at the site.
+                        <p>The index shows the average change in populations compared to a base year. It shows a relative change and not population numbers themselves. At the reference year, the index gets an index score of one. A score of 1.2 would mean a 20% increase on average compared to the reference year, while a score of 0.8 would mean a 20% decrease on average compared to the reference year.</p>
+                        <p>Check this index:</p>
+                        <ol>
+                          <li>Look at <b>Spatial representativeness</b> map to see how much data there are and where these data come from.</li>
+                          <li>Look at <b>Monitoring consistency</b> to see how consistently each monitoring location was visited over time.</li>
+                          <li>Go to <b>Time series and species accumulation</b> plot to see how many time series and species/subspecies were used to calculate this index in each year</li>
+                          <li>Adjust the <b>Reference year</b> to let the index start at a year with more data</li>
+                          <li>Go to <b>Data Summary</b> to see which species/subspecies were included in this index</li>
+                          <li>Go to <b>Download CSV</b> to get the aggregated data used to calculate this index.</li>
+                        </ol>
+                    </div>
+                </div>
+                <div class="plot-container" v-show="!noLPI">
+                  <canvas ref='lpiplot'></canvas>
+                </div>
+                <div class="has-text-black" v-show="noLPI">
+                  <p>No index generated – less than 3 taxa present in the range of reference years.</p>
+                  <p>Try changing the reference year to build an index</p>
+                </div>
+              </div>
+              <div class="tile is-child card">
+                  <h4 class="has-text-black">Monitoring consistency</h4>
+                  <span class="info-icon icon"
+                  data-tippy-html="#popup-monitoring-consistency"
+                  data-tippy-interactive="true"
+                  data-tippy-arrow="true"
+                  data-tippy-placement="left"
+                  v-tippy>
+                    <i class="far fa-question-circle"></i>
+                  </span>
+                  <div id="popup-monitoring-consistency" style="display: none" v-tippy-html>
+                      <div class="popup-content">
+                        This dot plot shows the particular years for which monitoring data were available. Each row represents a time series where a species/subspecies was monitored with a consistent method at a single site. The dots represent count values for the metric used to quantify the species/subspecies while zeros indicate absences (non-detections) of those species at the site.
+                      </div>
+                  </div>
+                  <div class="plot-container">
+                    <canvas ref='dotplot'></canvas>
+                  </div>
+              </div>
+            </div>
+            <div class="tile is-parent is-vertical">
+              <div class="tile is-child card map-tile">
+                <h4 class="has-text-black">Spatial representativeness</h4>
+                <span class="info-icon icon"
+                  data-tippy-html="#popup-spatial-rep"
+                  data-tippy-interactive="true"
+                  data-tippy-arrow="true"
+                  data-tippy-placement="left"
+                  v-tippy>
+                  <i class="far fa-question-circle"></i>
+                </span>
+                <div id="popup-spatial-rep" style="display: none" v-tippy-html>
+                    <div class="popup-content">
+                      This map shows where threatened species data to calculate this index are recorded in Australia. Light blue indicates less data (fewer sites monitored), pink indicates more data (more sites monitored).
+                    </div>
+                </div>
+                <vue-slider ref='slider' v-bind='sliderData' v-model='sliderRange' v-if='sliderEnabled' class='heatmap-slider'></vue-slider>
+                <div id='intensityplot' ref='intensityplot' class='heatmap-div'></div>
+                <spinner size='medium' v-show='loadingMap' class='heatmap-spinner'></spinner>
+              </div>
+              <div class="tile is-child card" v-show="!showFullMap">
+                <h4 class="has-text-black">Time series and species accumulation</h4>
+                <span class="info-icon icon"
+                  data-tippy-html="#popup-summary-plot"
+                  data-tippy-interactive="true"
+                  data-tippy-arrow="true"
+                  data-tippy-placement="left"
+                  v-tippy>
+                  <i class="far fa-question-circle"></i>
+                </span>
+                <div id="popup-summary-plot" style="display: none" v-tippy-html>
+                    <div class="popup-content">
+                      This plot shows the number of species/subspecies (in blue) and the number of time series (in green) used to calculate the index for each year.
                     </div>
                 </div>
                 <div class="plot-container">
-                  <canvas ref='dotplot'></canvas>
+                  <canvas ref='sumplot'></canvas>
                 </div>
-            </div>
-          </div>
-          <div class="tile is-parent is-vertical">
-            <div class="tile is-child card map-tile">
-              <h4 class="has-text-black">Spatial representativeness</h4>
-              <span class="info-icon icon"
-                data-tippy-html="#popup-spatial-rep"
-                data-tippy-interactive="true"
-                data-tippy-arrow="true"
-                data-tippy-placement="left"
-                v-tippy>
-                <i class="far fa-question-circle"></i>
-              </span>
-              <div id="popup-spatial-rep" style="display: none" v-tippy-html>
-                  <div class="popup-content">
-                    This map shows where threatened species data to calculate this index are recorded in Australia. Light blue indicates less data (fewer sites monitored), pink indicates more data (more sites monitored).
-                  </div>
               </div>
-              <vue-slider ref='slider' v-bind='sliderData' v-model='sliderRange' v-if='sliderEnabled' class='heatmap-slider'></vue-slider>
-              <div id='intensityplot' ref='intensityplot' class='heatmap-div'></div>
-              <spinner size='medium' v-show='loadingMap' class='heatmap-spinner'></spinner>
-            </div>
-            <div class="tile is-child card" v-show="!showFullMap">
-              <h4 class="has-text-black">Time series and species accumulation</h4>
-              <span class="info-icon icon"
-                data-tippy-html="#popup-summary-plot"
-                data-tippy-interactive="true"
-                data-tippy-arrow="true"
-                data-tippy-placement="left"
-                v-tippy>
-                <i class="far fa-question-circle"></i>
-              </span>
-              <div id="popup-summary-plot" style="display: none" v-tippy-html>
-                  <div class="popup-content">
-                    This plot shows the number of species/subspecies (in blue) and the number of time series (in green) used to calculate the index for each year.
-                  </div>
-              </div>
-              <div class="plot-container">
-                <canvas ref='sumplot'></canvas>
-              </div>
-            </div>
 
+            </div>
           </div>
+        </div>
+
+        <div class="tile is-child" v-show="noData">
+          <p style="margin: 0.8em">(No data to show)</p>
         </div>
       </div>
 
-      <div class="tile is-child" v-show="noData">
-        <p style="margin: 0.8em">(No data to show)</p>
-      </div>
-    </div>
-
-    <!-- warning dialog -->
-    <div class="modal is-active" v-show="!hasAcceptedWarning">
-      <div class="modal-background"></div>
-      <div class="modal-card">
-        <header class="modal-card-head">
-          <span class="modal-card-title">Caution</span>
-        </header>
-        <section class="modal-card-body" style="color:black">
-          <p>The trends produced by this tool vary in reliability.</p>
-          <p>A trend is only as good as the data used to generate it.</p>
-          <p>We have developed diagnostic tools to help assess the reliability of each trend. <a target="_blank" rel="noopener noreferrer" href="https://tsx.org.au/visualising-the-index/how-good/">(Click here for more details on how to assess reliability of trends)</a></p>
-          <p>By using this tool you acknowledge these precautions and agree to apply common sense whenever using the TSX.</p>
-        </section>
-        <footer class="modal-card-foot">
-          <button class="button" v-on:click='acceptWarning'>I Accept</button>
-          <button class="button" v-on:click='goBack'>Cancel</button>
-        </footer>
+      <!-- warning dialog -->
+      <div class="modal is-active" v-show="!hasAcceptedWarning">
+        <div class="modal-background"></div>
+        <div class="modal-card">
+          <header class="modal-card-head">
+            <span class="modal-card-title">Caution</span>
+          </header>
+          <section class="modal-card-body" style="color:black">
+            <p>The trends produced by this tool vary in reliability.</p>
+            <p>A trend is only as good as the data used to generate it.</p>
+            <p>We have developed diagnostic tools to help assess the reliability of each trend. <a target="_blank" rel="noopener noreferrer" href="https://tsx.org.au/visualising-the-index/how-good/">(Click here for more details on how to assess reliability of trends)</a></p>
+            <p>By using this tool you acknowledge these precautions and agree to apply common sense whenever using the TSX.</p>
+          </section>
+          <footer class="modal-card-foot">
+            <button class="button" v-on:click='acceptWarning'>I Accept</button>
+            <button class="button" v-on:click='goBack'>Cancel</button>
+          </footer>
+        </div>
       </div>
     </div>
   </div>
@@ -957,6 +988,9 @@ export default {
 <style src='leaflet-easybutton/src/easy-button.css'>
 </style>
 <style scoped>
+  label {
+    color: white;
+  }
   h4 {
     /*margin-top: 0.5em;*/
     /*margin-left: 1em;*/

@@ -25,29 +25,30 @@ $tsr-F: #93b479;
 $tsr-G: #636968;
 
 $primary: $tsr-E;
-$text: #fff;
-$text-strong: #fff;
-$label-color: #fff;
-$background: $tsr-green;
-$body-background-color: $tsr-green;
-$table-background-color: $tsr-green;
-$table-color: #fff;
-$subtitle-color: #fff;
-$title-color: #fff;
-$table-striped-row-even-background-color: rgba(255,255,255,0.1) !default
-$table-striped-row-even-hover-background-color: rgba(255,255,255,0.2) !default
+// $text: #fff;
+// $text-strong: #fff;
+// $label-color: #fff;
+// $background: $tsr-green;
+// $body-background-color: $tsr-green;
+// $table-background-color: $tsr-green;
+// $table-color: #fff;
+// $subtitle-color: #fff;
+// $title-color: #fff;
+// $table-striped-row-even-background-color: rgba(255,255,255,0.1) !default
+// $table-striped-row-even-hover-background-color: rgba(255,255,255,0.2) !default
+// $table-row-hover-background-color: rgba(255,255,255,0.2) !default
 
 
 body {
-  background-color: $tsr-green;
+  // background-color: $tsr-green;
 }
 
-.bird-background {
-  background-image: url('../static/images/bird-bg.png');
-  background-repeat: no-repeat;
-  background-position: top 1em left 2em;
-  background-size: 150px;
-}
+// .bird-background {
+//   background-image: url('../static/images/bird-bg.png');
+//   background-repeat: no-repeat;
+//   background-position: top 1em left 2em;
+//   background-size: 150px;
+// }
 
 $family-sans-serif: "Museo Sans", "Arial", BlinkMacSystemFont, -apple-system, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", sans-serif;
 
@@ -65,6 +66,19 @@ input[disabled], select[disabled], textarea[disabled] {
 
 h1 {
   margin-top: 1em;
+}
+
+.content h4 {
+	font-weight: normal;
+}
+
+footer {
+	border-top: 5px solid $tsr-green;
+}
+
+.is-dark {
+	background-color: $tsr-green;
+	color: white;
 }
 
 </style>

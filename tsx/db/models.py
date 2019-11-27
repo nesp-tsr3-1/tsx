@@ -219,6 +219,10 @@ class Source(Base):
     description = Column(Text)
     notes = Column(Text)
     authors = Column(Text)
+    contact_name = Column(Text)
+    contact_position = Column(Text)
+    contact_email = Column(Text)
+    contact_phone = Column(Text)
 
     source_type = relationship('SourceType')
     users = relationship('User', secondary='user_source')

@@ -1,5 +1,5 @@
 <template>
-  <div class="import-list">
+  <div class="source-list">
     <div v-if="status == 'loading'">
       <p>
         Loading…
@@ -7,26 +7,26 @@
     </div>
     <div v-if="status == 'error'">
       <p>
-        Failed to load imports.
+        Failed to load sources.
       </p>
     </div>
     <div v-if="status == 'loaded'">
-      <p class="table is-fullwidth is-striped is-hoverable" v-if="imports.length == 0">
+      <p class="table is-fullwidth is-striped is-hoverable" v-if="sources.length == 0">
         None
       </p>
-      <table class="table is-fullwidth is-striped is-hoverable" v-if="imports.length > 0">
+      <table class="table is-fullwidth is-striped is-hoverable" v-if="sources.length > 0">
         <thead>
           <tr>
-            <th>Filename</th>
+            <th>Description</th>
+            <th>Created</th>
             <th>Status</th>
-            <th>Uploaded</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="i in imports">
-            <td><a v-bind:href="importUrl(i)">{{i.filename}}</a></td>
+          <tr v-for="i in sources" v-on:click='$router.push("source/" + i.id)'>
+            <td>{{i.description}}</td>
+            <td><timeago :since='i.time_created' :auto-update="60" v-if="i.time_created"></timeago></td>
             <td>{{humanizeStatus(i.status)}}</td>
-            <td><timeago :since='i.time_created' :auto-update="60"></timeago></td>
           </tr>
         </tbody>
       </table>
@@ -51,18 +51,16 @@ Vue.use(VueTimeago, {
 })
 
 export default {
-  name: 'ImportList',
+  name: 'sourceList',
   data () {
     var data = {
-      imports: [],
+      sources: [],
       status: 'loading'
     }
 
-    var importsPromise = this.sourceId ? api.dataSourceImports(this.sourceId) : api.dataImports()
-
-    importsPromise.then((imports) => {
-      data.imports = imports
-        .sort((a, b) => b.time_created.localeCompare(a.time_created))
+    api.dataSources().then((sources) => {
+      data.sources = sources
+        .sort((a, b) => (b.time_created || '').localeCompare(a.time_created || ''))
       data.status = 'loaded'
     }).catch((error) => {
       console.log(error)
@@ -72,13 +70,10 @@ export default {
     return data
   },
   methods: {
-    importUrl(i) {
-      return api.uploadURL(i.upload_uuid)
-    },
     humanizeStatus
   },
   props: {
-    sourceId: Number
+    completed: Boolean
   }
 }
 </script>

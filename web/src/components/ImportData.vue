@@ -1,14 +1,8 @@
+<!--
+  Import component, embedded within data source page
+-->
 <template>
   <div class="import-edit content">
-    <h3 class="title">{{title}}</h3>
-    <router-link to='/import'>Back to imports</router-link>
-    <hr>
-
-    <div class="field">
-      <label class="label">Enter a description for this import</label>
-      <input class="input" type="text" v-bind:disabled="!canEdit" v-model="name" style="max-width: 30em">
-    </div>
-
     <div class="field">
       <label class="label">Data type</label>
       <div class="select">
@@ -70,7 +64,7 @@
     </div>
 
     <div v-if='processingComplete' class="log">
-      <h3>Import log</h3>
+      <h5>Import log</h5>
       <code v-for='log in importLogs' v-bind:class='log.level' style='display: block'>
         {{log.message}}
       </code>
@@ -89,7 +83,7 @@ import * as api from '@/api'
 import * as util from '@/util'
 
 export default {
-  name: 'ImportEdit',
+  name: 'ImportData',
   data () {
     return {
       uploading: false,
@@ -138,15 +132,20 @@ export default {
       }
     })
 
-    if(this.$route.params.id !== 'new') {
-      this.importId = this.$route.params.id
-      this.monitorImport()
-    }
+    api.dataSourceImports(this.sourceId).then(imports => {
+      if(imports.length > 0) {
+        var lastImport = imports[imports.length - 1]
+        if(lastImport.status !== 'imported') {
+          this.importId = lastImport.id
+          this.monitorImport()
+        }
+      }
+    })
   },
   watch: {
-    importId: function(val) {
-      this.$router.replace('/import/' + val)
-    }
+    // importId: function(val) {
+    //   this.$router.replace('/import/' + val)
+    // }
   },
   methods: {
     destroyed: function() {
@@ -188,8 +187,8 @@ export default {
 
       var dataImport = {
         upload_uuid: this.fileUUID,
-        name: this.name.trim(),
-        data_type: this.dataType
+        data_type: this.dataType,
+        source_id: this.sourceId
       }
 
       if(this.importId) {
@@ -246,6 +245,9 @@ export default {
         })
       }
     }
+  },
+  props: {
+    sourceId: Number
   }
 }
 
@@ -274,8 +276,13 @@ function poll(promiseFn, delay, callback) {
 .error { color: $red; }
 .info { color: $blue; }
 .warning { color: orange; }
-code {
-  background: white !important;
+
+
+.log code {
+  background: #eee;
 }
+// code {
+//   background: white !important;
+// }
 
 </style>

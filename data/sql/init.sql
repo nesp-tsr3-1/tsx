@@ -97,14 +97,14 @@ INSERT INTO `range` (id, description) VALUES
   (5, "Irruptive"),
   (6, "Introduced");
 
-INSERT INTO `data_import_status` (id, description) VALUES
-  (1, "Checking"),
-  (2, "Checked - OK"),
-  (3, "Checked - Error"),
-  (4, "Importing"),
-  (5, "Import Error"),
-  (6, "Imported - Awaiting Approval"),
-  (7, "Imported - Approved");
+INSERT INTO `data_import_status` (id, code, description) VALUES
+  (1, "checking", "Checking"),
+  (2, "checked_ok", "Checked - OK"),
+  (3, "checked_error", "Checked - Error"),
+  (4, "importing", "Importing"),
+  (5, "import_error", "Import Error"),
+  (6, "imported", "Imported - Awaiting Approval"),
+  (7, "approved", "Imported - Approved");
 
 INSERT INTO `role` (id, description) VALUES
   (1, "Administrator"),

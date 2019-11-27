@@ -131,3 +131,15 @@ export function max(array) {
 export function uniq(array) {
   return [...new Set(array)]
 }
+
+export function humanizeStatus(str) {
+  return {
+    init: 'Not checked yet',
+    checked_ok: 'Checked (OK)',
+    checked_error: 'Checked (error)',
+    checking: 'Checking',
+    importing: 'Importing',
+    imported: 'Imported',
+    import_error: 'Error during import'
+  }[str]
+}

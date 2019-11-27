@@ -1,60 +1,19 @@
 from flask import request, make_response, g, jsonify, Blueprint, session
 from tsx.db import get_session, User
-from tsx.api.util import get_user
+from tsx.api.util import get_user, get_roles, db_session
 from sqlalchemy import exc
 import os
 import json
-import re
-from collections import namedtuple
 from passlib.context import CryptContext
+import secrets
+from string import Template
+from textwrap import dedent
+from tsx.api.validation import *
 
 bp = Blueprint('user', __name__)
 
 # For password hashing
 pwd_context = CryptContext(schemes=["argon2"])
-
-# Basic field validation framework
-
-Field = namedtuple("Field", "name title validators")
-
-email_regex = r'^[^@\s]+@[^@\s]+\.[^@\s]+$'
-def validate_email(value, field):
-	if not re.match(email_regex, value):
-		return "Must be a valid email address"
-
-def validate_required(value, field):
-	if value is None or value == "":
-		return "%s is required" % field.title
-
-def validate_max_chars(length):
-	def v(value, field):
-		if len(value) > length:
-			return "Must contain no more than %s characters" % length
-	return v
-
-def validate_min_chars(length):
-	def v(value, field):
-		if len(value) < length:
-			return "Must contain at least %s characters" % length
-	return v
-
-def validate_fields(fields, body):
-	errors = {}
-
-	for field in fields:
-		value = body[field.name].strip()
-
-		for validator in field.validators:
-			message = validator(value, field)
-			if message:
-				errors[field.name] = message
-				break
-				# errors.append({
-				# 	'field': field.name,
-				# 	'message': message
-				# })
-
-	return errors
 
 # Routes:
 
@@ -83,7 +42,6 @@ def create_user():
 		password_hash=pwd_context.hash(body['password'])
 	)
 
-	db_session = get_session()
 	try:
 		db_session.add(user)
 		db_session.commit()
@@ -107,7 +65,6 @@ def login():
 	if len(errors):
 		return jsonify(errors), 400
 
-	db_session = get_session()
 	user = db_session.query(User).filter(User.email == body['email']).one_or_none()
 
 	if user is not None and pwd_context.verify(body['password'], user.password_hash):
@@ -137,3 +94,144 @@ def logout():
 @bp.route('/is_logged_in', methods = ['GET'])
 def is_logged_in():
 	return jsonify(get_user() is not None), 200
+
+@bp.route('/users/me', methods = ['GET'])
+def current_user():
+	user = get_user()
+	if user is None:
+		return "Not found", 404
+	else:
+		return jsonify(user_to_json(user)), 200
+
+@bp.route('/users/<int:user_id>/role', methods = ['PUT'])
+def update_user_role(user_id):
+	user = get_user()
+
+	if 'Administrator' not in get_roles(user):
+		return "Forbidden", 403
+
+	body = request.json
+
+	try:
+		new_role = body['role']
+	except KeyError:
+		return "Missing role", 400
+
+	db_session.execute("DELETE FROM user_role WHERE user_id = :user_id", { 'user_id': user_id })
+	print(new_role)
+	print(user_id)
+	db_session.execute("INSERT INTO user_role (user_id, role_id) SELECT :user_id, (SELECT id FROM role WHERE description = :role)", { 'user_id': user_id, 'role': new_role })
+	db_session.commit()
+
+	return "OK", 200
+
+@bp.route('/users', methods = ['GET'])
+def users():
+	user = get_user()
+
+	if 'Administrator' not in get_roles(user):
+		return "Forbidden", 403
+
+	sql = """SELECT
+		user.id,
+		user.email,
+		user.first_name,
+		user.last_name,
+		user.phone_number,
+		MAX(role.description = 'Administrator') AS is_admin
+	FROM user
+	LEFT JOIN user_role ON user.id = user_role.user_id
+	LEFT JOIN role ON user_role.role_id = role.id
+	GROUP BY user.id"""
+
+	rows = db_session.execute(sql)
+
+	return jsonify([dict(row.items()) for row in rows])
+
+def user_to_json(user):
+	return {
+		'id': user.id,
+		'email': user.email,
+		'first_name': user.first_name,
+		'last_name': user.last_name,
+		'phone_number': user.phone_number,
+		'is_admin': 'Administrator' in get_roles(user)
+	}
+
+reset_email_body = Template(dedent("""
+	Hi $name,
+
+	We have recieved a request to reset your password for the TSX web interface.
+
+	To reset your password, visit $reset_url
+
+	If you did not request a password reset, please disregard this email.
+"""))
+
+reset_email_no_account_body = Template(dedent("""
+	Hi,
+
+	We recieved a request to reset your password for the TSX web interface (http://tsx.org.au),
+	however there no account exists for this email address ($email).
+
+	If you wish to create a new account, visit https://tsx.org.au/tsx/#/signup
+
+	If you did not request a password reset, please disregard this email.
+"""))
+
+@bp.route('/reset_password', methods = ['POST'])
+def reset_password():
+	body = request.json
+
+	if 'code' in body:
+		# User already has a code - actually reset the password
+		fields = [
+			Field(name='password', title='Password', validators=[validate_required, validate_min_chars(8)])
+		]
+
+		errors = validate_fields(fields, body)
+
+		if len(errors):
+			return jsonify(errors), 400
+
+		code = body['code'].strip()
+		user = db_session.query(User).filter(User.password_reset_code == code).one_or_none()
+
+		if user == None:
+			return jsonify({ 'invalid_code': True }), 400
+		else:
+			user.password_hash = pwd_context.hash(body['password'])
+			user.password_reset_code = None
+			db_session.commit()
+			return "OK", 200
+
+	else:
+		# User doesn't have a code - need to send user a reset link
+		fields = [
+			Field(name='email', title='Email address', validators=[validate_required, validate_email])
+		]
+
+		errors = validate_fields(fields, body)
+
+		if len(errors):
+			return jsonify(errors), 400
+
+		email = body['email'].strip()
+
+		user = db_session.query(User).filter(User.email == email).one_or_none()
+		if user == None:
+			email_body = reset_email_no_account_body.substitute(email=email)
+		else:
+			# Update reset code in database
+			user.password_reset_code = secrets.token_urlsafe(16)
+			db_session.commit()
+
+			# Send reset email
+			# TODO: generate URL dynamically
+			reset_url = "http://localhost:8080/#/reset_password?code=%s" % user.password_reset_code
+			email_body = reset_email_body.substitute(name=user.first_name, reset_url=reset_url)
+
+		# TODO: send email
+		print(email_body)
+
+		return "OK", 200

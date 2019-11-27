@@ -1,30 +1,33 @@
 <template>
-  <div class='login'>
-    <div style="margin-bottom: 1em; text-align: center;">
-      <p v-if="after_signup" style="font-weight: bold; margin-bottom: 1em;">Your account has been created</p>
-      <p>Please enter your email address and password</p>
-    </div>
-    <form>
-      <fieldset v-bind:disabled="submitting">
-        <div class="field">
-          <label class="has-text-dark">Email address</label>
-          <input class="input" type="text" placeholder="user@example.com" v-model="email" autofocus></input>
-          <p class="help is-danger" v-if="errors.email">{{ errors.email }}</p>
-        </div>
-        <div class="field">
-          <label class="has-text-dark">Password</label>
-          <input class="input" type="password" v-model="password"></input>
-          <p class="help is-danger" v-if="errors.password">{{ errors.password }}</p>
-        </div>
-        <button class="button is-primary" style="width: 100%; margin: 0.5em 0;" v-on:click="login">Log In</button>
-      </fieldset>
-      <p style="font-size: 80%; text-align: center;"><a href="#">Forgot password?</a></p>
-    </form>
+  <div class="section">
+    <div class="container is-widescreen login">
+      <div style="margin-bottom: 1em; text-align: center;">
+        <p v-if="after_signup" style="font-weight: bold; margin-bottom: 1em;">Your account has been created</p>
+        <p>Please enter your email address and password</p>
+      </div>
+      <form>
+        <fieldset v-bind:disabled="submitting">
+          <div class="field">
+            <label class="has-text-dark">Email address</label>
+            <input class="input" type="text" placeholder="user@example.com" v-model="email" v-autofocus></input>
+            <p class="help is-danger" v-if="errors.email">{{ errors.email }}</p>
+          </div>
+          <div class="field">
+            <label class="has-text-dark">Password</label>
+            <input class="input" type="password" v-model="password"></input>
+            <p class="help is-danger" v-if="errors.password">{{ errors.password }}</p>
+          </div>
+          <button class="button is-primary" style="width: 100%; margin: 0.5em 0;" v-on:click="login">Log In</button>
+        </fieldset>
+        <p style="font-size: 80%; text-align: center;">
+          <router-link :to="{ path: '/reset_password', query: { email: email } }">Forgot password?</router-link>
+        </p>
+      </form>
 
-    <p style="text-align: center">
-      <router-link to="/signup" tag="button" class="button" style="margin-top: 2em;" v-if="!after_signup">Create an account</router-link>
-      <!-- <button class="button" style="margin-top: 2em;">Create an account</button> -->
-    </p>
+      <p style="text-align: center">
+        <router-link to="/signup" tag="button" class="button" style="margin-top: 2em;" v-if="!after_signup">Create an account</router-link>
+      </p>
+    </div>
   </div>
 </template>
 
