@@ -20,6 +20,7 @@ def get_session():
 
 engine = create_engine(get_database_url(),
     convert_unicode=True,
-    pool_recycle=600) # Avoid DB connection timeout
+    pool_recycle=600, # Avoid DB connection timeout
+    connect_args = {'use_pure':True}) # This avoids weird intermittent 'Access denied for user' error (maybe due to a bug in the MySQL C connector?)
 
 Session = sessionmaker(bind=engine)
