@@ -10,7 +10,7 @@ configparser==3.7.4
 docutils==0.14
 enum34==1.1.6
 et-xmlfile==1.0.1
-faulthandler==3.1
+faulthandler==3.1; python_version < '3.3'
 Fiona==1.7.13
 Flask==1.0
 Flask-Cors==3.0.6
