@@ -11,69 +11,89 @@ import os
 import json
 import numpy as np
 import tempfile
+import re
 from zipfile import ZipFile, ZIP_DEFLATED
 
-# this is going to use quite alot of RAM, but it is more responsive than using dask
 bp = Blueprint('lpi_data', __name__)
-export_dir = tsx.config.data_dir('export')
-filename = 'lpi-filtered.csv'
-if os.path.isfile(os.path.join(export_dir, filename)):
-	# filename = '/Users/james/tmp/lpi-2018-08-08/lpi-filtered.csv'
-	unfiltered_df = pd.read_csv(os.path.join(export_dir, filename), index_col='ID', quoting=csv.QUOTE_MINIMAL, dtype={
-		'ID': int,
-		'Binomial': str,
-		'SpNo': int,
-		'TaxonID': str,
-		'CommonName': str,
-		'Class': str,
-		'Order': str,
-		'Family': str,
-		'FamilyCommonName': str,
-		'Genus': str,
-		'Species': str,
-		'Subspecies': str,
-		'FunctionalGroup': str,
-		'FunctionalSubGroup': str,
-		'EPBCStatus': str,
-		'IUCNStatus': str,
-		'BirdLifeAustraliaStatus': str,
-		'MaxStatus': str,
-		'State': str,
-		'Region': str,
-		'RegionCentroidLatitude': float,
-		'RegionCentroidLongitude': float,
-		'RegionCentroidAccuracy':float,
-		'SiteID': int,
-		'SiteDesc': str,
-		'SourceID': int,
-		'SourceDesc': str,
-		'UnitID': int,
-		'Unit': str,
-		'SearchTypeID': str,
-		'SearchTypeDesc': str,
-		'ExperimentalDesignType': str,
-		'ResponseVariableType': str,
-		'DataType': int,
-		'TimeSeriesLength': float,
-		'TimeSeriesSampleYears': float,
-		'TimeSeriesCompleteness': float,
-		'TimeSeriesSamplingEvenness': float,
-		'NoAbsencesRecorded': str,
-		'StandardisationOfMethodEffort': str,
-		'ObjectiveOfMonitoring': str,
-		'SpatialRepresentativeness': float,
-		'SeasonalConsistency': float,
-		'ConsistencyOfMonitoring': float,
-		'MonitoringFrequencyAndTiming': float,
-		'DataAgreement': str,
-		'SurveysCentroidLatitude': float,
-		'SurveysCentroidLongitude': float,
-		'SurveyCount': int,
-		'TimeSeriesID': str,
-		'NationalPriorityTaxa': int
-	})
-	# Important: remove sensitive information that must not be exposed publicly
-	unfiltered_df = unfiltered_df.drop(['SurveysCentroidLatitude', 'SurveysCentroidLongitude', 'SurveysSpatialAccuracy', 'DataAgreement', 'SiteDesc'], axis=1)
+
+
+cached_data = {}
+def read_data(filename):
+	if filename not in cached_data:
+		export_dir = tsx.config.data_dir('export')
+		if os.path.isfile(os.path.join(export_dir, filename)):
+			# this is going to use quite alot of RAM, but it is more responsive than using dask
+			# filename = '/Users/james/tmp/lpi-2018-08-08/lpi-filtered.csv'
+			df = pd.read_csv(os.path.join(export_dir, filename), index_col='ID', quoting=csv.QUOTE_MINIMAL, dtype={
+				'ID': int,
+				'Binomial': str,
+				'SpNo': int,
+				'TaxonID': str,
+				'CommonName': str,
+				'Class': str,
+				'Order': str,
+				'Family': str,
+				'FamilyCommonName': str,
+				'Genus': str,
+				'Species': str,
+				'Subspecies': str,
+				'FunctionalGroup': str,
+				'FunctionalSubGroup': str,
+				'EPBCStatus': str,
+				'IUCNStatus': str,
+				'BirdLifeAustraliaStatus': str,
+				'MaxStatus': str,
+				'State': str,
+				'Region': str,
+				'RegionCentroidLatitude': float,
+				'RegionCentroidLongitude': float,
+				'RegionCentroidAccuracy':float,
+				'SiteID': int,
+				'SiteDesc': str,
+				'SourceID': int,
+				'SourceDesc': str,
+				'UnitID': int,
+				'Unit': str,
+				'SearchTypeID': str,
+				'SearchTypeDesc': str,
+				'ExperimentalDesignType': str,
+				'ResponseVariableType': str,
+				'DataType': int,
+				'TimeSeriesLength': float,
+				'TimeSeriesSampleYears': float,
+				'TimeSeriesCompleteness': float,
+				'TimeSeriesSamplingEvenness': float,
+				'NoAbsencesRecorded': str,
+				'StandardisationOfMethodEffort': str,
+				'ObjectiveOfMonitoring': str,
+				'SpatialRepresentativeness': float,
+				'SeasonalConsistency': float,
+				'ConsistencyOfMonitoring': float,
+				'MonitoringFrequencyAndTiming': float,
+				'DataAgreement': str,
+				'SurveysCentroidLatitude': float,
+				'SurveysCentroidLongitude': float,
+				'SurveyCount': int,
+				'TimeSeriesID': str,
+				'NationalPriorityTaxa': int
+			})
+			# Important: remove sensitive information that must not be exposed publicly
+			df = df.drop(['SurveysCentroidLatitude', 'SurveysCentroidLongitude', 'SurveysSpatialAccuracy', 'DataAgreement', 'SiteDesc'], axis=1)
+			cached_data[filename] = df
+		else:
+			cached_data[filename] = None
+
+	return cached_data[filename]
+
+# Allows us to switch databases depending on 'dataset' parameter
+# For a given dataset, there must be a section in the config file called "database_<dataset name>"
+def get_db_session():
+	dataset = get_dataset_name()
+
+	if dataset == None:
+		return get_session()
+	else:
+		return get_session(database_config=("database_%s" % dataset))
 
 @bp.route('/lpi-data', methods = ['GET'])
 def lpi_data():
@@ -247,7 +267,7 @@ def get_intensity():
 			dat = filtered_data.to_dict()
 			csv_ids = dat['TimeSeriesID'].values()
 
-		session = get_session()
+		session = get_db_session()
 
 		sql_where_expressions, sql_values = build_filter_sql()
 
@@ -379,11 +399,25 @@ def suppress_aggregated_data(df):
 
 	return df
 
+# Gets 'dataset' request parameter and sanitises it
+def get_dataset_name():
+	dataset = request.args.get('dataset', type=str)
+	if dataset != None:
+		dataset = re.sub(r'[^-_\w.]', '', dataset)
+	return dataset
+
+def get_unfiltered_data():
+	dataset = get_dataset_name()
+	if dataset == None:
+		return read_data('lpi-filtered.csv')
+	else:
+		return read_data('lpi-filtered-%s.csv' % dataset)
+
 
 def get_filtered_data():
 	filter_str = build_filter_string()
 
-	df = unfiltered_df
+	df = get_unfiltered_data()
 
 	if filter_str:
 		df = df.query(filter_str)
@@ -428,7 +462,7 @@ def build_filter_string():
 	if 'searchtype' in request.args:
 		_search_type = request.args.get('searchtype', type=int)
 		# find in database
-		session = get_session()
+		session = get_db_session()
 		_search_type_desc = session.execute(
 			"""SELECT * FROM search_type WHERE id = :searchtypeid""",
 			{'searchtypeid': _search_type}).fetchone()['description']
@@ -655,7 +689,7 @@ def get_stats(filtered_data):
 
 	sql_where_expressions, sql_values = build_filter_sql(taxon_only=True)
 
-	session = get_session()
+	session = get_db_session()
 	result = session.bind.execute("""SELECT
 			id AS 'TaxonID',
 			common_name,
