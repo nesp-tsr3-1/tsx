@@ -95,6 +95,7 @@ from threading import Thread
 from six.moves.queue import Queue, Empty
 import math
 import platform
+import sys
 
 try:
     default_num_workers = config.getint("processing","num_workers")
