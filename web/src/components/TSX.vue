@@ -301,7 +301,7 @@ export default {
     // groups
     data.groupList.push({value: 'None', text: 'All'})
     data.groupList.push({value: 'Terrestrial', text: 'Terrestrial'})
-    data.groupList.push({value: 'Wetland', text: 'Wetland'})
+    // data.groupList.push({value: 'Wetland', text: 'Wetland'})
     data.groupList.push({value: 'Marine', text: 'Marine'})
     data.groupList.push({value: 'Shoreline (migratory)', text: 'Shoreline (migratory)'})
     // data.groupList.push({value: 'Shoreline (resident)', text: 'Shoreline (resident)'})
@@ -447,6 +447,12 @@ export default {
             position: 'left',
             gridLines: {
               drawOnChartArea: true
+            }
+          },
+          ticks: {
+            callback: function(label, index, labels) {
+              // Force labels to always show one decimal place
+              return (+label).toFixed(1)
             }
           }]
         }
@@ -628,10 +634,6 @@ export default {
       // filterParams.source = 'lpi_wide_table'
 
       api.intensityPlot(filterParams).then((data) => {
-        if(data.length === 0) {
-          return
-        }
-
         console.log('--loading map data----')
 
         var surveyData = []
