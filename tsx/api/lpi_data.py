@@ -441,9 +441,9 @@ def get_filtered_data():
 	else:
 		if group:
 			if subgroup:
-				regex = "(?:^|,)%s:%s(?:,|$)" % (group, subgroup)
+				regex = "(?:^|,)%s:%s(?:,|$)" % (re.escape(group), re.escape(subgroup))
 			else:
-				regex = "(?:^|,)%s(?:[:,]|$)" % group
+				regex = "(?:^|,)%s(?:[:,]|$)" % re.escape(group)
 
 			df = df[df.FunctionalGroup.str.contains(regex)]
 
