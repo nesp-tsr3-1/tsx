@@ -128,7 +128,7 @@ def lpi_data():
 			# Write out extra files
 			try:
 				dataset = get_dataset_name()
-				if dataset = None:
+				if dataset == None:
 					extra_dir = tsx.config.data_dir('download-extras')
 				else:
 					extra_dir = tsx.config.data_dir('download-extras-%s' % dataset)
