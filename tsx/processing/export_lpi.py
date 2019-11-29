@@ -297,6 +297,6 @@ def process_database(species = None, monthly = False, filter_output = False):
                 del data['value_count']
                 del data['scientific_name']
 
-                writer.writerow({k:unicode(v).encode("utf-8") for k, v in data.items()})
+                writer.writerow({k: None if v == None else unicode(v).encode("utf-8") for k, v in data.items()})
 
     log.info("Done")
