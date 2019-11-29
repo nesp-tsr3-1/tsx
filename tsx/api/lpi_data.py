@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 import csv
 from flask import request, make_response, g, jsonify, Blueprint, Response
+from flask_headers import headers
 from tsx.api.util import csv_response
 from tsx.db import get_session
 from datetime import datetime
@@ -236,6 +237,7 @@ def plot():
 	})
 
 @bp.route('/lpi-data/intensity', methods = ['GET'])
+@headers({'Cache-Control':'public, max-age=602'})
 def get_intensity():
 	filtered_data = get_filtered_data()
 	if len(filtered_data) == 0:

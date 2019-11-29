@@ -14,6 +14,7 @@ faulthandler==3.1; python_version < '3.3'
 Fiona==1.7.13
 Flask==1.0
 Flask-Cors==3.0.6
+Flask-Headers==1.0
 Flask-Login==0.4.0
 idna==2.6
 imagesize==0.7.1
