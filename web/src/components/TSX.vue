@@ -447,14 +447,14 @@ export default {
             position: 'left',
             gridLines: {
               drawOnChartArea: true
+            },
+            ticks: {
+              callback: function(label, index, labels) {
+                // Force labels to always show one decimal place
+                return (+label).toFixed(1)
+              }
             }
-          }],
-          ticks: {
-            callback: function(label, index, labels) {
-              // Force labels to always show one decimal place
-              return (+label).toFixed(1)
-            }
-          }
+          }]
         }
       }
     })
