@@ -127,7 +127,12 @@ def lpi_data():
 			zip_file.writestr('tsxdata.csv', filtered_dat.to_csv())
 			# Write out extra files
 			try:
-				extra_dir = tsx.config.data_dir('download-extras')
+				dataset = get_dataset_name()
+				if dataset = None:
+					extra_dir = tsx.config.data_dir('download-extras')
+				else:
+					extra_dir = tsx.config.data_dir('download-extras-%s' % dataset)
+
 				for filename in os.listdir(extra_dir):
 					zip_file.write(os.path.join(extra_dir, filename), filename)
 			except:
