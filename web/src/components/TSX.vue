@@ -322,8 +322,7 @@ export default {
     // status auth
     data.statusAuthorityList.push({value: 'Max', text: 'Max'})
     data.statusAuthorityList.push({value: 'EPBC', text: 'EPBC'})
-    // data.statusAuthorityList.push({value: 'IUCN', text: 'IUCN'})
-    data.statusAuthorityList.push({value: 'BirdLifeAustralia', text: 'Australian IUCN status'})
+    data.statusAuthorityList.push({value: 'IUCN', text: 'Australian IUCN status'})
     // year
     data.yearList.push({value: '1985', text: '1985'})
     data.yearList.push({value: '1990', text: '1990'})
