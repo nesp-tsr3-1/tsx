@@ -78,7 +78,7 @@ def read_data(filename):
 				'NationalPriorityTaxa': int
 			})
 			# Important: remove sensitive information that must not be exposed publicly
-			df = df.drop(['SurveysCentroidLatitude', 'SurveysCentroidLongitude', 'SurveysSpatialAccuracy', 'DataAgreement', 'SiteDesc'], axis=1)
+			df = df.drop(['SurveysCentroidLatitude', 'SurveysCentroidLongitude', 'SurveysSpatialAccuracy', 'DataAgreement', 'SiteDesc', 'StatePlantStatus'], axis=1)
 			cached_data[filename] = df
 		else:
 			cached_data[filename] = None
