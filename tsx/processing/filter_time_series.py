@@ -26,7 +26,7 @@ def process_database():
 		AND COALESCE(agg.search_type_id, 0) != 6
 		AND COALESCE(taxon.max_status_id, 0) NOT IN (0,1,7)
 		AND region_id IS NOT NULL
-		AND COALESCE(data_source.data_agreement_id, -1) NOT IN (0, 1)
+		AND COALESCE(data_source.data_agreement_id, -1) NOT IN (0)
 		AND COALESCE(data_source.standardisation_of_method_effort_id, -1) NOT IN (0, 1)
 		AND COALESCE(data_source.consistency_of_monitoring_id, -1) NOT IN (0, 1)
 		AND experimental_design_type_id = 1
