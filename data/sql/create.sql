@@ -74,6 +74,7 @@ DROP TABLE IF EXISTS `intensive_management` ;
 CREATE TABLE IF NOT EXISTS `intensive_management` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `description` VARCHAR(255) NULL,
+  `grouping` VARCHAR(255) NULL,
   PRIMARY KEY (`id`))
 ENGINE = InnoDB;
 

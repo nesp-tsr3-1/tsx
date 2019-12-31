@@ -118,6 +118,7 @@ def process_database(species = None, monthly = False, filter_output = False):
             'ConsistencyOfMonitoring',
             # 'MonitoringFrequencyAndTiming', # TBD
             'IntensiveManagement',
+            'IntensiveManagementGrouping',
             'DataAgreement',
             'SuppressAggregatedData',
             'SurveysCentroidLatitude',
@@ -183,6 +184,7 @@ def process_database(species = None, monthly = False, filter_output = False):
                         CONCAT('site_', agg.data_type, '_', site_id),
                         CONCAT('grid_', grid_cell_id)) AS SiteDesc,
                     (SELECT description FROM intensive_management WHERE t1_site.intensive_management_id = intensive_management.id) AS IntensiveManagement,
+                    (SELECT grouping FROM intensive_management WHERE t1_site.intensive_management_id = intensive_management.id) AS IntensiveManagementGrouping,
                     source.id AS SourceID,
                     source.description AS SourceDesc,
                     unit.id AS UnitID,
