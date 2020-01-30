@@ -261,9 +261,9 @@ def process_database(species = None, commit = False):
     # This is important because we are about to spawn child processes, and this stops them attempting to share the
     # same database connection pool
     session.close()
-    tsx.db.connect.engine.dispose()
+
     # Process all the species in parallel
-    for result, error in tqdm(run_parallel(process_spno, species, use_processes = True), total = len(species)):
+    for result, error in tqdm(run_parallel(process_spno, species, use_processes = False), total = len(species)):
         if error:
             print(error)
 

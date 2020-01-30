@@ -133,7 +133,7 @@ try:
 except:
     default_num_workers = None
 
-def run_parallel(target, tasks, n_workers = default_num_workers, use_processes = False):
+def run_parallel(target, tasks, n_workers = default_num_workers, use_processes = True):
     """
     Runs tasks in parallel
 

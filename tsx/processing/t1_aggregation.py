@@ -34,6 +34,7 @@ def process_database(species = None, commit = False):
         if error:
             print(error)
 
+    session = get_session()
     cleanup_region_lookup_table(session)
 
 
