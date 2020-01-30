@@ -599,17 +599,6 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `species_range`
--- -----------------------------------------------------
-DROP TABLE IF EXISTS `species_range` ;
-
-CREATE TABLE IF NOT EXISTS `species_range` (
-  `species_id` INT NOT NULL,
-  PRIMARY KEY (`species_id`))
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
 -- Table `taxon_range`
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `taxon_range` ;

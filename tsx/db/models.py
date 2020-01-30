@@ -231,12 +231,6 @@ class SourceType(Base):
     description = Column(String(255), nullable=False)
 
 
-class SpeciesRange(Base):
-    __tablename__ = 'species_range'
-
-    species_id = Column(Integer, primary_key=True)
-
-
 class State(Base):
     __tablename__ = 'state'
 
