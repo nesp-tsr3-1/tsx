@@ -4,7 +4,7 @@ import * as util from '@/util'
 import _ from 'underscore'
 
 const LPI_RUNS_URL = 'https://tsx.org.au/lpi_runs'
-export const ROOT_URL = https://tsx.org.au/tsxapi'
+export const ROOT_URL = 'https://tsx.org.au/tsxapi'
 
 export function createImport(dataImport) {
   return post('/imports', dataImport)
