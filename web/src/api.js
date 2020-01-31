@@ -3,8 +3,8 @@ import Promise from 'bluebird' // We can drop this when browser support is bette
 import * as util from '@/util'
 import _ from 'underscore'
 
-const TSX_URL = 'https://tsx.org.au'
-export const ROOT_URL = TSX_URL + '/tsxapi'
+const LPI_RUNS_URL = 'https://tsx.org.au/lpi_runs'
+export const ROOT_URL = https://tsx.org.au/tsxapi'
 
 export function createImport(dataImport) {
   return post('/imports', dataImport)
@@ -55,7 +55,7 @@ export function lpiRunData(filterString, year) {
   // URI Encode everything except spaces and pluses because that's how the files are named on the server
   // filterString = filterString.split(' ').map(encodeURIComponent).join(' ')
 
-  var url = encodeURI(TSX_URL + '/lpi_runs/' + filterString + '/nesp_' + year + '_infile_Results.txt')
+  var url = encodeURI(LPI_RUNS_URL + '/' + filterString + '/nesp_' + year + '_infile_Results.txt')
 
   console.log(url)
 
