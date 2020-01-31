@@ -28,7 +28,7 @@ def read_data(filename):
 			df = pd.read_csv(os.path.join(export_dir, filename), index_col='ID', quoting=csv.QUOTE_MINIMAL, dtype={
 				'ID': int,
 				'Binomial': str,
-				'SpNo': int,
+				'SpNo': 'Int64',
 				'TaxonID': str,
 				'CommonName': str,
 				'Class': str,
@@ -76,7 +76,9 @@ def read_data(filename):
 				'SurveysCentroidLongitude': float,
 				'SurveyCount': int,
 				'TimeSeriesID': str,
-				'NationalPriorityTaxa': int
+				'NationalPriorityTaxa': int,
+				'IntensiveManagement': str,
+				'IntensiveManagementGrouping': str
 			})
 			# Important: remove sensitive information that must not be exposed publicly
 			df = df.drop(['SurveysCentroidLatitude', 'SurveysCentroidLongitude', 'SurveysSpatialAccuracy', 'DataAgreement', 'SiteDesc', 'StatePlantStatus'], axis=1, errors='ignore')
@@ -292,7 +294,6 @@ def get_intensity():
 							STRAIGHT_JOIN region ON region.id = aggregated_by_year.region_id
 							STRAIGHT_JOIN taxon ON taxon.id = aggregated_by_year.taxon_id
 							WHERE include_in_analysis
-							AND taxon.taxonomic_group = 'Birds'
 							AND %s
 							GROUP BY time_series_id, start_date_y""" % sql_where_expressions, sql_values)
 
@@ -449,12 +450,30 @@ def get_filtered_data():
 
 			df = df[df.FunctionalGroup.str.contains(regex)]
 
+
+	# Site management filtering is also special
+	management = request.args.get('management')
+	if management == 'No management':
+		df = df[df.IntensiveManagement.isna() == True]
+	elif management == 'Any management':
+		df = df[df.IntensiveManagement.isna() == False]
+	elif management == 'Predator-free':
+		df = df[df.IntensiveManagementGrouping.str.contains('predator-free', na=False)]
+
 	return df
 
 
 def build_filter_string():
-	#spno
 	filters = []
+
+	# Special logic for threatened *bird* index
+	if get_dataset_name().startswith('tbx'):
+		filters.append("TaxonomicGroup=='Birds'")
+
+	#taxonomic group
+	if 'tgroup' in request.args:
+		filters.append("TaxonomicGroup=='%s'" % request.args.get('tgroup'))
+	#spno
 	if 'spno' in request.args:
 		_sp_no = request.args.get('spno', type=int)
 		filters.append("SpNo=='%d'" % (_sp_no))
@@ -505,10 +524,19 @@ def build_filter_sql(taxon_only=False):
 	expressions = []
 	values = []
 
+	# Special logic for threatened *bird* index
+	if get_dataset_name().startswith('tbx'):
+		expressions.append("taxon.taxonomic_group = 'Birds'")
+
 	#spno
 	if 'spno' in request.args:
 		expressions.append("taxon.spno = %s")
 		values.append(request.args.get('spno', type=int))
+
+	# Taxonomic group
+	if 'tgroup' in request.args:
+		expressions.append("taxon.taxonomic_group = %s")
+		values.append(request.args.get('tgroup', type=str))
 
 	# Functional group
 	if 'group' in request.args:
@@ -527,6 +555,16 @@ def build_filter_sql(taxon_only=False):
 		if status_authority in ["uicn", "epbc", "aust", "max"] and len(statuses) > 0:
 			expressions.append("taxon.%s_status_id IN (SELECT id FROM taxon_status WHERE description IN (%s))" % (status_authority, in_clause_placeholders(statuses)))
 			values.extend(statuses)
+
+	if 'management' in request.args:
+		expressions.append("data_type = 1")
+		management = request.args.get('management', type=str)
+		if management == 'Predator-free':
+			expressions.append("site_id IN (SELECT t1_site.id FROM t1_site, intensive_management WHERE intensive_management.id = intensive_management_id AND grouping LIKE '%%predator-free%%')")
+		elif management == 'Any management':
+			expressions.append("site_id IN (SELECT id FROM t1_site WHERE intensive_management_id IS NOT NULL)")
+		elif management == 'No management':
+			expressions.append("site_id IN (SELECT id FROM t1_site WHERE intensive_management_id IS NULL)")
 
 	# national priority
 	if 'priority' in request.args:
@@ -710,7 +748,6 @@ def get_stats(filtered_data):
 			(SELECT description FROM taxon_status WHERE taxon_status.id = epbc_status_id) AS epbc_status
 		FROM taxon
 		WHERE COALESCE(taxon.max_status_id, 0) NOT IN (0,1,7)
-		AND taxon.taxonomic_group = 'Birds'
 		AND %s
 	""" % sql_where_expressions, sql_values)
 	session.close()
