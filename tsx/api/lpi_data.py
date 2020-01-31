@@ -467,7 +467,8 @@ def build_filter_string():
 	filters = []
 
 	# Special logic for threatened *bird* index
-	if get_dataset_name().startswith('tbx'):
+	dataset = get_dataset_name()
+	if dataset != None and dataset.startswith('tbx'):
 		filters.append("TaxonomicGroup=='Birds'")
 
 	#taxonomic group
@@ -525,7 +526,8 @@ def build_filter_sql(taxon_only=False):
 	values = []
 
 	# Special logic for threatened *bird* index
-	if get_dataset_name().startswith('tbx'):
+	dataset = get_dataset_name()
+	if dataset != None and dataset.startswith('tbx'):
 		expressions.append("taxon.taxonomic_group = 'Birds'")
 
 	#spno
