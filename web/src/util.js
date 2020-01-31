@@ -127,3 +127,7 @@ export function max(array) {
     return (a === undefined || b > a) ? b : a
   }, undefined)
 }
+
+export function uniq(array) {
+  return [...new Set(array)]
+}

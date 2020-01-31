@@ -4,6 +4,14 @@
       <div class="tile is-2 is-parent">
         <div class="tile is-child">
           <div class="field">
+            <label class="label">Index</label>
+            <div class="select is-fullwidth">
+              <select v-model='selectedIndex' :disabled='prioritySelected'>
+                <option v-for="option in indexList" v-bind:value="option">{{option.text}}</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
             <label class="label">Group</label>
             <div class="select is-fullwidth">
               <select v-model='selectedGroup' :disabled='prioritySelected'>
@@ -14,8 +22,8 @@
           <div class="field">
             <label class="label">Sub-group</label>
             <div class="select is-fullwidth">
-              <select v-model='selectedSubGroup' :disabled='prioritySelected || !subGroupEnabled'>
-                <option v-for="option in subGroupList" v-bind:value="option">{{option.text}}</option>
+              <select v-model='selectedSubgroup' :disabled='prioritySelected || !subgroupEnabled'>
+                <option v-for="option in subgroupList" v-bind:value="option">{{option.text}}</option>
               </select>
             </div>
           </div>
@@ -44,6 +52,22 @@
             </div>
           </div>
           <div class="field">
+            <input type="checkbox" id="checkbox" v-model="prioritySelected">
+            <label for="checkbox">National priority species</label>
+          </div>
+
+          <hr>
+
+          <div class="field" v-if='managementEnabled'>
+            <label class="label">Management</label>
+            <div class="select is-fullwidth">
+              <select v-model='selectedManagement'>
+                <option v-for="option in managementList" v-bind:value="option">{{option.text}}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
             <label class="label">Reference year</label>
             <div class="select is-fullwidth">
               <select v-model='selectedYear'>
@@ -52,10 +76,6 @@
             </div>
           </div>
 
-          <div class="field">
-            <input type="checkbox" id="checkbox" v-model="prioritySelected">
-            <label for="checkbox">National priority species</label>
-          </div>
 
           <p>
             <button class='button is-primary is-small' v-on:click='downloadCSV'>Download CSV</button>
@@ -208,23 +228,118 @@ import L from 'leaflet'
 import HeatmapOverlay from 'heatmap.js/plugins/leaflet-heatmap/leaflet-heatmap.js'
 import easyButton from 'leaflet-easybutton/src/easy-button.js'
 import vueSlider from 'vue-slider-component/dist/index.js'
-import { min, max, pluck } from '@/util'
+import { min, max, pluck, uniq } from '@/util'
 
-const subGroups = [
+// Generated with:
+// SELECT REPLACE(REPLACE(JSON_ARRAYAGG(o), """", "'"), "], ", "],\n") FROM (SELECT DISTINCT JSON_ARRAY(taxonomic_group, group_name, subgroup_name) AS o FROM taxon JOIN taxon_group ON taxon.id = taxon_id ORDER BY taxonomic_group, group_name, subgroup_name) t\G
+
+// Note: Have manually commented out combinations without enough time series to make a trend. TODO - make this automated somehow.
+
+const groupings = [
+  ['Birds', 'Marine', null],
+  ['Birds', 'Marine', 'Albatrosses and Giant-Petrels'],
+  // ['Birds', 'Marine', 'Gulls Terns Noddies Skuas Jaegers'],
+  // ['Birds', 'Marine', 'Penguins'],
+  // ['Birds', 'Marine', 'Petrels and Shearwaters'],
+  // ['Birds', 'Marine', 'Tropicbirds Frigatebirds Gannets Boobies'],
+  ['Birds', 'Shoreline (migratory)', null],
+  // ['Birds', 'Shoreline (resident)', null],
+  ['Birds', 'Terrestrial', null],
+  // ['Birds', 'Terrestrial', 'Arid Woodland/ shrubland'],
+  ['Birds', 'Terrestrial', 'Dry sclerophyll woodland/forest'],
+  // ['Birds', 'Terrestrial', 'Grassland'],
+  // ['Birds', 'Terrestrial', 'Heathland'],
+  // ['Birds', 'Terrestrial', 'Island endemic'],
+  // ['Birds', 'Terrestrial', 'Mallee woodland'],
+  // ['Birds', 'Terrestrial', 'Parrots Lorikeets Rosellas Cockatoos Corellas'],
+  // ['Birds', 'Terrestrial', 'Rainforest'],
+  ['Birds', 'Terrestrial', 'Tropical savanna woodland'],
+  // ['Birds', 'Wetland', null],
+  // ['Birds', 'Wetland', 'Gulls Terns Noddies Skuas Jaegers'],
+  ['Mammals', '<50g', null],
+  ['Mammals', '50-5000g', null],
+  ['Mammals', '>5000g', null],
+  ['Mammals', 'Marine', null],
+  ['Mammals', 'Terrestrial', null],
+  ['Mammals', 'Terrestrial', 'Arboreal'],
+  ['Mammals', 'Terrestrial', 'Volant']
+]
+
+const noneOption = {value: 'None', text: 'All'}
+
+function generateIndexList() {
+  let indexList = uniq(groupings.map(x => x[0]))
+
+  return [noneOption].concat(indexList.map(x => ({value: x, text: x})))
+}
+
+function generateGroupList(index) {
+  var groupList
+  if(index.value === 'None') {
+    groupList = ['Marine', 'Terrestrial']
+  } else {
+    groupList = uniq(groupings.filter(x => index.value === x[0]).map(x => x[1]))
+  }
+
+  return [noneOption].concat(groupList.map(x => ({value: x, text: x})))
+}
+
+function generateSubgroupList(index, group) {
+  var subgroupList
+  if(index.value === 'None' || group.value === 'None') {
+    subgroupList = []
+  } else {
+    subgroupList = uniq(groupings.filter(x => index.value === x[0] && group.value === x[1] && x[2] !== null).map(x => x[2]))
+  }
+
+  return [noneOption].concat(subgroupList.map(x => ({value: x, text: x})))
+}
+
+const states = [
   {value: 'None', text: 'All'},
-  // {value: 'Tropicbirds Frigatebirds Gannets Boobies', text: 'Tropicbirds Frigatebirds Gannets Boobies'},
-  // {value: 'Gulls Terns Noddies Skuas Jaegers', text: 'Gulls Terns Noddies Skuas Jaegers'},
-  // {value: 'Rainforest', text: 'Rainforest'},
-  // {value: 'Penguins', text: 'Penguins'},
-  {value: 'Tropical savanna woodland', text: 'Tropical savanna woodland', group: 'Terrestrial'},
-  // {value: 'Island endemic', text: 'Island endemic'},
-  // {value: 'Petrels and Shearwaters', text: 'Petrels and Shearwaters'},
-  // {value: 'Grassland', text: 'Grassland'},
-  {value: 'Albatrosses and Giant-Petrels', text: 'Albatrosses and Giant-Petrels', group: 'Marine'},
-  {value: 'Dry sclerophyll woodland/forest', text: 'Dry sclerophyll woodland/forest', group: 'Terrestrial'}
-  // {value: 'Arid Woodland/ shrubland', text: 'Arid Woodland/ shrubland'},
-  // {value: 'Heathland', text: 'Heathland'},
-  // {value: 'Mallee woodland', text: 'Mallee woodland'}
+  {value: 'Australian Capital Territory', text: 'Australian Capital Territory'},
+  // {value: 'Commonwealth', text: 'Commonwealth'},
+  {value: 'Queensland', text: 'Queensland'},
+  {value: 'New South Wales', text: 'New South Wales'},
+  {value: 'Australian Capital Territory+New South Wales', text: 'Australian Capital Territory + New South Wales'},
+  {value: 'Northern Territory', text: 'Northern Territory'},
+  {value: 'South Australia', text: 'South Australia'},
+  {value: 'Western Australia', text: 'Western Australia'},
+  {value: 'Tasmania', text: 'Tasmania'},
+  {value: 'Victoria', text: 'Victoria'}
+]
+
+const statusAuthorities = [
+  {value: 'Max', text: 'Max'},
+  {value: 'EPBC', text: 'EPBC'},
+  {value: 'IUCN', text: 'Australian IUCN status'}
+]
+
+const statuses = [
+  {
+    value: 'Vulnerable+Endangered+Critically Endangered',
+    text: 'Threatened species (all Vulnerable + Endangered + Critically Endangered)'
+  }, {
+    value: 'Near Threatened+Vulnerable+Endangered+Critically Endangered',
+    text: 'All (all Near Threatened + Vulnerable + Endangered + Critically Endangered)'
+  }, {
+    value: 'Near Threatened',
+    text: 'Near Threatened species (Near Threatened species only)'
+  }
+]
+
+const managementTypes = [
+  { value: 'None', text: 'All sites' },
+  { value: 'Any management', text: 'Any management' },
+  { value: 'Predator-free', text: 'Predator-free' },
+  { value: 'No management', text: 'No (known) management' }
+]
+
+const years = [
+  {value: '1985', text: '1985'},
+  {value: '1990', text: '1990'},
+  {value: '1995', text: '1995'},
+  {value: '2000', text: '2000'}
 ]
 
 export default {
@@ -234,25 +349,32 @@ export default {
   },
   data () {
     var data = {
+      // index
+      indexList: generateIndexList(),
+      selectedIndex: noneOption,
       // group
-      groupList: [],
-      selectedGroup: {value: 'None', text: 'All'},
+      groupList: generateGroupList(noneOption),
+      selectedGroup: noneOption,
       // subgroup
-      subGroupList: [],
-      selectedSubGroup: subGroups[0],
-      subGroupEnabled: true,
+      subgroupList: generateSubgroupList(noneOption, noneOption),
+      selectedSubgroup: noneOption,
+      subgroupEnabled: false,
       // states
-      stateList: [],
-      selectedState: {value: 'None', text: 'All'},
+      stateList: states,
+      selectedState: states[0],
       // status auth
-      statusAuthorityList: [],
-      selectedStatusAuthority: {value: 'Max', text: 'Max'},
+      statusAuthorityList: statusAuthorities,
+      selectedStatusAuthority: statusAuthorities[0],
       // status
-      statusList: [],
-      selectedStatus: {value: 'Near Threatened+Vulnerable+Endangered+Critically Endangered', text: 'All (all Near Threatened + Vulnerable + Endangered + Critically Endangered)'},
+      statusList: statuses,
+      selectedStatus: statuses[1],
+      // management
+      managementList: managementTypes,
+      selectedManagement: managementTypes[0],
+
       // year
-      yearList: [],
-      selectedYear: {value: '1985', text: '1985'},
+      yearList: years,
+      selectedYear: years[0],
       // charts
       dotPlot: null,
       dotPlotDataSet: null,
@@ -298,44 +420,7 @@ export default {
       sliderEnabled: false,
       hasAcceptedWarning: localStorage.getItem('hasAcceptedWarning') || false
     }
-    // groups
-    data.groupList.push({value: 'None', text: 'All'})
-    data.groupList.push({value: 'Terrestrial', text: 'Terrestrial'})
-    // data.groupList.push({value: 'Wetland', text: 'Wetland'})
-    data.groupList.push({value: 'Marine', text: 'Marine'})
-    data.groupList.push({value: 'Shoreline (migratory)', text: 'Shoreline (migratory)'})
-    // data.groupList.push({value: 'Shoreline (resident)', text: 'Shoreline (resident)'})
-    // subgroups
-    data.subGroupList = subGroups
-    // states filter
-    data.stateList.push({value: 'None', text: 'All'})
-    data.stateList.push({value: 'Australian Capital Territory', text: 'Australian Capital Territory'})
-    // data.stateList.push({value: 'Commonwealth', text: 'Commonwealth'})
-    data.stateList.push({value: 'Queensland', text: 'Queensland'})
-    data.stateList.push({value: 'New South Wales', text: 'New South Wales'})
-    data.stateList.push({value: 'Australian Capital Territory+New South Wales', text: 'Australian Capital Territory + New South Wales'})
-    data.stateList.push({value: 'Northern Territory', text: 'Northern Territory'})
-    data.stateList.push({value: 'South Australia', text: 'South Australia'})
-    data.stateList.push({value: 'Western Australia', text: 'Western Australia'})
-    data.stateList.push({value: 'Tasmania', text: 'Tasmania'})
-    data.stateList.push({value: 'Victoria', text: 'Victoria'})
-    // status auth
-    data.statusAuthorityList.push({value: 'Max', text: 'Max'})
-    data.statusAuthorityList.push({value: 'EPBC', text: 'EPBC'})
-    data.statusAuthorityList.push({value: 'IUCN', text: 'Australian IUCN status'})
-    // year
-    data.yearList.push({value: '1985', text: '1985'})
-    data.yearList.push({value: '1990', text: '1990'})
-    data.yearList.push({value: '1995', text: '1995'})
-    data.yearList.push({value: '2000', text: '2000'})
-    // status
-    data.statusList.push({value: 'Vulnerable+Endangered+Critically Endangered', text: 'Threatened species (all Vulnerable + Endangered + Critically Endangered)'})
-    data.statusList.push({value: 'Near Threatened+Vulnerable+Endangered+Critically Endangered', text: 'All (all Near Threatened + Vulnerable + Endangered + Critically Endangered)'})
-    data.statusList.push({value: 'Near Threatened', text: 'Near Threatened species (Near Threatened species only)'})
-    // data.statusList.push({value: 'Near Threatened', text: 'Near Threatened'})
-    // data.statusList.push({value: 'Vulnerable', text: 'Vulnerable'})
-    // data.statusList.push({value: 'Endangered', text: 'Endangered'})
-    // data.statusList.push({value: 'Critically Endangered', text: 'Critically Endangered'})
+
     return data
   },
   mounted: function() {
@@ -523,12 +608,22 @@ export default {
     this.updatePlot()
   },
   watch: {
+    selectedIndex(val) {
+      this.groupList = generateGroupList(this.selectedIndex)
+      this.groupEnabled = this.subgroupList.length > 1
+
+      this.selectedGroup = this.groupList.find(x => x.value === this.selectedGroup.value) || this.groupList[0]
+
+      this.subgroupList = generateSubgroupList(this.selectedIndex, this.selectedGroup)
+      this.subgroupEnabled = this.subgroupList.length > 1
+
+      this.selectedSubgroup = this.subgroupList.find(x => x.value === this.selectedSubgroup.value) || this.subgroupList[0]
+    },
     selectedGroup(val) {
-      this.subGroupList = subGroups.filter(x => val.value === 'None' || x.value === 'None' || x.group === val.value)
-      if(this.selectedSubGroup && this.selectedSubGroup.group !== val.value) {
-        this.selectedSubGroup = subGroups[0]
-      }
-      this.subGroupEnabled = this.subGroupList.length > 1
+      this.subgroupList = generateSubgroupList(this.selectedIndex, this.selectedGroup)
+      this.subgroupEnabled = this.subgroupList.length > 1
+
+      this.selectedSubgroup = this.subgroupList.find(x => x.value === this.selectedSubgroup.value) || this.subgroupList[0]
     },
     selectedStatusAuthority(val) {
       if(val.value === 'None') {
@@ -562,6 +657,9 @@ export default {
   computed: {
     filterParams() {
       return this.getFilterParams()
+    },
+    managementEnabled() {
+      return this.selectedIndex.value === 'Mammals'
     }
   },
   methods: {
@@ -729,46 +827,44 @@ export default {
       if(this.prioritySelected) {
         filterParams['priority'] = 1
       } else {
-        if(this.selectedGroup.value !== 'None') {
-          filterParams['group'] = this.selectedGroup.value
-        }
-        if(this.selectedSubGroup.value !== 'None') {
-          filterParams['subgroup'] = this.selectedSubGroup.value
-        }
-        if(this.selectedState.value !== 'None') {
-          filterParams['state'] = this.selectedState.value
-        }
-        if(this.selectedStatusAuthority.value !== 'None') {
-          filterParams['statusauth'] = this.selectedStatusAuthority.value
-        }
-        if(this.selectedStatus.value !== 'None') {
-          filterParams['status'] = this.selectedStatus.value
-        }
+        [
+          ['tgroup', this.selectedIndex],
+          ['group', this.selectedGroup],
+          ['subgroup', this.selectedSubgroup],
+          ['state', this.selectedState],
+          ['statusauth', this.selectedStatusAuthority],
+          ['status', this.selectedStatus],
+          ['management', this.selectedIndex.value === 'Mammals' ? this.selectedManagement : noneOption]
+        ].forEach(pair => {
+          var key = pair[0]
+          var value = pair[1].value
+
+          if(value !== 'None') {
+            filterParams[key] = value
+          }
+        })
       }
       return filterParams
     },
     getFilterString: function() {
-      var filtersStr = ''
       if(this.prioritySelected) {
-        filtersStr = 'priority-1'
+        return 'priority-1'
       } else {
-        if(this.selectedGroup.value !== 'None') {
-          filtersStr = filtersStr + 'group-' + this.selectedGroup.value + '_'
-        }
-        if(this.selectedSubGroup.value !== 'None') {
-          filtersStr = filtersStr + 'subgroup-' + this.selectedSubGroup.value + '_'
-        }
-        if(this.selectedState.value !== 'None') {
-          filtersStr = filtersStr + 'state-' + this.selectedState.value + '_'
-        }
-        if(this.selectedStatusAuthority.value !== 'None') {
-          filtersStr = filtersStr + 'statusauth-' + this.selectedStatusAuthority.value + '_'
-        }
-        if(this.selectedStatus.value !== 'None') {
-          filtersStr = filtersStr + 'status-' + this.selectedStatus.value + '_'
-        }
+        return [
+          ['tgroup', this.selectedIndex],
+          ['group', this.selectedGroup],
+          ['subgroup', this.selectedSubgroup],
+          ['state', this.selectedState],
+          ['statusauth', this.selectedStatusAuthority],
+          ['status', this.selectedStatus],
+          ['management', this.selectedIndex.value === 'Mammals' ? this.selectedManagement : noneOption]
+        ].map(function(pair) {
+          var key = pair[0]
+          var value = pair[1].value
+
+          return value === 'None' ? '' : key + '-' + value + '_'
+        }).join('')
       }
-      return filtersStr
     },
     // refresh summary plot
     refreshSummaryPlot: function() {
