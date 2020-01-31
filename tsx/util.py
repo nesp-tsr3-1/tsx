@@ -133,6 +133,32 @@ try:
 except:
     default_num_workers = None
 
+# Helper to get next item from queue without constantly blocking
+def next(q):
+    while True:
+        try:
+            return q.get(True, 1) # Get with timeout so thread isn't constantly blocked
+        except Empty:
+            pass
+        except:
+            log.exception("Exception getting item from queue")
+            raise
+
+# Takes tasks from a work queue, processes them with 'target', and puts the results on to a result queu
+# Terminates when it encounters 'None' on the work queue.
+def worker(target, work_q, result_q):
+    faulthandler.enable()
+    while True:
+        task = next(work_q)
+        if task is None:
+            break
+        try:
+            result_q.put((target(*task), None))
+        except:
+            e = sys.exc_info()[0]
+            log.exception("Exception in worker")
+            result_q.put((None, e))
+
 def run_parallel(target, tasks, n_workers = default_num_workers, use_processes = True):
     """
     Runs tasks in parallel
@@ -164,48 +190,39 @@ def run_parallel(target, tasks, n_workers = default_num_workers, use_processes =
     if n_workers is None:
         n_workers = multiprocessing.cpu_count()
 
-    # Multiprocessing has issues on Windows
+    # Multiprocessing has issues on Windows (TODO: check if this is still the case now that we are using the 'spawn' method, see below)
     if platform.system() == 'Windows':
         use_processes = False
 
-    Q = multiprocessing.Queue if use_processes else Queue
+
+    # I ran into major issues trying to use Python Multiprocessing, e.g.:
+    # - https://docs.python.org/3.7/library/multiprocessing.html#contexts-and-start-methods
+    # - https://bugs.python.org/issue37677
+    #
+    # In particular I could not get MySQL connections to work even though I was careful to create brand new connections after
+    # forking a new process.
+    #
+    # However, on Mac at least, switching from 'fork' to 'spawn' method seems to work very well. I had to refactor some code,
+    # but I think it is now more explicit what is being shared over process boundaries.
+    # TODO: Test on Windows and Linux
+
+    if use_processes:
+        mp = multiprocessing.get_context('spawn')
+
+    Q = mp.Queue if use_processes else Queue
 
     # Setup queues
 
     work_q = Q()
     result_q = Q()
-    # Helper to get next item from queue without constantly blocking
-    def next(q):
-        while True:
-            try:
-                return q.get(True, 1) # Get with timeout so thread isn't constantly blocked
-            except Empty:
-                pass
-            except:
-                log.exception("Exception getting item from queue")
-                raise
-
-    # Setup worker threads
-    def worker(work_q, result_q):
-        faulthandler.enable()
-        while True:
-            task = next(work_q)
-            if task is None:
-                break
-            try:
-                result_q.put((target(*task), None))
-            except:
-                e = sys.exc_info()[0]
-                log.exception("Exception in worker")
-                result_q.put((None, e))
 
     for i in range(0, n_workers):
             if use_processes:
-                p = multiprocessing.Process(target = worker, args = (work_q, result_q))
+                p = mp.Process(target = worker, args = (target, work_q, result_q))
                 p.daemon = True # Kill process if parent terminates early
                 p.start()
             else:
-                t = Thread(target = worker, args = (work_q, result_q))
+                t = Thread(target = worker, args = (target, work_q, result_q))
                 t.daemon = True
                 t.start()
 

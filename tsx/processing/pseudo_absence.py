@@ -90,6 +90,23 @@ def process_grid(session):
 			})
 	# Processed 23 taxa in 2m25s
 
+def get_taxon_sites(taxon_id):
+	session = get_session()
+	try:
+		return session.execute("""SELECT DISTINCT t2_survey_site.site_id, taxon_id
+			FROM taxon_presence_alpha_hull_subdiv alpha STRAIGHT_JOIN t2_survey USE INDEX (coords), t2_survey_site
+			WHERE ST_Contains(alpha.geometry, t2_survey.coords)
+			AND t2_survey_site.survey_id = t2_survey.id
+			AND taxon_id = :taxon_id
+			AND alpha.range_id = 1""", {
+				'taxon_id': taxon_id
+			}).fetchall()
+	except:
+		log.exception("Exception getting sites for taxon")
+		raise
+	finally:
+		session.close()
+
 def process_sites(session):
 	run_sql(session, "Populate t2_survey_site",
 		"""INSERT INTO t2_survey_site (survey_id, site_id)
@@ -144,23 +161,6 @@ def process_sites(session):
 	# Furthermore, we process taxa in parallel threads to fully utilise the CPU, and then the results of the query are
 	# inserted in bulk on the main thread.
 	# Time taken: 17 min 4 s
-
-	def get_taxon_sites(taxon_id):
-		session = get_session()
-		try:
-			return session.execute("""SELECT DISTINCT t2_survey_site.site_id, taxon_id
-				FROM taxon_presence_alpha_hull_subdiv alpha STRAIGHT_JOIN t2_survey USE INDEX (coords), t2_survey_site
-				WHERE ST_Contains(alpha.geometry, t2_survey.coords)
-				AND t2_survey_site.survey_id = t2_survey.id
-				AND taxon_id = :taxon_id
-				AND alpha.range_id = 1""", {
-					'taxon_id': taxon_id
-				}).fetchall()
-		except:
-			log.exception("Exception getting sites for taxon")
-			raise
-		finally:
-			session.close()
 
 	for result, error in tqdm(run_parallel(get_taxon_sites, taxa), total = len(taxa)):
 		# Perform bulk insert on main thread

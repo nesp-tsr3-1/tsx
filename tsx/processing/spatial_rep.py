@@ -57,89 +57,92 @@ def process_database(species = None, commit = False):
     for data_type in 1,2:
         log.info("Processing type %s data" % data_type)
 
-        # Process a single species.
-        # This gets run off the main thread.
-        def process(taxon_id):
-            session = get_session()
-
-            try:
-                # Load core range geometry
-                core_range_geom = reproject(get_core_range_geometry(session, taxon_id), db_proj, working_proj).buffer(0).intersection(coastal_shape)
-
-                for source_id in get_source_ids(session, data_type, taxon_id):
-
-                    log.info("Processing taxon_id: %s, source_id: %s" % (taxon_id, source_id))
-
-                    # Get raw points from DB
-                    raw_points = get_raw_points(session, data_type, taxon_id, source_id)
-
-                    empty = len(raw_points) < 4
-
-                    if empty:
-                        log.info("Taxon %s: not enough points to create alpha hull (%s)" % (taxon_id, len(raw_points)))
-
-                    if not empty:
-                        # Read points from database
-                        points = [reproject(p, db_proj, working_proj) for p in raw_points]
-
-                        # Generate alpha shape
-                        alpha_shp = make_alpha_hull(
-                            points = points,
-                            coastal_shape = None,
-                            thinning_distance = tsx.config.config.getfloat('processing.alpha_hull', 'thinning_distance'),
-                            alpha = tsx.config.config.getfloat('processing.alpha_hull', 'alpha'),
-                            hullbuffer_distance = tsx.config.config.getfloat('processing.alpha_hull', 'hullbuffer_distance'),
-                            isolatedbuffer_distance = tsx.config.config.getfloat('processing.alpha_hull', 'isolatedbuffer_distance'))
-
-                        # Clean up geometry
-                        alpha_shp = alpha_shp.buffer(0)
-
-                        if core_range_geom.area == 0:
-                            log.info("Core range geometry area is zero")
-                            empty = True
-
-                        else:
-                            # Intersect alpha hull with core range
-                            intersected_alpha = to_multipolygon(core_range_geom.intersection(alpha_shp))
-
-                            empty = intersected_alpha.is_empty
-
-                    if empty:
-                        session.execute("""INSERT INTO taxon_source_alpha_hull (source_id, taxon_id, data_type, core_range_area_in_m2, alpha_hull_area_in_m2)
-                            VALUES (:source_id, :taxon_id, :data_type, 0, 0)""", {
-                                'source_id': source_id,
-                                'taxon_id': taxon_id,
-                                'data_type': data_type
-                            })
-                    else:
-                        session.execute("""INSERT INTO taxon_source_alpha_hull (source_id, taxon_id, data_type, geometry, core_range_area_in_m2, alpha_hull_area_in_m2)
-                            VALUES (:source_id, :taxon_id, :data_type, ST_GeomFromWKB(_BINARY :geom_wkb), :core_range_area, :alpha_hull_area)""", {
-                                'source_id': source_id,
-                                'taxon_id': taxon_id,
-                                'data_type': data_type,
-                                'geom_wkb': shapely.wkb.dumps(reproject(intersected_alpha, working_proj, db_proj)),
-                                'core_range_area': core_range_geom.area,
-                                'alpha_hull_area': intersected_alpha.area
-                            })
-
-                    if commit:
-                        session.commit()
-
-            except:
-                log.exception("Exception processing alpha hull")
-                raise
-            finally:
-                session.close()
-
         taxa = get_taxa(session, data_type, species)
+
+        tasks = [(taxon_id, coastal_shape) for taxon_id in taxa]
 
         # This is important because we are about to spawn child processes, and this stops them attempting to share the
         # same database connection pool
-        session.close()
+        session.close() # TODO: not sure if this is needed now
+
         # Process all the species in parallel
-        for result, error in tqdm(run_parallel(process, taxa), total = len(taxa)):
+        for result, error in tqdm(run_parallel(process, tasks), total = len(tasks)):
             if error:
                 print(error)
+
+# Process a single species.
+# This gets run off the main thread.
+def process(taxon_id, coastal_shape):
+    session = get_session()
+
+    try:
+        # Load core range geometry
+        core_range_geom = reproject(get_core_range_geometry(session, taxon_id), db_proj, working_proj).buffer(0).intersection(coastal_shape)
+
+        for source_id in get_source_ids(session, data_type, taxon_id):
+
+            log.info("Processing taxon_id: %s, source_id: %s" % (taxon_id, source_id))
+
+            # Get raw points from DB
+            raw_points = get_raw_points(session, data_type, taxon_id, source_id)
+
+            empty = len(raw_points) < 4
+
+            if empty:
+                log.info("Taxon %s: not enough points to create alpha hull (%s)" % (taxon_id, len(raw_points)))
+
+            if not empty:
+                # Read points from database
+                points = [reproject(p, db_proj, working_proj) for p in raw_points]
+
+                # Generate alpha shape
+                alpha_shp = make_alpha_hull(
+                    points = points,
+                    coastal_shape = None,
+                    thinning_distance = tsx.config.config.getfloat('processing.alpha_hull', 'thinning_distance'),
+                    alpha = tsx.config.config.getfloat('processing.alpha_hull', 'alpha'),
+                    hullbuffer_distance = tsx.config.config.getfloat('processing.alpha_hull', 'hullbuffer_distance'),
+                    isolatedbuffer_distance = tsx.config.config.getfloat('processing.alpha_hull', 'isolatedbuffer_distance'))
+
+                # Clean up geometry
+                alpha_shp = alpha_shp.buffer(0)
+
+                if core_range_geom.area == 0:
+                    log.info("Core range geometry area is zero")
+                    empty = True
+
+                else:
+                    # Intersect alpha hull with core range
+                    intersected_alpha = to_multipolygon(core_range_geom.intersection(alpha_shp))
+
+                    empty = intersected_alpha.is_empty
+
+            if empty:
+                session.execute("""INSERT INTO taxon_source_alpha_hull (source_id, taxon_id, data_type, core_range_area_in_m2, alpha_hull_area_in_m2)
+                    VALUES (:source_id, :taxon_id, :data_type, 0, 0)""", {
+                        'source_id': source_id,
+                        'taxon_id': taxon_id,
+                        'data_type': data_type
+                    })
+            else:
+                session.execute("""INSERT INTO taxon_source_alpha_hull (source_id, taxon_id, data_type, geometry, core_range_area_in_m2, alpha_hull_area_in_m2)
+                    VALUES (:source_id, :taxon_id, :data_type, ST_GeomFromWKB(_BINARY :geom_wkb), :core_range_area, :alpha_hull_area)""", {
+                        'source_id': source_id,
+                        'taxon_id': taxon_id,
+                        'data_type': data_type,
+                        'geom_wkb': shapely.wkb.dumps(reproject(intersected_alpha, working_proj, db_proj)),
+                        'core_range_area': core_range_geom.area,
+                        'alpha_hull_area': intersected_alpha.area
+                    })
+
+            if commit:
+                session.commit()
+
+    except:
+        log.exception("Exception processing alpha hull")
+        raise
+    finally:
+        session.close()
 
 def reproject(geom, src_proj, dest_proj):
     fn = partial(pyproj.transform, src_proj, dest_proj)

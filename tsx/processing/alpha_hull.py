@@ -20,10 +20,16 @@ from tqdm import tqdm
 import logging
 import shapely.wkb
 import binascii
+import gc
+
+import mysql.connector
 
 import threading, sys, traceback
 
 log = logging.getLogger(__name__)
+
+db_proj = pyproj.Proj('+init=EPSG:4326') # Database always uses WGS84
+working_proj = pyproj.Proj('+init=EPSG:3112') # GDA94 / Geoscience Australia Lambert - so that we can buffer in metres
 
 def plot_polygon(polygon):
     # These imports are only needed for plotting
@@ -151,6 +157,72 @@ def make_alpha_hull(points, coastal_shape,
     #_ = plot_polygon(final)
     #pl.show()
 
+
+# Process a single species.
+# This gets run off the main thread.
+def process_spno(spno, coastal_shape, commit):
+    session = get_session()
+
+    try:
+        # Get raw points from DB
+        raw_points = get_species_points(session, spno)
+
+        if len(raw_points) < 4:
+            # Not enough points to create an alpha hull
+            return
+
+        # Read points from database
+        points = [reproject(p, db_proj, working_proj) for p in raw_points]
+
+        # Generate alpha shape
+        alpha_shp = make_alpha_hull(
+            points = points,
+            coastal_shape = coastal_shape,
+            thinning_distance = tsx.config.config.getfloat('processing.alpha_hull', 'thinning_distance'),
+            alpha = tsx.config.config.getfloat('processing.alpha_hull', 'alpha'),
+            hullbuffer_distance = tsx.config.config.getfloat('processing.alpha_hull', 'hullbuffer_distance'),
+            isolatedbuffer_distance = tsx.config.config.getfloat('processing.alpha_hull', 'isolatedbuffer_distance'))
+
+        # Convert back to DB projection
+        alpha_shp = reproject(alpha_shp, working_proj, db_proj)
+
+        # Clean up geometry
+        alpha_shp = alpha_shp.buffer(0)
+
+        # Get range polygons to intersect with alpha shape
+        for taxon_id, range_id, breeding_range_id, geom_wkb in get_species_range_polygons(session, spno):
+            # Intersect and insert into DB
+            geom = shapely.wkb.loads(binascii.unhexlify(geom_wkb)).buffer(0)
+            geom = to_multipolygon(geom.intersection(alpha_shp)) # slow
+            if len(geom) > 0:
+                session.execute("""INSERT INTO taxon_presence_alpha_hull (taxon_id, range_id, breeding_range_id, geometry)
+                    VALUES (:taxon_id, :range_id, :breeding_range_id, ST_GeomFromWKB(_BINARY :geom_wkb))""", {
+                        'taxon_id': taxon_id,
+                        'range_id': range_id,
+                        'breeding_range_id': breeding_range_id,
+                        'geom_wkb': shapely.wkb.dumps(geom)
+                    }
+                )
+            # We also subdivide the geometries into small pieces and insert this into the database. This allows for much faster
+            # spatial queries in the database.
+            for subgeom in subdivide_geometry(geom, max_points = 100):
+                session.execute("""INSERT INTO taxon_presence_alpha_hull_subdiv (taxon_id, range_id, breeding_range_id, geometry)
+                    VALUES (:taxon_id, :range_id, :breeding_range_id, ST_GeomFromWKB(_BINARY :geom_wkb))""", {
+                        'taxon_id': taxon_id,
+                        'range_id': range_id,
+                        'breeding_range_id': breeding_range_id,
+                        'geom_wkb': shapely.wkb.dumps(subgeom)
+                    }
+                )
+        if commit:
+            session.commit()
+
+    except:
+        log.exception("Exception processing alpha hull")
+        raise
+    finally:
+        session.close()
+
 def process_database(species = None, commit = False):
     """
     Generates alpha hulls from raw sighting data in the database
@@ -180,9 +252,6 @@ def process_database(species = None, commit = False):
     if species is None:
         species = get_all_spno(session)
 
-    db_proj = pyproj.Proj('+init=EPSG:4326') # Database always uses WGS84
-    working_proj = pyproj.Proj('+init=EPSG:3112') # GDA94 / Geoscience Australia Lambert - so that we can buffer in metres
-
     # Load coastal shapefile
     coastal_shape_filename = tsx.config.config.get("processing.alpha_hull", "coastal_shp")
     with fiona.open(coastal_shape_filename, 'r') as coastal_shape:
@@ -192,78 +261,18 @@ def process_database(species = None, commit = False):
         log.info("Simplifying coastal boundary")
         coastal_shape = coastal_shape.buffer(10000).simplify(10000)
 
-    log.info("Generating alpha shapes")
+        # TODO: cache simplified shapefile
+        # with fiona.open(coastal_shape_filename[0:-4] + ".shp", 'w'):
 
-    # Process a single species.
-    # This gets run off the main thread.
-    def process_spno(spno):
-        session = get_session()
-        try:
-            # Get raw points from DB
-            raw_points = get_species_points(session, spno)
-
-            if len(raw_points) < 4:
-                # Not enough points to create an alpha hull
-                return
-
-            # Read points from database
-            points = [reproject(p, db_proj, working_proj) for p in raw_points]
-
-            # Generate alpha shape
-            alpha_shp = make_alpha_hull(
-                points = points,
-                coastal_shape = coastal_shape,
-                thinning_distance = tsx.config.config.getfloat('processing.alpha_hull', 'thinning_distance'),
-                alpha = tsx.config.config.getfloat('processing.alpha_hull', 'alpha'),
-                hullbuffer_distance = tsx.config.config.getfloat('processing.alpha_hull', 'hullbuffer_distance'),
-                isolatedbuffer_distance = tsx.config.config.getfloat('processing.alpha_hull', 'isolatedbuffer_distance'))
-
-            # Convert back to DB projection
-            alpha_shp = reproject(alpha_shp, working_proj, db_proj)
-
-            # Clean up geometry
-            alpha_shp = alpha_shp.buffer(0)
-
-            # Get range polygons to intersect with alpha shape
-            for taxon_id, range_id, breeding_range_id, geom_wkb in get_species_range_polygons(session, spno):
-                # Intersect and insert into DB
-                geom = shapely.wkb.loads(binascii.unhexlify(geom_wkb)).buffer(0)
-                geom = to_multipolygon(geom.intersection(alpha_shp)) # slow
-                if len(geom) > 0:
-                    session.execute("""INSERT INTO taxon_presence_alpha_hull (taxon_id, range_id, breeding_range_id, geometry)
-                        VALUES (:taxon_id, :range_id, :breeding_range_id, ST_GeomFromWKB(_BINARY :geom_wkb))""", {
-                            'taxon_id': taxon_id,
-                            'range_id': range_id,
-                            'breeding_range_id': breeding_range_id,
-                            'geom_wkb': shapely.wkb.dumps(geom)
-                        }
-                    )
-                # We also subdivide the geometries into small pieces and insert this into the database. This allows for much faster
-                # spatial queries in the database.
-                for subgeom in subdivide_geometry(geom, max_points = 100):
-                    session.execute("""INSERT INTO taxon_presence_alpha_hull_subdiv (taxon_id, range_id, breeding_range_id, geometry)
-                        VALUES (:taxon_id, :range_id, :breeding_range_id, ST_GeomFromWKB(_BINARY :geom_wkb))""", {
-                            'taxon_id': taxon_id,
-                            'range_id': range_id,
-                            'breeding_range_id': breeding_range_id,
-                            'geom_wkb': shapely.wkb.dumps(subgeom)
-                        }
-                    )
-            if commit:
-                session.commit()
-
-        except:
-            log.exception("Exception processing alpha hull")
-            raise
-        finally:
-            session.close()
-
-    # This is important because we are about to spawn child processes, and this stops them attempting to share the
-    # same database connection pool
+    # The geometry operations above allocate quite a lot of memory, which for some reason doesn't seem to get garbage collected
+    # in a timely manner. This problem is made even worse by the subsequent process forking.
+    # gc.collect()
     session.close()
 
+    tasks = [(spno, coastal_shape, commit) for spno in species]
+
     # Process all the species in parallel
-    for result, error in tqdm(run_parallel(process_spno, species, use_processes = False), total = len(species)):
+    for result, error in tqdm(run_parallel(process_spno, tasks), total = len(species)):
         if error:
             print(error)
 
