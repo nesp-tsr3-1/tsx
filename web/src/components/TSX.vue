@@ -659,7 +659,7 @@ export default {
       return this.getFilterParams()
     },
     managementEnabled() {
-      return this.selectedIndex.value === 'Mammals'
+      return this.selectedIndex.value === 'Mammals' || this.prioritySelected
     }
   },
   methods: {
@@ -824,33 +824,40 @@ export default {
     getFilterParams: function() {
       var filterParams = {}
       filterParams['reference_year'] = this.selectedYear.value
-      if(this.prioritySelected) {
-        filterParams['priority'] = 1
-      } else {
-        [
-          ['tgroup', this.selectedIndex],
-          ['group', this.selectedGroup],
-          ['subgroup', this.selectedSubgroup],
-          ['state', this.selectedState],
-          ['statusauth', this.selectedStatusAuthority],
-          ['status', this.selectedStatus],
-          ['management', this.selectedIndex.value === 'Mammals' ? this.selectedManagement : noneOption]
-        ].forEach(pair => {
-          var key = pair[0]
-          var value = pair[1].value
 
-          if(value !== 'None') {
-            filterParams[key] = value
-          }
-        })
+      function addParam(key, selectedItem) {
+        if(selectedItem.value !== 'None') {
+          filterParams[key] = selectedItem.value
+        }
       }
+
+      if(this.prioritySelected) {
+        filterParams['priority'] = '1'
+        addParam('management', this.selectedManagement)
+      } else {
+        addParam('tgroup', this.selectedIndex)
+        addParam('group', this.selectedGroup)
+        addParam('subgroup', this.selectedSubgroup)
+        addParam('state', this.selectedState)
+        addParam('statusauth', this.selectedStatusAuthority)
+        addParam('status', this.selectedStatus)
+        if(this.selectedIndex.value === 'Mammals') {
+          addParam('management', this.selectedManagement)
+        }
+      }
+
       return filterParams
     },
     getFilterString: function() {
+      var components
+
       if(this.prioritySelected) {
-        return 'priority-1'
+        components = [
+          ['management', this.selectedManagement],
+          ['priority', {value: 1}]
+        ]
       } else {
-        return [
+        components = [
           ['tgroup', this.selectedIndex],
           ['group', this.selectedGroup],
           ['subgroup', this.selectedSubgroup],
@@ -858,13 +865,15 @@ export default {
           ['statusauth', this.selectedStatusAuthority],
           ['status', this.selectedStatus],
           ['management', this.selectedIndex.value === 'Mammals' ? this.selectedManagement : noneOption]
-        ].map(function(pair) {
-          var key = pair[0]
-          var value = pair[1].value
-
-          return value === 'None' ? '' : key + '-' + value + '_'
-        }).join('')
+        ]
       }
+
+      return components.map(function(pair) {
+        var key = pair[0]
+        var value = pair[1].value
+
+        return value === 'None' ? '' : key + '-' + value + '_'
+      }).join('')
     },
     // refresh summary plot
     refreshSummaryPlot: function() {
