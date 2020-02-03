@@ -758,7 +758,16 @@ export default {
         }
 
         var counts = pluck(that.surveyData, 'count')
-        that.heatmapDataSet.max = max(counts)
+        if(that.sliderEnabled) {
+          that.heatmapDataSet.max = max(counts)
+        } else {
+          // This scaling factor is arbitrarily chosen for aesthetic reasons.
+          // Previously we were stacking points from many years on top of each other on the map, but
+          // for performance reasons I have now combined all years into a single point (see 'fast_mode' in lpi_data.py).
+          // This resulted in the heatmap being very faint compared to before, this scaling factor increases the intensity.
+          that.heatmapDataSet.max = max(counts) / 20
+        }
+
         that.heatmapDataSet.min = min(counts)
 
         that.heatmapDataSet.data = that.surveyData

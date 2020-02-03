@@ -271,6 +271,7 @@ def get_intensity():
 		"""
 
 		enable_consistency_check = False # for testing that DB query and CSV queries match up
+		fast_mode = True # Sums all date into a single year '1' – so this doesn't work with the time slider functionality, but is much faster
 
 		if enable_consistency_check:
 			dat = filtered_data.to_dict()
@@ -280,13 +281,29 @@ def get_intensity():
 
 		sql_where_expressions, sql_values = build_filter_sql()
 
+		# Faster alternative that flattens all years
+		if fast_mode:
+			result = session.bind.execute("""SELECT
+			ANY_VALUE(ROUND(ST_Y(centroid_coords), 5)) as lat,
+			ANY_VALUE(ROUND(ST_X(centroid_coords), 5)) as lon,
+			SUM(survey_count) as survey_count
+			FROM aggregated_by_year
+			STRAIGHT_JOIN region ON region.id = aggregated_by_year.region_id
+			STRAIGHT_JOIN taxon ON taxon.id = aggregated_by_year.taxon_id
+			WHERE include_in_analysis
+			AND %s
+			GROUP BY lat, lon""" % sql_where_expressions, sql_values)
+
+			json_result = json.dumps([[float(lon), float(lat), [[1, int(count)]]] for lat, lon, count in result.fetchall()])
+			session.close()
+			return json_result
+
 		with log_time("Query database"):
-			# Note '.bind' is necessary to run query with positional parameters
+			# Note 'session.bind' is necessary to run query with positional parameters
 			# STRAIGHT_JOIN is necessary to stop MySQL from choosing a very slow query plan
 			result = session.bind.execute("""SELECT
 							time_series_id,
 							start_date_y as Year,
-							# 1 as Year, # this is much faster but slightly changes intensity map
 							ANY_VALUE(ST_Y(centroid_coords)) as Latitude,
 							ANY_VALUE(ST_X(centroid_coords)) as Longitude,
 							SUM(survey_count) as Count
