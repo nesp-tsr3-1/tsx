@@ -34,7 +34,8 @@ def main():
 				'exclude_from_analysis': get_bool(row, 'NotInIndex', False, unknown_value_default=True),
 				'suppress_aggregated_data': get_bool(row, 'SuppressAggregatedDataUntil', False, unknown_value_default=True),
 				'authors': row['Authors'],
-				'provider': row['SourceProvider']
+				'provider': row['SourceProvider'],
+				'description': row['SourceDesc']
 			}
 
 			# In relaxed mode, silently skip rows without SourceID value
@@ -79,7 +80,7 @@ def main():
 			)
 
 			# TODO: Not sure if SourceName should be imported into source.description?
-			session.execute("""UPDATE source SET authors = :authors, provider = :provider WHERE id = :source_id""", data)
+			session.execute("""UPDATE source SET authors = :authors, provider = :provider, description = :description WHERE id = :source_id""", data)
 
 
 	session.commit()
