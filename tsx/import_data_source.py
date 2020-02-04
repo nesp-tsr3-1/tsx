@@ -57,8 +57,8 @@ def main():
 				return stripped
 
 			data['authors'] = strip_and_warn(data['authors'])
-			data['provider'] = strip_and_warn(data['authors'])
-			data['description'] = strip_and_warn(data['authors'])
+			data['provider'] = strip_and_warn(data['provider'])
+			data['description'] = strip_and_warn(data['description'])
 
 
 			session.execute("""INSERT INTO data_source (
