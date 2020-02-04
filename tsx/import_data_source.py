@@ -39,16 +39,26 @@ def main():
 			}
 
 			# In relaxed mode, silently skip rows without SourceID value
-			if args.relax and row['SourceID'].strip() in ('', 'NULL'):
+			if args.relax and row['SourceID'].strip() in ('', 'NULL', 'NA'):
 				continue
 
 			r = session.execute("SELECT 1 FROM source WHERE id = :id", { 'id': data['source_id'] }).fetchall()
 			if len(r) == 0:
 				if args.relax:
-					log.warn("Skipping unknown source id: %s" % data['source_id'])
+					log.warning("Skipping unknown source id: %s" % data['source_id'])
 					continue
 				else:
 					raise ValueError("Invalid source id: %s" % data['source_id'])
+
+			def strip_and_warn(s):
+				stripped = s.strip(". ")
+				if s != stripped:
+					log.warning("Stripping leading/trailing space/periods from '%s'", s)
+				return stripped
+
+			data['authors'] = strip_and_warn(data['authors'])
+			data['provider'] = strip_and_warn(data['authors'])
+			data['description'] = strip_and_warn(data['authors'])
 
 
 			session.execute("""INSERT INTO data_source (
@@ -120,7 +130,7 @@ def get_bool(row, column, default=None, unknown_value_default=None):
 	if value in ('', 'na', 'null'):
 		return default
 	else:
-		log.warn("Unknown value for %s: '%s', defaulting to %s" % (column, raw_value, unknown_value_default))
+		log.warning("Unknown value for %s: '%s', defaulting to %s" % (column, raw_value, unknown_value_default))
 		return unknown_value_default
 
 def lookup(row, column):
@@ -134,7 +144,7 @@ def lookup(row, column):
 	elif value in lookup:
 		return lookup[value]
 	else:
-		log.warn("Unknown value for %s: '%s', defaulting to None" % (column, value))
+		log.warning("Unknown value for %s: '%s', defaulting to None" % (column, value))
 		return None
 
 if __name__ == '__main__':
