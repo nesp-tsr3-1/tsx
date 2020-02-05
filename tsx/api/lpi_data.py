@@ -575,16 +575,6 @@ def build_filter_sql(taxon_only=False):
 			expressions.append("taxon.%s_status_id IN (SELECT id FROM taxon_status WHERE description IN (%s))" % (status_authority, in_clause_placeholders(statuses)))
 			values.extend(statuses)
 
-	if 'management' in request.args:
-		expressions.append("data_type = 1")
-		management = request.args.get('management', type=str)
-		if management == 'Predator-free':
-			expressions.append("site_id IN (SELECT t1_site.id FROM t1_site, intensive_management WHERE intensive_management.id = intensive_management_id AND grouping LIKE '%%predator-free%%')")
-		elif management == 'Any management':
-			expressions.append("site_id IN (SELECT id FROM t1_site WHERE intensive_management_id IS NOT NULL)")
-		elif management == 'No management':
-			expressions.append("site_id IN (SELECT id FROM t1_site WHERE intensive_management_id IS NULL)")
-
 	# national priority
 	if 'priority' in request.args:
 		expressions.append("taxon.national_priority = %s")
@@ -616,6 +606,17 @@ def build_filter_sql(taxon_only=False):
 		if 'sourceid' in request.args:
 			expressions.append("source_id = %s")
 			values.append(request.args.get('sourceid', type=int))
+
+		# management
+		if 'management' in request.args:
+			expressions.append("data_type = 1")
+			management = request.args.get('management', type=str)
+			if management == 'Predator-free':
+				expressions.append("site_id IN (SELECT t1_site.id FROM t1_site, intensive_management WHERE intensive_management.id = intensive_management_id AND grouping LIKE '%%predator-free%%')")
+			elif management == 'Any management':
+				expressions.append("site_id IN (SELECT id FROM t1_site WHERE intensive_management_id IS NOT NULL)")
+			elif management == 'No management':
+				expressions.append("site_id IN (SELECT id FROM t1_site WHERE intensive_management_id IS NULL)")
 
 	if len(expressions):
 		return (" AND ".join(expressions), tuple(values))
