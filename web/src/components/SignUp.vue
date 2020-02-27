@@ -32,7 +32,7 @@
           </div>
           <div class="field">
             <label>Confirm password</label>
-            <input class="input" type="password" name="confirm_password" v-model="confirm_password">
+            <input class="input" type="password" name="confirm_password" v-model="confirm_password" v-on:keyup.enter="signUp">
             <p class="help is-warning" v-if="errors.confirm_password">{{ errors.confirm_password }}</p>
           </div>
           <button type="button" class="button is-primary" v-on:click='signUp' style="margin: 0.5em 0;">{{ buttonLabel }}</button>
