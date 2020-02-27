@@ -174,7 +174,7 @@ reset_email_no_account_body = Template(dedent("""
 	Hi,
 
 	We recieved a request to reset your password for the TSX web interface (http://tsx.org.au),
-	however there no account exists for this email address ($email).
+	however no account exists for this email address ($email).
 
 	If you wish to create a new account, visit $root_url#/signup
 
