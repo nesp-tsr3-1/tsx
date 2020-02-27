@@ -46,10 +46,16 @@ def create_user():
 
 	try:
 		db_session.add(user)
-		db_session.commit()
+		db_session.flush()
 	except exc.IntegrityError:
 		# User already exists
 		pass
+
+	db_session.execute("""INSERT INTO user_role (user_id, role_id)
+		VALUES (:user_id, (SELECT id FROM role WHERE description = 'Custodian'))""",
+		{'user_id': user.id})
+
+	db_session.commit()
 
 	return "OK", 204 # Success
 
