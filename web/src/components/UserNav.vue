@@ -1,6 +1,7 @@
 <template>
   <ul class='user-nav' v-if="user">
-    <li>{{user.first_name}}</li>
+    <li style="font-weight: bold;">{{user.first_name}}</li>
+    <li><router-link :to="{ name: 'SourceHome' }">Datasets</router-link></li>
     <li v-if="canManageUsers"><router-link :to="{ name: 'UserManage' }">Manage Users</router-link></li>
     <li><router-link :to="{ name: 'Logout' }">Logout</router-link></li>
   </ul>
