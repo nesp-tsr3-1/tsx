@@ -25,7 +25,10 @@
         <tbody>
           <tr v-for="i in imports">
             <td><a v-bind:href="importUrl(i)">{{i.filename}}</a></td>
-            <td>{{humanizeStatus(i.status)}}</td>
+            <td>
+              {{humanizeStatus(i.status)}}
+              <a v-bind:href="importLogUrl(i)">(log)</a>
+            </td>
             <td><timeago :since='i.time_created' :auto-update="60"></timeago></td>
           </tr>
         </tbody>
@@ -74,6 +77,9 @@ export default {
   methods: {
     importUrl(i) {
       return api.uploadURL(i.upload_uuid)
+    },
+    importLogUrl(i) {
+      return api.dataImportLogUrl(i.id)
     },
     humanizeStatus
   },

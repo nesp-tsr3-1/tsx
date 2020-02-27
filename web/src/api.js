@@ -78,6 +78,10 @@ export function dataImportLog(id) {
   return get('/imports/' + id + '/log')
 }
 
+export function dataImportLogUrl(id) {
+  return ROOT_URL + '/imports/' + id + '/log'
+}
+
 export function lpidata(params) {
   return get('/lpi-data', params)
 }
