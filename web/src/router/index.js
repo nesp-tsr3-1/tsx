@@ -20,7 +20,10 @@ export default new Router({
       path: '/logout',
       name: 'Logout',
       beforeEnter: (to, from, next) => {
-        api.logout().finally(() => next('/login'))
+        api.logout().finally(() => {
+          api.refreshCurrentUser()
+          next('/login')
+        })
       }
     },
     {

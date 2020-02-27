@@ -114,6 +114,10 @@ export function logout() {
   return post('/logout')
 }
 
+export function refreshCurrentUser() {
+  currentUser.cached = undefined
+}
+
 export function currentUser() {
   if(!currentUser.cached) {
     currentUser.cached = get('/users/me')

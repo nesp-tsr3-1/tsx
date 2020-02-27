@@ -54,6 +54,7 @@ export default {
     login: function() {
       this.submitting = true
       api.login(this.email, this.password).then(response => {
+        api.refreshCurrentUser()
         this.$router.replace(this.$route.query.after_login || '/source')
       }).catch(error => {
         if(error.xhr.status === 400) {
