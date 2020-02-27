@@ -12,7 +12,7 @@
     </div>
     <div v-if="status == 'loaded'">
       <p class="table is-fullwidth is-striped is-hoverable" v-if="sources.length == 0">
-        None
+        No datasets to show.
       </p>
       <table class="table is-fullwidth is-striped is-hoverable" v-if="sources.length > 0">
         <thead>
