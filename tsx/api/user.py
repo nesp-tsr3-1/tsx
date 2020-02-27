@@ -229,9 +229,8 @@ def reset_password():
 			db_session.commit()
 
 			# Send reset email
-			# TODO: generate URL dynamically
-			reset_url = "%s#/reset_password?code=%s" % (root_url, user.password_reset_code)
 			root_url = config.get("api", "root_url")
+			reset_url = "%s#/reset_password?code=%s" % (root_url, user.password_reset_code)
 			email_body = reset_email_body.substitute(name=user.first_name, reset_url=reset_url, root_url=root_url)
 
 		try:
