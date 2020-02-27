@@ -8,6 +8,7 @@ name=tsx
 [api]
 secret_key=change_me
 port=8080
+root_url=http://localhost:8080/
 
 [global]
 data_dir=sample-data
@@ -24,3 +25,11 @@ alpha=1.6
 hullbuffer_distance=1000
 isolatedbuffer_distance=1000
 coastal_shp=sample-data/spatial/AusCoast_Islands_1kmBuffer.shp
+
+[smtp]
+password=secret
+username=example
+host=example.com
+port=587
+use_starttls=true
+default_sender=Example <example@example.com>

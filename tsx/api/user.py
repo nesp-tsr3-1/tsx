@@ -9,6 +9,8 @@ import secrets
 from string import Template
 from textwrap import dedent
 from tsx.api.validation import *
+from tsx.api.mail import send_email
+from tsx.config import config
 
 bp = Blueprint('user', __name__)
 
@@ -174,7 +176,7 @@ reset_email_no_account_body = Template(dedent("""
 	We recieved a request to reset your password for the TSX web interface (http://tsx.org.au),
 	however there no account exists for this email address ($email).
 
-	If you wish to create a new account, visit https://tsx.org.au/tsx/#/signup
+	If you wish to create a new account, visit $root_url#/signup
 
 	If you did not request a password reset, please disregard this email.
 """))
@@ -228,10 +230,13 @@ def reset_password():
 
 			# Send reset email
 			# TODO: generate URL dynamically
-			reset_url = "http://localhost:8080/#/reset_password?code=%s" % user.password_reset_code
-			email_body = reset_email_body.substitute(name=user.first_name, reset_url=reset_url)
+			reset_url = "%s#/reset_password?code=%s" % (root_url, user.password_reset_code)
+			root_url = config.get("api", "root_url")
+			email_body = reset_email_body.substitute(name=user.first_name, reset_url=reset_url, root_url=root_url)
 
-		# TODO: send email
-		print(email_body)
+		try:
+			send_email(email, 'Password reset request', email_body)
+			return "OK", 200
+		except:
+			return jsonify('There was a problem sending the password reset email. Please try again later.'), 500
 
-		return "OK", 200
