@@ -21,6 +21,19 @@ running_imports = {} # Holds information about running imports
 
 lock = Lock() # Used to sync data between import thread and main thread
 
+def update_import_statuses_after_restart():
+	db_session.execute("""UPDATE data_import
+		SET status_id = (SELECT id FROM data_import_status WHERE code = 'checked_error')
+		WHERE status_id = (SELECT id FROM data_import_status WHERE code = 'checking')""")
+
+	db_session.execute("""UPDATE data_import
+		SET status_id = (SELECT id FROM data_import_status WHERE code = 'import_error')
+		WHERE status_id = (SELECT id FROM data_import_status WHERE code = 'importing')""")
+
+	db_session.commit()
+
+update_import_statuses_after_restart()
+
 def permitted(user, action, resource_type, resource_id=None):
 	if user == None:
 		return False
@@ -83,7 +96,7 @@ def jsonify_rows(rows):
 
 @bp.route('/data_sources', methods = ['POST'])
 def create_source():
-	return create_or_update_source('create')
+	return create_or_update_source()
 
 @bp.route('/data_sources/<int:source_id>', methods = ['PUT'])
 def update_source(source_id = None):
@@ -319,6 +332,11 @@ def create_or_update_source(source_id=None):
 
 	update_source_from_json(source, body)
 	db_session.add(source)
+	db_session.flush()
+
+	db_session.execute("""INSERT INTO user_source (user_id, source_id) VALUES (:user_id, :source_id)""",
+			{ 'source_id': source.id, 'user_id': user.id })
+
 	db_session.commit()
 
 	return jsonify(source_to_json(source)), 200 if source_id else 201
@@ -363,7 +381,7 @@ def post_import():
 	except KeyError:
 		return jsonify('source_id is required'), 400
 
-	if not permitted(user, 'source', 'update', source_id):
+	if not permitted(user, 'update', 'source', source_id):
 		return 'Not authorized', 401
 
 	# Check upload parameter
@@ -389,10 +407,10 @@ def post_import():
 	db_session.commit()
 	import_id = data_import.id
 
-	working_path = os.path.join(imports_path, "%04d" % import_id)
+	# working_path = os.path.join(imports_path, "%04d" % import_id)
 
-	working_path, import_id = next_path(os.path.join(imports_path, "%04d"))
-	os.makedirs(working_path)
+	# working_path, import_id = next_path(os.path.join(imports_path, "%04d"))
+	# os.makedirs(working_path)
 
 	process_import_async(import_id, 'checking')
 
@@ -408,6 +426,7 @@ def process_import_async(import_id, status):
 
 	file_path = get_upload_path(info.upload_uuid)
 	working_path = import_path(import_id)
+	os.makedirs(working_path)
 	data_type = info.data_type
 
 	with lock:

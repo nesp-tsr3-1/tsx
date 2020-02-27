@@ -70,10 +70,10 @@
       </code>
     </div>
 
-    <div v-if='canDelete'>
+    <!-- <div v-if='canDelete'>
       <hr>
       <button class='button is-light' v-on:click='deleteImport'>Delete import</button>
-    </div>
+    </div> -->
   </div>
 
 </template>
