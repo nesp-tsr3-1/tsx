@@ -20,8 +20,7 @@ export default new Router({
       path: '/logout',
       name: 'Logout',
       beforeEnter: (to, from, next) => {
-        console.log('beforeEnter!')
-        api.logout().finally(() => next('/'))
+        api.logout().finally(() => next('/login'))
       }
     },
     {
@@ -43,6 +42,10 @@ export default new Router({
       path: '/source',
       name: 'SourceHome',
       component: SourceHome
+    },
+    {
+      path: '/import',
+      redirect: '/source'
     },
     {
       path: '/source/edit/:id',

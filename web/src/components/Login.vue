@@ -54,7 +54,7 @@ export default {
     login: function() {
       this.submitting = true
       api.login(this.email, this.password).then(response => {
-        this.$router.replace(this.$route.query.after_login || '/')
+        this.$router.replace(this.$route.query.after_login || '/source')
       }).catch(error => {
         if(error.xhr.status === 400) {
           this.errors = JSON.parse(error.xhr.response)

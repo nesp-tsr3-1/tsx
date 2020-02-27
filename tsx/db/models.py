@@ -78,6 +78,7 @@ class DataImportStatus(Base):
 
     id = Column(Integer, primary_key=True)
     description = Column(String(255))
+    code = Column(String(255), nullable=False, unique=True)
 
 
 class DataProcessingNotes(Base):
@@ -139,6 +140,7 @@ class IntensiveManagement(Base):
 
     id = Column(Integer, primary_key=True)
     description = Column(String(255))
+    grouping = Column(String(255))
 
 
 t_processing_method = Table(

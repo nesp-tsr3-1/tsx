@@ -28,11 +28,16 @@
             </div>
             <div class="column">
               <div style="margin-bottom: 1em;">
-                <div style="font-weight: bold;">Contact</div>
-                {{ source.contact_name }}<br>
-                {{ source.contact_position }}<br>
-                {{ source.contact_email }}<br>
-                {{ source.contact_phone }}
+                <div style="font-weight: bold;">Contact Information</div>
+                <div v-if="hasContactInfo">
+                  {{ source.contact_name }}<br>
+                  {{ source.contact_position }}<br>
+                  {{ source.contact_email }}<br>
+                  {{ source.contact_phone }}
+                </div>
+                <div style="font-style: italic" v-else>
+                  None
+                </div>
               </div>
             </div>
           </div>
@@ -42,8 +47,10 @@
           <div class="columns">
             <div class="column">
               <h4 class="title is-4">Custodians</h4>
-
-              <p>(TODO)</p>
+              <p class="content">
+                Custodians are users who have access to import data and edit details for this dataset.
+              </p>
+              <source-custodians v-bind:sourceId="sourceId"></source-custodians>
             </div>
           </div>
 
@@ -88,13 +95,15 @@ import * as api from '@/api'
 import ImportList from '@/components/ImportList'
 import ImportData from '@/components/ImportData'
 import ProcessingNotes from '@/components/ProcessingNotes'
+import SourceCustodians from '@/components/SourceCustodians'
 
 export default {
   name: 'SourceView',
   components: {
     'import-list': ImportList,
     'import-data': ImportData,
-    'processing-notes': ProcessingNotes
+    'processing-notes': ProcessingNotes,
+    'source-custodians': SourceCustodians
   },
   data () {
     return {
@@ -103,7 +112,13 @@ export default {
       latestImportId: null
     }
   },
-  created() {
+  computed: {
+    hasContactInfo() {
+      let source = this.source
+      return !!(source && (source.contact_name || source.contact_position || source.contact_email || source.contact_phone))
+    }
+  },
+  created () {
     api.isLoggedIn().then(isLoggedIn => {
       if(!isLoggedIn) {
         this.$router.replace({ path: '/login', query: { after_login: this.$route.path } })

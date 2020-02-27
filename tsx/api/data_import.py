@@ -4,7 +4,7 @@ from tsx.api.util import db_session, get_user, get_roles
 from tsx.api.upload import get_upload_path, get_upload_name
 from tsx.importer import Importer
 from tsx.config import data_dir
-from tsx.db import User, Source, get_session, DataImport, DataProcessingNotes
+from tsx.db import User, Source, get_session, DataImport, DataProcessingNotes, t_user_source
 import logging
 import os
 from threading import Thread, Lock
@@ -132,6 +132,8 @@ def get_source_imports(source_id=None):
 
 	return jsonify_rows(rows)
 
+# --------- Data processing notes
+
 @bp.route('/data_sources/<int:source_id>/notes', methods = ['GET'])
 def get_source_processing_notes(source_id=None):
 	user = get_user()
@@ -164,7 +166,7 @@ def get_source_processing_notes(source_id=None):
 def create_source_processing_notes(source_id=None):
 	user = get_user()
 
-	if not permitted(user, 'get', 'source', source_id):
+	if not permitted(user, 'update', 'source', source_id):
 		return "Not authorized", 401
 
 	body = request.json
@@ -179,6 +181,117 @@ def create_source_processing_notes(source_id=None):
 	db_session.commit()
 
 	return "OK", 201
+
+@bp.route('/data_sources/<int:source_id>/notes/<int:note_id>', methods = ['PUT'])
+def update_source_processing_notes(source_id=None, note_id=None):
+	user = get_user()
+
+	if not permitted(user, 'update', 'source', source_id):
+		return "Not authorized", 401
+
+	notes = db_session.query(DataProcessingNotes).get(note_id)
+
+	if notes.source_id != source_id:
+		return "Source id doesn't match", 400
+
+	body = request.json # TODO: validate json
+	notes.notes = body['notes']
+	db_session.add(notes)
+	db_session.commit()
+
+	return "OK", 201
+
+@bp.route('/data_sources/<int:source_id>/notes/<int:note_id>', methods = ['DELETE'])
+def delete_source_processing_notes(source_id=None, note_id=None):
+	user = get_user()
+
+	if not permitted(user, 'delete', 'source', source_id):
+		return "Not authorized", 401
+
+	notes = db_session.query(DataProcessingNotes).get(note_id)
+
+	if notes.source_id != source_id:
+		return "Source id doesn't match", 400
+
+	db_session.delete(notes)
+	db_session.commit()
+
+	return "OK", 200
+
+# --------- Custodians
+
+@bp.route('/data_sources/<int:source_id>/custodians', methods = ['GET'])
+def get_source_custodians(source_id=None):
+	user = get_user()
+
+	if not permitted(user, 'get', 'source', source_id):
+		return "Not authorized", 401
+
+	source = db_session.query(Source).get(source_id) if source_id else None
+
+	if source == None:
+		return "Not found", 404
+
+	rows = db_session.execute("""SELECT
+		user.first_name,
+		user.last_name,
+		user.email,
+		user.id
+		FROM user_source
+		JOIN user ON user_source.user_id = user.id
+		WHERE user_source.source_id = :source_id
+	""", { 'source_id': source_id })
+
+	return jsonify_rows(rows)
+
+@bp.route('/data_sources/<int:source_id>/custodians', methods = ['POST'])
+def create_source_custodian(source_id=None):
+	user = get_user()
+
+	if not permitted(user, 'update', 'source', source_id):
+		return "Not authorized", 401
+
+	body = request.json
+
+	email = body["email"]
+
+	if not re.match(email_regex, email):
+		return jsonify({ 'error' : '"%s" is not a valid email address' % email }), 400
+
+	custodian = db_session.query(User).filter(User.email == email).one_or_none()
+
+	if not custodian:
+		error_message = 'No user found with the email address "%s". (Note: custodians must first create an account before they can be added)' % email
+		return jsonify({ 'error': error_message }), 400
+
+	rows = db_session.execute("""SELECT 1
+		FROM user_source
+		WHERE user_id = :user_id
+		AND source_id = :source_id
+	""", { 'source_id': source_id, 'user_id': custodian.id })
+
+	if len(list(rows)) == 0:
+		db_session.execute("""INSERT INTO user_source (user_id, source_id) VALUES (:user_id, :source_id)""",
+			{ 'source_id': source_id, 'user_id': custodian.id })
+		db_session.commit()
+
+	return "OK", 201
+
+@bp.route('/data_sources/<int:source_id>/custodians/<int:user_id>', methods = ['DELETE'])
+def delete_source_custodian(source_id=None, user_id=None):
+	user = get_user()
+
+	if not permitted(user, 'update', 'source', source_id):
+		return "Not authorized", 401
+
+	db_session.execute("""DELETE FROM user_source
+		WHERE user_id = :user_id
+		AND source_id = :source_id""", { 'source_id': source_id, 'user_id': user_id })
+	db_session.commit()
+
+	return "OK", 200
+
+#------
 
 
 def create_or_update_source(source_id=None):
@@ -212,8 +325,13 @@ def create_or_update_source(source_id=None):
 
 
 def update_source_from_json(source, json):
+	def clean(value):
+		if type(value) == str:
+			value = value.strip()
+		return value
+
 	for field in source_fields:
-		setattr(source, field.name, json.get(field.name).strip())
+		setattr(source, field.name, clean(json.get(field.name)))
 
 def source_to_json(source):
 	json = {

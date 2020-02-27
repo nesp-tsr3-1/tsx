@@ -34,8 +34,28 @@ export function dataSourceNotes(id) {
   return get('/data_sources/' + id + '/notes')
 }
 
-export function createDataSourceNotes(id, notes) {
-  return post('/data_sources/' + id + '/notes', { notes })
+export function createDataSourceNote(dataSourceId, notes) {
+  return post('/data_sources/' + dataSourceId + '/notes', { notes })
+}
+
+export function updateDataSourceNote(dataSourceId, noteId, notes) {
+  return put('/data_sources/' + dataSourceId + '/notes/' + noteId, { notes })
+}
+
+export function deleteDataSourceNote(dataSourceId, noteId) {
+  return del('/data_sources/' + dataSourceId + '/notes/' + noteId)
+}
+
+export function dataSourceCustodians(id) {
+  return get('/data_sources/' + id + '/custodians')
+}
+
+export function addDataSourceCustodian(dataSourceId, email) {
+  return post('/data_sources/' + dataSourceId + '/custodians', { email })
+}
+
+export function deleteDataSourceCustodian(dataSourceId, userId) {
+  return del('/data_sources/' + dataSourceId + '/custodians/' + userId)
 }
 
 export function createDataSource(source) {
@@ -201,6 +221,12 @@ function putOrPost(method, url, data, contentType, progressCallback) {
   }
 
   xhr.open(method, ROOT_URL + url)
+  xhr._meta = {
+    url: url,
+    method: method,
+    data: data
+  }
+
   if(contentType) {
     xhr.setRequestHeader('Content-Type', contentType)
   }
@@ -305,8 +331,17 @@ function xhrPromise(xhr, dataToSend) {
 }
 
 function XHRError(xhr) {
-  var url = xhr._meta ? xhr._meta.url : '?'
+  var url = xhr._meta ? xhr._meta.url : '(unknown URL)'
   var error = new Error('XHR Error ' + xhr.status + ': ' + url)
   error.xhr = xhr
+  try {
+    if(xhr.getResponseHeader('Content-Type') === 'application/json') {
+      error.json = JSON.parse(xhr.responseText)
+      console.log(error.json)
+    }
+  } catch(e) {
+    console.log(e)
+    console.log('Failed to parse JSON error response: ' + xhr.responseText)
+  }
   return error
 }

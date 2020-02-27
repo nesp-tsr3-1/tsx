@@ -23,7 +23,7 @@
             <div class="card" v-if="state == 'init'">
               <header class="card-header">
                 <p class="card-header-title">{{note.first_name}} {{note.last_name}}
-                  <span style="font-weight: normal;">&nbsp;– {{formatDateTime(note.time_created)}}</span>
+                  <span style="font-weight: normal; margin-left: 1em;">{{formatDateTime(note.time_created)}}</span>
                 </p>
                 <div class="card-header-icon" v-if="note.editable">
                   <span class="icon link" aria-label="edit" @click="editNote">
@@ -103,7 +103,7 @@ const Note = {
     },
     deleteNote() {
       this.state = 'deleting'
-      api.deleteDataSourceNote(this.note.id).then(() => {
+      api.deleteDataSourceNote(this.note.source_id, this.note.id).then(() => {
         this.$emit('deleted')
       }).catch(error => {
         console.log(error)
@@ -113,7 +113,7 @@ const Note = {
     },
     updateNote() {
       this.state = 'updating'
-      api.updateDataSourceNote(this.note.id, this.newNotes).then(() => {
+      api.updateDataSourceNote(this.note.source_id, this.note.id, this.newNotes).then(() => {
         this.note.notes = this.newNotes
         this.state = 'init'
       }).catch(error => {
@@ -123,7 +123,8 @@ const Note = {
       })
     },
     formatDateTime(str) {
-      return new Date(Date.parse(str)).toLocaleString()
+      let date = new Date(Date.parse(str))
+      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
     }
   },
   props: {
@@ -169,7 +170,7 @@ export default {
     },
     submitNotes() {
       this.submitStatus = 'submitting'
-      api.createDataSourceNotes(this.sourceId, this.newNotes).then(() => {
+      api.createDataSourceNote(this.sourceId, this.newNotes).then(() => {
         this.newNotes = ''
         this.refreshNotes()
         this.submitStatus = 'init'

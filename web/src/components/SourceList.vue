@@ -24,7 +24,7 @@
         </thead>
         <tbody>
           <tr v-for="i in sources" v-on:click='$router.push("source/" + i.id)'>
-            <td>{{i.description}}</td>
+            <td :title="i.description">{{truncate(i.description, 40)}}</td>
             <td><timeago :since='i.time_created' :auto-update="60" v-if="i.time_created"></timeago></td>
             <td>{{humanizeStatus(i.status)}}</td>
           </tr>
@@ -70,7 +70,16 @@ export default {
     return data
   },
   methods: {
-    humanizeStatus
+    humanizeStatus,
+    truncate(str, maxLength) {
+      if(str.length > maxLength) {
+        var words = str.substr(0, maxLength + 1).split(' ')
+        words.pop()
+        return words.join(' ') + '…'
+      } else {
+        return str
+      }
+    }
   },
   props: {
     completed: Boolean
