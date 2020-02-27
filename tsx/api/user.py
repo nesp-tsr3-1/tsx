@@ -151,13 +151,15 @@ def users():
 	return jsonify([dict(row.items()) for row in rows])
 
 def user_to_json(user):
+	roles = get_roles(user)
 	return {
 		'id': user.id,
 		'email': user.email,
 		'first_name': user.first_name,
 		'last_name': user.last_name,
 		'phone_number': user.phone_number,
-		'is_admin': 'Administrator' in get_roles(user)
+		'is_admin': 'Administrator' in roles,
+		'roles': list(roles)
 	}
 
 reset_email_body = Template(dedent("""
