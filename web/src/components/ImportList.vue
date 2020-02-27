@@ -27,7 +27,7 @@
             <td><a v-bind:href="importUrl(i)">{{i.filename}}</a></td>
             <td>
               {{humanizeStatus(i.status)}}
-              <a v-bind:href="importLogUrl(i)">(log)</a>
+              <a v-bind:href="importLogUrl(i)" target="_blank">(log)</a>
             </td>
             <td><timeago :since='i.time_created' :auto-update="60"></timeago></td>
           </tr>
