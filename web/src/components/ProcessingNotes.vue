@@ -35,7 +35,7 @@
                 </div>
               </header>
               <div class="card-content">
-                <p style="white-space: pre;">{{note.notes}}</p>
+                <p style="white-space: pre-wrap;">{{note.notes}}</p>
               </div>
             </div>
 
