@@ -42,6 +42,13 @@
                 <p class="help is-danger" v-if="errors.contact_name">{{ errors.contact_name }}</p>
               </div>
               <div class="field">
+                <label class="label">Institution</label>
+                <div class="control">
+                  <input class="input" type="text" name="contact_institution" v-model="contact_institution">
+                </div>
+                <p class="help is-danger" v-if="errors.contact_institution">{{ errors.contact_institution }}</p>
+              </div>
+              <div class="field">
                 <label class="label">Position</label>
                 <div class="control">
                   <input class="input" type="text" name="contact_position" v-model="contact_position">
@@ -76,7 +83,7 @@ import * as api from '@/api'
 import SourceList from '@/components/SourceList'
 import _ from 'underscore'
 
-const sourceProps = ['description', 'provider', 'authors', 'contact_name', 'contact_position', 'contact_email', 'contact_phone']
+const sourceProps = ['description', 'provider', 'authors', 'contact_name', 'contact_institution', 'contact_position', 'contact_email', 'contact_phone']
 
 export default {
   name: 'ImportHome',
@@ -94,6 +101,7 @@ export default {
       provider: '',
       authors: '',
       contact_name: '',
+      contact_institution: '',
       contact_position: '',
       contact_email: '',
       contact_phone: ''

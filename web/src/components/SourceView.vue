@@ -31,6 +31,7 @@
                 <div style="font-weight: bold;">Contact Information</div>
                 <div v-if="hasContactInfo">
                   {{ source.contact_name }}<br>
+                  {{ source.contact_institution }}<br>
                   {{ source.contact_position }}<br>
                   {{ source.contact_email }}<br>
                   {{ source.contact_phone }}
@@ -115,7 +116,7 @@ export default {
   computed: {
     hasContactInfo() {
       let source = this.source
-      return !!(source && (source.contact_name || source.contact_position || source.contact_email || source.contact_phone))
+      return !!(source && (source.contact_name || source.contact_institution || source.contact_position || source.contact_email || source.contact_phone))
     }
   },
   created () {

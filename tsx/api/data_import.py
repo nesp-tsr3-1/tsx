@@ -365,6 +365,7 @@ source_fields = [
 	Field(name='authors', title='Author(s)', validators=[validate_required, validate_max_chars(255)]),
 
 	Field(name='contact_name', title='Full name', validators=[validate_required, validate_max_chars(255)]),
+	Field(name='contact_institution', title='Institution', validators=[validate_required, validate_max_chars(255)]),
 	Field(name='contact_position', title='Position', validators=[validate_required, validate_max_chars(255)]),
 	Field(name='contact_email', title='Email address', validators=[validate_required, validate_email]),
 	Field(name='contact_phone', title='Phone number', validators=[validate_max_chars(32)])

@@ -222,6 +222,7 @@ class Source(Base):
     notes = Column(Text)
     authors = Column(Text)
     contact_name = Column(Text)
+    contact_institution = Column(Text)
     contact_position = Column(Text)
     contact_email = Column(Text)
     contact_phone = Column(Text)
