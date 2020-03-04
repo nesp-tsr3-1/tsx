@@ -5,7 +5,6 @@
     <li v-if="canManageUsers"><router-link :to="{ name: 'UserManage' }">Manage Users</router-link></li>
     <li><router-link :to="{ name: 'Logout' }">Logout</router-link></li>
   </ul>
-
 </template>
 
 <script>
@@ -42,6 +41,7 @@ export default {
 <style scoped>
   ul.user-nav {
     text-align: right;
+    margin-bottom: 1em;
   }
 
   ul li {

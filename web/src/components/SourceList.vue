@@ -24,7 +24,7 @@
         </thead>
         <tbody>
           <tr v-for="i in sources" v-on:click='$router.push("source/" + i.id)'>
-            <td :title="i.description">{{truncate(i.description, 40)}}</td>
+            <td :title="i.description">{{truncate(i.description, 60)}}</td>
             <td><timeago :since='i.time_created' :auto-update="60" v-if="i.time_created"></timeago></td>
             <td>{{humanizeStatus(i.status)}}</td>
           </tr>
