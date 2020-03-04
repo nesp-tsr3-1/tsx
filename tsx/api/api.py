@@ -42,7 +42,9 @@ app.register_blueprint(tsx.api.user.bp)
 
 class DateTimeEncoder(json.JSONEncoder):
 	def default(self, obj):
-		if isinstance(obj, (datetime.datetime, datetime.date, datetime.time)):
+		if isinstance(obj, datetime.datetime):
+			return obj.isoformat() + 'Z'
+		if isinstance(obj, (datetime.date, datetime.time)):
 			return obj.isoformat()
 		elif isinstance(obj, datetime.timedelta):
 			return (datetime.datetime.min + obj).time().isoformat()
