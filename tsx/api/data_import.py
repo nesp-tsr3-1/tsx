@@ -121,6 +121,21 @@ def get_source(source_id=None):
 
 	return jsonify(source_to_json(source)), 200
 
+
+@bp.route('/data_sources/<int:source_id>', methods = ['DELETE'])
+def delete_source(source_id=None):
+	user = get_user()
+
+	if not permitted(user, 'delete', 'source', source_id):
+		return "Not authorized", 401
+
+	db_session.execute("""DELETE FROM user_source WHERE source_id = :source_id""", { 'source_id': source_id })
+	db_session.execute("""DELETE FROM data_import WHERE source_id = :source_id""", { 'source_id': source_id })
+	db_session.execute("""DELETE FROM source WHERE id = :source_id""", { 'source_id': source_id })
+	db_session.commit()
+
+	return "OK", 200
+
 @bp.route('/data_sources/<int:source_id>/imports', methods = ['GET'])
 def get_source_imports(source_id=None):
 	user = get_user()
@@ -546,24 +561,6 @@ def data_import_json(data_import):
 			result.update(running_imports[data_import.id])
 
 	return result
-
-
-# @bp.route('/imports/<int:import_id>', methods = ['DELETE'])
-# def delete_import(import_id=None):
-# 	info = load_import(import_id)
-
-# 	if not info:
-# 		return "Not found", 404
-
-# 	db_session.delete(info)
-# 	db_session.commit()
-
-# 	return "OK", 200
-
-# @bp.route('/imports', methods = ['GET'])
-# def list_imports():
-# 	result = [import_info(import_id, include_running = True) for import_id in os.listdir(imports_path)]
-# 	return jsonify(result)
 
 @bp.route('/imports/<int:import_id>', methods = ['GET'])
 def get_import(import_id=None):

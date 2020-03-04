@@ -66,6 +66,10 @@ export function updateDataSource(source) {
   return put('/data_sources/' + source.id, source)
 }
 
+export function deleteDataSource(id) {
+  return del('/data_sources/' + id)
+}
+
 export function dataImports() {
   return get('/imports')
 }

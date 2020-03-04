@@ -85,6 +85,18 @@
 
           <import-data v-bind:sourceId="sourceId"></import-data>
 
+          <hr>
+
+          <h4 class="title is-4">Delete Dataset</h4>
+          <p class="content">
+            Deleting this dataset cannot be undone. All previously imported data and processing notes will be deleted.
+          </p>
+          <div class="field">
+            <input type="checkbox" id="checkbox" v-model="enableDelete">
+            <label for="checkbox">I understand and wish to delete this dataset</label>
+          </div>
+          <button class='button is-danger' :disabled="!enableDelete" v-on:click='deleteSource'>Delete this dataset</button>
+
         </div>
       </div>
     </div>
@@ -110,13 +122,24 @@ export default {
     return {
       sourceId: +this.$route.params.id,
       source: null,
-      latestImportId: null
+      latestImportId: null,
+      enableDelete: false
     }
   },
   computed: {
     hasContactInfo() {
       let source = this.source
       return !!(source && (source.contact_name || source.contact_institution || source.contact_position || source.contact_email || source.contact_phone))
+    }
+  },
+  methods: {
+    deleteSource() {
+      api.deleteDataSource(this.sourceId).then(() => {
+        this.$router.replace({ path: '/source' })
+      }).catch(error => {
+        console.log(error)
+        alert('Delete failed.')
+      })
     }
   },
   created () {
