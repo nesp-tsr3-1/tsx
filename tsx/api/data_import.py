@@ -433,7 +433,7 @@ def process_import_async(import_id, status):
 
 	file_path = get_upload_path(info.upload_uuid)
 	working_path = import_path(import_id)
-	os.makedirs(working_path)
+	os.makedirs(working_path, exist_ok=True)
 	data_type = info.data_type
 
 	with lock:
