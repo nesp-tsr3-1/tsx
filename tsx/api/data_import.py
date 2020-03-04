@@ -466,9 +466,16 @@ def process_import_async(import_id, status):
 			running_imports[import_id]['total_rows'] = total_rows
 			running_imports[import_id]['processed_rows'] = processed_rows
 
-	# Start import process
-	t = Thread(target = process_import, args = (file_path, working_path, data_type, status == 'importing', progress_callback, result_callback, info.source_id))
-	t.start()
+	try:
+		# Start import process
+		t = Thread(target = process_import, args = (file_path, working_path, data_type, status == 'importing', progress_callback, result_callback, info.source_id))
+		t.start()
+	except:
+		traceback.print_exc()
+		result_callback({
+			'warnings': 0,
+			'errors': 1
+		})
 
 # This is called off the main thread
 # Ideally we would run this in a separate process, but Python 2 multiprocessing is broken/hard. Easy with Python 3 though.
