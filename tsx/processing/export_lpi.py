@@ -13,7 +13,7 @@ import tsx.config
 
 log = logging.getLogger(__name__)
 
-def process_database(species = None, monthly = False, filter_output = False):
+def process_database(species = None, monthly = False, filter_output = False, include_all_years_data = False):
     session = get_session()
 
     if species == None:
@@ -40,15 +40,13 @@ def process_database(species = None, monthly = False, filter_output = False):
         SELECT id, ST_X(ST_Centroid(geometry)) AS x, ST_Y(ST_Centroid(geometry)) AS y
         FROM region""")
 
-    # When enabled, this flag means that all year's data will be included for any time series that passed filtering,
-    # even beyond the max_year specified in the config file. However, the TimeSeriesSampleYears and other stats still
-    # need to reflect only the years up to max_year, so it makes things a tad more complicated.
-    include_all_years_data = True
-
     # Get year range
     min_year = tsx.config.config.getint("processing", "min_year")
     max_analysis_year = tsx.config.config.getint("processing", "max_year")
 
+    # When enabled, this flag means that all year's data will be included for any time series that passed filtering,
+    # even beyond the max_year specified in the config file. However, the TimeSeriesSampleYears and other stats still
+    # need to reflect only the years up to max_year, so it makes things a tad more complicated.
     if include_all_years_data:
         (max_year,) = session.execute("""SELECT MAX(start_date_y) FROM aggregated_by_year""").fetchone()
     else:
@@ -64,7 +62,10 @@ def process_database(species = None, monthly = False, filter_output = False):
     if monthly:
         filename += '-monthly'
     if filter_output:
-        filename += '-filtered'
+        if include_all_years_data:
+            filename += '-filtered-all-years'
+        else:
+            filename += '-filtered'
     filename += '.csv'
 
     filepath = os.path.join(export_dir, filename)

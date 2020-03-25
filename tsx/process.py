@@ -52,6 +52,7 @@ def main():
 
     p.add_argument('--monthly', '-m', action='store_true', dest='monthly', help='Output a column for each month')
     p.add_argument('--filter', '-f', action='store_true', dest='filter', help='Filter output')
+    p.add_argument('--all-years', '-a', action='store_true', dest='include_all_years_data', help='Include data for all years')
 
     p = subparsers.add_parser('spatial_rep')
     p = subparsers.add_parser('filter_time_series')
@@ -82,7 +83,7 @@ def main():
     elif args.command == 'response_variable':
         tsx.processing.response_variable.process_database(species = species, commit = args.commit)
     elif args.command == 'export_lpi':
-        tsx.processing.export_lpi.process_database(species = species, monthly = args.monthly, filter_output = args.filter)
+        tsx.processing.export_lpi.process_database(species = species, monthly = args.monthly, filter_output = args.filter, include_all_years_data = args.include_all_years_data)
     elif args.command == 'spatial_rep':
         tsx.processing.spatial_rep.process_database(species = species, commit = args.commit)
     elif args.command == 'filter_time_series':
