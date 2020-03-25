@@ -40,9 +40,19 @@ def process_database(species = None, monthly = False, filter_output = False):
         SELECT id, ST_X(ST_Centroid(geometry)) AS x, ST_Y(ST_Centroid(geometry)) AS y
         FROM region""")
 
+    # When enabled, this flag means that all year's data will be included for any time series that passed filtering,
+    # even beyond the max_year specified in the config file. However, the TimeSeriesSampleYears and other stats still
+    # need to reflect only the years up to max_year, so it makes things a tad more complicated.
+    include_all_years_data = True
+
     # Get year range
     min_year = tsx.config.config.getint("processing", "min_year")
-    max_year = tsx.config.config.getint("processing", "max_year")
+    max_analysis_year = tsx.config.config.getint("processing", "max_year")
+
+    if include_all_years_data:
+        (max_year,) = session.execute("""SELECT MAX(start_date_y) FROM aggregated_by_year""").fetchone()
+    else:
+        max_year = max_analysis_year
 
 
     # Without this, the GROUP_CONCAT in the export query produces rows that are too long
@@ -134,9 +144,13 @@ def process_database(species = None, monthly = False, filter_output = False):
         writer.writeheader()
 
         where_conditions = []
+        having_clause = ''
 
         if filter_output:
-            where_conditions += ['include_in_analysis']
+            if include_all_years_data:
+                having_clause = "HAVING MAX(include_in_analysis)"
+            else:
+                where_conditions += ['include_in_analysis']
 
         if monthly:
             value_series = "GROUP_CONCAT(CONCAT(start_date_y, '_', LPAD(COALESCE(start_date_m, 0), 2, '0'), '=', value) ORDER BY start_date_y)"
@@ -244,10 +258,12 @@ def process_database(species = None, monthly = False, filter_output = False):
                     agg.region_id,
                     agg.unit_id,
                     agg.data_type
+                {having_clause}
                     """.format(
                         value_series = value_series,
                         aggregated_table = aggregated_table,
-                        where_conditions = " ".join("AND %s" % cond for cond in where_conditions)
+                        where_conditions = " ".join("AND %s" % cond for cond in where_conditions),
+                        having_clause = having_clause
                     )
 
             result = session.execute(sql, {
@@ -284,6 +300,10 @@ def process_database(species = None, monthly = False, filter_output = False):
 
                 if not monthly and len(year_data) > 0:
                     years = sorted([int(year) for year in year_data.keys()])
+
+                    if include_all_years_data:
+                        years = filter(lambda y: y <= max_analysis_year, years)
+
                     year_range = max(years) - min(years) + 1
 
                     data['TimeSeriesLength'] = year_range
