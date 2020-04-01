@@ -143,3 +143,14 @@ export function humanizeStatus(str) {
     import_error: 'Error during import'
   }[str]
 }
+
+export function formatDateTime(str) {
+  if(!str) {
+    return ''
+  }
+  let date = new Date(Date.parse(str))
+  if(!date) {
+    return ''
+  }
+  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
+}

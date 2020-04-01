@@ -17,15 +17,16 @@
       <table class="table is-fullwidth is-striped is-hoverable" v-if="sources.length > 0">
         <thead>
           <tr>
-            <th>Description</th>
-            <th>Created</th>
-            <th>Status</th>
+            <th v-on:click="sortBy('description')">Description {{sortIcon('description')}}</th>
+            <th v-on:click="sortBy('time_created')">Created {{sortIcon('time_created')}}</th>
+            <th v-on:click="sortBy('status')">Status {{sortIcon('status')}}</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="i in sources" v-on:click='$router.push("source/" + i.id)'>
-            <td :title="i.description">{{truncate(i.description, 60)}}</td>
-            <td><timeago :since='i.time_created' :auto-update="60" v-if="i.time_created"></timeago></td>
+          <tr v-for="i in sortedSources" v-on:click='$router.push("source/" + i.id)'>
+            <td :title="i.description">{{truncate(i.description, 120)}}</td>
+            <td>{{formatDateTime(i.time_created)}}</td>
+            <!-- <td><timeago :since='i.time_created' :auto-update="60" v-if="i.time_created"></timeago></td> -->
             <td>{{humanizeStatus(i.status)}}</td>
           </tr>
         </tbody>
@@ -39,7 +40,7 @@
 import * as api from '@/api'
 import Vue from 'vue'
 import VueTimeago from 'vue-timeago'
-import { humanizeStatus } from '@/util'
+import { humanizeStatus, formatDateTime } from '@/util'
 
 Vue.use(VueTimeago, {
   name: 'timeago', // component name, `timeago` by default
@@ -55,12 +56,16 @@ export default {
   data () {
     var data = {
       sources: [],
-      status: 'loading'
+      status: 'loading',
+      sort: {
+        key: 'time_created',
+        asc: false
+      }
     }
 
     api.dataSources().then((sources) => {
       data.sources = sources
-        .sort((a, b) => (b.time_created || '').localeCompare(a.time_created || ''))
+      // .sort((a, b) => (b.time_created || '').localeCompare(a.time_created || ''))
       data.status = 'loaded'
     }).catch((error) => {
       console.log(error)
@@ -71,6 +76,7 @@ export default {
   },
   methods: {
     humanizeStatus,
+    formatDateTime,
     truncate(str, maxLength) {
       if(str.length > maxLength) {
         var words = str.substr(0, maxLength + 1).split(' ')
@@ -79,6 +85,33 @@ export default {
       } else {
         return str
       }
+    },
+    sortIcon(key) {
+      if(this.sort.key === key) {
+        return this.sort.asc ? '▲' : '▼'
+      } else {
+        return ''
+      }
+    },
+    sortBy(key) {
+      if(this.sort.key === key) {
+        this.sort.asc = !this.sort.asc
+      } else {
+        this.sort = {
+          key: key,
+          asc: true
+        }
+      }
+    }
+  },
+  computed: {
+    sortedSources() {
+      let key = this.sort.key
+      let result = this.sources.slice().sort((a, b) => (a[key] || '').localeCompare(b[key] || ''))
+      if(!this.sort.asc) {
+        result.reverse()
+      }
+      return result
     }
   },
   props: {
@@ -103,5 +136,11 @@ export default {
   }
   .table tbody tr {
     cursor: pointer;
+  }
+  .table thead th {
+    cursor: pointer;
+  }
+  .table thead th:hover {
+    background: #f8f8f8;
   }
 </style>
