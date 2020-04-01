@@ -29,7 +29,7 @@
               {{humanizeStatus(i.status)}}
               <a v-bind:href="importLogUrl(i)" target="_blank">(log)</a>
             </td>
-            <td><timeago :since='i.time_created' :auto-update="60"></timeago></td>
+            <td>{{formatDateTime(i.time_created)}}</td>
           </tr>
         </tbody>
       </table>
@@ -42,7 +42,7 @@
 import * as api from '@/api'
 import Vue from 'vue'
 import VueTimeago from 'vue-timeago'
-import { humanizeStatus } from '@/util'
+import { humanizeStatus, formatDateTime } from '@/util'
 
 Vue.use(VueTimeago, {
   name: 'timeago', // component name, `timeago` by default
@@ -81,7 +81,8 @@ export default {
     importLogUrl(i) {
       return api.dataImportLogUrl(i.id)
     },
-    humanizeStatus
+    humanizeStatus,
+    formatDateTime
   },
   props: {
     sourceId: Number
@@ -95,13 +96,7 @@ export default {
     table-layout: fixed;
   }
   .table th:nth-child(3) {
-    width: 8em;
-  }
-  .table th:nth-child(4) {
-    width: 8em;
-  }
-  .table th:nth-child(5) {
-    width: 8em;
+    width: 12em;
   }
   .table tbody tr {
     cursor: pointer;
