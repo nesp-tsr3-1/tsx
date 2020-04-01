@@ -11,7 +11,7 @@
       </p>
     </div>
     <div v-if="status == 'loaded'">
-      <div class="columns">
+      <div class="columns is-multiline">
         <user-row inline-template v-for="user in users"
           v-bind:key="user.id"
           v-bind:user="user"
