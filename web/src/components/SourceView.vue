@@ -87,9 +87,12 @@
 
           <hr>
 
-          <h4 class="title is-4">Delete Dataset</h4>
+          <h4 class="title is-6">Delete Dataset</h4>
           <p class="content">
-            Deleting this dataset cannot be undone. All previously imported data and processing notes will be deleted.
+            Deleting this dataset will remove it from the index and cannot be undone. All previously imported data and processing notes will be deleted.
+          </p>
+          <p class="content">
+            If you wish to update your dataset, simply import an new file using the 'Import Data' section above.
           </p>
           <div class="field">
             <input type="checkbox" id="checkbox" v-model="enableDelete">
