@@ -64,9 +64,8 @@ class DataImport(Base):
     error_count = Column(Integer)
     warning_count = Column(Integer)
     data_type = Column(Integer, nullable=False)
-    time_created = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
     user_id = Column(ForeignKey('user.id'), index=True)
-    source_desc = Column(String(255))
+    time_created = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
     last_modified = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))
 
     source = relationship('Source')
@@ -87,7 +86,7 @@ class DataProcessingNotes(Base):
 
     id = Column(Integer, primary_key=True)
     user_id = Column(ForeignKey('user.id'), nullable=False, index=True)
-    source_id = Column(ForeignKey('source.id'), nullable=False, index=True)
+    source_id = Column(ForeignKey('source.id', ondelete='CASCADE'), nullable=False, index=True)
     time_created = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
     notes = Column(Text, nullable=False)
 
@@ -125,7 +124,7 @@ class GridCell(Base):
     __tablename__ = 'grid_cell'
 
     id = Column(Integer, primary_key=True)
-    geometry = Column(NullType, nullable=False, index=True)
+    geometry = Column(NullType, nullable=False)
 
 
 t_incidental_sighting = Table(
@@ -186,7 +185,7 @@ t_region_subdiv = Table(
     'region_subdiv', metadata,
     Column('id', Integer, nullable=False),
     Column('name', String(255)),
-    Column('geometry', NullType, nullable=False, index=True)
+    Column('geometry', NullType, nullable=False)
 )
 
 
@@ -266,7 +265,7 @@ class T1Site(Base):
     __tablename__ = 't1_site'
 
     id = Column(Integer, primary_key=True)
-    source_id = Column(ForeignKey('source.id', ondelete='CASCADE'), index=True)
+    source_id = Column(ForeignKey('source.id', ondelete='CASCADE'), nullable=False, index=True)
     data_import_id = Column(ForeignKey('data_import.id'), index=True)
     name = Column(String(255))
     search_type_id = Column(ForeignKey('search_type.id'), nullable=False, index=True)
@@ -368,11 +367,13 @@ class T2Site(Base):
     )
 
     id = Column(Integer, primary_key=True)
-    source_id = Column(ForeignKey('source.id', ondelete='CASCADE'), index=True)
+    source_id = Column(ForeignKey('source.id', ondelete='CASCADE'), nullable=False, index=True)
+    data_import_id = Column(ForeignKey('data_import.id'), index=True)
     name = Column(String(255))
     search_type_id = Column(ForeignKey('search_type.id'), nullable=False, index=True)
     geometry = Column(NullType)
 
+    data_import = relationship('DataImport')
     search_type = relationship('SearchType')
     source = relationship('Source')
     surveys = relationship('T2Survey', secondary='t2_survey_site')
@@ -396,7 +397,7 @@ class T2Survey(Base):
     duration_in_minutes = Column(Integer)
     area_in_m2 = Column(Float(asdecimal=True))
     length_in_km = Column(Float(asdecimal=True))
-    coords = Column(NullType, nullable=False, index=True)
+    coords = Column(NullType, nullable=False)
     location = Column(Text)
     positional_accuracy_in_m = Column(Float(asdecimal=True))
     comments = Column(Text)
@@ -500,7 +501,7 @@ t_taxon_presence_alpha_hull_subdiv = Table(
     Column('taxon_id', ForeignKey('taxon.id'), nullable=False, index=True),
     Column('range_id', ForeignKey('range.id'), nullable=False, index=True),
     Column('breeding_range_id', Integer),
-    Column('geometry', NullType, nullable=False, index=True)
+    Column('geometry', NullType, nullable=False)
 )
 
 
@@ -518,7 +519,7 @@ t_taxon_range_subdiv = Table(
     Column('taxon_id', ForeignKey('taxon.id'), nullable=False, index=True),
     Column('range_id', ForeignKey('range.id'), nullable=False, index=True),
     Column('breeding_range_id', ForeignKey('range.id'), index=True),
-    Column('geometry', NullType, nullable=False, index=True)
+    Column('geometry', NullType, nullable=False)
 )
 
 
