@@ -3,7 +3,7 @@
 -->
 <template>
   <div class="import-edit content">
-    <div class="field">
+    <div class="field" v-if="canEdit">
       <label class="label">Data type</label>
       <div class="select">
         <select v-model="dataType">
@@ -15,10 +15,10 @@
 
     <div class="field">
       <label class="label">Data file</label>
-      <p v-if='status == "init"'>
+      <div v-if='status == "init"'>
         <button class='button' v-on:click='selectFile'>Select file</button>
         <p>Tip: the import will run faster if records belonging to the same survey and site are grouped into contiguous rows instead of scattered throughout the file</p>
-      </p>
+      </div>
 
       <p v-if='uploading'>
         Uploading
@@ -27,7 +27,6 @@
 
       <p v-if='fileURL && filename && !uploading'>
         File uploaded: <a v-bind:href='fileURL'>{{filename}}</a>
-        <!-- File uploaded: {{filename}} -->
       </p>
     </div>
 
@@ -59,8 +58,8 @@
       <button class='button' v-on:click='selectFile'>Upload an edited file</button>
     </p>
 
-    <div v-if='status == "imported"' class='notification is-success'>
-      🎉 All data has been imported without errors. See full import log below.
+    <div v-if='status == "approved" || status == "imported"' class='notification is-success'>
+        🎉 All data has been imported without errors. See full import log below.
     </div>
 
     <div v-if='processingComplete' class="log">
@@ -69,11 +68,6 @@
         {{log.message}}
       </code>
     </div>
-
-    <!-- <div v-if='canDelete'>
-      <hr>
-      <button class='button is-light' v-on:click='deleteImport'>Delete import</button>
-    </div> -->
   </div>
 
 </template>
@@ -105,16 +99,13 @@ export default {
       return ['importing', 'checking'].includes(this.status)
     },
     processingComplete: function() {
-      return ['checked_ok', 'checked_error', 'imported', 'import_error'].includes(this.status)
+      return ['checked_ok', 'checked_error', 'imported', 'import_error', 'approved'].includes(this.status)
     },
     canEdit: function() {
       return ['init', 'checked_ok', 'checked_error', 'import_error'].includes(this.status)
     },
     canProcess: function() {
       return !!(this.name.trim() !== '' && this.fileUUID)
-    },
-    canDelete: function() {
-      return this.importId !== null && this.canEdit
     },
     fileURL: function() {
       if(this.fileUUID) {
@@ -135,17 +126,12 @@ export default {
     api.dataSourceImports(this.sourceId).then(imports => {
       if(imports.length > 0) {
         var lastImport = imports[imports.length - 1]
-        if(lastImport.status !== 'imported') {
+        if(lastImport.status !== 'imported' && lastImport.status !== 'approved') {
           this.importId = lastImport.id
           this.monitorImport()
         }
       }
     })
-  },
-  watch: {
-    // importId: function(val) {
-    //   this.$router.replace('/import/' + val)
-    // }
   },
   methods: {
     destroyed: function() {
@@ -219,6 +205,7 @@ export default {
         this.dataType = dataImport.data_type || 1
         return dataImport.status === 'checking' || dataImport.status === 'importing'
       }).then((dataImport) => {
+        this.$emit('data-import-updated')
         return api.dataImportLog(dataImport.id)
       }).then((importLog) => {
         var logs = []

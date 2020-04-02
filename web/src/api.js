@@ -18,6 +18,10 @@ export function updateImport(id, dataImport) {
   return put('/imports/' + id, dataImport)
 }
 
+export function approveImport(id) {
+  return post('/imports/' + id + '/approve')
+}
+
 export function dataSources() {
   return get('/data_sources')
 }
@@ -227,9 +231,11 @@ function post(url, data, contentType, progressCallback) {
 function putOrPost(method, url, data, contentType, progressCallback) {
   var xhr = new XMLHttpRequest()
 
-  if(!contentType && !(data instanceof FormData)) {
-    data = JSON.stringify(data)
-    contentType = 'application/json'
+  if(data !== undefined) {
+    if(!contentType && !(data instanceof FormData)) {
+      data = JSON.stringify(data)
+      contentType = 'application/json'
+    }
   }
 
   xhr.open(method, ROOT_URL + url)

@@ -445,6 +445,7 @@ status_codes = {v: k for k, v in status_ids.items()}
 
 def process_import_async(import_id, status):
 	info = load_import(import_id)
+	user = get_user()
 
 	file_path = get_upload_path(info.upload_uuid)
 	working_path = import_path(import_id)
@@ -456,10 +457,13 @@ def process_import_async(import_id, status):
 			'started': local_iso_datetime(),
 			'status': status,
 			'total_rows': 0,
-			'processed_rows': 0
+			'processed_rows': 0,
+			'is_admin': 'Administrator' in get_roles(user)
 		}
 
 	def result_callback(result):
+		is_admin = running_imports[import_id]['is_admin']
+
 		with lock:
 			del running_imports[import_id]
 
@@ -468,7 +472,7 @@ def process_import_async(import_id, status):
 		if status == 'checking':
 			new_status = 'checked_ok' if success else 'checked_error'
 		elif status == 'importing':
-			new_status = 'imported' if success else 'import_error'
+			new_status = ('approved' if is_admin else 'imported') if success else 'import_error'
 
 		info = load_import(import_id)
 		info.status_id = status_ids[new_status]
@@ -483,7 +487,7 @@ def process_import_async(import_id, status):
 
 	try:
 		# Start import process
-		t = Thread(target = process_import, args = (file_path, working_path, data_type, status == 'importing', progress_callback, result_callback, info.source_id))
+		t = Thread(target = process_import, args = (file_path, working_path, data_type, status == 'importing', progress_callback, result_callback, info.source_id, import_id))
 		t.start()
 	except:
 		traceback.print_exc()
@@ -494,7 +498,7 @@ def process_import_async(import_id, status):
 
 # This is called off the main thread
 # Ideally we would run this in a separate process, but Python 2 multiprocessing is broken/hard. Easy with Python 3 though.
-def process_import(file_path, working_path, data_type, commit, progress_callback, result_callback, source_id):
+def process_import(file_path, working_path, data_type, commit, progress_callback, result_callback, source_id, data_import_id):
 	try:
 		# Create logger for this import
 		log_file = os.path.join(working_path, 'import.log')
@@ -505,7 +509,7 @@ def process_import(file_path, working_path, data_type, commit, progress_callback
 		log.setLevel(logging.INFO)
 		log.addHandler(handler)
 
-		importer = Importer(file_path, commit = commit, data_type = data_type, logger = log, progress_callback = progress_callback, source_id = source_id)
+		importer = Importer(file_path, commit = commit, data_type = data_type, logger = log, progress_callback = progress_callback, source_id = source_id, data_import_id = data_import_id)
 		importer.ingest_data()
 
 		result_callback({
@@ -539,10 +543,37 @@ def update_import(import_id=None):
 		return "Attempting to import unchecked upload", 400
 
 	data_import.upload_uuid = body['upload_uuid']
+	data_import.filename = get_upload_name(body['upload_uuid'])
 	data_import.data_type = body.get('data_type', 1)
 	db_session.commit()
 
 	process_import_async(import_id, new_status)
+
+	return jsonify(data_import_json(data_import))
+
+@bp.route('/imports/<int:import_id>/approve', methods = ['POST'])
+def approve_import(import_id=None):
+	data_import = load_import(import_id)
+
+	if not data_import:
+		return "Not found", 404
+
+	old_status = status_codes[data_import.status_id]
+
+	if old_status != 'imported':
+		return "Cannot approve import with status '%s'" % old_status, 400
+
+	user = get_user()
+	if not permitted(user, 'approve', 'import', import_id):
+		return 'Not authorized', 401
+
+	db_session.execute("UPDATE data_import SET status_id = :status_id WHERE id = :import_id", {
+		'status_id': status_ids['approved'],
+		'import_id': import_id
+	})
+	db_session.commit()
+
+	data_import.status_id = status_ids['approved']
 
 	return jsonify(data_import_json(data_import))
 

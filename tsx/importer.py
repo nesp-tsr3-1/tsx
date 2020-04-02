@@ -1,6 +1,6 @@
 import pyproj
 from pyproj import Proj
-from tsx.db import T1Survey, T1Sighting, T1Site, T2Survey, T2Sighting, T2Site, Taxon, Source, SourceType, SearchType, Unit, IntensiveManagement, ProjectionName, get_session
+from tsx.db import T1Survey, T1Sighting, T1Site, T2Survey, T2Sighting, T2Site, Taxon, Source, DataImport, SourceType, SearchType, Unit, IntensiveManagement, ProjectionName, get_session
 import tsx.util
 import os
 import logging
@@ -75,7 +75,7 @@ class ImportError(Exception):
 	pass
 
 class Importer:
-	def __init__(self, filename, data_type = None, commit = False, logger = log, progress_callback = None, source_id = None):
+	def __init__(self, filename, data_type = None, commit = False, logger = log, progress_callback = None, source_id = None, data_import_id = None):
 		if data_type not in (1,2):
 			raise ValueError("Invalid type (must be 1 or 2)")
 
@@ -124,6 +124,7 @@ class Importer:
 		self.sighting_keys = set(["SpNo", "TaxonID", "Breeding", "Count", "UnitID", "SightingComments"])
 
 		self.source_id = source_id
+		self.data_import_id = data_import_id
 
 
 	def progress_wrapper(self, iterable):
@@ -390,6 +391,12 @@ class Importer:
 		else:
 			source = session.query(Source).get(self.source_id)
 
+		# Data Import
+		if self.data_import_id == None:
+			data_import = None
+		else:
+			data_import = session.query(DataImport).get(self.data_import_id)
+
 		# SearchType
 		search_type = self.get_or_create_search_type(session, row.get('SearchTypeDesc'))
 
@@ -408,7 +415,8 @@ class Importer:
 					site_params = {
 						'name': row.get('SiteName'),
 						'search_type': search_type,
-						'source': source
+						'source': source,
+						'data_import': data_import
 					}
 					if self.data_type == 1:
 						site_params['intensive_management'] = intensive_management # This property only present for type 1 sites
@@ -431,10 +439,10 @@ class Importer:
 			if self.fast_mode:
 				survey = None
 			else:
-				survey = session.query(Survey).filter_by(source_primary_key = row.get('SourcePrimaryKey')).one_or_none()
+				survey = session.query(Survey).filter_by(source_primary_key = row.get('SourcePrimaryKey'), data_import = data_import).one_or_none()
 
 			if survey == None:
-				survey = Survey(site = site, source_primary_key = row.get('SourcePrimaryKey'))
+				survey = Survey(site = site, source_primary_key = row.get('SourcePrimaryKey'), data_import = data_import)
 
 			self.cache['last_survey'] = survey
 

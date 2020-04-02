@@ -67,6 +67,7 @@ class DataImport(Base):
     time_created = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
     user_id = Column(ForeignKey('user.id'), index=True)
     source_desc = Column(String(255))
+    last_modified = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))
 
     source = relationship('Source')
     status = relationship('DataImportStatus')
@@ -266,11 +267,13 @@ class T1Site(Base):
 
     id = Column(Integer, primary_key=True)
     source_id = Column(ForeignKey('source.id', ondelete='CASCADE'), index=True)
+    data_import_id = Column(ForeignKey('data_import.id'), index=True)
     name = Column(String(255))
     search_type_id = Column(ForeignKey('search_type.id'), nullable=False, index=True)
     notes = Column(Text)
     intensive_management_id = Column(ForeignKey('intensive_management.id'), index=True)
 
+    data_import = relationship('DataImport')
     intensive_management = relationship('IntensiveManagement')
     search_type = relationship('SearchType')
     source = relationship('Source')
@@ -282,6 +285,7 @@ class T1Survey(Base):
     id = Column(Integer, primary_key=True)
     site_id = Column(ForeignKey('t1_site.id', ondelete='CASCADE'), nullable=False, index=True)
     source_id = Column(ForeignKey('source.id', ondelete='CASCADE'), nullable=False, index=True)
+    data_import_id = Column(ForeignKey('data_import.id'), index=True)
     source_primary_key = Column(String(255), nullable=False, unique=True)
     start_date_d = Column(SmallInteger)
     start_date_m = Column(SmallInteger)
@@ -300,6 +304,7 @@ class T1Survey(Base):
     positional_accuracy_in_m = Column(Float(asdecimal=True))
     comments = Column(Text)
 
+    data_import = relationship('DataImport')
     site = relationship('T1Site')
     source = relationship('Source')
 
@@ -379,6 +384,7 @@ class T2Survey(Base):
     id = Column(Integer, primary_key=True)
     site_id = Column(ForeignKey('t2_site.id', ondelete='CASCADE'), index=True)
     source_id = Column(ForeignKey('source.id', ondelete='CASCADE'), nullable=False, index=True)
+    data_import_id = Column(ForeignKey('data_import.id'), index=True)
     start_date_d = Column(SmallInteger)
     start_date_m = Column(SmallInteger)
     start_date_y = Column(SmallInteger, nullable=False)
@@ -398,6 +404,7 @@ class T2Survey(Base):
     source_primary_key = Column(String(255), nullable=False, unique=True)
     secondary_source_id = Column(String(255))
 
+    data_import = relationship('DataImport')
     search_type = relationship('SearchType')
     site = relationship('T2Site')
     source = relationship('Source')

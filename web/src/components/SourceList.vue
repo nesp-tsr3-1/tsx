@@ -125,14 +125,11 @@ export default {
   .table {
     table-layout: fixed;
   }
+  .table th:nth-child(2) {
+    width: 12em;
+  }
   .table th:nth-child(3) {
-    width: 8em;
-  }
-  .table th:nth-child(4) {
-    width: 8em;
-  }
-  .table th:nth-child(5) {
-    width: 8em;
+    width: 12em;
   }
   .table tbody tr {
     cursor: pointer;

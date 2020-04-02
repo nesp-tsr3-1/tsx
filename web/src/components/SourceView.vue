@@ -71,7 +71,7 @@
             <div class="column">
               <h4 class="title is-4">Import History</h4>
 
-              <import-list v-bind:sourceId="sourceId"></import-list>
+              <import-list v-bind:sourceId="sourceId" ref="importList"></import-list>
             </div>
           </div>
 
@@ -83,7 +83,7 @@
             </div>
           </div>
 
-          <import-data v-bind:sourceId="sourceId"></import-data>
+          <import-data v-bind:sourceId="sourceId" v-on:data-import-updated="handleDataImportUpdated"></import-data>
 
           <hr>
 
@@ -143,6 +143,9 @@ export default {
         console.log(error)
         alert('Delete failed.')
       })
+    },
+    handleDataImportUpdated() {
+      this.$refs.importList.refresh()
     }
   },
   created () {

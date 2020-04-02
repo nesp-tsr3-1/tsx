@@ -139,7 +139,8 @@ export function humanizeStatus(str) {
     checked_error: 'Checked (error)',
     checking: 'Checking',
     importing: 'Importing',
-    imported: 'Imported',
+    imported: 'Imported (unapproved)',
+    approved: 'Imported',
     import_error: 'Error during import'
   }[str]
 }
