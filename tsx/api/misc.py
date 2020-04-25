@@ -42,3 +42,7 @@ def get_status():
 @bp.route('/source', methods = ['GET'])
 def get_source():
 	return query_to_json("""SELECT id, source_type_id, provider, description FROM source ORDER BY description""")
+
+@bp.route('/monitoring_program', methods = ['GET'])
+def get_monitoring_program():
+	return query_to_json("""SELECT DISTINCT(monitoring_program) AS description FROM source WHERE monitoring_program IS NOT NULL ORDER BY monitoring_program""")

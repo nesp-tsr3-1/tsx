@@ -226,6 +226,7 @@ class Source(Base):
     contact_position = Column(Text)
     contact_email = Column(Text)
     contact_phone = Column(Text)
+    monitoring_program = Column(Text)
 
     source_type = relationship('SourceType')
     users = relationship('User', secondary='user_source')

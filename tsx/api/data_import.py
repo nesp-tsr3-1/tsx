@@ -74,7 +74,7 @@ def get_sources():
 			source.id,
 			source.description,
 			data_import_status.code AS status,
-			data_import.time_created
+			source.time_created
 		FROM source
 		LEFT JOIN (SELECT source_id, max(data_import.id) AS data_import_id FROM data_import GROUP BY source_id) AS latest_import
 			ON latest_import.source_id = source.id
@@ -355,8 +355,9 @@ def create_or_update_source(source_id=None):
 	db_session.add(source)
 	db_session.flush()
 
-	db_session.execute("""INSERT INTO user_source (user_id, source_id) VALUES (:user_id, :source_id)""",
-			{ 'source_id': source.id, 'user_id': user.id })
+	if action == 'create':
+		db_session.execute("""INSERT INTO user_source (user_id, source_id) VALUES (:user_id, :source_id)""",
+				{ 'source_id': source.id, 'user_id': user.id })
 
 	db_session.commit()
 
@@ -384,6 +385,7 @@ source_fields = [
 	Field(name='description', title='Dataset description', validators=[validate_required, validate_max_chars(255)]),
 	Field(name='provider', title='Dataset provider', validators=[validate_required, validate_max_chars(255)]),
 	Field(name='authors', title='Author(s)', validators=[validate_required, validate_max_chars(255)]),
+	Field(name='monitoring_program', title='Monitoring program', validators=[validate_max_chars(255)]),
 
 	Field(name='contact_name', title='Full name', validators=[validate_required, validate_max_chars(255)]),
 	Field(name='contact_institution', title='Institution', validators=[validate_required, validate_max_chars(255)]),

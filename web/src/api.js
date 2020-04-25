@@ -90,6 +90,10 @@ export function dataImportLogUrl(id) {
   return ROOT_URL + '/imports/' + id + '/log'
 }
 
+export function monitoringPrograms() {
+  return get('/monitoring_program')
+}
+
 export function lpidata(params) {
   return get('/lpi-data', params)
 }

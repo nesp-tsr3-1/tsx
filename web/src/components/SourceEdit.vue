@@ -32,6 +32,24 @@
                 </div>
                 <p class="help is-danger" v-if="errors.authors">{{ errors.authors }}</p>
               </div>
+              <div class="field">
+                <label class="label">Monitoring program</label>
+                <div class="control">
+                  <div class="select">
+                    <select v-model="monitoring_program">
+                      <option v-bind:value="null" selected>N/A</option>
+                      <option v-for="mp in monitoringPrograms" v-bind:value="mp">{{ mp }}</option>
+                      <option v-bind:value="'__new__'">New program…</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="field"  v-if="monitoring_program === '__new__'">
+                <div class="control">
+                  <input class="input" type="text" name="monitoring_program" v-model="new_monitoring_program" placeholder="Name of monitoring program">
+                </div>
+                <p class="help is-danger" v-if="errors.monitoring_program">{{ errors.monitoring_program }}</p>
+              </div>
 
               <h3 class="title is-4" style="margin-top: 1em">Contact</h3>
               <div class="field">
@@ -83,7 +101,7 @@ import * as api from '@/api'
 import SourceList from '@/components/SourceList'
 import _ from 'underscore'
 
-const sourceProps = ['description', 'provider', 'authors', 'contact_name', 'contact_institution', 'contact_position', 'contact_email', 'contact_phone']
+const sourceProps = ['description', 'provider', 'authors', 'monitoring_program', 'contact_name', 'contact_institution', 'contact_position', 'contact_email', 'contact_phone']
 
 export default {
   name: 'ImportHome',
@@ -95,11 +113,14 @@ export default {
     return {
       isNew: sourceId === 'new',
       sourceId: (sourceId === 'new') ? undefined : sourceId,
+      monitoringPrograms: [],
       submitting: false,
       errors: {},
       description: '',
       provider: '',
       authors: '',
+      monitoring_program: null,
+      new_monitoring_program: '',
       contact_name: '',
       contact_institution: '',
       contact_position: '',
@@ -128,10 +149,17 @@ export default {
         }
       })
     }
+    api.monitoringPrograms().then((mps) => {
+      this.monitoringPrograms = mps.map(mp => mp.description)
+    })
   },
   methods: {
     submit: function() {
       var source = _.pick(this, sourceProps)
+
+      if(source.monitoring_program === '__new__') {
+        source.monitoring_program = this.new_monitoring_program
+      }
 
       this.submitting = true
 
