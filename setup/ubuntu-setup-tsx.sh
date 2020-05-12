@@ -24,6 +24,17 @@ apt-get update
 
 apt-get install -y mysql-server python python-pip virtualenv r-base git samba libxslt1-dev
 
+
+# Set MySQL default character encoding to utf8
+sudo tee -a /etc/mysql/mysql.conf.d/encoding-utf8.cnf > /dev/null <<EOF
+[mysqld]
+collation-server = utf8_unicode_ci
+init-connect='SET NAMES utf8'
+character-set-server = utf8
+EOF
+
+sudo service mysql restart
+
 # For some reason I seem to have to install these one by one
 apt-get install -y libssl-dev
 apt-get install -y libgit2-dev
