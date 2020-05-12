@@ -24,15 +24,15 @@ def main():
 			data = {
 				'source_id': row['SourceID'],
 				'taxon_id': row['TaxonID'],
-				'data_agreement_id': row['AgreementSigned'] or None,
+				'data_agreement_id': row.get('AgreementSigned') or None,
 				'objective_of_monitoring_id': lookup(row, 'ObjectiveOfMonitoring'),
 				'absences_recorded': get_bool(row, 'AbsencesRecorded', True, unknown_value_default=True),
-				'standardisation_of_method_effort_id': lookup(row, 'StandardisationOfMethodEffort'),
-				'consistency_of_monitoring_id': lookup(row, 'ConsistencyOfMonitoring'),
-				'start_year': row['StartYear'] or None,
-				'end_year': row['EndYear'] or None,
-				'exclude_from_analysis': get_bool(row, 'NotInIndex', False, unknown_value_default=True),
-				'suppress_aggregated_data': get_bool(row, 'SuppressAggregatedDataUntil', False, unknown_value_default=True),
+				'standardisation_of_method_effort_id': lookup(row, 'StandardisationOfMethodEffort', optional=True),
+				'consistency_of_monitoring_id': lookup(row, 'ConsistencyOfMonitoring', optional=True),
+				'start_year': row.get('StartYear') or None,
+				'end_year': row.get('EndYear') or None,
+				'exclude_from_analysis': get_bool(row, 'NotInIndex', False, unknown_value_default=True, optional=True),
+				'suppress_aggregated_data': get_bool(row, 'SuppressAggregatedDataUntil', False, unknown_value_default=True, optional=True),
 				'authors': row['Authors'],
 				'provider': row['SourceProvider'],
 				'description': row['SourceDesc']
@@ -119,8 +119,12 @@ LOOKUPS = {
 	}
 }
 
-def get_bool(row, column, default=None, unknown_value_default=None):
-	raw_value = row[column].strip()
+def get_bool(row, column, default=None, unknown_value_default=None, optional=False):
+	raw_value = row.get(column)
+	if optional and raw_value is None:
+		return default
+
+	raw_value = raw_value.strip()
 	value = raw_value.lower()
 
 	if value in ('1', 'yes', 'true', 'y', 't'):
@@ -133,8 +137,12 @@ def get_bool(row, column, default=None, unknown_value_default=None):
 		log.warning("Unknown value for %s: '%s', defaulting to %s" % (column, raw_value, unknown_value_default))
 		return unknown_value_default
 
-def lookup(row, column):
-	value = row[column].strip()
+def lookup(row, column, optional=False):
+	value = row.get(column)
+
+	if optional and value is None:
+		return None
+
 	lookup = LOOKUPS[column]
 
 	if value in ('', 'NA', '0'):
