@@ -21,6 +21,9 @@ from tsx.geo import to_multipolygon
 
 log = logging.getLogger(__name__)
 
+db_proj = pyproj.Proj('+init=EPSG:4326') # Database always uses WGS84
+working_proj = pyproj.Proj('+init=EPSG:3112') # GDA94 / Geoscience Australia Lambert - so that we can buffer in metres
+
 def process_database(species = None, commit = False):
     """
     Calculates spatial representativeness using alpha hulls
@@ -40,9 +43,6 @@ def process_database(species = None, commit = False):
                 sql_list_argument('species', species))
         session.commit()
 
-    db_proj = pyproj.Proj('+init=EPSG:4326') # Database always uses WGS84
-    working_proj = pyproj.Proj('+init=EPSG:3112') # GDA94 / Geoscience Australia Lambert - so that we can buffer in metres
-
     # Load coastal shapefile
     coastal_shape_filename = tsx.config.config.get("processing.alpha_hull", "coastal_shp")
     with fiona.open(coastal_shape_filename, 'r') as coastal_shape:
@@ -59,7 +59,7 @@ def process_database(species = None, commit = False):
 
         taxa = get_taxa(session, data_type, species)
 
-        tasks = [(taxon_id, coastal_shape) for taxon_id in taxa]
+        tasks = [(taxon_id, coastal_shape, data_type, commit) for taxon_id in taxa]
 
         # This is important because we are about to spawn child processes, and this stops them attempting to share the
         # same database connection pool
@@ -72,7 +72,7 @@ def process_database(species = None, commit = False):
 
 # Process a single species.
 # This gets run off the main thread.
-def process(taxon_id, coastal_shape):
+def process(taxon_id, coastal_shape, data_type, commit):
     session = get_session()
 
     try:
