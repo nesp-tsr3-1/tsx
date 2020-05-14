@@ -278,6 +278,8 @@ def get_source_custodians(source_id=None):
 
 	return jsonify_rows(rows)
 
+auto_create_custodians = True
+
 @bp.route('/data_sources/<int:source_id>/custodians', methods = ['POST'])
 def create_source_custodian(source_id=None):
 	user = get_user()
@@ -295,8 +297,13 @@ def create_source_custodian(source_id=None):
 	custodian = db_session.query(User).filter(User.email == email).one_or_none()
 
 	if not custodian:
-		error_message = 'No user found with the email address "%s". (Note: custodians must first create an account before they can be added)' % email
-		return jsonify({ 'error': error_message }), 400
+		if auto_create_custodians:
+			custodian = User(email=email)
+			db_session.add(custodian)
+			db_session.flush()
+		else:
+			error_message = 'No user found with the email address "%s". (Note: custodians must first create an account before they can be added)' % email
+			return jsonify({ 'error': error_message }), 400
 
 	rows = db_session.execute("""SELECT 1
 		FROM user_source

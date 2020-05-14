@@ -36,13 +36,18 @@ def create_user():
 	if len(errors):
 		return jsonify(errors), 400
 
-	user = User(
-		email=body['email'].strip(),
-		first_name=body['first_name'].strip(),
-		last_name=body['last_name'].strip(),
-		phone_number=body['phone_number'].strip(),
-		password_hash=pwd_context.hash(body['password'])
-	)
+	user = db_session.query(User).filter(User.email == body['email']).one_or_none()
+	if user:
+		if user.password_hash:
+			# User already has an ccount
+			return jsonify({ 'email': "An account with this email address already exists" }), 400
+	else:
+		user = User(email=body['email'].strip())
+
+	user.first_name=body['first_name'].strip()
+	user.last_name=body['last_name'].strip()
+	user.phone_number=body['phone_number'].strip()
+	user.password_hash=pwd_context.hash(body['password'])
 
 	try:
 		db_session.add(user)

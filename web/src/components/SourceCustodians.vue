@@ -22,10 +22,13 @@
               <div class="card-content">
                 <button class="delete" @click="deleteUser" style="position: absolute; top: 1.5rem; right: 1rem;"></button>
                 <div>
-                  <span style="font-weight: bold">{{user.first_name}} {{user.last_name}}</span>
+                  <span style="font-weight: bold">{{displayName}}</span>
                 </div>
                 <div>
                   <a v-bind:href="'mailto: ' + user.email">{{user.email}}</a>
+                </div>
+                <div v-if="!isRegistered" class="is-size-7">
+                  This user has not signed up for an account yet
                 </div>
                 <div class="spinner" v-if="state == 'updating' || state == 'deleting'">
                   One moment…
@@ -71,6 +74,17 @@ const User = {
     }
   },
   computed: {
+    displayName() {
+      let user = this.user
+      if(user.first_name) {
+        return user.first_name + ' ' + user.last_name
+      } else {
+        return ''
+      }
+    },
+    isRegistered() {
+      return this.user.first_name !== null
+    }
   },
   created() {
   },
