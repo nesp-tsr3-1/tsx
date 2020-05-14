@@ -215,16 +215,19 @@ def run_parallel(target, tasks, n_workers = default_num_workers, use_processes =
 
     work_q = Q()
     result_q = Q()
+    workers = []
 
     for i in range(0, n_workers):
             if use_processes:
                 p = mp.Process(target = worker, args = (target, work_q, result_q))
                 p.daemon = True # Kill process if parent terminates early
                 p.start()
+                workers.append(p)
             else:
                 t = Thread(target = worker, args = (target, work_q, result_q))
                 t.daemon = True
                 t.start()
+                workers.append(t)
 
     # Feed in tasks and yield results
     i = 0
@@ -247,3 +250,7 @@ def run_parallel(target, tasks, n_workers = default_num_workers, use_processes =
     while i > 0:
         yield next(result_q)
         i -= 1
+
+    # Wait for workers to terminate
+    for w in workers:
+        w.join()
