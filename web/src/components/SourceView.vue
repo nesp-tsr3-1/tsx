@@ -25,6 +25,9 @@
                 <div style="font-weight: bold;">Authors</div>
                 {{ source.authors || 'N/A' }}
               </div>
+
+              <div v-if="hasMonitoringProgram" style="font-weight: bold;">Monitoring Program</div>
+              <div v-if="hasMonitoringProgram">{{ source.monitoring_program }}</div>
             </div>
             <div class="column">
               <div style="margin-bottom: 1em;">
@@ -133,6 +136,10 @@ export default {
     hasContactInfo() {
       let source = this.source
       return !!(source && (source.contact_name || source.contact_institution || source.contact_position || source.contact_email || source.contact_phone))
+    },
+    hasMonitoringProgram() {
+      let source = this.source
+      return !!source.monitoring_program
     }
   },
   methods: {
