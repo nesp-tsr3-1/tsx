@@ -2,12 +2,14 @@ This directory contains scripts for creating a virtual machine image for running
 
 Virtual machines are created using packer (https://www.packer.io)
 
-There are 3 packer scripts which progressively build a TSX workflow environment. Each VM builds on the previous.
+There are 4 packer scripts which progressively build a TSX workflow environment. Each VM builds on the previous.
 
  ubuntu1804:                A fresh, minimal Ubuntu 18.04 installation
 
- ubuntu1804-tsx:            ubuntu1804, plus:
+ ubuntu1804-tsx-deps:		ubuntu1804, plus:
                                 - All TSX workflow dependencies installed
+
+ ubuntu1804-tsx:            ubuntu1804-tsx-deps, plus:
                                 - Latest TSX repository cloned from git master into ~tsx/tsx
                                 - A Python virtualenv with all dependencies installed
                                 - TSX sample data downloaded

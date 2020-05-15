@@ -2,26 +2,17 @@
     "builders": [
     {
       "type": "virtualbox-ovf",
-      "source_path": "build/tsx-deps/tsx-deps.ova",
-      "vm_name": "tsx",
+      "source_path": "build/ubuntu1804/ubuntu1804.ova",
+      "vm_name": "tsx-deps",
       "shutdown_command": "echo tsx | sudo -S shutdown -P now",
       "ssh_password": "{{ user `ssh_password` }}",
       "ssh_username": "{{ user `ssh_username` }}",
       "ssh_wait_timeout": "10000s",
       "format": "ova",
-      "output_directory": "build/tsx",
+      "output_directory": "build/tsx-deps",
       "vboxmanage": [
         [
           "modifyvm", "{{.Name}}", "--nictype1", "virtio"
-        ],
-        [
-          "modifyvm", "{{.Name}}", "--natpf1", "guestssh,tcp,,1322,,22"
-        ],
-        [
-          "modifyvm", "{{.Name}}", "--nic2", "hostonly"
-        ],
-        [
-          "modifyvm", "{{.Name}}", "--hostonlyadapter2", "vboxnet0"
         ],
         [
           "modifyvm", "{{.Name}}", "--memory", "2048"
@@ -39,7 +30,7 @@
     {
       "execute_command": "echo '{{ user `ssh_password` }}' | {{.Vars}} sudo -E -S bash '{{.Path}}'",
       "scripts": [
-        "../ubuntu-setup-tsx.sh"
+        "../ubuntu-setup-tsx-deps.sh"
       ],
       "type": "shell",
       "expect_disconnect": "true"
