@@ -33,9 +33,9 @@ setup(
 	install_requires=[
 		"Twisted>=17.9.0",
 		"pyOpenSSL>=17.5.0",
-		"Flask>=0.12.2",
+		"Flask>=1.1.1",
 		"Flask-Cors>=3.0.6",
-		"MySQL-python>=1.2.5",
+		"Flask-Session>=0.3.1",
 		"mysql-connector",
 		"openpyxl>=2.4.9",
 		"pyproj>=1.9.5.1",
@@ -47,11 +47,12 @@ setup(
 		"tzlocal>=1.4",
 		"tqdm>=4.19.4",
 		"pandas>=0.21.0",
-		"configparser==3.7.4"
+		"configparser>=3.7.4",
+		"passlib>=1.7.1"
 	]
 )
 
-print """
+print("""
 
 NOTES:
 
@@ -66,4 +67,4 @@ To install as a Linux service:
 Example configuration has been installed to /opt/tsx/conf/tsx.conf.example.
 Copy this to 'tsx.conf' and update configuration.
 
-"""
+""")
