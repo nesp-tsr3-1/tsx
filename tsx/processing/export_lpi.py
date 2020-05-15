@@ -13,6 +13,12 @@ import tsx.config
 
 log = logging.getLogger(__name__)
 
+try:
+    if unicode:
+        unicode_type_exists = True
+except NameError:
+    unicode_type_exists = False
+
 def process_database(species = None, monthly = False, filter_output = False, include_all_years_data = False):
     session = get_session()
 
@@ -72,7 +78,7 @@ def process_database(species = None, monthly = False, filter_output = False, inc
 
     log.info("Exporting LPI wide table file: %s" % filepath)
 
-    with open(filepath, 'w') as csvfile:
+    with open(filepath, 'w', encoding='utf-8') as csvfile:
         fieldnames = [
             'ID',
             'Binomial',
@@ -322,6 +328,9 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                 del data['value_count']
                 del data['scientific_name']
 
-                writer.writerow({k: None if v == None else unicode(v).encode("utf-8") for k, v in data.items()})
+                if unicode_type_exists:
+                    writer.writerow({k: None if v == None else unicode(v).encode("utf-8") for k, v in data.items()})
+                else:
+                    writer.writerow({k: None if v == None else str(v) for k, v in data.items()})
 
     log.info("Done")
