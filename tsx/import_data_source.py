@@ -11,6 +11,7 @@ def main():
 
 	parser = argparse.ArgumentParser(description='Import data source information')
 	parser.add_argument('--relax', action='store_true', dest='relax', help="Ignore invalid source ids")
+	parser.add_argument('--update-source-table', action='store_true', dest='update_source_table', help="Also update `source` table with authors, provider and description information")
 	parser.add_argument('filename', type=str, help='Data source file  (aka master list) (CSV)')
 	args = parser.parse_args()
 
@@ -32,10 +33,7 @@ def main():
 				'start_year': row.get('StartYear') or None,
 				'end_year': row.get('EndYear') or None,
 				'exclude_from_analysis': get_bool(row, 'NotInIndex', False, unknown_value_default=True, optional=True),
-				'suppress_aggregated_data': get_bool(row, 'SuppressAggregatedDataUntil', False, unknown_value_default=True, optional=True),
-				'authors': row['Authors'],
-				'provider': row['SourceProvider'],
-				'description': row['SourceDesc']
+				'suppress_aggregated_data': get_bool(row, 'SuppressAggregatedDataUntil', False, unknown_value_default=True, optional=True)
 			}
 
 			# In relaxed mode, silently skip rows without SourceID value
@@ -50,16 +48,19 @@ def main():
 				else:
 					raise ValueError("Invalid source id: %s" % data['source_id'])
 
-			def strip_and_warn(s):
-				stripped = s.strip(". ")
-				if s != stripped:
-					log.warning("Stripping leading/trailing space/periods from '%s'", s)
-				return stripped
+			if args.update_source_table:
+				def strip_and_warn(s):
+					stripped = s.strip(". ")
+					if s != stripped:
+						log.warning("Stripping leading/trailing space/periods from '%s'", s)
+					return stripped
 
-			data['authors'] = strip_and_warn(data['authors'])
-			data['provider'] = strip_and_warn(data['provider'])
-			data['description'] = strip_and_warn(data['description'])
+				data['authors'] = strip_and_warn(row['Authors'])
+				data['provider'] = strip_and_warn(row['SourceProvider'])
+				data['description'] = strip_and_warn(row['SourceDesc'])
 
+				# TODO: Not sure if SourceName should be imported into source.description?
+				session.execute("""UPDATE source SET authors = :authors, provider = :provider, description = :description WHERE id = :source_id""", data)
 
 			session.execute("""INSERT INTO data_source (
 					source_id,
@@ -88,10 +89,6 @@ def main():
 				)""",
 				data
 			)
-
-			# TODO: Not sure if SourceName should be imported into source.description?
-			session.execute("""UPDATE source SET authors = :authors, provider = :provider, description = :description WHERE id = :source_id""", data)
-
 
 	session.commit()
 
