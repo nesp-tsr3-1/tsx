@@ -16,6 +16,7 @@ from tqdm import tqdm
 from sqlalchemy import func
 import openpyxl
 import zipfile
+import re
 
 from six import text_type
 
