@@ -192,7 +192,10 @@ class Importer:
 					for i, row in enumerate(self.progress_wrapper(reader)):
 						self.process_row(session, row, i + 2)
 
-			self.flush_sightings(session) # flush any left over sightings not yet committed
+			try:
+				self.flush_sightings(session) # flush any left over sightings not yet committed
+			except Exception as ex:
+				self.handle_import_exception(ex)
 
 		except ImportError as e:
 			self.log.error(str(e))
@@ -291,15 +294,7 @@ class Importer:
 		try:
 			self.ingest_row(session, row, row_index)
 		except Exception as ex:
-			# Detect duplicate source primary key and give a more friendly error message
-			if isinstance(ex, IntegrityError):
-				msg = ex.orig.args[1] # Took me along time to figure out this line. Doesn't seem to be documented anywhere.
-				if 'Duplicate entry' in msg and 'source_primary_key_UNIQUE' in msg:
-					raise ImportError("Error: %s [NOTE: Please ensure that your data is sorted by the SourcePrimaryKey column]" % msg)
-
-			self.log.exception("Fatal error during import")
-			raise ImportError("Unexpected error - probably a bug (see above)")
-
+			self.handle_import_exception(ex)
 		finally:
 			self.update_log_counts()
 			if self.progress_callback:
@@ -310,6 +305,16 @@ class Importer:
 
 		if self.processed_rows > 100 and self.error_count + self.warning_count > self.processed_rows / 100.0:
 			raise ImportError("Warning/error rate too high")
+
+	def handle_import_exception(self, ex):
+		# Detect duplicate source primary key and give a more friendly error message
+		if isinstance(ex, IntegrityError):
+			msg = ex.orig.args[1] # Took me along time to figure out this line. Doesn't seem to be documented anywhere.
+			if 'Duplicate entry' in msg and 'source_primary_key_UNIQUE' in msg:
+				raise ImportError("Error: %s [NOTE: Please ensure that your data is sorted by the SourcePrimaryKey column]" % msg)
+
+		self.log.exception("Fatal error during import")
+		raise ImportError("Unexpected error - probably a bug (see above)")
 
 	def ingest_row(self, session, row, row_index):
 		"""
