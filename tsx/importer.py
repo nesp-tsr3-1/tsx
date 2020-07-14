@@ -535,8 +535,8 @@ class Importer:
 			# 4. Common name
 			taxon_id = row.get('TaxonID')
 			spno = row.get('SpNo')
-			common_name = row.get('CommonName')
-			scientific_name = row.get('ScientificName')
+			common_name = normalize(row.get('CommonName'))
+			scientific_name = normalize(row.get('ScientificName'))
 
 			if taxon_id is not None:
 				taxon = self.get_taxon(session, taxon_id)
@@ -872,6 +872,18 @@ def parse_time(raw_time):
 		return datetime.strptime(raw_time, '%H:%M:%S').time()
 
 	raise ValueError("Unable to process time: %s" % raw_time)
+
+def normalize(s):
+	"""
+	Normalizes a string:
+
+	 - replaces any sequence of whitespace characters (including non-breaking space) with a single space character
+	"""
+	if s == None:
+		return None
+	else:
+		return re.sub(r'\s+', ' ', s)
+
 
 if __name__ == '__main__':
 	main()
