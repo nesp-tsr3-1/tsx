@@ -496,7 +496,7 @@ class Importer:
 
 			with field('DurationInDays/Nights') as value:
 				if value is not None:
-					survey.duration_in_minutes = validate(value, validate_int, validate_greater_than(0)) * 24 * 60
+					survey.duration_in_minutes = int(validate(value, validate_float, validate_greater_than(0)) * 24 * 60)
 
 			with field('NumberOfTrapsPerDay/Night') as value:
 				if self.data_type == 1 and value is not None:
