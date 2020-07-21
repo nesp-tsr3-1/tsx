@@ -260,7 +260,7 @@ class Importer:
 			"IntensiveManagement",
 			"DurationInMinutes",
 			"DurationInDays/Nights",
-			"NumberOfTrapsPerDay/Night"
+			"NumberOfTrapsPerDay/Night",
 			"UnitID",
 			"UnitOfMeasurement",
 			"SpNo"
