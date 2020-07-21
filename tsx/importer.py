@@ -150,13 +150,22 @@ class Importer:
 
 			# Autodetect excel files
 			if zipfile.is_zipfile(self.filename):
-				self.log.info('Guessing file format: Excel Spreadsheet')
+				self.log.info('File format: Excel Spreadsheet')
 				format = 'excel'
 			else:
-				self.log.info('Guessing file format: CSV')
+				self.log.info('File format: CSV')
 				format = 'csv'
 
 			if format is 'excel':
+				# The processing code generally expects data to come in as strings
+				# We could convert everything to str, but that gives us issues with date formats and 'None'
+				# So we just convert numeric values to strings
+				def normalize_excel_value(v):
+					if type(v) == int or type(v) == float:
+						return str(v)
+					else:
+						return v
+
 				wb = openpyxl.load_workbook(open(self.filename, 'rb'), read_only=True)
 				for name in wb.sheetnames:
 					# Skip any worksheets with 'template' in the name
@@ -171,7 +180,7 @@ class Importer:
 					# self.row_count = len(wb[name].rows)
 
 					# for i, row in wb[name].rows:
-						row = [cell.value for cell in row]
+						row = [normalize_excel_value(cell.value) for cell in row]
 						if i == 0:
 							headers = row
 							self.check_headers(row)
