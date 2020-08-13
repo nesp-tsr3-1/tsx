@@ -174,17 +174,18 @@ class Importer:
 
 					ws = wb[name]
 
-					self.row_count = ws.max_row
+					#self.row_count = ws.max_row # max_row cannot be trusted
+					self.row_count = len(list(ws.iter_rows()))
 
 					for i, row in self.progress_wrapper(enumerate(ws.rows)):
-					# self.row_count = len(wb[name].rows)
-
-					# for i, row in wb[name].rows:
 						row = [normalize_excel_value(cell.value) for cell in row]
 						if i == 0:
 							headers = row
 							self.check_headers(row)
 						else:
+							# Fill missing cells with None
+							if len(row) < len(headers):
+								row = row + [None] * (len(headers) - len(row))
 							self.process_row(session, dict(zip(headers, row)), i + 1)
 
 					break
