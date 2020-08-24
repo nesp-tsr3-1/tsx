@@ -317,6 +317,9 @@ class Importer:
 			raise ImportError("Warning/error rate too high")
 
 	def handle_import_exception(self, ex):
+		if isinstance(ex, ImportError):
+			raise ex
+
 		# Detect duplicate source primary key and give a more friendly error message
 		if isinstance(ex, IntegrityError):
 			msg = ex.orig.args[1] # Took me along time to figure out this line. Doesn't seem to be documented anywhere.
