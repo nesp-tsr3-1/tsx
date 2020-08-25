@@ -389,9 +389,9 @@ def source_to_json(source):
 	return json
 
 source_fields = [
-	Field(name='description', title='Dataset description', validators=[validate_required, validate_max_chars(1024)]),
-	Field(name='provider', title='Dataset provider', validators=[validate_required, validate_max_chars(255)]),
-	Field(name='authors', title='Author(s)', validators=[validate_required, validate_max_chars(255)]),
+	Field(name='description', title='Dataset description', validators=[validate_required, validate_max_chars(4096)]),
+	Field(name='provider', title='Dataset provider', validators=[validate_required, validate_max_chars(4096)]),
+	Field(name='authors', title='Author(s)', validators=[validate_required, validate_max_chars(4096)]),
 	Field(name='monitoring_program', title='Monitoring program', validators=[validate_max_chars(255)]),
 
 	Field(name='contact_name', title='Full name', validators=[validate_required, validate_max_chars(255)]),
