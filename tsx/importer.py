@@ -473,10 +473,10 @@ class Importer:
 
 			# Start/Finish date/time
 			with field('StartDate') as value:
-				survey.start_date_d, survey.start_date_m, survey.start_date_y = parse_date(value)
+				survey.start_date_d, survey.start_date_m, survey.start_date_y = parse_date(value, log)
 
 			with field('FinishDate') as value:
-				survey.finish_date_d, survey.finish_date_m, survey.finish_date_y = parse_date(value)
+				survey.finish_date_d, survey.finish_date_m, survey.finish_date_y = parse_date(value, log)
 
 			with field('StartTime') as value:
 				survey.start_time = parse_time(value)
@@ -819,7 +819,7 @@ def validate_condition(fn, message):
 
 # ----- End Validation Helpers -----
 
-def parse_date(raw_date):
+def parse_date(raw_date, log):
 	"""
 	Parses date in DD/MM/YYYY format
 
@@ -855,7 +855,9 @@ def parse_date(raw_date):
 		except ValueError:
 			raise ValueError("Invalid date format (expected DD/MM/YYYY)")
 
-		if y < 1900 or y > date.today().year:
+		if y < 1900:
+			log.info("Year %s earlier than 1900 (please ensure this is not a typo)" % y)
+		if y > date.today().year:
 			raise ValueError("Invalid year: %s" % y)
 		if m == 0 and d == 0:
 			return None, None, y
