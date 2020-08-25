@@ -69,11 +69,11 @@ def main():
 					ultrataxon = row['UltrataxonID'] == 'u',
 					taxon_level = get_or_create(session, TaxonLevel, description = row['Taxon Level']) if row['Taxon Level'] else None,
 					spno = row['SpNo'],
-					common_name = row['Taxon name'],
-					scientific_name = row['Taxon scientific name'],
-					family_common_name = row['Family common name'],
-					family_scientific_name = row['Family scientific name'],
-					order = row['Order'],
+					common_name = normalize(row['Taxon name']),
+					scientific_name = normalize(row['Taxon scientific name']),
+					family_common_name = normalize(row['Family common name']),
+					family_scientific_name = normalize(row['Family scientific name']),
+					order = normalize(row['Order']),
 					population = row['Population'],
 					# TODO - there are status in WLAB like 'Introduced' and 'Vagrant' not in Glenn's list - for now importing as NULL
 					epbc_status = get_status('EPBCStatus'),
@@ -121,6 +121,17 @@ def get_or_create(session, model, **kwargs):
 		instance = model(**kwargs)
 		session.add(instance)
 		return instance
+
+def normalize(s):
+	"""
+	Normalizes a string:
+
+	 - replaces any sequence of whitespace characters (including non-breaking space) with a single space character
+	"""
+	if s == None:
+		return None
+	else:
+		return re.sub(r'\s+', ' ', s)
 
 if __name__ == '__main__':
 	main()
