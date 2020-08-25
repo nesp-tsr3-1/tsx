@@ -60,7 +60,7 @@ def main():
 				data['description'] = strip_and_warn(row['SourceDesc'])
 
 				# TODO: Not sure if SourceName should be imported into source.description?
-				session.execute("""UPDATE source SET authors = :authors, provider = :provider, description = :description WHERE id = :source_id""", data)
+#				session.execute("""UPDATE source SET authors = :authors, provider = :provider, description = :description WHERE id = :source_id""", data)
 
 			session.execute("""INSERT INTO data_source (
 					source_id,
