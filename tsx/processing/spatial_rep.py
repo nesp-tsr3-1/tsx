@@ -23,6 +23,8 @@ log = logging.getLogger(__name__)
 
 db_proj = pyproj.Proj('+init=EPSG:4326') # Database always uses WGS84
 working_proj = pyproj.Proj('+init=EPSG:3112') # GDA94 / Geoscience Australia Lambert - so that we can buffer in metres
+to_working_transformer = pyproj.Transformer.from_proj(db_proj, working_proj)
+to_db_transformer = pyproj.Transformer.from_proj(working_proj, db_proj)
 
 def process_database(species = None, commit = False):
     """
@@ -47,7 +49,8 @@ def process_database(species = None, commit = False):
     coastal_shape_filename = tsx.config.config.get("processing.alpha_hull", "coastal_shp")
     with fiona.open(coastal_shape_filename, 'r') as coastal_shape:
         # Convert from fiona dictionary to shapely geometry and reproject
-        coastal_shape = reproject(shape(coastal_shape[0]['geometry']), pyproj.Proj(coastal_shape.crs), working_proj)
+        shp_to_working_transformer = pyproj.Transformer.from_proj(pyproj.Proj(coastal_shape.crs), working_proj)
+        coastal_shape = reproject(shape(coastal_shape[0]['geometry']), shp_to_working_transformer)
         # Simplify coastal boundary - makes things run ~20X faster
         log.info("Simplifying coastal boundary")
         coastal_shape = coastal_shape.buffer(10000).simplify(10000)
@@ -77,7 +80,7 @@ def process(taxon_id, coastal_shape, data_type, commit):
 
     try:
         # Load core range geometry
-        core_range_geom = reproject(get_core_range_geometry(session, taxon_id), db_proj, working_proj).buffer(0).intersection(coastal_shape)
+        core_range_geom = reproject(get_core_range_geometry(session, taxon_id), to_working_transformer).buffer(0).intersection(coastal_shape)
 
         for source_id in get_source_ids(session, data_type, taxon_id):
 
@@ -93,7 +96,7 @@ def process(taxon_id, coastal_shape, data_type, commit):
 
             if not empty:
                 # Read points from database
-                points = [reproject(p, db_proj, working_proj) for p in raw_points]
+                points = [reproject(p, to_working_transformer) for p in raw_points]
 
                 # Generate alpha shape
                 alpha_shp = make_alpha_hull(
@@ -130,7 +133,7 @@ def process(taxon_id, coastal_shape, data_type, commit):
                         'source_id': source_id,
                         'taxon_id': taxon_id,
                         'data_type': data_type,
-                        'geom_wkb': shapely.wkb.dumps(reproject(intersected_alpha, working_proj, db_proj)),
+                        'geom_wkb': shapely.wkb.dumps(reproject(intersected_alpha, to_db_transformer)),
                         'core_range_area': core_range_geom.area,
                         'alpha_hull_area': intersected_alpha.area
                     })
@@ -144,9 +147,8 @@ def process(taxon_id, coastal_shape, data_type, commit):
     finally:
         session.close()
 
-def reproject(geom, src_proj, dest_proj):
-    fn = partial(pyproj.transform, src_proj, dest_proj)
-    return transform(fn, geom)
+def reproject(geom, transformer):
+    return transform(transformer.transform, geom)
 
 
 def get_core_range_geometry(session, taxon_id):
