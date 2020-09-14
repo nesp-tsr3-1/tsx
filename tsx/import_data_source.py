@@ -22,6 +22,7 @@ def main():
 	with open(args.filename) as f:
 		reader = csv.DictReader(f)
 		for row in reader:
+			row = {k: v.strip() for k, v in row.items()}
 			data = {
 				'source_id': row['SourceID'],
 				'taxon_id': row['TaxonID'],
