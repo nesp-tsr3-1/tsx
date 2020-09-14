@@ -25,12 +25,9 @@ import pyproj
 # 					if not geom2.is_empty:
 # 						tiles.append((x2, y2, z2, geom2))
 
-def reproject(geom, src_proj, dest_proj):
-    return reproject_fn(src_proj, dest_proj)(geom)
-
 def reproject_fn(src_proj, dest_proj):
-	fn = partial(pyproj.transform, src_proj, dest_proj)
-	return lambda geom: transform(fn, geom)
+	transformer = pyproj.Transformer.from_proj(src_proj, dest_proj)
+	return lambda geom: transform(transformer.transform, geom)
 
 def subdivide_geometry(geometry, max_points = 100):
 	"""
