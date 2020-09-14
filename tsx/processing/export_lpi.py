@@ -310,18 +310,21 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                 if not monthly and len(year_data) > 0:
                     years = sorted([int(year) for year in year_data.keys()])
 
+                    # If we include all years' data, we still want to output stats as if we were only processing up to max_analysis_year
                     if include_all_years_data:
                         years = filter(lambda y: y <= max_analysis_year, years)
 
-                    year_range = max(years) - min(years) + 1
+                    # Due to previous step, years could in fact be empty by this point
+                    if len(years) > 0:
+                        year_range = max(years) - min(years) + 1
 
-                    data['TimeSeriesLength'] = year_range
-                    data['TimeSeriesSampleYears'] = len(years)
-                    data['TimeSeriesCompleteness'] = "%0.3f" % (float(len(years)) / year_range)
+                        data['TimeSeriesLength'] = year_range
+                        data['TimeSeriesSampleYears'] = len(years)
+                        data['TimeSeriesCompleteness'] = "%0.3f" % (float(len(years)) / year_range)
 
-                    # Get all non-zero gaps between years
-                    gaps = [b - a - 1 for a, b in zip(years[:-1], years[1:]) if b - a > 1]
-                    data['TimeSeriesSamplingEvenness'] = np.array(gaps).var() if len(gaps) > 0 else 0
+                        # Get all non-zero gaps between years
+                        gaps = [b - a - 1 for a, b in zip(years[:-1], years[1:]) if b - a > 1]
+                        data['TimeSeriesSamplingEvenness'] = np.array(gaps).var() if len(gaps) > 0 else 0
 
                 # Remove unwanted key from dict
                 del data['value_series']
