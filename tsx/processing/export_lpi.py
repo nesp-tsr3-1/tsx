@@ -68,10 +68,9 @@ def process_database(species = None, monthly = False, filter_output = False, inc
     if monthly:
         filename += '-monthly'
     if filter_output:
-        if include_all_years_data:
-            filename += '-filtered-all-years'
-        else:
-            filename += '-filtered'
+        filename += '-filtered'
+    if include_all_years_data:
+        filename += '-all-years'
     filename += '.csv'
 
     filepath = os.path.join(export_dir, filename)
@@ -312,7 +311,7 @@ def process_database(species = None, monthly = False, filter_output = False, inc
 
                     # If we include all years' data, we still want to output stats as if we were only processing up to max_analysis_year
                     if include_all_years_data:
-                        years = filter(lambda y: y <= max_analysis_year, years)
+                        years = list(filter(lambda y: y <= max_analysis_year, years))
 
                     # Due to previous step, years could in fact be empty by this point
                     if len(years) > 0:
