@@ -49,6 +49,16 @@ def main():
 				else:
 					raise ValueError("Invalid source id: %s" % data['source_id'])
 
+			try:
+				if data['data_agreement_id']:
+					data['data_agreement_id'] = int(data['data_agreement_id'])
+			except:
+				if args.relax:
+					log.warning("Treating unknown AgreementSigned value as blank: %s" % data['data_agreement_id'])
+					data['data_agreement_id'] = None
+				else:
+					raise ValueError("Invalid AgreementSigned: %s" % data['data_agreement_id'])
+
 			if args.update_source_table:
 				def strip_and_warn(s):
 					stripped = s.strip(". ")
