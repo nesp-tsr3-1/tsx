@@ -4,12 +4,16 @@ import sys
 import argparse
 from tqdm import tqdm
 import shapely.wkb
+import shapely.ops
 from tsx.geo import reproject_fn, to_multipolygon, subdivide_geometry
 from shapely.geometry import shape
 import fiona
 import pyproj
 
 log = logging.getLogger(__name__)
+
+def to_2d(x, y, z):
+    return tuple(filter(None, [x, y]))
 
 def main():
 	logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)-15s %(name)s %(levelname)-8s %(message)s')
@@ -26,6 +30,7 @@ def main():
 			props = feature['properties']
 
 			geometry = reproject(shape(feature['geometry']))
+			geometry = shapely.ops.transform(to_2d, geometry)
 			geometry = geometry.buffer(0)
 
 			session.execute("""INSERT INTO region (id, name, geometry, state, positional_accuracy_in_m)
