@@ -6,6 +6,7 @@ import argparse
 import openpyxl
 from tqdm import tqdm
 from six import text_type
+import re
 
 log = logging.getLogger(__name__)
 
