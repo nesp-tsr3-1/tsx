@@ -24,7 +24,7 @@ EOF
 sudo -u tsx bash <<EOF
 virtualenv -p python3 env
 source env/bin/activate
-pip install -r requirements.txt
+pip install -r jupyter/requirements.txt
 EOF
 
 # Configure Samba Share

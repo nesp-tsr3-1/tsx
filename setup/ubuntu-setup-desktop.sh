@@ -40,4 +40,6 @@ cat >> ~tsx/.bashrc <<EOF
 # Enter TSX directory and activate Python virtual environment
 cd ~/tsx
 source env/bin/activate
+jupyter/run.sh
+
 EOF
