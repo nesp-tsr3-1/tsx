@@ -4,7 +4,7 @@ set -e
 
 cd "$(dirname "$0")" && cd ..
 
-mkdir -p jupter/log
+mkdir -p jupyter/log
 jupyter-lab --config=jupyter/jupyter_notebook_config.py 2> jupyter/log/jupyter-lab-$(date +%Y%m%d_%H%M%S).log &
 
 echo
