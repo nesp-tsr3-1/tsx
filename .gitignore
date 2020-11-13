@@ -12,6 +12,7 @@ sample.zip
 *.log
 *.cache
 *.mwb
+*.swp
 
 .DS_Store
 env/
@@ -23,3 +24,5 @@ vagrant-env/
 tsx.conf
 *.egg-info/
 flask_session/
+
+/.ipynb_checkpoints
