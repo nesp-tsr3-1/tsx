@@ -8,7 +8,7 @@ from tsx.util import run_parallel, sql_list_placeholder, sql_list_argument
 
 log = logging.getLogger(__name__)
 
-def process_database(species = None, commit = False):
+def process_database(species = None, commit = False, simple_mode = False):
     session = get_session()
     if species == None:
         taxa = [taxon_id for (taxon_id,) in session.execute("SELECT DISTINCT taxon_id FROM t1_sighting").fetchall()]
@@ -17,10 +17,11 @@ def process_database(species = None, commit = False):
             "SELECT DISTINCT taxon_id FROM t1_sighting, taxon WHERE taxon.id = taxon_id AND spno IN (%s)" % sql_list_placeholder('species', species),
             sql_list_argument('species', species)).fetchall()]
 
-    create_region_lookup_table(session)
+    if not simple_mode:
+        create_region_lookup_table(session)
 
     # Process in parallel
-    tasks = [(taxon_id, commit) for taxon_id in taxa]
+    tasks = [(taxon_id, simple_mode, commit) for taxon_id in taxa]
 
     log.info("Step 1/2: Monthly aggregation")
 
@@ -38,13 +39,20 @@ def process_database(species = None, commit = False):
     cleanup_region_lookup_table(session)
 
 
-def aggregate_monthly(taxon_id, commit = False):
+def aggregate_monthly(taxon_id, simple_mode = False, commit = False):
     session = get_session()
     try:
-        sql = """SELECT source_id, unit_id, search_type_id, experimental_design_type_id, response_variable_type_id
-            FROM processing_method
-            WHERE data_type = 1
-            AND taxon_id = :taxon_id"""
+        if simple_mode:
+            sql = """SELECT DISTINCT t1_survey.source_id, unit_id, search_type_id, 1, 1
+                FROM t1_survey, t1_sighting, t1_site
+                WHERE t1_survey.site_id = t1_site.id
+                AND t1_sighting.survey_id = t1_survey.id
+                AND taxon_id = :taxon_id"""
+        else:
+            sql = """SELECT source_id, unit_id, search_type_id, experimental_design_type_id, response_variable_type_id
+                FROM processing_method
+                WHERE data_type = 1
+                AND taxon_id = :taxon_id"""
         rows = session.execute(sql, {'taxon_id': taxon_id}).fetchall()
 
         for source_id, unit_id, search_type_id, experimental_design_type_id, response_variable_type_id in rows:
@@ -68,6 +76,10 @@ def aggregate_monthly(taxon_id, commit = False):
                 aggregate_expression = 'AVG(count > 0)'
                 where_conditions.append("unit_id = 1")
 
+            if simple_mode:
+                region_expression = 'NULL'
+            else:
+                region_expression = 'MIN((SELECT MIN(region_id) FROM tmp_region_lookup t WHERE t.site_id = survey.site_id))'
 
             # ingest into the table
             sql = """INSERT INTO aggregated_by_month (
@@ -96,7 +108,7 @@ def aggregate_monthly(taxon_id, commit = False):
                 1,
                 :response_variable_type_id,
                 {aggregate_expression},
-                MIN((SELECT MIN(region_id) FROM tmp_region_lookup t WHERE t.site_id = survey.site_id)),
+                {region_expression},
                 MAX(positional_accuracy_in_m),
                 unit_id,
                 1,
@@ -117,7 +129,8 @@ def aggregate_monthly(taxon_id, commit = False):
                 start_date_y, start_date_m, site_id
             """.format(
                     aggregate_expression = aggregate_expression,
-                    where_conditions = " ".join("AND %s" % cond for cond in where_conditions)
+                    where_conditions = " ".join("AND %s" % cond for cond in where_conditions),
+                    region_expression = region_expression
                 )
 
             session.execute(sql, {
@@ -139,7 +152,7 @@ def aggregate_monthly(taxon_id, commit = False):
 
 
 
-def aggregate_yearly(taxon_id, commit = False):
+def aggregate_yearly(taxon_id, simple_mode = False, commit = False):
     session = get_session()
     try:
         sql = """

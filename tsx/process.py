@@ -58,6 +58,7 @@ def main():
     p = subparsers.add_parser('filter_time_series')
     p = subparsers.add_parser('clear')
     p = subparsers.add_parser('all')
+    p = subparsers.add_parser('simple')
     args = parser.parse_args()
 
     species = None
@@ -130,6 +131,25 @@ def main():
 
         log.info("STEP 7 - FILTER TIME SERIES")
         tsx.processing.filter_time_series.process_database()
+
+        log.info("PROCESSING COMPLETE")
+
+    elif args.command == 'simple':
+        if not args.commit:
+            log.error("Dry-run mode not supported for 'simple'")
+            return
+        if args.species:
+            log.error("Passing species not supported for 'simple'")
+            return
+
+        log.info("STEP 0 - CLEARING PREVIOUS RESULTS")
+        clear_database()
+
+        log.info("STEP 1 - TYPE 1 DATA AGGREGATION")
+        tsx.processing.t1_aggregation.process_database(commit = True, simple_mode = True)
+
+        log.info("STEP 2 - EXPORT")
+        tsx.processing.export_lpi.process_database()
 
         log.info("PROCESSING COMPLETE")
 

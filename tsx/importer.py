@@ -1,6 +1,6 @@
 import pyproj
 from pyproj import Proj
-from tsx.db import T1Survey, T1Sighting, T1Site, T2Survey, T2Sighting, T2Site, Taxon, Source, DataImport, SourceType, SearchType, Unit, IntensiveManagement, ProjectionName, get_session
+from tsx.db import T1Survey, T1Sighting, T1Site, T2Survey, T2Sighting, T2Site, Taxon, TaxonLevel, Source, DataImport, SourceType, SearchType, Unit, IntensiveManagement, ProjectionName, get_session
 import tsx.util
 import os
 import logging
@@ -41,13 +41,21 @@ def main():
 	parser.add_argument('-t', action='store_true', dest='test', help='test database connection')
 	parser.add_argument('--type', dest='data_type', choices=[1,2], type=int, help='Type of data (1 or 2)')
 	parser.add_argument('-c', action='store_true', dest='commit', help='commit changes (default is dry-run)')
+	parser.add_argument('--simple', action='store_true', dest='simple_mode', help='Simple mode')
 	args = parser.parse_args()
 
 	if args.filename:
-		if not args.data_type:
+		if not args.simple_mode and not args.data_type:
 			parser.error('--type is required')
 			return
-		importer = Importer(args.filename, data_type = args.data_type, commit = args.commit)
+		if args.simple_mode:
+			if args.data_type == 2:
+				parser.error('--type 2 is not support in simple mode')
+				return
+			else:
+				args.data_type = 1
+
+		importer = Importer(args.filename, data_type = args.data_type, commit = args.commit, simple_mode = args.simple_mode)
 		importer.ingest_data()
 	elif args.test:
 		test_db()
@@ -76,7 +84,7 @@ class ImportError(Exception):
 	pass
 
 class Importer:
-	def __init__(self, filename, data_type = None, commit = False, logger = log, progress_callback = None, source_id = None, data_import_id = None):
+	def __init__(self, filename, data_type = None, commit = False, logger = log, progress_callback = None, source_id = None, data_import_id = None, simple_mode = False):
 		if data_type not in (1,2):
 			raise ValueError("Invalid type (must be 1 or 2)")
 
@@ -86,6 +94,7 @@ class Importer:
 		self.log = logger
 		self.data_type = data_type
 		self.progress_callback = progress_callback
+		self.simple_mode = simple_mode
 		# see check_survey_consistency
 		self.survey_fields_by_pk = {}
 
@@ -120,6 +129,8 @@ class Importer:
 		if self.data_type == 2:
 			self.non_empty_keys.remove('SiteName')
 			self.non_empty_keys.remove('Count')
+			self.non_empty_keys.remove('TaxonID')
+		if self.simple_mode:
 			self.non_empty_keys.remove('TaxonID')
 
 		self.sighting_keys = set(["SpNo", "TaxonID", "Breeding", "Count", "UnitID", "SightingComments"])
@@ -553,19 +564,25 @@ class Importer:
 			# 3. Scientific name
 			# 4. Common name
 			taxon_id = row.get('TaxonID')
-			spno = row.get('SpNo')
+			spno = None if self.simple_mode else row.get('SpNo')
 			common_name = normalize(row.get('CommonName'))
 			scientific_name = normalize(row.get('ScientificName'))
 
 			if taxon_id is not None:
 				taxon = self.get_taxon(session, taxon_id)
 				if not taxon:
-					log.error("Invalid TaxonID: %s" % taxon_id)
+					if self.simple_mode:
+						taxon = self.create_taxon(session, taxon_id, scientific_name or 'Unknown', common_name)
+					else:
+						log.error("Invalid TaxonID: %s" % taxon_id)
 					return False
 			else:
 				taxon = None
 
-			if 'SpNo' in row:
+			if taxon is None and args.simple_mode:
+				taxon = self.create_taxon(session, None, scientific_name or 'Unknown', common_name or 'Unknown')
+
+			if spno:
 				if taxon is None:
 					# Get Taxon ID from SpNo
 					taxon = self.get_species_taxon(session, spno)
@@ -679,6 +696,24 @@ class Importer:
 	def get_taxon_by_scientific_name(self, session, scientific_name):
 		return self.get_cached('taxon_by_scientific_name', scientific_name,
 			lambda: session.query(Taxon).filter(Taxon.scientific_name == scientific_name).one_or_none())
+
+	def create_taxon(self, session, taxon_id, scientific_name, common_name):
+		if taxon_id is None:
+			taxon_id = session.execute("""SELECT CONCAT('a', LPAD(COALESCE(SUBSTR((SELECT MAX(id) FROM taxon WHERE id LIKE 'a%'), 2), 0) + 1, 5, '0'));""")
+		taxon = Taxon(
+					id = taxon_id,
+					ultrataxon = True,
+					common_name = normalize(common_name),
+					scientific_name = normalize(scientific_name),
+					taxonomic_group = 'Unknown'
+				)
+		try:
+			del self.cache['taxa']
+		except KeyError:
+			pass
+		session.add(taxon)
+		session.flush()
+
 
 	def get_unit(self, session, unit_id):
 		return self.get_cached('unit_by_id', unit_id,
