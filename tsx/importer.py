@@ -572,7 +572,7 @@ class Importer:
 				taxon = self.get_taxon(session, taxon_id)
 				if not taxon:
 					if self.simple_mode:
-						taxon = self.create_taxon(session, taxon_id, scientific_name or 'Unknown', common_name)
+						taxon = self.create_taxon(session, taxon_id, scientific_name, common_name or 'Unknown')
 					else:
 						log.error("Invalid TaxonID: %s" % taxon_id)
 					return False
@@ -580,7 +580,7 @@ class Importer:
 				taxon = None
 
 			if taxon is None and args.simple_mode:
-				taxon = self.create_taxon(session, None, scientific_name or 'Unknown', common_name or 'Unknown')
+				taxon = self.create_taxon(session, None, scientific_name, common_name or 'Unknown')
 
 			if spno:
 				if taxon is None:
@@ -700,6 +700,10 @@ class Importer:
 	def create_taxon(self, session, taxon_id, scientific_name, common_name):
 		if taxon_id is None:
 			taxon_id = session.execute("""SELECT CONCAT('a', LPAD(COALESCE(SUBSTR((SELECT MAX(id) FROM taxon WHERE id LIKE 'a%'), 2), 0) + 1, 5, '0'));""")
+
+		if scientific_name is None:
+			scientific_name = taxon_id
+
 		taxon = Taxon(
 					id = taxon_id,
 					ultrataxon = True,
