@@ -29,7 +29,7 @@ def process_database(species = None, commit = False, simple_mode = False):
         if error:
             print(error)
 
-    log.info("Step 1/2: Yearly aggregation")
+    log.info("Step 2/2: Yearly aggregation")
 
     for result, error in tqdm(run_parallel(aggregate_yearly, tasks), total=len(tasks)):
         if error:
