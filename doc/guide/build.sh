@@ -2,4 +2,4 @@
 
 mkdir -p build
 cp -r images build
-asciidoctor -D build index.adoc
+asciidoctor -D build index.adoc simple.adoc

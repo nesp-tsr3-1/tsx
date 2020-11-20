@@ -15,5 +15,3 @@ image::vm-import.png[VirtualBox Appliance Settings screen]
 After importing the virtual machine into VirtualBox, double click on tsx-desktop to start it. After a few seconds to minutes (depending on computer), it should start up and display a terminal:
 
 image::vm-start.png[Virtual machine after startup, 600]
-
-That's it! You can now skip straight to <<Running the workflow>>.

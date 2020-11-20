@@ -76,6 +76,8 @@ The workflow was primarily designed to run on Linux and macOS, and requires seve
 
 include::include/install-virtualbox.adoc[]
 
+That's it! You can now skip straight to <<Running the workflow>>.
+
 === Installation on Linux/macOS
 
 include::include/install-linux.adoc[]
