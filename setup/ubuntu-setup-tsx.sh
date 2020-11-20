@@ -25,6 +25,7 @@ sudo -u tsx bash <<EOF
 virtualenv -p python3 env
 source env/bin/activate
 pip install -r jupyter/requirements.txt
+echo 'IRkernel::installspec()' | R --no-save
 EOF
 
 # Configure Samba Share

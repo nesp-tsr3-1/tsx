@@ -46,4 +46,5 @@ install.packages("devtools")
 library(devtools)
 install.packages("ggplot2")
 install_github("nesp-tsr3-1/rlpi", dependencies=TRUE)
+install.packages('IRkernel')
 EOF
