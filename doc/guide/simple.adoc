@@ -169,7 +169,7 @@ Use the play icon at the top of the notebook tab to run through each step.
 
 You should be rewarded with a plot and table showing the resulting TSX index:
 
-(TODO)
+image::jupyter-r-plot.png[Jupyter Notebook showing plot of LPI result]
 
 Congratulations!
 
