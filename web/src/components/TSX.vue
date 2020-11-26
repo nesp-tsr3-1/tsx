@@ -268,7 +268,12 @@ const groupings = [
   ['Mammals', 'Marine', null],
   ['Mammals', 'Terrestrial', null],
   ['Mammals', 'Terrestrial', 'Arboreal'],
-  ['Mammals', 'Terrestrial', 'Volant']
+  ['Mammals', 'Terrestrial', 'Volant'],
+  ['Plants', 'Grass', null],
+  ['Plants', 'Herbaceous', null],
+  ['Plants', 'Orchid', null],
+  ['Plants', 'Shrub', null],
+  ['Plants', 'Tree', null]
 ]
 
 const noneOption = {value: 'None', text: 'All'}
@@ -665,7 +670,7 @@ export default {
       return this.getFilterParams()
     },
     managementEnabled() {
-      return this.selectedIndex.value === 'Mammals' || this.prioritySelected
+      return this.selectedIndex.value === 'Mammals' || this.selectedIndex.value === 'Plants' || this.prioritySelected
     }
   },
   methods: {
@@ -856,7 +861,7 @@ export default {
         addParam('state', this.selectedState)
         addParam('statusauth', this.selectedStatusAuthority)
         addParam('status', this.selectedStatus)
-        if(this.selectedIndex.value === 'Mammals') {
+        if(this.selectedIndex.value === 'Mammals' || this.selectedIndex.value === 'Plants') {
           addParam('management', this.selectedManagement)
         }
       }
@@ -879,7 +884,7 @@ export default {
           ['state', this.selectedState],
           ['statusauth', this.selectedStatusAuthority],
           ['status', this.selectedStatus],
-          ['management', this.selectedIndex.value === 'Mammals' ? this.selectedManagement : noneOption]
+          ['management', this.selectedIndex.value === 'Mammals' || this.selectedIndex.value === 'Plants' ? this.selectedManagement : noneOption]
         ]
       }
 
