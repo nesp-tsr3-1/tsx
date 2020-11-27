@@ -84,7 +84,7 @@ def read_data(filename):
 			df = df.drop(['SurveysCentroidLatitude', 'SurveysCentroidLongitude', 'SurveysSpatialAccuracy', 'DataAgreement', 'SiteDesc', 'StatePlantStatus'], axis=1, errors='ignore')
 
 			if get_dataset_name() != 'tsx2019':
-				df.drop(['IntensiveManagement'], axis=1, errors='ignore')
+				df = df.drop(['IntensiveManagement'], axis=1, errors='ignore')
 
 			cached_data[filename] = df
 		else:
