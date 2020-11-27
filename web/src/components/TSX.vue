@@ -343,6 +343,7 @@ const managementTypes = [
   { value: 'None', text: 'All sites' },
   { value: 'Any management', text: 'Any management' },
   { value: 'Predator-free', text: 'Predator-free' },
+  { value: 'Translocation', text: 'Translocation' },
   { value: 'No management', text: 'No (known) management' }
 ]
 

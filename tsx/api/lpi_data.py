@@ -82,6 +82,10 @@ def read_data(filename):
 			})
 			# Important: remove sensitive information that must not be exposed publicly
 			df = df.drop(['SurveysCentroidLatitude', 'SurveysCentroidLongitude', 'SurveysSpatialAccuracy', 'DataAgreement', 'SiteDesc', 'StatePlantStatus'], axis=1, errors='ignore')
+
+			if get_dataset_name() != 'tsx2019':
+				df.drop(['IntensiveManagement'], axis=1, errors='ignore')
+
 			cached_data[filename] = df
 		else:
 			cached_data[filename] = None
@@ -470,12 +474,24 @@ def get_filtered_data():
 
 	# Site management filtering is also special
 	management = request.args.get('management')
-	if management == 'No management':
-		df = df[df.IntensiveManagement.isna() == True]
-	elif management == 'Any management':
-		df = df[df.IntensiveManagement.isna() == False]
-	elif management == 'Predator-free':
-		df = df[df.IntensiveManagementGrouping.str.contains('predator-free', na=False)]
+
+	if get_dataset_name() == 'tsx2019':
+		# legacy
+		if management == 'No management':
+			df = df[df.IntensiveManagement.isna() == True]
+		elif management == 'Any management':
+			df = df[df.IntensiveManagement.isna() == False]
+		elif management == 'Predator-free':
+			df = df[df.IntensiveManagementGrouping.str.contains('predator-free', na=False)]
+	else:
+		if management == "Any management":
+			df = df[~(df.IntensiveManagementGrouping.isna() | df.IntensiveManagementGrouping == "No known management")]
+		elif management == "Predator-free":
+			df = df[df.IntensiveManagementGrouping.str.contains('predator-free', na=False)]
+		elif management == "Translocation":
+			df = df[df.IntensiveManagementGrouping.str.contains('Translocation', na=False)]
+		elif management == "No management":
+			df = df[df.IntensiveManagementGrouping.isna() | df.IntensiveManagementGrouping == "No known management"]
 
 	return df
 
@@ -611,12 +627,26 @@ def build_filter_sql(taxon_only=False):
 		if 'management' in request.args:
 			expressions.append("data_type = 1")
 			management = request.args.get('management', type=str)
-			if management == 'Predator-free':
-				expressions.append("site_id IN (SELECT t1_site.id FROM t1_site, intensive_management WHERE intensive_management.id = intensive_management_id AND grouping LIKE '%%predator-free%%')")
-			elif management == 'Any management':
-				expressions.append("site_id IN (SELECT id FROM t1_site WHERE intensive_management_id IS NOT NULL)")
-			elif management == 'No management':
-				expressions.append("site_id IN (SELECT id FROM t1_site WHERE intensive_management_id IS NULL)")
+
+			if get_dataset_name() == 'tsx2019':
+				#legacy
+				if management == 'Predator-free':
+					expressions.append("site_id IN (SELECT t1_site.id FROM t1_site, intensive_management WHERE intensive_management.id = intensive_management_id AND grouping LIKE '%%predator-free%%')")
+				elif management == 'Any management':
+					expressions.append("site_id IN (SELECT id FROM t1_site WHERE intensive_management_id IS NOT NULL)")
+				elif management == 'No management':
+					expressions.append("site_id IN (SELECT id FROM t1_site WHERE intensive_management_id IS NULL)")
+			else:
+				pass
+				if management == "Any management":
+					expressions.append("site_id IN (SELECT t1_site.id FROM t1_site, intensive_management WHERE intensive_management.id = intensive_management_id AND grouping != 'No known management')")
+				elif management == "Predator-free":
+					expressions.append("site_id IN (SELECT t1_site.id FROM t1_site, intensive_management WHERE intensive_management.id = intensive_management_id AND grouping LIKE '%%predator-free%%')")
+				elif management == "Translocation":
+					expressions.append("site_id IN (SELECT t1_site.id FROM t1_site, intensive_management WHERE intensive_management.id = intensive_management_id AND grouping LIKE '%%Translocation%%')")
+				elif management == "No management":
+					expressions.append("site_id NOT IN (SELECT t1_site.id FROM t1_site, intensive_management WHERE intensive_management.id = intensive_management_id AND grouping != 'No known management')")
+
 
 	if len(expressions):
 		return (" AND ".join(expressions), tuple(values))
