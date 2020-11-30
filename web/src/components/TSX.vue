@@ -340,11 +340,11 @@ const statuses = [
 ]
 
 const managementTypes = [
-  { value: 'None', text: 'All sites' },
-  { value: 'Any management', text: 'Any management' },
-  { value: 'Predator-free', text: 'Predator-free' },
-  { value: 'Translocation', text: 'Translocation' },
-  { value: 'No management', text: 'No (known) management' }
+  { value: 'None', text: 'All sites', groups: ['Mammals', 'Plants'] },
+  { value: 'Any management', text: 'Any management', groups: ['Mammals', 'Plants'] },
+  { value: 'Predator-free', text: 'Predator-free', groups: ['Mammals'] },
+  { value: 'Translocation', text: 'Translocation', groups: ['Plants'] },
+  { value: 'No management', text: 'No (known) management', groups: ['Mammals', 'Plants'] }
 ]
 
 const years = [
@@ -630,6 +630,9 @@ export default {
       this.subgroupEnabled = this.subgroupList.length > 1
 
       this.selectedSubgroup = this.subgroupList.find(x => x.value === this.selectedSubgroup.value) || this.subgroupList[0]
+
+      this.managementList = managementTypes.filter(x => x.groups.includes(this.selectedIndex.value))
+      this.selectedManagement = this.managementList.find(x => x.value === this.selectedManagement.value) || this.managementList[0]
     },
     selectedGroup(val) {
       this.subgroupList = generateSubgroupList(this.selectedIndex, this.selectedGroup)
