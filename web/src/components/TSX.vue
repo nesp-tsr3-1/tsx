@@ -269,7 +269,7 @@ const groupings = [
   ['Mammals', 'Terrestrial', null],
   ['Mammals', 'Terrestrial', 'Arboreal'],
   ['Mammals', 'Terrestrial', 'Volant'],
-  ['Plants', 'Grass', null],
+  // ['Plants', 'Grass', null],
   ['Plants', 'Herbaceous', null],
   ['Plants', 'Orchid', null],
   ['Plants', 'Shrub', null],
