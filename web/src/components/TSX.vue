@@ -273,7 +273,8 @@ const groupings = [
   ['Plants', 'Herbaceous', null],
   ['Plants', 'Orchid', null],
   ['Plants', 'Shrub', null],
-  ['Plants', 'Tree', null]
+  ['Plants', 'Tree', null],
+  ['Plants', 'Terrestrial', null]
 ]
 
 const noneOption = {value: 'None', text: 'All'}
