@@ -633,7 +633,9 @@ export default {
       this.selectedSubgroup = this.subgroupList.find(x => x.value === this.selectedSubgroup.value) || this.subgroupList[0]
 
       this.managementList = managementTypes.filter(x => x.groups.includes(this.selectedIndex.value))
-      this.selectedManagement = this.managementList.find(x => x.value === this.selectedManagement.value) || this.managementList[0]
+      if(this.selectedManagement) {
+        this.selectedManagement = this.managementList.find(x => x.value === this.selectedManagement.value) || managementTypes[0]
+      }
     },
     selectedGroup(val) {
       this.subgroupList = generateSubgroupList(this.selectedIndex, this.selectedGroup)
