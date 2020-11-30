@@ -485,13 +485,14 @@ def get_filtered_data():
 			df = df[df.IntensiveManagementGrouping.str.contains('predator-free', na=False)]
 	else:
 		if management == "Any management":
-			df = df[~(df.IntensiveManagementGrouping.isna() | df.IntensiveManagementGrouping == "No known management")]
+			df = df[~(df.IntensiveManagementGrouping.isna() | (df.IntensiveManagementGrouping == "No known management"))]
 		elif management == "Predator-free":
 			df = df[df.IntensiveManagementGrouping.str.contains('predator-free', na=False)]
 		elif management == "Translocation":
 			df = df[df.IntensiveManagementGrouping.str.contains('Translocation', na=False)]
 		elif management == "No management":
-			df = df[df.IntensiveManagementGrouping.isna() | df.IntensiveManagementGrouping == "No known management"]
+			pass
+			df = df[df.IntensiveManagementGrouping.isna() | (df.IntensiveManagementGrouping == "No known management")]
 
 	return df
 
@@ -637,7 +638,6 @@ def build_filter_sql(taxon_only=False):
 				elif management == 'No management':
 					expressions.append("site_id IN (SELECT id FROM t1_site WHERE intensive_management_id IS NULL)")
 			else:
-				pass
 				if management == "Any management":
 					expressions.append("site_id IN (SELECT t1_site.id FROM t1_site, intensive_management WHERE intensive_management.id = intensive_management_id AND grouping != 'No known management')")
 				elif management == "Predator-free":
