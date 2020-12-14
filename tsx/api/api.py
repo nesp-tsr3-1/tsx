@@ -1,4 +1,4 @@
-from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash
+from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash, json
 import tsx.api.lpi_data
 from tsx.api.util import setup_db
 import tsx.config
@@ -13,7 +13,6 @@ import tsx.api.data_import
 import tsx.api.misc
 import tsx.api.user
 
-import json
 import datetime
 # import tsx.api.auth
 
