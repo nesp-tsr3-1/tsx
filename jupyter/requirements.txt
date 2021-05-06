@@ -22,7 +22,7 @@ enum34==1.1.6
 et-xmlfile==1.0.1
 Fiona==1.7.13
 Flask==1.1.1
-Flask-Cors==3.0.6
+Flask-Cors==3.0.9
 Flask-Headers==1.0
 Flask-Login==0.4.0
 Flask-Session==0.3.1
