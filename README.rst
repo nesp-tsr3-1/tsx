@@ -4,7 +4,7 @@ Welcome to the Australian Threatened Species Index (TSX) Repository
 
 For information about the Australian Threatened Species Index project, see https://tsx.org.au
 
-The code in this repository is responsible for data-import and pre-processing of data, and visualsation of the generated trend graphs and associated data.
+The code in this repository is responsible for data import and pre-processing of data, and visualsation of the generated trend graphs and associated data.
 
 
 User Guide
