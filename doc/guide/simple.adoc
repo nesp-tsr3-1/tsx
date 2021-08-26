@@ -157,6 +157,8 @@ For the sample dataset, this processing should complete very quickly, with outpu
 
 The workflow has now completed processing all raw observation data in the database to produce aggregated time series in the file `sample-data/export/lpi.csv`. This file is in a format ready for processing using the Living Planet Index method.
 
+You can also run the next section on the aggregated time series file that is produced by the TSX. To customise and generate this file, visit https://tsx.org.au/tsx, filter the index to the data you wish to include by selecting the species group, region, status, management category and reference year of interest, then click “Download CSV”.
+
 == Living Planet Index Calculation
 
 The Living Planet Index R package, https://github.com/Zoological-Society-of-London/rlpi[`rlpi`], is used to generate the main final output of the TSX workflow.
