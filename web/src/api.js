@@ -1,10 +1,12 @@
 import Promise from 'bluebird' // We can drop this when browser support is better
-// import * as util from 'util'
-import * as util from '@/util'
+import * as util from './util'
 import _ from 'underscore'
 
-const LPI_RUNS_URL = 'https://tsx.org.au/lpi_runs'
-export const ROOT_URL = 'https://tsx.org.au/tsxapi'
+// const LPI_RUNS_URL = 'https://tsx.org.au/lpi_runs'
+// export const ROOT_URL = 'https://tsx.org.au/tsxapi'
+
+const LPI_RUNS_URL = 'http://localhost:3000/static/lpi_runs'
+export const ROOT_URL = 'http://localhost:5000'
 
 export function isLoggedIn() {
   return get('/is_logged_in')
@@ -92,6 +94,18 @@ export function dataImportLogUrl(id) {
 
 export function monitoringPrograms() {
   return get('/monitoring_program')
+}
+
+export function programManagers(program_id) {
+  return get('/programs/' + program_id + '/managers')
+}
+
+export function programsManagedBy(user_id) {
+  return get('/users/' + user_id + '/programs')
+}
+
+export function updateProgramsManagedBy(user_id, program_ids) {
+  return put('/users/' + user_id + '/programs', program_ids)
 }
 
 export function lpidata(params) {

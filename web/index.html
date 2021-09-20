@@ -1,92 +1,91 @@
-<!doctype html>
-<html class="no-js" lang="">
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="x-ua-compatible" content="ie=edge">
-        <title>TSX - Australian Threatened Species Index</title>
-        <meta name="description" content="">
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
-    </head>
-    <body>
-        <!--[if lte IE 9]>
-            <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience and security.</p>
-        <![endif]-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TSX - Australian Threatened Species Index</title>
+  </head>
+  <body>
+    <!--[if lte IE 9]>
+    <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience and security.</p>
+    <![endif]-->
 
-        <!-- Add your site or application content here -->
-        <header class="is-dark">
-          <div class="section" style="padding-bottom: 1em;">
-            <div class="container is-widescreen bird-background">
-              <div class="columns is-dark" style="align-items: flex-end;">
-                <div class="column is-offset-2 is-10">
-                  <div style="display: flex; flex-flow: row wrap; justify-content: space-between; align-items: flex-end;">
-                    <h1 style="font-size: 1.9rem; flex: 100 1 10em; display: inline-block; margin: 0;">The Australian Threatened Species Index – Part 1: Birds</h1>
-                    <div style="flex: 1 0 240px; padding-top: 1em; margin-left: 1em;">
-                      <img src="static/images/birdlife-logo-white.png" style="width: 70px; margin-right: 12px; margin-bottom: 16px;"><a href="/"><img src="static/images/tsr-logo-white.svg" style="width: 158px;"></a>
-                    </div>
-                  </div>
+    <!-- Add your site or application content here -->
+    <header class="is-dark">
+      <div class="section" style="padding-bottom: 1em;">
+        <div class="container is-widescreen bird-background">
+          <div class="columns is-dark" style="align-items: flex-end;">
+            <div class="column is-offset-2 is-10">
+              <div style="display: flex; flex-flow: row wrap; justify-content: space-between; align-items: flex-end;">
+                <h1 style="font-size: 1.9rem; flex: 100 1 10em; display: inline-block; margin: 0;">The Australian Threatened Species Index</h1>
+                <div style="flex: 1 0 240px; padding-top: 1em; margin-left: 1em;">
+                  <img src="static/images/birdlife-logo-white.png" style="width: 70px; margin-right: 12px; margin-bottom: 16px;"><a href="/"><img src="static/images/tsr-logo-white.svg" style="width: 158px;"></a>
                 </div>
               </div>
             </div>
           </div>
-        </header>
+        </div>
+      </div>
+    </header>
 
-        <div id="app"></div>
+    <div id="app"></div>
 
-        <footer class="footer" style="background: white; padding: 1em;">
-          <div class="container is-widescreen">
-            <div class="logos"><!-- class="content has-text-centered has-text-black">-->
-              <style>
-              footer img {
-                height: 40px;
-              }
-              footer .logos {
-                display: flex;
-                flex-flow: row wrap;
-                justify-content: center;
-              }
-              footer .logo {
-                flex: 0 0 100px;
-                text-align: center;
-              }
-              @media screen and (min-width: 640px) {
-                footer img {
-                  height: 45px
-                }
-                .footer .logo {
-                  flex: 0 0 110px;
-                }
-              }
-              </style>
+    <footer class="footer" style="background: white; padding: 1em;">
+      <div class="container is-widescreen">
+        <div class="logos"><!-- class="content has-text-centered has-text-black">-->
+          <style>
+          footer img {
+            height: 40px;
+          }
+          footer .logos {
+            display: flex;
+            flex-flow: row wrap;
+            justify-content: center;
+          }
+          footer .logo {
+            flex: 0 0 100px;
+            text-align: center;
+          }
+          @media screen and (min-width: 640px) {
+            footer img {
+              height: 45px
+            }
+            .footer .logo {
+              flex: 0 0 110px;
+            }
+          }
+          </style>
 
-              <div class="logo"><img src="static/images/partners/x250/UQ.png"></div>
-              <div class="logo"><img src="static/images/partners/x250/BirdLife.png"></div>
-              <div class="logo"><img src="static/images/partners/x250/ANU.png"></div>
-              <div class="logo"><img src="static/images/partners/x250/UniMelb.png"></div>
-              <div class="logo"><img src="static/images/partners/x250/CDU.png"></div>
-              <div class="logo"><img src="static/images/partners/x250/TERN.png"></div>
-              <div class="logo"><img src="static/images/partners/x250/USyd.png"></div>
-              <div class="logo"><img src="static/images/partners/x250/GriffithU.png"></div>
-              <div class="logo"><img src="static/images/partners/x250/WA-DBCA.png"></div>
-              <div class="logo"><img src="static/images/partners/x250/IanPotter.png"></div>
-              <div class="logo"><img src="static/images/partners/x250/Planticle.png"></div>
-              <div class="logo"><img src="static/images/partners/x250/RCC.png"></div>
-              <div class="logo"><img src="static/images/partners/x250/ParksAus.png"></div>
-              <div class="logo"><img src="static/images/partners/x250/BHA.png"></div>
-              <div class="logo"><img src="static/images/partners/x250/QLDGovt.png"></div>
-              <div class="logo"><img src="static/images/partners/x250/NT-DLRM.png"></div>
-              <div class="logo"><img src="static/images/partners/x250/SA-DEWNR.png"></div>
-              <div class="logo"><img src="static/images/partners/x250/Vic-DELWP.png"></div>
-              <div class="logo"><img src="static/images/partners/x250/ALA.png"></div>
-              <div class="logo"><img src="static/images/partners/x250/ZSL-WWF.png"></div>
-              <div class="logo"><img src="static/images/partners/x250/AWC.png"></div>
-              <div class="logo"><img src="static/images/partners/x250/NSW.png"></div>
-              <div class="logo"><img src="static/images/partners/x250/Tas-DPIPWE.png"></div>
-              <div class="logo"><img src="static/images/partners/x250/ACTGovt.png"></div>
+          <div class="logo"><img src="static/images/partners/x250/UQ.png"></div>
+          <div class="logo"><img src="static/images/partners/x250/BirdLife.png"></div>
+          <div class="logo"><img src="static/images/partners/x250/ANU.png"></div>
+          <div class="logo"><img src="static/images/partners/x250/UniMelb.png"></div>
+          <div class="logo"><img src="static/images/partners/x250/CDU.png"></div>
+          <div class="logo"><img src="static/images/partners/x250/TERN.png"></div>
+          <div class="logo"><img src="static/images/partners/x250/USyd.png"></div>
+          <div class="logo"><img src="static/images/partners/x250/GriffithU.png"></div>
+          <div class="logo"><img src="static/images/partners/x250/WA-DBCA.png"></div>
+          <div class="logo"><img src="static/images/partners/x250/IanPotter.png"></div>
+          <div class="logo"><img src="static/images/partners/x250/Planticle.png"></div>
+          <div class="logo"><img src="static/images/partners/x250/RCC.png"></div>
+          <div class="logo"><img src="static/images/partners/x250/ParksAus.png"></div>
+          <div class="logo"><img src="static/images/partners/x250/BHA.png"></div>
+          <div class="logo"><img src="static/images/partners/x250/QLDGovt.png"></div>
+          <div class="logo"><img src="static/images/partners/x250/NT-DLRM.png"></div>
+          <div class="logo"><img src="static/images/partners/x250/SA-DEWNR.png"></div>
+          <div class="logo"><img src="static/images/partners/x250/Vic-DELWP.png"></div>
+          <div class="logo"><img src="static/images/partners/x250/ALA.png"></div>
+          <div class="logo"><img src="static/images/partners/x250/ZSL-WWF.png"></div>
+          <div class="logo"><img src="static/images/partners/x250/AWC.png"></div>
+          <div class="logo"><img src="static/images/partners/x250/NSW.png"></div>
+          <div class="logo"><img src="static/images/partners/x250/Tas-DPIPWE.png"></div>
+          <div class="logo"><img src="static/images/partners/x250/ACTGovt.png"></div>
 
-            </div>
-          </div>
-        </footer>
-        <!-- built files will be auto injected -->
-    </body>
+        </div>
+      </div>
+    </footer>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
 </html>

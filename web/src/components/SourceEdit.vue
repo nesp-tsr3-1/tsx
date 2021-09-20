@@ -97,8 +97,8 @@
 </template>
 
 <script>
-import * as api from '@/api'
-import SourceList from '@/components/SourceList'
+import * as api from '../api.js'
+import SourceList from './SourceList.vue'
 import _ from 'underscore'
 
 const sourceProps = ['description', 'provider', 'authors', 'monitoring_program', 'contact_name', 'contact_institution', 'contact_position', 'contact_email', 'contact_phone']

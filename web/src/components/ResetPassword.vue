@@ -21,7 +21,7 @@
               <p class="help is-danger" v-if="errors.password">{{ errors.password }}</p>
             </div>
             <div class="field">
-              <label class="has-text-dark"s>Confirm password</label>
+              <label class="has-text-dark">Confirm password</label>
               <input class="input" type="password" name="confirm_password" v-model="confirm_password">
               <p class="help is-danger" v-if="errors.confirm_password">{{ errors.confirm_password }}</p>
             </div>
@@ -47,7 +47,7 @@
           <fieldset v-bind:disabled="submitting">
             <div class="field">
               <label class="has-text-dark">Email address</label>
-              <input class="input" type="text" placeholder="user@example.com" v-model="email" v-autofocus></input>
+              <input class="input" type="text" placeholder="user@example.com" v-model="email" v-autofocus>
               <p class="help is-danger" v-if="errors.email">{{ errors.email }}</p>
             </div>
             <button class="button is-primary" style="width: 100%; margin: 0.5em 0;" v-on:click="requestPasswordReset">Request Password Reset</button>
@@ -68,8 +68,7 @@
 </template>
 
 <script>
-import * as api from '@/api'
-// import * as util from '@/util'
+import * as api from '../api.js'
 
 export default {
   name: 'ResetPassword',
@@ -142,21 +141,9 @@ export default {
 </script>
 
 <style>
-/*label {
-  display: block;
-}
-input {
-  font-size: 100%;
-  width: 100%;
-  border: 1px solid #eee;
-  padding: 0.5em;
-}*/
-/*.login input.input::placeholder {
-  color: #888 !important;
-}*/
 .forgot-password {
   width: 100%;
-  max-width: 24em;
+  max-width: 24em !important;
   margin: 2em auto;
 }
 

@@ -14,6 +14,9 @@
       <p class="table is-fullwidth is-striped is-hoverable" v-if="sources.length == 0">
         No datasets to show.
       </p>
+      <p v-if="sources.length > 0" class="title is-6">
+        Showing {{sources.length}} datasets.
+      </p>
       <table class="table is-fullwidth is-striped is-hoverable" v-if="sources.length > 0">
         <thead>
           <tr>
@@ -23,7 +26,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="i in sortedSources" v-on:click='$router.push("source/" + i.id)'>
+          <tr v-for="i in sortedSources" v-on:click='$router.push("/source/" + i.id)'>
             <td :title="i.description">{{truncate(i.description, 120)}}</td>
             <td>{{formatDateTime(i.time_created)}}</td>
             <!-- <td><timeago :since='i.time_created' :auto-update="60" v-if="i.time_created"></timeago></td> -->
@@ -37,24 +40,13 @@
 </template>
 
 <script>
-import * as api from '@/api'
-import Vue from 'vue'
-import VueTimeago from 'vue-timeago'
-import { humanizeStatus, formatDateTime } from '@/util'
-
-Vue.use(VueTimeago, {
-  name: 'timeago', // component name, `timeago` by default
-  locale: 'en-US',
-  locales: {
-    // you will need json-loader in webpack 1
-    'en-US': require('vue-timeago/locales/en-US.json')
-  }
-})
+import * as api from '../api.js'
+import { humanizeStatus, formatDateTime } from '../util.js'
 
 export default {
   name: 'sourceList',
   data () {
-    var data = {
+    return {
       sources: [],
       status: 'loading',
       sort: {
@@ -62,17 +54,17 @@ export default {
         asc: false
       }
     }
-
+  },
+  created() {
     api.dataSources().then((sources) => {
-      data.sources = sources
+      console.log(sources)
+      this.sources = sources
       // .sort((a, b) => (b.time_created || '').localeCompare(a.time_created || ''))
-      data.status = 'loaded'
+      this.status = 'loaded'
     }).catch((error) => {
       console.log(error)
-      data.status = 'error'
+      this.status = 'error'
     })
-
-    return data
   },
   methods: {
     humanizeStatus,

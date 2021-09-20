@@ -29,8 +29,8 @@
 </template>
 
 <script>
-import * as api from '@/api'
-import SourceList from '@/components/SourceList'
+import * as api from '../api.js'
+import SourceList from './SourceList.vue'
 
 export default {
   name: 'SourceHome',
@@ -62,7 +62,7 @@ export default {
         return 'error'
       } else if(this.currentUser === null) {
         return 'loading'
-      } else if(this.currentUser.roles.some(x => x === 'Administrator' || x === 'Custodian')) {
+      } else if(this.currentUser.roles.some(x => x === 'Administrator' || x === 'Custodian' || x === 'Program manager')) {
         return 'loaded'
       } else {
         return 'noAccess'

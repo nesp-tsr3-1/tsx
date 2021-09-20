@@ -12,7 +12,7 @@ export default {
 
 <style lang="scss">
 
-@import '~bulma/sass/utilities/initial-variables.sass';
+@import '../node_modules/bulma/sass/utilities/initial-variables.sass';
 
 // Colours from style guide:
 $tsr-green: #387469;
@@ -54,7 +54,7 @@ $family-sans-serif: "Museo Sans", "Arial", BlinkMacSystemFont, -apple-system, "S
 
 $input-disabled-background-color: white;
 
-@import "~bulma/bulma.sass";
+@import "../node_modules/bulma/bulma.sass";
 
 input[disabled], select[disabled], textarea[disabled] {
   opacity: 0.7;

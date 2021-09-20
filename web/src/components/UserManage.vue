@@ -15,23 +15,7 @@
               </tr>
             </thead>
             <tbody>
-              <user-row inline-template v-for="user in users" v-bind:key="user.id" v-bind:user="user">
-                <tr>
-                  <td>{{user.first_name}} {{user.last_name}}</td>
-                  <td>{{user.email}}</td>
-                  <td>
-                    <fieldset v-bind:disabled="isLoading">
-                      <div class="select" v-bind:class="{ 'is-loading': isLoading }">
-                        <select v-model="clientRole">
-                          <option>Administrator</option>
-                          <option>Custodian</option>
-                        </select>
-                      </div>
-                      <p v-if="isError" class="help is-danger">Failed to update role</p>
-                    </fieldset>
-                  </td>
-                </tr>
-              </user-row>
+              <user-row v-for="user in users" v-bind:key="user.id" v-bind:user="user" :monitoringPrograms="monitoringPrograms"></user-row>
             </tbody>
           </table>
         </div>
@@ -41,7 +25,8 @@
 </template>
 
 <script>
-import * as api from '@/api'
+import * as api from '../api.js'
+import UserRow from './UserRow.vue'
 
 function debounce(fn, delay) {
   var timerId
@@ -56,57 +41,7 @@ function debounce(fn, delay) {
 }
 
 function normalizedTerms() {
-  return Array.from(arguments).flatMap(str => str.toLowerCase().replace(/[^a-z]/g, '').split(/ +/))
-}
-
-const UserRow = {
-  data () {
-    var currentRole = this.user.is_admin ? 'Administrator' : 'Custodian'
-    return {
-      clientRole: currentRole,
-      serverRole: currentRole,
-      state: 'init'
-    }
-  },
-  computed: {
-    isError: function() {
-      return this.state === 'error'
-    },
-    isLoading: function() {
-      return this.state === 'loading'
-    }
-  },
-  watch: {
-    clientRole(role) {
-      if(this.state !== 'loading' && this.clientRole !== this.serverRole) {
-        this.state = 'loading'
-
-        api.currentUser().then((me) => {
-          let proceed = true
-          if(me.id === this.user.id && this.serverRole === 'Administrator' && this.clientRole !== 'Administrator') {
-            proceed = confirm('You are about to remove Administrator privileges for yourself. Are you sure you wish to continue?')
-          }
-
-          if(proceed) {
-            return api.updateUserRole(this.user.id, this.clientRole).then(() => {
-              this.serverRole = this.clientRole
-              this.state = 'init'
-            })
-          } else {
-            this.clientRole = this.serverRole
-            this.state = 'init'
-          }
-        }).catch((error) => {
-          console.log(error)
-          this.clientRole = this.serverRole // Revert UI
-          this.state = 'error'
-        })
-      }
-    }
-  },
-  props: {
-    user: Object
-  }
+  return Array.from(arguments).flatMap(str => (str || '').toLowerCase().replace(/[^a-z]/g, '').split(/ +/))
 }
 
 export default {
@@ -119,7 +54,8 @@ export default {
       status: 'loading',
       allUsers: [],
       searchText: '',
-      debouncedSearchText: ''
+      debouncedSearchText: '',
+      monitoringPrograms: []
     }
   },
   computed: {
@@ -143,7 +79,7 @@ export default {
   created () {
     api.users().then((users) => {
       users.forEach((user) => {
-        user.serverRole = user.is_admin ? 'Administrator' : 'Custodian'
+        user.serverRole = user.role
         user.clientRole = user.serverRole
       })
       this.allUsers = users
@@ -152,6 +88,8 @@ export default {
       console.log(error)
       this.status = 'error'
     })
+
+    api.monitoringPrograms().then(x => this.monitoringPrograms = x)
   },
   methods: {
     updateUserRole: function(user, role) {

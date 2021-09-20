@@ -110,11 +110,11 @@
 </template>
 
 <script>
-import * as api from '@/api'
-import ImportList from '@/components/ImportList'
-import ImportData from '@/components/ImportData'
-import ProcessingNotes from '@/components/ProcessingNotes'
-import SourceCustodians from '@/components/SourceCustodians'
+import * as api from '../api.js'
+import ImportList from './ImportList.vue'
+import ImportData from './ImportData.vue'
+import ProcessingNotes from './ProcessingNotes.vue'
+import SourceCustodians from './SourceCustodians.vue'
 
 export default {
   name: 'SourceView',

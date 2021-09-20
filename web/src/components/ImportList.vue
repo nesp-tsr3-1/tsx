@@ -40,19 +40,8 @@
 </template>
 
 <script>
-import * as api from '@/api'
-import Vue from 'vue'
-import VueTimeago from 'vue-timeago'
-import { humanizeStatus, formatDateTime } from '@/util'
-
-Vue.use(VueTimeago, {
-  name: 'timeago', // component name, `timeago` by default
-  locale: 'en-US',
-  locales: {
-    // you will need json-loader in webpack 1
-    'en-US': require('vue-timeago/locales/en-US.json')
-  }
-})
+import * as api from '../api.js'
+import { humanizeStatus, formatDateTime } from '../util.js'
 
 export default {
   name: 'ImportList',
@@ -69,13 +58,11 @@ export default {
     api.currentUser().then(currentUser => {
       this.currentUser = currentUser
     })
-
     this.refresh()
   },
   methods: {
     refresh() {
       var importsPromise = this.sourceId ? api.dataSourceImports(this.sourceId) : api.dataImports()
-
       importsPromise.then((imports) => {
         imports.forEach(i => { i.isApproving = false })
         this.imports = imports

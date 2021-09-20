@@ -9,15 +9,15 @@
         <fieldset v-bind:disabled="submitting">
           <div class="field">
             <label class="has-text-dark">Email address</label>
-            <input class="input" type="text" placeholder="user@example.com" v-model="email" v-autofocus></input>
+            <input class="input" type="text" placeholder="user@example.com" v-model="email" v-autofocus>
             <p class="help is-danger" v-if="errors.email">{{ errors.email }}</p>
           </div>
           <div class="field">
             <label class="has-text-dark">Password</label>
-            <input class="input" type="password" v-model="password"></input>
+            <input class="input" type="password" v-model="password">
             <p class="help is-danger" v-if="errors.password">{{ errors.password }}</p>
           </div>
-          <button class="button is-primary" style="width: 100%; margin: 0.5em 0;" v-on:click="login">Log In</button>
+          <button type="button" class="button is-primary" style="width: 100%; margin: 0.5em 0;" v-on:click="login">Log In</button>
         </fieldset>
         <p style="font-size: 80%; text-align: center;">
           <router-link :to="{ path: '/reset_password', query: { email: email } }">Forgot password?</router-link>
@@ -32,8 +32,7 @@
 </template>
 
 <script>
-import * as api from '@/api'
-// import * as util from '@/util'
+import * as api from '../api.js'
 
 export default {
   name: 'Login',
@@ -69,28 +68,15 @@ export default {
 </script>
 
 <style>
-/*label {
-  display: block;
-}
-input {
-  font-size: 100%;
-  width: 100%;
-  border: 1px solid #eee;
-  padding: 0.5em;
-}*/
-/*.login input.input::placeholder {
-  color: #888 !important;
-}*/
 .login {
   width: 100%;
-  max-width: 24em;
+  max-width: 24em !important;
   margin: 2em auto;
 }
 
 .login form {
   padding: 2em;
   background: white;
-  /*border: 1px solid #eee;*/
   box-shadow: 1px 1px 4px rgba(0,0,0,0.3);
 }
 

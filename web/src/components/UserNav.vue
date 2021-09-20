@@ -1,14 +1,14 @@
 <template>
   <ul class='user-nav' v-if="user">
-    <li style="font-weight: bold;">{{user.first_name}}</li>
     <li><router-link :to="{ name: 'SourceHome' }">Datasets</router-link></li>
     <li v-if="canManageUsers"><router-link :to="{ name: 'UserManage' }">Manage Users</router-link></li>
     <li><router-link :to="{ name: 'Logout' }">Logout</router-link></li>
+    <li style="color: #888">{{user.first_name}} {{user.last_name}}</li>
   </ul>
 </template>
 
 <script>
-import * as api from '@/api'
+import * as api from '../api.js'
 
 export default {
   name: 'UserNav',
@@ -47,5 +47,9 @@ export default {
   ul li {
     display: inline-block;
     margin-left: 1em;
+  }
+
+  .router-link-active {
+    font-weight:  bold;
   }
 </style>

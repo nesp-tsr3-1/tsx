@@ -1,23 +1,14 @@
 // The Vue build version to load with the `import` command
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
-import Vue from 'vue'
-import App from './App'
+import { createApp } from 'vue'
+import App from './App.vue'
 import router from './router'
-import VueTippy from 'vue-tippy'
+// import VueTippy from 'vue-tippy'
 import autofocus from 'vue-autofocus-directive'
-import UserNav from '@/components/UserNav'
+import UserNav from './components/UserNav.vue'
 
-Vue.directive('autofocus', autofocus)
-Vue.use(VueTippy)
-
-Vue.config.productionTip = false
-
-Vue.component('user-nav', UserNav)
-
-/* eslint-disable no-new */
-new Vue({
-  el: '#app',
-  router,
-  template: '<App/>',
-  components: { App }
-})
+const app = createApp(App)
+app.use(router)
+app.directive('autofocus', autofocus)
+app.component('user-nav', UserNav)
+app.mount('#app')

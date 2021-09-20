@@ -12,7 +12,7 @@
     </div>
     <div v-if="status == 'loaded'">
       <div class="columns is-multiline">
-        <user-row inline-template v-for="user in users"
+        <user-row v-for="user in users"
           v-bind:key="user.id"
           v-bind:user="user"
           v-bind:sourceId="sourceId"
@@ -51,10 +51,9 @@
               @focus="newCustodianEmailFocused = true"
               @blur="newCustodianEmailFocused = false"
               v-on:keyup.enter="addUser">
-            </textarea>
           </div>
           <div class="control">
-            <button class="button is-info"e :disabled="!enableSubmit" @click="addUser">Add Custodian</button>
+            <button class="button is-info" :disabled="!enableSubmit" @click="addUser">Add Custodian</button>
           </div>
         </div>
         <p v-if="submitStatus === 'error' && submitErrorMessage" class="help is-danger">{{submitErrorMessage}}</p>
@@ -65,51 +64,13 @@
 </template>
 
 <script>
-import * as api from '@/api'
-
-const User = {
-  data() {
-    return {
-      state: 'init'
-    }
-  },
-  computed: {
-    displayName() {
-      let user = this.user
-      if(user.first_name) {
-        return user.first_name + ' ' + user.last_name
-      } else {
-        return ''
-      }
-    },
-    isRegistered() {
-      return this.user.first_name !== null
-    }
-  },
-  created() {
-  },
-  methods: {
-    deleteUser() {
-      this.state = 'deleting'
-      api.deleteDataSourceCustodian(this.sourceId, this.user.id).then(() => {
-        this.$emit('deleted')
-      }).catch(error => {
-        console.log(error)
-        this.state = 'init'
-        this.error = 'Delete failed'
-      })
-    }
-  },
-  props: {
-    user: Object,
-    sourceId: Number
-  }
-}
+import * as api from '../api.js'
+import SourceCustodian from './SourceCustodian.vue'
 
 export default {
   name: 'SourceCustodians',
   components: {
-    'user-row': User
+    'user-row': SourceCustodian
   },
   data () {
     return {

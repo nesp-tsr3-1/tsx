@@ -43,8 +43,7 @@
 </template>
 
 <script>
-import * as api from '@/api'
-// import * as util from '@/util'
+import * as api from '../api.js'
 
 export default {
   name: 'SignUp',

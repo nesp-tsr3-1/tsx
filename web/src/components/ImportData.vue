@@ -73,8 +73,8 @@
 </template>
 
 <script>
-import * as api from '@/api'
-import * as util from '@/util'
+import * as api from '../api.js'
+import * as util from '../util.js'
 
 export default {
   name: 'ImportData',
@@ -258,7 +258,7 @@ function poll(promiseFn, delay, callback) {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped lang='scss'>
-@import '~bulma/sass/utilities/initial-variables.sass';
+@import '../../node_modules/bulma/sass/utilities/initial-variables.sass';
 .log { color: #888; }
 .error { color: $red; }
 .info { color: $blue; }

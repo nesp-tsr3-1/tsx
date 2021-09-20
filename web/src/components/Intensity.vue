@@ -88,7 +88,7 @@
   </div>
 </template>
 <script>
-import * as api from '@/api'
+import * as api from './api'
 import Spinner from 'vue-simple-spinner'
 import L from 'leaflet'
 import HeatmapOverlay from 'heatmap.js/plugins/leaflet-heatmap/leaflet-heatmap.js'

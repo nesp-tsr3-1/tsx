@@ -1,20 +1,18 @@
-import Vue from 'vue'
-import Router from 'vue-router'
-import SourceHome from '@/components/SourceHome'
-import SourceEdit from '@/components/SourceEdit'
-import SourceView from '@/components/SourceView'
-import UserManage from '@/components/UserManage'
-import Plot from '@/components/Plot'
-import TSX from '@/components/TSX'
-import Intensity from '@/components/Intensity'
-import Login from '@/components/Login'
-import SignUp from '@/components/SignUp'
-import ResetPassword from '@/components/ResetPassword'
-import * as api from '@/api'
+import { createRouter, createWebHashHistory } from 'vue-router'
+import SourceHome from '../components/SourceHome.vue'
+import SourceEdit from '../components/SourceEdit.vue'
+import SourceView from '../components/SourceView.vue'
+import UserManage from '../components/UserManage.vue'
+// import Plot from '../components/Plot.vue'
+import TSX from '../components/TSX.vue'
+// import Intensity from '../components/Intensity.vue'
+import Login from '../components/Login.vue'
+import SignUp from '../components/SignUp.vue'
+import ResetPassword from '../components/ResetPassword.vue'
+import * as api from '../api'
 
-Vue.use(Router)
-
-export default new Router({
+export default createRouter({
+  history: createWebHashHistory(),
   routes: [
     {
       path: '/logout',
@@ -60,11 +58,11 @@ export default new Router({
       name: 'SourceView',
       component: SourceView
     },
-    {
-      path: '/plot',
-      name: 'Plot',
-      component: Plot
-    },
+    // {
+    //   path: '/plot',
+    //   name: 'Plot',
+    //   component: Plot
+    // },
     {
       path: '/',
       name: 'TSX',
@@ -74,11 +72,11 @@ export default new Router({
       path: '/tsx',
       redirect: '/'
     },
-    {
-      path: '/intensity',
-      name: 'Intensity',
-      component: Intensity
-    },
+    // {
+    //   path: '/intensity',
+    //   name: 'Intensity',
+    //   component: Intensity
+    // },
     {
       path: '/manager-users',
       name: 'UserManage',

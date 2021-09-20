@@ -47,11 +47,11 @@
   </div>
 </template>
 <script>
-import * as api from '@/api'
+import * as api from './api'
 import Chart from 'chart.js'
 import Spinner from 'vue-simple-spinner'
 import { BasicSelect } from 'vue-search-select'
-// import * as util from '@/util'
+// import * as util from './util'
 export default {
   name: 'Plot',
   components: {
