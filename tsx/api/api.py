@@ -12,6 +12,7 @@ import tsx.api.lpi_data
 import tsx.api.data_import
 import tsx.api.misc
 import tsx.api.user
+import tsx.api.program_manager
 
 import datetime
 # import tsx.api.auth
@@ -37,6 +38,7 @@ app.register_blueprint(tsx.api.lpi_data.bp)
 app.register_blueprint(tsx.api.data_import.bp)
 app.register_blueprint(tsx.api.misc.bp)
 app.register_blueprint(tsx.api.user.bp)
+app.register_blueprint(tsx.api.program_manager.bp)
 
 
 class DateTimeEncoder(json.JSONEncoder):

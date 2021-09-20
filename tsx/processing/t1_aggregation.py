@@ -8,8 +8,8 @@ from tsx.util import run_parallel, sql_list_placeholder, sql_list_argument
 
 log = logging.getLogger(__name__)
 
-def process_database(species = None, commit = False, simple_mode = False):
-    session = get_session()
+def process_database(species = None, commit = False, simple_mode = False, database_config = None):
+    session = get_session(database_config)
     if species == None:
         taxa = [taxon_id for (taxon_id,) in session.execute("SELECT DISTINCT taxon_id FROM t1_sighting").fetchall()]
     else:
@@ -21,7 +21,7 @@ def process_database(species = None, commit = False, simple_mode = False):
         create_region_lookup_table(session)
 
     # Process in parallel
-    tasks = [(taxon_id, simple_mode, commit) for taxon_id in taxa]
+    tasks = [(taxon_id, simple_mode, commit, database_config) for taxon_id in taxa]
 
     log.info("Step 1/2: Monthly aggregation")
 
@@ -35,12 +35,12 @@ def process_database(species = None, commit = False, simple_mode = False):
         if error:
             print(error)
 
-    session = get_session()
+    session = get_session(database_config)
     cleanup_region_lookup_table(session)
 
 
-def aggregate_monthly(taxon_id, simple_mode = False, commit = False):
-    session = get_session()
+def aggregate_monthly(taxon_id, simple_mode = False, commit = False, database_config = None):
+    session = get_session(database_config)
     try:
         if simple_mode:
             sql = """SELECT DISTINCT t1_survey.source_id, unit_id, search_type_id, 1, 1
@@ -81,6 +81,11 @@ def aggregate_monthly(taxon_id, simple_mode = False, commit = False):
             else:
                 region_expression = 'MIN((SELECT MIN(region_id) FROM tmp_region_lookup t WHERE t.site_id = survey.site_id))'
 
+            if "sqlite:" in database_config:
+                centroid_expression = "MakePoint(AVG(ST_X(survey.coords)), AVG(ST_Y(survey.coords)), -1)"
+            else:
+                centroid_expression = "Point(AVG(ST_X(survey.coords)), AVG(ST_Y(survey.coords)))"
+
             # ingest into the table
             sql = """INSERT INTO aggregated_by_month (
                 start_date_y,
@@ -112,7 +117,7 @@ def aggregate_monthly(taxon_id, simple_mode = False, commit = False):
                 MAX(positional_accuracy_in_m),
                 unit_id,
                 1,
-                Point(AVG(ST_X(survey.coords)), AVG(ST_Y(survey.coords))),
+                {centroid_expression},
                 COUNT(*)
             FROM t1_survey survey
             INNER JOIN
@@ -130,7 +135,8 @@ def aggregate_monthly(taxon_id, simple_mode = False, commit = False):
             """.format(
                     aggregate_expression = aggregate_expression,
                     where_conditions = " ".join("AND %s" % cond for cond in where_conditions),
-                    region_expression = region_expression
+                    region_expression = region_expression,
+                    centroid_expression = centroid_expression
                 )
 
             session.execute(sql, {
@@ -152,8 +158,14 @@ def aggregate_monthly(taxon_id, simple_mode = False, commit = False):
 
 
 
-def aggregate_yearly(taxon_id, simple_mode = False, commit = False):
-    session = get_session()
+def aggregate_yearly(taxon_id, simple_mode = False, commit = False, database_config = None):
+    session = get_session(database_config)
+
+    if "sqlite:" in database_config:
+        centroid_expression = "MakePoint(AVG(ST_X(centroid_coords)), AVG(ST_Y(centroid_coords)), -1)"
+    else:
+        centroid_expression = "Point(AVG(ST_X(centroid_coords)), AVG(ST_Y(centroid_coords)))"
+
     try:
         sql = """
             INSERT INTO aggregated_by_year (
@@ -186,7 +198,7 @@ def aggregate_yearly(taxon_id, simple_mode = False, commit = False):
                 region_id,
                 unit_id,
                 MAX(positional_accuracy_in_m),
-                Point(AVG(ST_X(centroid_coords)), AVG(ST_Y(centroid_coords))),
+                {centroid_expression},
                 SUM(survey_count)
             FROM aggregated_by_month
             WHERE taxon_id = :taxon_id
@@ -203,7 +215,7 @@ def aggregate_yearly(taxon_id, simple_mode = False, commit = False):
                 data_type,
                 region_id,
                 unit_id
-        """
+        """.format(centroid_expression = centroid_expression)
 
         session.execute(sql, { 'taxon_id': taxon_id })
 

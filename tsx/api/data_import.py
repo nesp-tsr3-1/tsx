@@ -13,6 +13,7 @@ import traceback
 from shutil import rmtree
 import time
 from tsx.api.validation import *
+from tsx.api.permissions import permitted
 
 bp = Blueprint('data_import', __name__)
 
@@ -34,32 +35,6 @@ def update_import_statuses_after_restart():
 
 update_import_statuses_after_restart()
 
-def permitted(user, action, resource_type, resource_id=None):
-	if user == None:
-		return False
-
-	user_roles = get_roles(user)
-	if 'Administrator' in user_roles:
-		return True
-
-	if resource_type == 'source' and 'Custodian' in user_roles:
-		if action in ('create', 'list'):
-			return True
-		if action in ('get', 'update', 'delete'):
-			return len(db_session.execute("""SELECT 1 FROM user_source WHERE user_id = :user_id AND source_id = :source_id""", {
-				'source_id': resource_id,
-				'user_id': user.id
-				}).fetchall()) > 0
-
-	if resource_type == 'notes' and 'Custodian' in user_roles:
-		try:
-			notes = db_session.query(DataProcessingNotes).get(resource_id)
-			return notes.user_id == user.id
-		except:
-			return False
-
-	return False
-
 @bp.route('/data_sources', methods = ['GET'])
 def get_sources():
 	user = get_user()
@@ -68,6 +43,8 @@ def get_sources():
 		return "Not authorized", 401
 
 	db_session.execute("SET time_zone = '+00:00'")
+
+	print(user.id)
 
 	rows = db_session.execute(
 		"""SELECT
@@ -86,6 +63,10 @@ def get_sources():
 				(
 					EXISTS (SELECT 1 FROM user_role WHERE user_id = :user_id AND role_id = 2) AND
 					source.id IN (SELECT source_id FROM user_source WHERE user_id = :user_id)
+				) OR
+				(
+					EXISTS (SELECT 1 FROM user_role WHERE user_id = :user_id AND role_id = 3) AND
+					source.monitoring_program_id IN (SELECT monitoring_program_id FROM user_program_manager WHERE user_id = :user_id)
 				)
 			)
 		""",
@@ -94,7 +75,7 @@ def get_sources():
 	return jsonify_rows(rows)
 
 def jsonify_rows(rows):
-	return jsonify([dict(row.items()) for row in rows])
+	return jsonify([dict(row) for row in rows])
 
 @bp.route('/data_sources', methods = ['POST'])
 def create_source():
@@ -378,14 +359,35 @@ def update_source_from_json(source, json):
 		return value
 
 	for field in source_fields:
-		setattr(source, field.name, clean(json.get(field.name)))
+		if field.name == 'monitoring_program':
+			source.monitoring_program_id = get_monitoring_program_id(json['monitoring_program'])
+		else:
+			setattr(source, field.name, clean(json.get(field.name)))
+
+
+def get_monitoring_program_id(description):
+	if not description:
+		return None
+
+	for (program_id,) in db_session.execute("""SELECT id FROM monitoring_program WHERE description = :description""", { "description": description}):
+		return program_id
+
+	return db_session.execute("""
+		INSERT INTO monitoring_program (description)
+		VALUES (:description)""",
+		{ "description": description}).lastrowid
+
+
 
 def source_to_json(source):
 	json = {
 		'id': source.id
 	}
 	for field in source_fields:
-		json[field.name] = getattr(source, field.name)
+		if field.name == 'monitoring_program':
+			json['monitoring_program'] = source.monitoring_program.description
+		else:
+			json[field.name] = getattr(source, field.name)
 	return json
 
 source_fields = [

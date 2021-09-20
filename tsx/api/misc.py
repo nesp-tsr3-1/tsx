@@ -1,16 +1,13 @@
 from flask import request, make_response, g, jsonify, Blueprint
 from tsx.db import get_session
+from tsx.api.util import db_session
 import os
 import json
 
 bp = Blueprint('misc', __name__)
 
 def query_to_json(query):
-	session = get_session()
-	result = [dict(zip(row.keys(), row.values())) for row in session.execute(query).fetchall()]
-	# result = [{**row} for row in session.execute(query).fetchall()] # Python 3 version
-	session.close()
-	return jsonify(result)
+	return jsonify([dict(row) for row in db_session.execute(query)])
 
 @bp.route('/region', methods = ['GET'])
 def get_region():
@@ -45,4 +42,4 @@ def get_source():
 
 @bp.route('/monitoring_program', methods = ['GET'])
 def get_monitoring_program():
-	return query_to_json("""SELECT DISTINCT(monitoring_program) AS description FROM source WHERE monitoring_program IS NOT NULL ORDER BY monitoring_program""")
+	return query_to_json("""SELECT id, description FROM monitoring_program ORDER BY description""")

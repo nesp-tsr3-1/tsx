@@ -3,6 +3,15 @@ import tempfile
 import shapely.geometry
 import shapely.wkb
 import tsx.config
+from tqdm import tqdm
+import logging
+import os
+from tsx.db import get_session
+from shapely.geometry import Point
+from tsx.mysql_to_sqlite import export_to_sqlite
+import binascii
+from datetime import datetime
+import random
 import tsx.processing.alpha_hull
 import tsx.processing.range_ultrataxon
 import tsx.processing.pseudo_absence
@@ -12,13 +21,7 @@ import tsx.processing.export_lpi
 import tsx.processing.spatial_rep
 import tsx.processing.filter_time_series
 import fiona
-from tqdm import tqdm
-import logging
-import os
 from tsx.geo import to_multipolygon
-from tsx.db import get_session
-from shapely.geometry import Point
-import binascii
 
 log = logging.getLogger(__name__)
 
@@ -59,6 +62,10 @@ def main():
     p = subparsers.add_parser('clear')
     p = subparsers.add_parser('all')
     p = subparsers.add_parser('simple')
+
+    p = subparsers.add_parser('single_source')
+    p.add_argument('source_id', type=int, help='Source ID to process')
+
     args = parser.parse_args()
 
     species = None
@@ -153,6 +160,26 @@ def main():
 
         log.info("PROCESSING COMPLETE")
 
+    elif args.command == 'single_source':
+        log.info("Processing source %s" % args.source_id)
+        process_source(args.source_id)
+
+tmp_dir = '/tmp/tsx-work'
+
+def process_source(source_id):
+    dt = datetime.now()
+    path = os.path.join(tmp_dir, str(dt.date()), str(dt.time()) + '-' + random.randbytes(3).hex())
+    log.info("Work directory: %s" % path)
+    sqlite_db = os.path.join(path, 'data.sqlite')
+    os.makedirs(path, exist_ok = True)
+    log.info("Exporting to sqlite")
+    export_to_sqlite(source_id, sqlite_db)
+    database_url = 'sqlite:///' + sqlite_db
+    log.info("Performing t1_aggregation")
+    tsx.processing.t1_aggregation.process_database(commit = True, simple_mode = True, database_config = database_url)
+    log.info("Performing export_lpi")
+    tsx.processing.export_lpi.process_database(database_config = database_url, export_dir = path)
+    log.info("done")
 
 def clear_database():
     # Clears out all derived data from the database

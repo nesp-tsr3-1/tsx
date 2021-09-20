@@ -151,7 +151,8 @@ def users():
 		user.first_name,
 		user.last_name,
 		user.phone_number,
-		MAX(role.description = 'Administrator') AS is_admin
+		MAX(role.description = 'Administrator') AS is_admin,
+		COALESCE(MAX(role.description), 'Custodian') AS role
 	FROM user
 	LEFT JOIN user_role ON user.id = user_role.user_id
 	LEFT JOIN role ON user_role.role_id = role.id
@@ -159,7 +160,7 @@ def users():
 
 	rows = db_session.execute(sql)
 
-	return jsonify([dict(row.items()) for row in rows])
+	return jsonify([dict(row) for row in rows])
 
 def user_to_json(user):
 	roles = get_roles(user)

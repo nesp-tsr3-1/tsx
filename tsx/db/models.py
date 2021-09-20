@@ -1,76 +1,12 @@
 # coding: utf-8
-from sqlalchemy import Column, Date, DateTime, Float, ForeignKey, Index, Integer, SmallInteger, String, Table, Text, Time, text
+from sqlalchemy import CHAR, Column, Computed, DECIMAL, Date, Float, ForeignKey, Index, Integer, SmallInteger, String, TIMESTAMP, Table, Text, Time, text
+from sqlalchemy.dialects.mysql import TEXT, TINYINT
 from sqlalchemy.sql.sqltypes import NullType
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
-
 Base = declarative_base()
 metadata = Base.metadata
-
-
-t_aggregated_by_month = Table(
-    'aggregated_by_month', metadata,
-    Column('start_date_y', SmallInteger, nullable=False),
-    Column('start_date_m', SmallInteger),
-    Column('site_id', Integer),
-    Column('grid_cell_id', ForeignKey('grid_cell.id'), index=True),
-    Column('search_type_id', ForeignKey('search_type.id'), index=True),
-    Column('taxon_id', ForeignKey('taxon.id'), nullable=False, index=True),
-    Column('experimental_design_type_id', ForeignKey('experimental_design_type.id'), nullable=False, index=True),
-    Column('response_variable_type_id', ForeignKey('response_variable_type.id'), nullable=False, index=True),
-    Column('value', Float(asdecimal=True), nullable=False),
-    Column('data_type', Integer, nullable=False),
-    Column('source_id', ForeignKey('source.id', ondelete='CASCADE'), nullable=False, index=True),
-    Column('region_id', ForeignKey('region.id'), index=True),
-    Column('unit_id', ForeignKey('unit.id'), nullable=False, index=True),
-    Column('positional_accuracy_in_m', Float(asdecimal=True)),
-    Column('centroid_coords', NullType, nullable=False),
-    Column('survey_count', Integer, nullable=False),
-    Column('time_series_id', String(32))
-)
-
-
-t_aggregated_by_year = Table(
-    'aggregated_by_year', metadata,
-    Column('start_date_y', SmallInteger, nullable=False),
-    Column('site_id', Integer),
-    Column('grid_cell_id', ForeignKey('grid_cell.id'), index=True),
-    Column('search_type_id', ForeignKey('search_type.id'), index=True),
-    Column('taxon_id', ForeignKey('taxon.id'), nullable=False, index=True),
-    Column('experimental_design_type_id', ForeignKey('experimental_design_type.id'), nullable=False, index=True),
-    Column('response_variable_type_id', ForeignKey('response_variable_type.id'), nullable=False, index=True),
-    Column('value', Float(asdecimal=True), nullable=False),
-    Column('data_type', Integer, nullable=False),
-    Column('source_id', ForeignKey('source.id', ondelete='CASCADE'), nullable=False, index=True),
-    Column('region_id', ForeignKey('region.id'), index=True),
-    Column('unit_id', ForeignKey('unit.id'), nullable=False, index=True),
-    Column('positional_accuracy_in_m', Float(asdecimal=True)),
-    Column('centroid_coords', NullType, nullable=False),
-    Column('survey_count', Integer, nullable=False),
-    Column('time_series_id', String(32)),
-    Column('include_in_analysis', Integer, nullable=False, server_default=text("'0'"))
-)
-
-
-class DataImport(Base):
-    __tablename__ = 'data_import'
-
-    id = Column(Integer, primary_key=True)
-    source_id = Column(ForeignKey('source.id'), index=True)
-    status_id = Column(ForeignKey('data_import_status.id'), index=True)
-    upload_uuid = Column(String(36))
-    filename = Column(Text)
-    error_count = Column(Integer)
-    warning_count = Column(Integer)
-    data_type = Column(Integer, nullable=False)
-    user_id = Column(ForeignKey('user.id'), index=True)
-    time_created = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
-    last_modified = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))
-
-    source = relationship('Source')
-    status = relationship('DataImportStatus')
-    user = relationship('User')
 
 
 class DataImportStatus(Base):
@@ -81,36 +17,31 @@ class DataImportStatus(Base):
     code = Column(String(255), nullable=False, unique=True)
 
 
-class DataProcessingNotes(Base):
-    __tablename__ = 'data_processing_notes'
+t_data_source2 = Table(
+    'data_source2', metadata,
+    Column('source_id', Integer, nullable=False),
+    Column('taxon_id', CHAR(8), nullable=False),
+    Column('data_agreement_id', Integer),
+    Column('objective_of_monitoring_id', Integer),
+    Column('absences_recorded', TINYINT(1)),
+    Column('standardisation_of_method_effort_id', Integer),
+    Column('consistency_of_monitoring_id', Integer),
+    Column('exclude_from_analysis', TINYINT(1), nullable=False),
+    Column('start_year', Integer),
+    Column('end_year', Integer),
+    Column('suppress_aggregated_data', TINYINT(1), nullable=False)
+)
 
-    id = Column(Integer, primary_key=True)
-    user_id = Column(ForeignKey('user.id'), nullable=False, index=True)
-    source_id = Column(ForeignKey('source.id', ondelete='CASCADE'), nullable=False, index=True)
-    time_created = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
-    notes = Column(Text, nullable=False)
 
-    source = relationship('Source')
-    user = relationship('User')
-
-
-class DataSource(Base):
-    __tablename__ = 'data_source'
-
-    source_id = Column(ForeignKey('source.id', ondelete='CASCADE'), primary_key=True, nullable=False)
-    taxon_id = Column(ForeignKey('taxon.id'), primary_key=True, nullable=False, index=True)
-    data_agreement_id = Column(Integer)
-    objective_of_monitoring_id = Column(Integer)
-    absences_recorded = Column(Integer)
-    standardisation_of_method_effort_id = Column(Integer)
-    consistency_of_monitoring_id = Column(Integer)
-    exclude_from_analysis = Column(Integer, nullable=False)
-    start_year = Column(Integer)
-    end_year = Column(Integer)
-    suppress_aggregated_data = Column(Integer, nullable=False)
-
-    source = relationship('Source')
-    taxon = relationship('Taxon')
+t_exclusion_reason = Table(
+    'exclusion_reason', metadata,
+    Column('source_id', Integer),
+    Column('taxon_id', CHAR(8)),
+    Column('search_type_id', Integer),
+    Column('unit_id', Integer),
+    Column('data_type_id', Integer),
+    Column('reason', Text)
+)
 
 
 class ExperimentalDesignType(Base):
@@ -124,15 +55,7 @@ class GridCell(Base):
     __tablename__ = 'grid_cell'
 
     id = Column(Integer, primary_key=True)
-    geometry = Column(NullType, nullable=False)
-
-
-t_incidental_sighting = Table(
-    'incidental_sighting', metadata,
-    Column('taxon_id', ForeignKey('taxon.id'), nullable=False, index=True),
-    Column('coords', NullType),
-    Column('date', Date)
-)
+    geometry = Column(NullType, nullable=False, index=True)
 
 
 class IntensiveManagement(Base):
@@ -143,17 +66,21 @@ class IntensiveManagement(Base):
     grouping = Column(String(255))
 
 
-t_processing_method = Table(
-    'processing_method', metadata,
-    Column('taxon_id', ForeignKey('taxon.id'), nullable=False),
-    Column('unit_id', ForeignKey('unit.id'), index=True),
-    Column('source_id', ForeignKey('source.id', ondelete='CASCADE'), nullable=False, index=True),
-    Column('search_type_id', ForeignKey('search_type.id'), index=True),
-    Column('data_type', Integer, nullable=False),
-    Column('response_variable_type_id', Integer, nullable=False),
-    Column('experimental_design_type_id', Integer, nullable=False),
-    Column('positional_accuracy_threshold_in_m', Float(asdecimal=True)),
-    Index('uniq', 'taxon_id', 'unit_id', 'source_id', 'search_type_id', 'data_type', unique=True)
+class MonitoringProgram(Base):
+    __tablename__ = 'monitoring_program'
+
+    id = Column(Integer, primary_key=True)
+    description = Column(String(255))
+
+    users = relationship('User', secondary='user_program_manager')
+
+
+t_processing_method_check_sighting = Table(
+    'processing_method_check_sighting', metadata,
+    Column('NumSurveys', NullType),
+    Column('source_id', NullType),
+    Column('taxon_id', NullType),
+    Column('unit_id', NullType)
 )
 
 
@@ -185,7 +112,7 @@ t_region_subdiv = Table(
     'region_subdiv', metadata,
     Column('id', Integer, nullable=False),
     Column('name', String(255)),
-    Column('geometry', NullType, nullable=False)
+    Column('geometry', NullType, nullable=False, index=True)
 )
 
 
@@ -212,24 +139,23 @@ class SearchType(Base):
     description = Column(String(255), nullable=False)
 
 
-class Source(Base):
-    __tablename__ = 'source'
-
-    id = Column(Integer, primary_key=True)
-    source_type_id = Column(ForeignKey('source_type.id'), index=True)
-    provider = Column(Text)
-    description = Column(Text)
-    notes = Column(Text)
-    authors = Column(Text)
-    contact_name = Column(Text)
-    contact_institution = Column(Text)
-    contact_position = Column(Text)
-    contact_email = Column(Text)
-    contact_phone = Column(Text)
-    monitoring_program = Column(Text)
-
-    source_type = relationship('SourceType')
-    users = relationship('User', secondary='user_source')
+t_source2 = Table(
+    'source2', metadata,
+    Column('id', Integer, nullable=False, server_default=text("'0'")),
+    Column('source_type_id', Integer),
+    Column('provider', Text),
+    Column('description', Text),
+    Column('authors', Text),
+    Column('notes', Text),
+    Column('contact_name', Text),
+    Column('contact_institution', Text),
+    Column('contact_position', Text),
+    Column('contact_email', Text),
+    Column('contact_phone', Text),
+    Column('monitoring_program', Text),
+    Column('time_created', TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP")),
+    Column('last_modified', TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))
+)
 
 
 class SourceType(Base):
@@ -247,118 +173,240 @@ class State(Base):
     geometry = Column(NullType)
 
 
-class T1Sighting(Base):
-    __tablename__ = 't1_sighting'
+t_subibra = Table(
+    'subibra', metadata,
+    Column('OGR_FID', Integer, nullable=False, unique=True),
+    Column('SHAPE', NullType, nullable=False, index=True),
+    Column('subibra_id', DECIMAL(4, 0)),
+    Column('name', String(254))
+)
+
+
+class TaxonLevel(Base):
+    __tablename__ = 'taxon_level'
 
     id = Column(Integer, primary_key=True)
-    survey_id = Column(ForeignKey('t1_survey.id', ondelete='CASCADE'), nullable=False, index=True)
-    taxon_id = Column(ForeignKey('taxon.id'), nullable=False, index=True)
-    count = Column(Float(asdecimal=True), nullable=False)
-    unit_id = Column(ForeignKey('unit.id'), nullable=False, index=True)
-    breeding = Column(Integer)
-
-    survey = relationship('T1Survey')
-    taxon = relationship('Taxon')
-    unit = relationship('Unit')
+    description = Column(String(255), nullable=False)
 
 
-class T1Site(Base):
-    __tablename__ = 't1_site'
+class TaxonSourceAlphaHull(Base):
+    __tablename__ = 'taxon_source_alpha_hull'
+
+    taxon_id = Column(CHAR(8), primary_key=True, nullable=False)
+    source_id = Column(Integer, primary_key=True, nullable=False)
+    data_type = Column(String(255), primary_key=True, nullable=False)
+    geometry = Column(NullType)
+    core_range_area_in_m2 = Column(Float(asdecimal=True), nullable=False)
+    alpha_hull_area_in_m2 = Column(Float(asdecimal=True))
+
+
+class TaxonStatus(Base):
+    __tablename__ = 'taxon_status'
 
     id = Column(Integer, primary_key=True)
-    source_id = Column(ForeignKey('source.id', ondelete='CASCADE'), nullable=False, index=True)
-    data_import_id = Column(ForeignKey('data_import.id'), index=True)
-    name = Column(String(255))
-    search_type_id = Column(ForeignKey('search_type.id'), nullable=False, index=True)
+    description = Column(String(255))
+
+
+class Unit(Base):
+    __tablename__ = 'unit'
+
+    id = Column(Integer, primary_key=True)
+    description = Column(String(255), nullable=False)
+
+
+class User(Base):
+    __tablename__ = 'user'
+
+    id = Column(Integer, primary_key=True)
+    email = Column(String(255), unique=True, comment=' ')
+    password_hash = Column(Text)
+    first_name = Column(Text)
+    last_name = Column(Text)
+    phone_number = Column(String(32))
+    password_reset_code = Column(String(32))
+
+
+class Source(Base):
+    __tablename__ = 'source'
+
+    id = Column(Integer, primary_key=True)
+    source_type_id = Column(ForeignKey('source_type.id'), index=True)
+    provider = Column(Text)
+    description = Column(Text)
+    authors = Column(Text)
     notes = Column(Text)
-    intensive_management_id = Column(ForeignKey('intensive_management.id'), index=True)
+    contact_name = Column(Text)
+    contact_institution = Column(Text)
+    contact_position = Column(Text)
+    contact_email = Column(Text)
+    contact_phone = Column(Text)
+    time_created = Column(TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+    last_modified = Column(TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))
+    monitoring_program_id = Column(ForeignKey('monitoring_program.id'), index=True)
 
-    data_import = relationship('DataImport')
-    intensive_management = relationship('IntensiveManagement')
-    search_type = relationship('SearchType')
-    source = relationship('Source')
+    monitoring_program = relationship('MonitoringProgram')
+    source_type = relationship('SourceType')
+    users = relationship('User', secondary='user_source')
 
 
-class T1Survey(Base):
-    __tablename__ = 't1_survey'
+class Taxon(Base):
+    __tablename__ = 'taxon'
+
+    id = Column(CHAR(8), primary_key=True)
+    ultrataxon = Column(TINYINT(1), nullable=False)
+    taxon_level_id = Column(ForeignKey('taxon_level.id'), index=True)
+    spno = Column(SmallInteger)
+    common_name = Column(String(255))
+    scientific_name = Column(TEXT, nullable=False)
+    family_common_name = Column(String(255))
+    family_scientific_name = Column(String(255))
+    order = Column(String(255))
+    population = Column(String(255))
+    epbc_status_id = Column(ForeignKey('taxon_status.id'), index=True)
+    iucn_status_id = Column(ForeignKey('taxon_status.id'), index=True)
+    state_status_id = Column(Integer)
+    bird_group = Column(String(255))
+    bird_sub_group = Column(String(255))
+    national_priority = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
+    taxonomic_group = Column(String(255), nullable=False)
+    suppress_spatial_representativeness = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
+
+    epbc_status = relationship('TaxonStatus', primaryjoin='Taxon.epbc_status_id == TaxonStatus.id')
+    iucn_status = relationship('TaxonStatus', primaryjoin='Taxon.iucn_status_id == TaxonStatus.id')
+    taxon_level = relationship('TaxonLevel')
+
+
+t_user_program_manager = Table(
+    'user_program_manager', metadata,
+    Column('user_id', ForeignKey('user.id'), primary_key=True, nullable=False, index=True),
+    Column('monitoring_program_id', ForeignKey('monitoring_program.id'), primary_key=True, nullable=False, index=True)
+)
+
+
+t_user_role = Table(
+    'user_role', metadata,
+    Column('user_id', ForeignKey('user.id'), primary_key=True, nullable=False),
+    Column('role_id', ForeignKey('role.id'), primary_key=True, nullable=False, index=True)
+)
+
+
+t_aggregated_by_month = Table(
+    'aggregated_by_month', metadata,
+    Column('start_date_y', SmallInteger, nullable=False),
+    Column('start_date_m', SmallInteger),
+    Column('site_id', Integer),
+    Column('grid_cell_id', ForeignKey('grid_cell.id'), index=True),
+    Column('search_type_id', ForeignKey('search_type.id'), index=True),
+    Column('taxon_id', ForeignKey('taxon.id'), nullable=False, index=True),
+    Column('experimental_design_type_id', ForeignKey('experimental_design_type.id'), nullable=False, index=True),
+    Column('response_variable_type_id', ForeignKey('response_variable_type.id'), nullable=False, index=True),
+    Column('value', Float(asdecimal=True), nullable=False),
+    Column('data_type', Integer, nullable=False),
+    Column('source_id', ForeignKey('source.id', ondelete='CASCADE'), nullable=False, index=True),
+    Column('region_id', ForeignKey('region.id'), index=True),
+    Column('unit_id', ForeignKey('unit.id'), nullable=False, index=True),
+    Column('positional_accuracy_in_m', Float(asdecimal=True)),
+    Column('centroid_coords', NullType, nullable=False),
+    Column('survey_count', Integer, nullable=False),
+    Column('time_series_id', String(32), Computed("(concat(`source_id`,_latin1'_',`unit_id`,_latin1'_',convert(coalesce(`search_type_id`,_utf8mb3'0') using latin1),_latin1'_',convert(coalesce(`site_id`,concat(_utf8mb3'g',`grid_cell_id`)) using latin1),_latin1'_',`taxon_id`))", persisted=False))
+)
+
+
+t_aggregated_by_year = Table(
+    'aggregated_by_year', metadata,
+    Column('start_date_y', SmallInteger, nullable=False),
+    Column('site_id', Integer),
+    Column('grid_cell_id', ForeignKey('grid_cell.id'), index=True),
+    Column('search_type_id', ForeignKey('search_type.id'), index=True),
+    Column('taxon_id', ForeignKey('taxon.id'), nullable=False, index=True),
+    Column('experimental_design_type_id', ForeignKey('experimental_design_type.id'), nullable=False, index=True),
+    Column('response_variable_type_id', ForeignKey('response_variable_type.id'), nullable=False, index=True),
+    Column('value', Float(asdecimal=True), nullable=False),
+    Column('data_type', Integer, nullable=False),
+    Column('source_id', ForeignKey('source.id', ondelete='CASCADE'), nullable=False, index=True),
+    Column('region_id', ForeignKey('region.id'), index=True),
+    Column('unit_id', ForeignKey('unit.id'), nullable=False, index=True),
+    Column('positional_accuracy_in_m', Float(asdecimal=True)),
+    Column('centroid_coords', NullType, nullable=False),
+    Column('survey_count', Integer, nullable=False),
+    Column('time_series_id', String(32), Computed("(concat(`source_id`,_latin1'_',`unit_id`,_latin1'_',convert(coalesce(`search_type_id`,_utf8mb3'0') using latin1),_latin1'_',convert(coalesce(`site_id`,concat(_utf8mb3'g',`grid_cell_id`)) using latin1),_latin1'_',`taxon_id`))", persisted=False)),
+    Column('include_in_analysis', TINYINT(1), server_default=text("'0'"))
+)
+
+
+class DataImport(Base):
+    __tablename__ = 'data_import'
 
     id = Column(Integer, primary_key=True)
-    site_id = Column(ForeignKey('t1_site.id', ondelete='CASCADE'), nullable=False, index=True)
+    source_id = Column(ForeignKey('source.id'), index=True)
+    source_desc = Column(String(255))
+    status_id = Column(ForeignKey('data_import_status.id'), index=True)
+    upload_uuid = Column(String(36))
+    filename = Column(Text)
+    error_count = Column(Integer)
+    warning_count = Column(Integer)
+    data_type = Column(Integer, nullable=False)
+    time_created = Column(TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+    user_id = Column(ForeignKey('user.id'), index=True)
+    last_modified = Column(TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))
+
+    source = relationship('Source')
+    status = relationship('DataImportStatus')
+    user = relationship('User')
+
+
+class DataProcessingNotes(Base):
+    __tablename__ = 'data_processing_notes'
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(ForeignKey('user.id'), nullable=False, index=True)
     source_id = Column(ForeignKey('source.id', ondelete='CASCADE'), nullable=False, index=True)
-    data_import_id = Column(ForeignKey('data_import.id'), index=True)
-    source_primary_key = Column(String(255), nullable=False, unique=True)
-    start_date_d = Column(SmallInteger)
-    start_date_m = Column(SmallInteger)
-    start_date_y = Column(SmallInteger, nullable=False)
-    finish_date_d = Column(SmallInteger)
-    finish_date_m = Column(SmallInteger)
-    finish_date_y = Column(SmallInteger)
-    start_time = Column(Time)
-    finish_time = Column(Time)
-    duration_in_minutes = Column(Integer)
-    area_in_m2 = Column(Float(asdecimal=True))
-    length_in_km = Column(Float(asdecimal=True))
-    number_of_traps_per_day = Column(Integer)
-    coords = Column(NullType, nullable=False)
-    location = Column(Text)
-    positional_accuracy_in_m = Column(Float(asdecimal=True))
-    comments = Column(Text)
+    time_created = Column(TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+    notes = Column(Text, nullable=False)
 
-    data_import = relationship('DataImport')
-    site = relationship('T1Site')
     source = relationship('Source')
+    user = relationship('User')
 
 
-class T2ProcessedSighting(Base):
-    __tablename__ = 't2_processed_sighting'
-    __table_args__ = (
-        Index('survey_id_taxon_id', 'survey_id', 'taxon_id'),
-    )
+class DataSource(Base):
+    __tablename__ = 'data_source'
 
-    id = Column(Integer, primary_key=True)
-    survey_id = Column(ForeignKey('t2_processed_survey.id', ondelete='CASCADE'), nullable=False)
-    taxon_id = Column(ForeignKey('taxon.id'), nullable=False, index=True)
-    count = Column(Float(asdecimal=True), nullable=False)
-    unit_id = Column(ForeignKey('unit.id'), nullable=False, index=True)
-    pseudo_absence = Column(Integer, nullable=False)
+    source_id = Column(ForeignKey('source.id', ondelete='CASCADE'), primary_key=True, nullable=False)
+    taxon_id = Column(ForeignKey('taxon.id'), primary_key=True, nullable=False, index=True)
+    data_agreement_id = Column(Integer)
+    objective_of_monitoring_id = Column(Integer)
+    absences_recorded = Column(TINYINT(1))
+    standardisation_of_method_effort_id = Column(Integer)
+    consistency_of_monitoring_id = Column(Integer)
+    exclude_from_analysis = Column(TINYINT(1), nullable=False)
+    start_year = Column(Integer)
+    end_year = Column(Integer)
+    suppress_aggregated_data = Column(TINYINT(1), nullable=False)
 
-    survey = relationship('T2ProcessedSurvey')
-    taxon = relationship('Taxon')
-    unit = relationship('Unit')
-
-
-class T2ProcessedSurvey(Base):
-    __tablename__ = 't2_processed_survey'
-
-    id = Column(Integer, primary_key=True)
-    raw_survey_id = Column(ForeignKey('t2_survey.id', ondelete='CASCADE'), nullable=False, index=True)
-    site_id = Column(ForeignKey('t2_site.id', ondelete='CASCADE'), index=True)
-    grid_cell_id = Column(ForeignKey('grid_cell.id'), index=True)
-    search_type_id = Column(Integer, nullable=False)
-    start_date_y = Column(SmallInteger, nullable=False)
-    start_date_m = Column(SmallInteger)
-    source_id = Column(ForeignKey('source.id', ondelete='CASCADE'), nullable=False, index=True)
-    experimental_design_type_id = Column(Integer)
-
-    grid_cell = relationship('GridCell')
-    raw_survey = relationship('T2Survey')
-    site = relationship('T2Site')
     source = relationship('Source')
-
-
-class T2Sighting(Base):
-    __tablename__ = 't2_sighting'
-
-    id = Column(Integer, primary_key=True)
-    survey_id = Column(ForeignKey('t2_survey.id', ondelete='CASCADE'), nullable=False, index=True)
-    taxon_id = Column(ForeignKey('taxon.id'), nullable=False, index=True)
-    count = Column(Float(asdecimal=True))
-    unit_id = Column(ForeignKey('unit.id'), index=True)
-    breeding = Column(Integer)
-
-    survey = relationship('T2Survey')
     taxon = relationship('Taxon')
-    unit = relationship('Unit')
+
+
+t_incidental_sighting = Table(
+    'incidental_sighting', metadata,
+    Column('taxon_id', ForeignKey('taxon.id'), nullable=False, index=True),
+    Column('coords', NullType),
+    Column('date', Date)
+)
+
+
+t_processing_method = Table(
+    'processing_method', metadata,
+    Column('taxon_id', ForeignKey('taxon.id'), nullable=False),
+    Column('unit_id', ForeignKey('unit.id'), index=True),
+    Column('source_id', ForeignKey('source.id', ondelete='CASCADE'), nullable=False, index=True),
+    Column('search_type_id', ForeignKey('search_type.id'), index=True),
+    Column('data_type', Integer, nullable=False),
+    Column('response_variable_type_id', Integer, nullable=False),
+    Column('experimental_design_type_id', Integer, nullable=False),
+    Column('positional_accuracy_threshold_in_m', Float(asdecimal=True)),
+    Index('uniq', 'taxon_id', 'unit_id', 'source_id', 'search_type_id', 'data_type', unique=True)
+)
 
 
 class T2Site(Base):
@@ -368,94 +416,14 @@ class T2Site(Base):
     )
 
     id = Column(Integer, primary_key=True)
-    source_id = Column(ForeignKey('source.id', ondelete='CASCADE'), nullable=False, index=True)
-    data_import_id = Column(ForeignKey('data_import.id'), index=True)
+    source_id = Column(ForeignKey('source.id', ondelete='CASCADE'), index=True)
     name = Column(String(255))
     search_type_id = Column(ForeignKey('search_type.id'), nullable=False, index=True)
     geometry = Column(NullType)
 
-    data_import = relationship('DataImport')
     search_type = relationship('SearchType')
     source = relationship('Source')
     surveys = relationship('T2Survey', secondary='t2_survey_site')
-
-
-class T2Survey(Base):
-    __tablename__ = 't2_survey'
-
-    id = Column(Integer, primary_key=True)
-    site_id = Column(ForeignKey('t2_site.id', ondelete='CASCADE'), index=True)
-    source_id = Column(ForeignKey('source.id', ondelete='CASCADE'), nullable=False, index=True)
-    data_import_id = Column(ForeignKey('data_import.id'), index=True)
-    start_date_d = Column(SmallInteger)
-    start_date_m = Column(SmallInteger)
-    start_date_y = Column(SmallInteger, nullable=False)
-    finish_date_d = Column(SmallInteger)
-    finish_date_m = Column(SmallInteger)
-    finish_date_y = Column(SmallInteger)
-    start_time = Column(Time)
-    finish_time = Column(Time)
-    duration_in_minutes = Column(Integer)
-    area_in_m2 = Column(Float(asdecimal=True))
-    length_in_km = Column(Float(asdecimal=True))
-    coords = Column(NullType, nullable=False)
-    location = Column(Text)
-    positional_accuracy_in_m = Column(Float(asdecimal=True))
-    comments = Column(Text)
-    search_type_id = Column(ForeignKey('search_type.id'), nullable=False, index=True)
-    source_primary_key = Column(String(255), nullable=False, unique=True)
-    secondary_source_id = Column(String(255))
-
-    data_import = relationship('DataImport')
-    search_type = relationship('SearchType')
-    site = relationship('T2Site')
-    source = relationship('Source')
-
-
-t_t2_survey_site = Table(
-    't2_survey_site', metadata,
-    Column('survey_id', ForeignKey('t2_survey.id', ondelete='CASCADE'), primary_key=True, nullable=False),
-    Column('site_id', ForeignKey('t2_site.id', ondelete='CASCADE'), primary_key=True, nullable=False, index=True)
-)
-
-
-class T2UltrataxonSighting(Base):
-    __tablename__ = 't2_ultrataxon_sighting'
-
-    sighting_id = Column(ForeignKey('t2_sighting.id', ondelete='CASCADE'), primary_key=True, nullable=False)
-    taxon_id = Column(ForeignKey('taxon.id'), primary_key=True, nullable=False, index=True)
-    range_id = Column(ForeignKey('range.id'), nullable=False, index=True)
-    generated_subspecies = Column(Integer, nullable=False)
-
-    range = relationship('Range')
-    sighting = relationship('T2Sighting')
-    taxon = relationship('Taxon')
-
-
-class Taxon(Base):
-    __tablename__ = 'taxon'
-
-    id = Column(String(8), primary_key=True)
-    ultrataxon = Column(Integer, nullable=False)
-    taxon_level_id = Column(ForeignKey('taxon_level.id'), index=True)
-    spno = Column(SmallInteger)
-    common_name = Column(String(255))
-    scientific_name = Column(String(255), nullable=False)
-    family_common_name = Column(String(255))
-    family_scientific_name = Column(String(255))
-    order = Column(String(255))
-    population = Column(String(255))
-    epbc_status_id = Column(ForeignKey('taxon_status.id'), index=True)
-    iucn_status_id = Column(ForeignKey('taxon_status.id'), index=True)
-    state_status_id = Column(ForeignKey('taxon_status.id'), index=True)
-    national_priority = Column(Integer, nullable=False, server_default=text("'0'"))
-    taxonomic_group = Column(String(255), nullable=False)
-    suppress_spatial_representativeness = Column(Integer, nullable=False, server_default=text("'0'"))
-
-    epbc_status = relationship('TaxonStatus', primaryjoin='Taxon.epbc_status_id == TaxonStatus.id')
-    iucn_status = relationship('TaxonStatus', primaryjoin='Taxon.iucn_status_id == TaxonStatus.id')
-    state_status = relationship('TaxonStatus', primaryjoin='Taxon.state_status_id == TaxonStatus.id')
-    taxon_level = relationship('TaxonLevel')
 
 
 class TaxonGroup(Base):
@@ -475,17 +443,10 @@ class TaxonGroup(Base):
 class TaxonHybrid(Base):
     __tablename__ = 'taxon_hybrid'
 
-    id = Column(String(12), primary_key=True)
-    taxon_id = Column(ForeignKey('taxon.id'), index=True)
+    id = Column(CHAR(12), primary_key=True, comment='e.g. u123a.b.c')
+    taxon_id = Column(ForeignKey('taxon.id'), nullable=False, index=True)
 
     taxon = relationship('Taxon')
-
-
-class TaxonLevel(Base):
-    __tablename__ = 'taxon_level'
-
-    id = Column(Integer, primary_key=True)
-    description = Column(String(255), nullable=False)
 
 
 t_taxon_presence_alpha_hull = Table(
@@ -524,58 +485,172 @@ t_taxon_range_subdiv = Table(
 )
 
 
-class TaxonSourceAlphaHull(Base):
-    __tablename__ = 'taxon_source_alpha_hull'
-
-    taxon_id = Column(String(8), primary_key=True, nullable=False)
-    source_id = Column(Integer, primary_key=True, nullable=False)
-    data_type = Column(String(255), primary_key=True, nullable=False)
-    geometry = Column(NullType)
-    core_range_area_in_m2 = Column(Float(asdecimal=True), nullable=False)
-    alpha_hull_area_in_m2 = Column(Float(asdecimal=True))
-
-
-class TaxonStatus(Base):
-    __tablename__ = 'taxon_status'
-
-    id = Column(Integer, primary_key=True)
-    description = Column(String(255))
-
-
-class TimeSeries(Base):
-    __tablename__ = 'time_series'
-
-    id = Column(String(32), primary_key=True)
-
-
-class Unit(Base):
-    __tablename__ = 'unit'
-
-    id = Column(Integer, primary_key=True)
-    description = Column(String(255), nullable=False)
-
-
-class User(Base):
-    __tablename__ = 'user'
-
-    id = Column(Integer, primary_key=True)
-    email = Column(String(255), unique=True)
-    password_hash = Column(Text)
-    first_name = Column(Text)
-    last_name = Column(Text)
-    phone_number = Column(String(32))
-    password_reset_code = Column(String(32))
-
-
-t_user_role = Table(
-    'user_role', metadata,
-    Column('user_id', ForeignKey('user.id'), primary_key=True, nullable=False),
-    Column('role_id', ForeignKey('role.id'), primary_key=True, nullable=False, index=True)
-)
-
-
 t_user_source = Table(
     'user_source', metadata,
     Column('user_id', ForeignKey('user.id'), primary_key=True, nullable=False),
     Column('source_id', ForeignKey('source.id'), primary_key=True, nullable=False, index=True)
 )
+
+
+class T1Site(Base):
+    __tablename__ = 't1_site'
+
+    id = Column(Integer, primary_key=True)
+    source_id = Column(ForeignKey('source.id', ondelete='CASCADE'), index=True)
+    data_import_id = Column(ForeignKey('data_import.id'), index=True)
+    name = Column(String(255))
+    search_type_id = Column(ForeignKey('search_type.id'), nullable=False, index=True)
+    notes = Column(Text)
+    intensive_management_id = Column(ForeignKey('intensive_management.id'), index=True)
+
+    data_import = relationship('DataImport')
+    intensive_management = relationship('IntensiveManagement')
+    search_type = relationship('SearchType')
+    source = relationship('Source')
+
+
+class T2Survey(Base):
+    __tablename__ = 't2_survey'
+
+    id = Column(Integer, primary_key=True)
+    site_id = Column(ForeignKey('t2_site.id', ondelete='CASCADE'), index=True)
+    source_id = Column(ForeignKey('source.id', ondelete='CASCADE'), nullable=False, index=True)
+    start_date_d = Column(SmallInteger)
+    start_date_m = Column(SmallInteger)
+    start_date_y = Column(SmallInteger, nullable=False)
+    finish_date_d = Column(SmallInteger)
+    finish_date_m = Column(SmallInteger)
+    finish_date_y = Column(SmallInteger)
+    start_time = Column(Time)
+    finish_time = Column(Time)
+    duration_in_minutes = Column(Integer)
+    area_in_m2 = Column(Float(asdecimal=True))
+    length_in_km = Column(Float(asdecimal=True))
+    coords = Column(NullType, nullable=False, index=True)
+    location = Column(Text)
+    positional_accuracy_in_m = Column(Float(asdecimal=True))
+    comments = Column(Text)
+    search_type_id = Column(ForeignKey('search_type.id'), nullable=False, index=True)
+    source_primary_key = Column(String(255), nullable=False, unique=True)
+    secondary_source_id = Column(String(255))
+
+    search_type = relationship('SearchType')
+    site = relationship('T2Site')
+    source = relationship('Source')
+
+
+class T1Survey(Base):
+    __tablename__ = 't1_survey'
+
+    id = Column(Integer, primary_key=True)
+    site_id = Column(ForeignKey('t1_site.id', ondelete='CASCADE'), nullable=False, index=True)
+    source_id = Column(ForeignKey('source.id', ondelete='CASCADE'), nullable=False, index=True)
+    data_import_id = Column(ForeignKey('data_import.id'), index=True)
+    source_primary_key = Column(String(255), nullable=False, unique=True)
+    start_date_d = Column(SmallInteger)
+    start_date_m = Column(SmallInteger)
+    start_date_y = Column(SmallInteger, nullable=False)
+    finish_date_d = Column(SmallInteger)
+    finish_date_m = Column(SmallInteger)
+    finish_date_y = Column(SmallInteger)
+    start_time = Column(Time)
+    finish_time = Column(Time)
+    duration_in_minutes = Column(Integer)
+    area_in_m2 = Column(Float(asdecimal=True))
+    length_in_km = Column(Float(asdecimal=True))
+    number_of_traps_per_day = Column(Integer)
+    coords = Column(NullType)
+    location = Column(Text)
+    positional_accuracy_in_m = Column(Float(asdecimal=True))
+    comments = Column(Text)
+
+    data_import = relationship('DataImport')
+    site = relationship('T1Site')
+    source = relationship('Source')
+
+
+class T2ProcessedSurvey(Base):
+    __tablename__ = 't2_processed_survey'
+
+    id = Column(Integer, primary_key=True)
+    raw_survey_id = Column(ForeignKey('t2_survey.id', ondelete='CASCADE'), nullable=False, index=True)
+    site_id = Column(ForeignKey('t2_site.id', ondelete='CASCADE'), index=True)
+    grid_cell_id = Column(ForeignKey('grid_cell.id'), index=True)
+    search_type_id = Column(Integer, nullable=False)
+    start_date_y = Column(SmallInteger, nullable=False)
+    start_date_m = Column(SmallInteger)
+    source_id = Column(ForeignKey('source.id', ondelete='CASCADE'), nullable=False, index=True)
+    experimental_design_type_id = Column(Integer)
+
+    grid_cell = relationship('GridCell')
+    raw_survey = relationship('T2Survey')
+    site = relationship('T2Site')
+    source = relationship('Source')
+
+
+class T2Sighting(Base):
+    __tablename__ = 't2_sighting'
+
+    id = Column(Integer, primary_key=True)
+    survey_id = Column(ForeignKey('t2_survey.id', ondelete='CASCADE'), nullable=False, index=True)
+    taxon_id = Column(ForeignKey('taxon.id'), nullable=False, index=True)
+    count = Column(Float(asdecimal=True))
+    unit_id = Column(ForeignKey('unit.id'), index=True)
+    breeding = Column(TINYINT(1))
+
+    survey = relationship('T2Survey')
+    taxon = relationship('Taxon')
+    unit = relationship('Unit')
+
+
+t_t2_survey_site = Table(
+    't2_survey_site', metadata,
+    Column('survey_id', ForeignKey('t2_survey.id', ondelete='CASCADE'), primary_key=True, nullable=False),
+    Column('site_id', ForeignKey('t2_site.id', ondelete='CASCADE'), primary_key=True, nullable=False, index=True)
+)
+
+
+class T1Sighting(Base):
+    __tablename__ = 't1_sighting'
+
+    id = Column(Integer, primary_key=True)
+    survey_id = Column(ForeignKey('t1_survey.id', ondelete='CASCADE'), nullable=False, index=True)
+    taxon_id = Column(ForeignKey('taxon.id'), nullable=False, index=True)
+    count = Column(Float(asdecimal=True), nullable=False)
+    unit_id = Column(ForeignKey('unit.id'), nullable=False, index=True)
+    breeding = Column(TINYINT(1))
+
+    survey = relationship('T1Survey')
+    taxon = relationship('Taxon')
+    unit = relationship('Unit')
+
+
+class T2ProcessedSighting(Base):
+    __tablename__ = 't2_processed_sighting'
+    __table_args__ = (
+        Index('survey_id_taxon_id', 'survey_id', 'taxon_id'),
+    )
+
+    id = Column(Integer, primary_key=True)
+    survey_id = Column(ForeignKey('t2_processed_survey.id', ondelete='CASCADE'), nullable=False)
+    taxon_id = Column(ForeignKey('taxon.id'), nullable=False, index=True)
+    count = Column(Float(asdecimal=True), nullable=False)
+    unit_id = Column(ForeignKey('unit.id'), nullable=False, index=True)
+    pseudo_absence = Column(TINYINT(1), nullable=False)
+
+    survey = relationship('T2ProcessedSurvey')
+    taxon = relationship('Taxon')
+    unit = relationship('Unit')
+
+
+class T2UltrataxonSighting(Base):
+    __tablename__ = 't2_ultrataxon_sighting'
+
+    sighting_id = Column(ForeignKey('t2_sighting.id', ondelete='CASCADE'), primary_key=True, nullable=False)
+    taxon_id = Column(ForeignKey('taxon.id'), primary_key=True, nullable=False, index=True)
+    range_id = Column(ForeignKey('range.id'), nullable=False, index=True)
+    generated_subspecies = Column(TINYINT(1), nullable=False)
+
+    range = relationship('Range')
+    sighting = relationship('T2Sighting')
+    taxon = relationship('Taxon')

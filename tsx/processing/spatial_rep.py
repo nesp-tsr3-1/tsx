@@ -1,5 +1,4 @@
 
-import fiona
 from shapely.ops import transform
 from functools import partial
 import pyproj
@@ -19,10 +18,12 @@ from tsx.db import get_session
 from tsx.processing.alpha_hull import make_alpha_hull
 from tsx.geo import to_multipolygon
 
+import fiona
+
 log = logging.getLogger(__name__)
 
-db_proj = pyproj.Proj('+init=EPSG:4326') # Database always uses WGS84
-working_proj = pyproj.Proj('+init=EPSG:3112') # GDA94 / Geoscience Australia Lambert - so that we can buffer in metres
+db_proj = pyproj.Proj('EPSG:4326') # Database always uses WGS84
+working_proj = pyproj.Proj('EPSG:3112') # GDA94 / Geoscience Australia Lambert - so that we can buffer in metres
 to_working_transformer = pyproj.Transformer.from_proj(db_proj, working_proj)
 to_db_transformer = pyproj.Transformer.from_proj(working_proj, db_proj)
 
