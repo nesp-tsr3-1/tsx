@@ -11,7 +11,7 @@
 ### END INIT INFO
 service_dir="/opt/tsx"
 prog="tsxapi"
-pidfile="/var/run/$prog.pid"
+pidfile="/var/run/tsxapi.pid"
 logfile="/var/log/tsxapi.log"
 
 # Returns PID of currently running process, if any
@@ -46,12 +46,9 @@ start() {
          echo "SUCCESS"
          return 0
     fi
-    # curr_dir=`pwd`
-    # cd ${service_dir}
-    twistd --pidfile=$pidfile --logfile=$logfile $prog
+
+    twistd --pidfile=$pidfile --logfile=$logfile -n web --port tcp:8080 --wsgi tsx.api.api.app
     retval=$?
-    # cp twistd.pid $pidfile
-    # cd $curr_dir
 
     case "$retval" in
         0)

@@ -1,7 +1,0 @@
-# Notes added by James Watmuff 7/11/17
-
-This folder is required to package the NESP REST API as a Twisted plugin that can be installed via pip/setuptools etc.
-
-https://stackoverflow.com/questions/7275295/how-do-i-write-a-setup-py-for-a-twistd-twisted-plugin-that-works-with-setuptools
-
-An alternative would be to use the Twisted Web server as suggested here: http://flask.pocoo.org/docs/0.12/deploying/wsgi-standalone/#twisted-web

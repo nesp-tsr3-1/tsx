@@ -11,23 +11,15 @@ setup(
 	packages=[
 		'tsx',
 		'tsx.api',
-		'tsx.db',
-		'twisted.plugins'
+		'tsx.db'
 	],
 	entry_points={
 		'console_scripts': [
 			'tsx-import = tsx.importer:main'
 		]
 	},
-	package_data={
-		'twisted': ['plugins/*',]
-	},
 	data_files=[
-		('/opt/tsx/conf', ['tsx.conf.example']),
-		# The following breaks outside of Linux, so instead added I instructions to copy manually
-		# (installing init scripts doesn't belong in a Python install script anyway, it should go
-		# in an OS package e.g. .deb for Ubuntu)
-		# ('/etc/init.d', ['etc/init.d/nespapi']),
+		('/opt/tsx/conf', ['tsx.conf.example'])
 	],
 	zip_safe=False,
 	install_requires=[
