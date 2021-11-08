@@ -9,6 +9,7 @@ import TSX from '../components/TSX.vue'
 import Login from '../components/Login.vue'
 import SignUp from '../components/SignUp.vue'
 import ResetPassword from '../components/ResetPassword.vue'
+import DataSubsetDownloads from '../components/DataSubsetDownloads.vue'
 import * as api from '../api'
 
 export default createRouter({
@@ -81,6 +82,11 @@ export default createRouter({
       path: '/manager-users',
       name: 'UserManage',
       component: UserManage
+    },
+    {
+      path: '/downloads',
+      name: 'DataSubsetDownloads',
+      component: DataSubsetDownloads
     }
   ]
 })

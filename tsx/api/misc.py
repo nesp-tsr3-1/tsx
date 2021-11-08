@@ -20,12 +20,26 @@ def get_search_type():
 
 @bp.route('/species', methods = ['GET'])
 def get_species():
-	return query_to_json("""SELECT spno, common_name
-		FROM taxon
-		WHERE spno IS NOT NULL
-		AND common_name IS NOT NULL
-		ORDER BY common_name
-	""")
+	q = request.args.get('q', type=str)
+	if q == 'all_present':
+		return query_to_json("""SELECT id, common_name, scientific_name
+			FROM taxon
+			WHERE (id IN (SELECT taxon_id FROM t1_sighting) or id in (SELECT taxon_id FROM t2_sighting))
+			ORDER BY COALESCE(common_name, scientific_name)
+		""")
+	elif q == 't1_present':
+		return query_to_json("""SELECT id, common_name, scientific_name
+			FROM taxon
+			WHERE (id IN (SELECT taxon_id FROM t1_sighting))
+			ORDER BY COALESCE(common_name, scientific_name)
+		""")
+	else:
+		return query_to_json("""SELECT spno, common_name
+			FROM taxon
+			WHERE spno IS NOT NULL
+			AND common_name IS NOT NULL
+			ORDER BY common_name
+		""")
 
 @bp.route('/response_variable_type', methods = ['GET'])
 @bp.route('/responsevariabletype', methods = ['GET'])
@@ -43,3 +57,7 @@ def get_source():
 @bp.route('/monitoring_program', methods = ['GET'])
 def get_monitoring_program():
 	return query_to_json("""SELECT id, description FROM monitoring_program ORDER BY description""")
+
+@bp.route('/intensive_management_group', methods = ['GET'])
+def get_intensive_management_group():
+	return query_to_json("""SELECT DISTINCT `grouping` AS description FROM intensive_management WHERE `grouping` IS NOT NULL ORDER BY description""")

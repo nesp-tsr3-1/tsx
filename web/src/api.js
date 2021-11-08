@@ -132,6 +132,31 @@ export function createUser(user) {
   return post('/users', user)
 }
 
+
+export function dataSubsetDownloadURL(downloadType, params) {
+  return ROOT_URL + '/subset/' + downloadType + '?' + util.encodeParams(params)
+}
+
+export function dataSubsetStats(params) {
+  return get('/subset/stats', params)
+}
+
+export function dataSubsetGenerateTrend(params) {
+  return post('/subset/trend', params)
+}
+
+export function dataSubsetTrendStatus(id) {
+  return get('/subset/trend/' + id + '/status')
+}
+
+export function dataSubsetTrend(id) {
+  return get('/subset/trend/' + id)
+}
+
+export function dataSubsetTrendDownloadURL(id) {
+  return ROOT_URL + '/subset/trend/' + id
+}
+
 export function login(email, password) {
   return post('/login', { email, password })
 }
@@ -204,8 +229,8 @@ export function searchtype() {
   return get('/searchtype')
 }
 
-export function species() {
-  return get('/species')
+export function species(args) {
+  return get('/species', args)
 }
 
 export function source() {
@@ -218,6 +243,10 @@ export function status() {
 
 export function deleteImport(id) {
   return del('/imports/' + id)
+}
+
+export function intensiveManagementGroup(id) {
+  return get('/intensive_management_group')
 }
 
 export function upload(file, progressCallback) {
