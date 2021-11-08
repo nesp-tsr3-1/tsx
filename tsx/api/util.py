@@ -1,10 +1,14 @@
 import json, csv
 import csv
 from io import StringIO
-from flask import make_response, g, jsonify, _app_ctx_stack, session
+from flask import make_response, g, jsonify, _app_ctx_stack, session, current_app
 from tsx.db.connect import Session
 from tsx.db import User
 from sqlalchemy import orm
+from werkzeug.local import LocalProxy
+import logging
+
+log = LocalProxy(lambda: current_app.logger)
 
 def csv_response(rows, filename="export.csv"):
 	"""Generate CSV response from a list of row values"""
