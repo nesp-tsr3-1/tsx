@@ -118,7 +118,7 @@
           </p>
           <div class="field">
             <input type="checkbox" id="checkbox" v-model="enableDelete">
-            <label for="checkbox">I understand and wish to delete this dataset</label>
+            <label for="checkbox"> I understand and wish to delete this dataset</label>
           </div>
           <button class='button is-danger' :disabled="!enableDelete" v-on:click='deleteSource'>Delete this dataset</button>
 
