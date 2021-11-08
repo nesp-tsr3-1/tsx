@@ -12,7 +12,8 @@ def init_sqlite(path):
     # It may be due to the import order in a completely unrelated file e.g. alpha_hull.py
     # Also other packages seem to be involved too e.g. pyproj
     db.load_extension("mod_spatialite")
-    db.execute("SELECT InitSpatialMetaData()")
+    # Note: InitSpatialMetaData is very slow and use a lot of storage without these parameters
+    db.execute("SELECT InitSpatialMetaData(1, 'WGS84_ONLY')")
     return db
 
 def export_to_sqlite(source_id, path):
@@ -154,51 +155,3 @@ def copy_table_data(session, table, dest_db, select_where_clause = None, select_
             if len(rows) > 1000:
                 flush(rows)
                 rows = []
-
-# Helper to make logging and progress bar work together
-class TqdmStream(object):
-    def write(self, x):
-        tqdm.write(x.strip())
-    def flush(self):
-        pass
-
-def main():
-    logging.basicConfig(stream=TqdmStream(), level=logging.INFO, format='%(asctime)-15s %(levelname)-8s %(message)s')
-
-    parser = argparse.ArgumentParser(description='TSX processing utility')
-
-    parser.add_argument('--species', '-s', help='Comma separated list of species numbers (SPNO) to process')
-    parser.add_argument('--commit', '-c', action='store_true', dest='commit', help='Commit changes to database (default is dry-run)')
-
-    subparsers = parser.add_subparsers(help = 'command', dest = 'command')
-
-    p = subparsers.add_parser('alpha_hull')
-    p = subparsers.add_parser('export')
-
-    p.add_argument('layers', nargs='+', choices=['alpha', 'ultrataxa', 'pa', 'grid'], help='Layers to export')
-
-    p = subparsers.add_parser('range_ultrataxon')
-    p = subparsers.add_parser('pseudo_absence')
-    p = subparsers.add_parser('t1_aggregation')
-    p = subparsers.add_parser('response_variable')
-    p = subparsers.add_parser('export_lpi')
-
-    p.add_argument('--monthly', '-m', action='store_true', dest='monthly', help='Output a column for each month')
-    p.add_argument('--filter', '-f', action='store_true', dest='filter', help='Filter output')
-    p.add_argument('--all-years', '-a', action='store_true', dest='include_all_years_data', help='Include data for all years')
-
-    p = subparsers.add_parser('spatial_rep')
-    p = subparsers.add_parser('filter_time_series')
-    p = subparsers.add_parser('clear')
-    p = subparsers.add_parser('all')
-    p = subparsers.add_parser('simple')
-
-    p = subparsers.add_parser('single_source')
-    p.add_argument('source_id', type=int, help='Source ID to process')
-
-    args = parser.parse_args()
-
-    # export_to_sqlite(args.source_id)
-
-if __name__ == '__main__':
-    main()
