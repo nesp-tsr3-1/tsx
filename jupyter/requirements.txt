@@ -6,7 +6,7 @@ async-generator==1.10
 attrs==20.3.0
 Babel==2.5.1
 backcall==0.2.0
-bleach==3.2.1
+bleach==3.3.0
 certifi==2017.11.5
 cffi==1.12.3
 chardet==3.0.4
