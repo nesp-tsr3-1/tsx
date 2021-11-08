@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, send_file, session
+from flask import Blueprint, jsonify, request, send_file, session, Response
 from tsx.util import next_path, local_iso_datetime
 from tsx.api.util import db_session, get_user, get_roles
 from tsx.api.upload import get_upload_path, get_upload_name
@@ -14,6 +14,9 @@ from shutil import rmtree
 import time
 from tsx.api.validation import *
 from tsx.api.permissions import permitted
+from queue import Queue
+import subprocess
+from tsx.api.util import log
 
 bp = Blueprint('data_import', __name__)
 
@@ -384,7 +387,7 @@ def source_to_json(source):
 		'id': source.id
 	}
 	for field in source_fields:
-		if field.name == 'monitoring_program':
+		if field.name == 'monitoring_program' and source.monitoring_program:
 			json['monitoring_program'] = source.monitoring_program.description
 		else:
 			json[field.name] = getattr(source, field.name)
@@ -430,11 +433,11 @@ def post_import():
 	# Create new working directory for the import
 	data_import = DataImport(
 		source_id = source_id,
-    	status_id = 1,
-    	upload_uuid = body['upload_uuid'],
-    	filename = get_upload_name(upload_uuid),
-    	data_type = body.get('data_type'),
-    	user_id = user.id
+		status_id = 1,
+		upload_uuid = body['upload_uuid'],
+		filename = get_upload_name(upload_uuid),
+		data_type = body.get('data_type'),
+		user_id = user.id
 	)
 	db_session.add(data_import)
 	db_session.commit()
@@ -606,7 +609,7 @@ def data_import_json(data_import):
 
 @bp.route('/imports/<int:import_id>', methods = ['GET'])
 def get_import(import_id=None):
-	data_import = load_import(import_id, include_running = True)
+	data_import = load_import(import_id)
 
 	if not data_import:
 		return "Not found", 404
@@ -620,8 +623,98 @@ def get_import_log(import_id=None):
 def import_path(id):
 	return os.path.join(imports_path, "%04d" % int(id))
 
-def load_import(import_id, include_running = False):
+def load_import(import_id):
 	try:
 		return db_session.query(DataImport).get(int(import_id))
 	except:
 		return None
+
+
+# -- TODO: put this somewhere else
+
+def processed_data_dir(source_id, import_id):
+	return os.path.join(data_dir("processed_data"), "source-%04d" % int(source_id), "import-%04d" % int(import_id))
+
+processing_info = {}
+
+
+@bp.route('/data_sources/<int:source_id>/processed_data', methods = ['GET'])
+def get_processed_data(source_id=None):
+	(import_id,) = db_session.execute("SELECT MAX(id) FROM data_import WHERE source_id = :source_id", { 'source_id': source_id }).fetchone()
+
+	if import_id == None:
+		return "Not found", 404
+
+	with lock:
+		pinfo = processing_info.get(import_id)
+
+	if pinfo is None:
+		# Maybe processing has completed?
+		path = processed_data_dir(source_id, import_id)
+		if os.path.exists(path):
+			items = []
+			agg_path = os.path.join(path, 'aggregated.csv')
+			if os.path.exists(agg_path):
+				items.append({ 'name': 'Aggregated time series (CSV format)', 'id': 'aggregated.csv' })
+			trend_path = os.path.join(path, 'trend.csv')
+			if os.path.exists(trend_path):
+				items.append({ 'name': 'Population trend (CSV format)', 'id': 'trend.csv' })
+			return jsonify({
+				'processing_status': 'ready',
+				'items': items
+			})
+		else:
+			process_data(source_id, import_id)
+			return({ 'processing_status': 'pending' })
+	else:
+		return jsonify(pinfo)
+
+@bp.route('/data_sources/<int:source_id>/processed_data/<item_id>', methods = ['GET'])
+def get_processed_data_item(source_id=None, item_id=None):
+	(import_id,) = db_session.execute("SELECT MAX(id) FROM data_import WHERE source_id = :source_id", { 'source_id': source_id }).fetchone()
+
+	if import_id == None:
+		return "Not found", 404
+
+	path = processed_data_dir(source_id, import_id)
+	item_path = os.path.join(path, item_id)
+
+	return send_file(item_path, mimetype = 'text/csv', cache_timeout = 5)
+
+work_q = Queue()
+
+def process_data(source_id, import_id):
+	with lock:
+		pinfo = processing_info.get(import_id)
+
+		if pinfo is None:
+			processing_info[import_id] = { 'processing_status': 'processing' }
+		else:
+			return
+
+	work_q.put((source_id, import_id))
+
+
+processing_workers_started = False
+def start_processing_workers():
+	if processing_workers_started:
+		return
+	processing_manager_started = True
+	for i in range(0, 4):
+		t = Thread(target = process_worker)
+		t.start()
+
+def process_worker():
+	while True:
+		source_id, import_id = work_q.get()
+		output_dir = processed_data_dir(source_id, import_id)
+		if not os.path.exists(output_dir):
+			subprocess.run(['python3', '-m', 'tsx.process', 'single_source', str(source_id), '-o', output_dir])
+		else:
+			print("Already processed: %s" % import_id)
+		with lock:
+			del processing_info[import_id]
+
+def process_unprocessed():
+	for (source_id,import_id) in db_session.execute("SELECT source_id, max(id) FROM data_import WHERE source_id IS NOT NULL GROUP BY source_id"):
+		process_data(source_id, import_id)

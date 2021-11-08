@@ -50,6 +50,25 @@
 
           <div class="columns">
             <div class="column">
+              <h4 class="title is-4">Downloads</h4>
+              <p class="content" v-if="processedData.status == 'loading'">
+                Loading
+              </p>
+              <p class="content" v-if="processedData.status == 'loaded'">
+                <ul>
+                  <li v-for="item in processedData.items"><a v-bind:href="itemURL(item)" target="_blank">{{item.name}}</a></li>
+                </ul>
+              </p>
+              <p class="content" v-if="processedData.status == 'failed'">
+                {{ processedData.error }}
+              </p>
+            </div>
+          </div>
+
+          <hr>
+
+          <div class="columns">
+            <div class="column">
               <h4 class="title is-4">Custodians</h4>
               <p class="content">
                 Custodians are users who have access to import data and edit details for this dataset.
@@ -129,7 +148,8 @@ export default {
       sourceId: +this.$route.params.id,
       source: null,
       latestImportId: null,
-      enableDelete: false
+      enableDelete: false,
+      processedData: { status: 'loading' }
     }
   },
   computed: {
@@ -153,6 +173,9 @@ export default {
     },
     handleDataImportUpdated() {
       this.$refs.importList.refresh()
+    },
+    itemURL(item) {
+      return api.dataSourceProcessedDataItemURL(this.sourceId, item.id)
     }
   },
   created () {
@@ -163,6 +186,11 @@ export default {
     })
     api.dataSource(this.sourceId).then(source => {
       this.source = source
+    })
+    api.dataSourceProcessedData(this.sourceId).then(processedData => {
+      this.processedData = { status: 'loaded', ...processedData }
+    }).catch(e => {
+      this.processedData = { status: 'failed', error: e }
     })
   }
 }

@@ -10,6 +10,9 @@ from tsx.db import get_session
 from shapely.geometry import Point
 from tsx.mysql_to_sqlite import export_to_sqlite
 import binascii
+import importlib
+import subprocess
+import shutil
 from datetime import datetime
 import random
 import tsx.processing.alpha_hull
@@ -65,6 +68,7 @@ def main():
 
     p = subparsers.add_parser('single_source')
     p.add_argument('source_id', type=int, help='Source ID to process')
+    p.add_argument('--output-dir', '-o', help='Output directory for processed data')
 
     args = parser.parse_args()
 
@@ -162,11 +166,19 @@ def main():
 
     elif args.command == 'single_source':
         log.info("Processing source %s" % args.source_id)
-        process_source(args.source_id)
+        process_source(args.source_id, args.output_dir)
 
 tmp_dir = '/tmp/tsx-work'
 
-def process_source(source_id):
+def is_csv_empty(path):
+    with open(path, 'r') as f:
+        for count, line in enumerate(f):
+            if count > 1:
+                return False
+
+    return True
+
+def process_source(source_id, output_dir = None):
     dt = datetime.now()
     path = os.path.join(tmp_dir, str(dt.date()), str(dt.time()) + '-' + random.randbytes(3).hex())
     log.info("Work directory: %s" % path)
@@ -179,6 +191,22 @@ def process_source(source_id):
     tsx.processing.t1_aggregation.process_database(commit = True, simple_mode = True, database_config = database_url)
     log.info("Performing export_lpi")
     tsx.processing.export_lpi.process_database(database_config = database_url, export_dir = path)
+
+    if is_csv_empty(os.path.join(path, 'lpi.csv')):
+        log.info('No data to process')
+        # Creating the output dir indicates that processing is complete
+        if output_dir:
+            os.makedirs(output_dir, exist_ok=True)
+        return
+
+    log.info("Running LPI analysis")
+    with open(os.path.join(path, "lpi.R"), "wb") as f:
+        f.write(importlib.resources.read_binary("tsx.resources", "lpi.R"))
+    subprocess.run(["Rscript", os.path.join(path, "lpi.R"), os.path.join(path, "lpi.csv"), path])
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+        shutil.copy(os.path.join(path, "lpi.csv"), os.path.join(output_dir, "aggregated.csv"))
+        shutil.copy(os.path.join(path, "data_infile_Results.txt"), os.path.join(output_dir, "trend.csv"))
     log.info("done")
 
 def clear_database():

@@ -132,6 +132,13 @@ export function createUser(user) {
   return post('/users', user)
 }
 
+export function dataSourceProcessedData(id) {
+  return get('/data_sources/' + id + '/processed_data')
+}
+
+export function dataSourceProcessedDataItemURL(data_source_id, item_id) {
+  return ROOT_URL + '/data_sources/' + data_source_id + '/processed_data/' + item_id
+}
 
 export function dataSubsetDownloadURL(downloadType, params) {
   return ROOT_URL + '/subset/' + downloadType + '?' + util.encodeParams(params)
