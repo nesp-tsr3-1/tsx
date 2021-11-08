@@ -174,6 +174,8 @@ def process_database(species = None, monthly = False, filter_output = False, inc
             current_date_expression = "DATE(NOW())"
             current_year_expression = "YEAR(NOW())"
 
+        index = 1
+
         for taxon_id in tqdm(taxa):
             #                    (SELECT CAST(id AS UNSIGNED) FROM aggregated_id agg_id WHERE agg.taxon_id = agg_id.taxon_id AND agg.search_type_id <=> agg_id.search_type_id AND agg.source_id = agg_id.source_id AND agg.unit_id = agg_id.unit_id AND agg.site_id <=> agg_id.site_id AND agg.grid_cell_id <=> agg_id.grid_cell_id AND agg.data_type = agg_id.data_type) AS ID,
             sql = """SELECT
@@ -301,11 +303,12 @@ def process_database(species = None, monthly = False, filter_output = False, inc
 
             keys = result.keys()
 
-            for (index, row) in enumerate(result.fetchall()):
+            for row in result.fetchall():
                 # Get row as a dict
                 data = dict(zip(keys, row))
 
-                data["ID"] = index + 1
+                data["ID"] = index
+                index += 1
 
                 # Parse out the yearly values (or monthly)
                 year_data = dict(item.split('=') for item in data['value_series'].split(','))
