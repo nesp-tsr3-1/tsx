@@ -29,7 +29,7 @@ def reproject_fn(src_proj, dest_proj):
 	transformer = pyproj.Transformer.from_proj(src_proj, dest_proj)
 	return lambda geom: transform(transformer.transform, geom)
 
-def subdivide_geometry(geometry, max_points = 100):
+def subdivide_geometry(geometry, max_points = 100, max_extent = None):
 	"""
 	Subdivides a geometry into pieces having no more than max_points points each
 	"""
@@ -38,12 +38,18 @@ def subdivide_geometry(geometry, max_points = 100):
 	while len(q) > 0:
 		# Get next geometry to process from queue
 		geom = q.pop()
-		if count_points(geom) <= max_points:
+		points_ok = max_points is None or count_points(geom) <= max_points
+		extent_ok = max_extent is None or extent(geom) <= max_extent
+		if points_ok and extent_ok:
 			yield geom
 		else:
 			# Intersect geometry with each half of its bounding box, and add to work queue
 			for b in split_bounds(*geom.bounds):
 				q.append(geom.intersection(Polygon.from_bounds(*b)))
+
+def extent(geom):
+	minx, miny, maxx, maxy = geom.bounds
+	return max(maxx - minx, maxy - miny)
 
 def split_bounds(minx, miny, maxx, maxy):
 	"""
