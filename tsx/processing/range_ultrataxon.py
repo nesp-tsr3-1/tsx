@@ -86,6 +86,10 @@ def process_taxon(taxon_id, commit):
                         range_id = range_id,
                         generated_subspecies = False
                     ))
+                    # Would this help improve concurrency?:
+                    # if len(records) > 1000:
+                    #     session.bulk_save_objects(records)
+                    #     records = []
 
             if taxon.taxon_level.description == 'ssp':
                 # Get parent taxa (species) sightings
@@ -110,6 +114,10 @@ def process_taxon(taxon_id, commit):
                             range_id = range_id,
                             generated_subspecies = True
                         ))
+                        # Would this help improve concurrency?:
+                        # if len(records) > 1000:
+                        #     session.bulk_save_objects(records)
+                        #     records = []
 
             session.bulk_save_objects(records)
         if commit:
