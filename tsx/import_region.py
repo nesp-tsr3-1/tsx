@@ -7,6 +7,7 @@ import shapely.wkb
 import shapely.ops
 from tsx.geo import reproject_fn, to_multipolygon, subdivide_geometry
 from shapely.geometry import shape
+from fiona.transform import transform_geom
 import fiona
 import pyproj
 
@@ -25,12 +26,10 @@ def main():
 	session = get_session()
 
 	with fiona.open(args.filename, encoding = 'Windows-1252') as shp:
-		reproject = reproject_fn(pyproj.Proj(shp.crs), pyproj.Proj('+init=EPSG:4326'))
 		for index, feature in enumerate(tqdm(shp)):
 			props = feature['properties']
 
-			geometry = reproject(shape(feature['geometry']))
-			geometry = shapely.ops.transform(to_2d, geometry)
+			geometry = shape(transform_geom(shp.crs, 'EPSG:4326', feature['geometry']))
 			geometry = geometry.buffer(0)
 
 			session.execute("""INSERT INTO region (id, name, geometry, state, positional_accuracy_in_m)
