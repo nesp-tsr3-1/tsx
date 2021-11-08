@@ -47,6 +47,16 @@ Then edit the ``[database]`` section in tsx.conf to match the database you just 
 	source env/bin/activate
 	pip install -r requirements.txt
 
+Note: on Mac OS you may need to first use `pyenv` to build a version of Python that supports SQLite extensions, e.g.:
+
+.. code:: bash
+
+	PYTHON_CONFIGURE_OPTS="--enable-loadable-sqlite-extensions --enable-optimizations --with-openssl=/usr/local/Cellar/openssl@1.1/1.1.1l" \
+	LDFLAGS="-L/usr/local/opt/sqlite/lib" \
+	CPPFLAGS="-I/usr/local/opt/sqlite/include" \
+	pyenv install 3.9.4
+
+
 3. Import taxa
 --------------
 
