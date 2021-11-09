@@ -262,11 +262,10 @@ Chart.register(
   SubTitle
 );
 
-// import Spinner from 'vue-simple-spinner'
-import Spinner from '../../node_modules/vue-simple-spinner/src/components/Spinner.vue'
+import Spinner from 'vue-simple-spinner/src/components/Spinner.vue'
 import L from 'leaflet'
 import HeatmapOverlay from 'heatmap.js/plugins/leaflet-heatmap/leaflet-heatmap.js'
-import easyButton from 'leaflet-easybutton/src/easy-button.js'
+import 'leaflet-easybutton/src/easy-button.js'
 import { min, max, pluck, uniq } from '../util.js'
 
 // Generated with:
@@ -391,7 +390,7 @@ const years = [
 export default {
   name: 'TSX',
   components: {
-    Spinner, easyButton
+    Spinner
   },
   data () {
     var data = {
