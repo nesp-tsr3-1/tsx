@@ -75,15 +75,6 @@ class MonitoringProgram(Base):
     users = relationship('User', secondary='user_program_manager')
 
 
-t_processing_method_check_sighting = Table(
-    'processing_method_check_sighting', metadata,
-    Column('NumSurveys', NullType),
-    Column('source_id', NullType),
-    Column('taxon_id', NullType),
-    Column('unit_id', NullType)
-)
-
-
 class ProjectionName(Base):
     __tablename__ = 'projection_name'
 
