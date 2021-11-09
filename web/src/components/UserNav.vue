@@ -24,8 +24,7 @@ export default {
       return this.user && this.user.is_admin
     },
     isProgramManager: function() {
-      return true
-      // return this.user && (this.user.is_admin || this.user.roles.indexOf("Program Manager") != -1)
+      return this.user && (this.user.is_admin || this.user.roles.indexOf("Program Manager") != -1)
     }
   },
   created () {
