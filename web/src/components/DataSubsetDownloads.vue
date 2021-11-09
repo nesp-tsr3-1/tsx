@@ -215,7 +215,11 @@ export default {
     Promise.all([
       api.currentUser().then((user) => {
         this.user = user
-        return api.programsManagedBy(user.id)
+        if(user.is_admin) {
+          return api.monitoringPrograms()
+        } else {
+          return api.programsManagedBy(user.id)
+        }
       }).then((programs) => {
         this.options.monitoringPrograms = programs
         this.criteria.monitoringPrograms = programs // select all by default
