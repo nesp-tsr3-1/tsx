@@ -58,6 +58,7 @@
                       <option v-bind:value="null" selected>All sites (managed & unmanaged)</option>
                       <option>Any management</option>
                       <option>Predator-free</option>
+                      <option>Translocation</option>
                       <option>No known management</option>
                     </select>
                   </div>
