@@ -7,7 +7,7 @@ import os
 from threading import Thread, Lock
 import shutil
 import subprocess
-import importlib
+import importlib.resources
 
 bp = Blueprint('subset', __name__)
 
