@@ -8,6 +8,18 @@
 # rstudio lpi.R
 # (Then press shift + ctrl + S)
 
+if(!'rlpi' %in% rownames(installed.packages())) {
+	print("Installing required packages")
+	if(!'devtools' %in% rownames(installed.packages())) {
+		install.packages("devtools")
+	}
+	if(!'ggplot2' %in% rownames(installed.packages())) {
+		install.packages("ggplot2")
+	}
+	library(devtools)
+	install_github("nesp-tsr3-1/rlpi", dependencies=TRUE)
+}
+
 library(rlpi)
 
 in_file <- "../sample-data/export/lpi-filtered.csv"
