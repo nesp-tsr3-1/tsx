@@ -3,6 +3,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
+  - _r-mutex=1.0.1=anacondar_1
   - attrs=21.2.0=pyhd8ed1ab_0
   - boost-cpp=1.74.0=h5b4e17d_5
   - bzip2=1.0.8=h8ffe710_4
@@ -71,11 +72,36 @@ dependencies:
   - libzip=1.8.0=hfed4ece_1
   - libzlib=1.2.11=h8ffe710_1013
   - lz4-c=1.9.3=h8ffe710_1
+  - m2w64-bwidget=1.9.10=2
+  - m2w64-bzip2=1.0.6=6
+  - m2w64-expat=2.1.1=2
+  - m2w64-fftw=3.3.4=6
+  - m2w64-flac=1.3.1=3
   - m2w64-gcc-libgfortran=5.3.0=6
   - m2w64-gcc-libs=5.3.0=7
   - m2w64-gcc-libs-core=5.3.0=7
+  - m2w64-gettext=0.19.7=2
   - m2w64-gmp=6.1.0=2
+  - m2w64-gsl=2.1=2
+  - m2w64-libiconv=1.14=6
+  - m2w64-libjpeg-turbo=1.4.2=3
+  - m2w64-libogg=1.3.2=3
+  - m2w64-libpng=1.6.21=2
+  - m2w64-libsndfile=1.0.26=2
+  - m2w64-libtiff=4.0.6=2
+  - m2w64-libvorbis=1.3.5=2
   - m2w64-libwinpthread-git=5.0.0.4634.697f757=2
+  - m2w64-libxml2=2.9.3=3
+  - m2w64-mpfr=3.1.4=4
+  - m2w64-pcre2=10.34=0
+  - m2w64-speex=1.2rc2=3
+  - m2w64-speexdsp=1.2rc3=3
+  - m2w64-tcl=8.6.5=3
+  - m2w64-tk=8.6.5=3
+  - m2w64-tktable=2.10=5
+  - m2w64-wineditline=2.101=5
+  - m2w64-xz=5.2.2=2
+  - m2w64-zlib=1.2.8=10
   - mkl=2021.4.0=h0e2418a_729
   - msys2-conda-epoch=20160418=1
   - munch=2.5.0=py_0
@@ -104,6 +130,24 @@ dependencies:
   - python_abi=3.9=2_cp39
   - pytz=2021.3=pyhd8ed1ab_0
   - pytz-deprecation-shim=0.1.0.post0=py39hcbf5309_0
+  - r=4.1=r41hd8ed1ab_1004
+  - r-base=4.1.1=hddad469_1
+  - r-boot=1.3_28=r41hc72bb7e_0
+  - r-class=7.3_19=r41h6d2157b_0
+  - r-cluster=2.1.2=r41he816bda_0
+  - r-codetools=0.2_18=r41hc72bb7e_0
+  - r-foreign=0.8_81=r41h6d2157b_0
+  - r-kernsmooth=2.23_20=r41h090b817_0
+  - r-lattice=0.20_45=r41h6d2157b_0
+  - r-mass=7.3_54=r41h6d2157b_0
+  - r-matrix=1.3_4=r41hd2e18ed_0
+  - r-mgcv=1.8_38=r41hd2e18ed_0
+  - r-nlme=3.1_153=r41he816bda_0
+  - r-nnet=7.3_16=r41h6d2157b_0
+  - r-recommended=4.1=r41hd8ed1ab_1004
+  - r-rpart=4.1_15=r41h6d2157b_2
+  - r-spatial=7.3_14=r41h6d2157b_0
+  - r-survival=3.2_13=r41h6d2157b_0
   - scipy=1.7.1=py39hc0c34ad_0
   - setuptools=58.5.3=py39hcbf5309_0
   - shapely=1.7.1=py39haadaec5_5

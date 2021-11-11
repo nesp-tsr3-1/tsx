@@ -16,3 +16,4 @@ dependencies:
   - openpyxl==3.0.7
   - mysql-client
   - tzlocal
+  - r
