@@ -5,29 +5,22 @@ from shapely.geometry import Point, MultiPoint, Polygon, MultiPolygon, GeometryC
 from shapely.ops import transform
 from functools import partial
 import pyproj
-
-# def subdivide_geometry(geometry, max_points = 1000):
-# 	"""
-# 	Subdivides a geometry into pieces having no more than max_points points each
-# 	"""
-# 	tiles = deque()
-# 	tiles.append((0,0,0,geometry))
-
-# 	while len(tiles) > 0:
-# 		x, y, z, geom = tiles.pop()
-# 		if count_points(geom) <= max_points:
-# 			yield geom
-# 		else:
-# 			z2 = z + 1
-# 			for x2 in [x * 2, x * 2 + 1]:
-# 				for y2 in [y * 2, y * 2 + 1]:
-# 					geom2 = to_multipolygon(geom.intersection(tile_bounds((x2, y2, z2))))
-# 					if not geom2.is_empty:
-# 						tiles.append((x2, y2, z2, geom2))
+from contextlib import contextmanager
+import fiona
 
 def reproject_fn(src_proj, dest_proj):
-	transformer = pyproj.Transformer.from_proj(src_proj, dest_proj)
+	transformer = pyproj.Transformer.from_proj(src_proj, dest_proj, always_xy=True)
 	return lambda geom: transform(transformer.transform, geom)
+
+
+# Opening a shapefile and reprojecting it is really verbose
+@contextmanager
+def open_shapefile(filename, dest_crs):
+	with fiona.Env(OSR_WKT_FORMAT="WKT2_2018"), fiona.open(filename, encoding = 'Windows-1252') as shp:
+		src_crs = pyproj.CRS.from_wkt(shp.crs_wkt)
+		transformer = pyproj.Transformer.from_proj(src_crs, dest_crs, always_xy=True)
+		reproject = lambda geom: transform(transformer.transform, geom)
+		yield shp, reproject
 
 def subdivide_geometry(geometry, max_points = 100, max_extent = None):
 	"""

@@ -4,9 +4,9 @@ import sys
 import argparse
 from tqdm import tqdm
 import shapely.wkb
-from tsx.geo import reproject_fn, to_multipolygon
+from tsx.geo import open_shapefile, to_multipolygon
 from shapely.geometry import shape
-import fiona
+from shapely.ops import transform
 import pyproj
 
 log = logging.getLogger(__name__)
@@ -20,8 +20,7 @@ def main():
 
 	session = get_session()
 
-	with fiona.open(args.filename, encoding = 'Windows-1252') as shp:
-		reproject = reproject_fn(pyproj.Proj(shp.crs), pyproj.Proj('+init=EPSG:4326'))
+	with open_shapefile(args.filename, dest_crs='EPSG:4326') as (shp, reproject):
 		for feature in tqdm(shp):
 			props = feature['properties']
 			geometry = to_multipolygon(reproject(shape(feature['geometry'])))

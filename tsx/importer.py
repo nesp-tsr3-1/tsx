@@ -1,5 +1,4 @@
-import pyproj
-from pyproj import Proj
+from pyproj import Transformer
 from tsx.db import T1Survey, T1Sighting, T1Site, T2Survey, T2Sighting, T2Site, Taxon, TaxonLevel, Source, DataImport, SourceType, SearchType, Unit, IntensiveManagement, ProjectionName, get_session
 import tsx.util
 import os
@@ -783,19 +782,13 @@ class Importer:
 			raise ValueError("Survey fields do not match for the same SourcePrimaryKey (%s):\n%s\n%s" % (primary_key, a_diff, b_diff))
 
 def create_point(x, y, projection_ref):
-	"""
-	This function converts x,y value belong to different projectionsystem and datum to a point in WSG84
-	Example of projection ref:
-	None, EPSG:1234, all of these references are from spatialreference.org
-	"""
 	if projection_ref not in (None, 'EPSG:4326'):
 		try:
-			p1 = Proj(init=projection_ref)
+			transformer = Transformer.from_crs(projection_ref, "EPSG:4326", always_xy=True)
 		except:
 			log.exception("Invalid/unrecognized projection")
 			raise ImportError("Invalid/unrecognized projection: %s" % projection_ref)
-		p2 = Proj(init='EPSG:4326')
-		x, y = pyproj.transform(p1, p2, x, y)
+		x, y = transformer.transform(x, y)
 
 	return Point(x, y)
 

@@ -81,7 +81,7 @@ def aggregate_monthly(taxon_id, simple_mode = False, commit = False, database_co
             else:
                 region_expression = 'MIN((SELECT MIN(region_id) FROM tmp_region_lookup t WHERE t.site_id = survey.site_id))'
 
-            if "sqlite:" in database_config:
+            if database_config and "sqlite:" in database_config:
                 centroid_expression = "MakePoint(AVG(ST_X(survey.coords)), AVG(ST_Y(survey.coords)), -1)"
             else:
                 centroid_expression = "Point(AVG(ST_X(survey.coords)), AVG(ST_Y(survey.coords)))"
@@ -161,7 +161,7 @@ def aggregate_monthly(taxon_id, simple_mode = False, commit = False, database_co
 def aggregate_yearly(taxon_id, simple_mode = False, commit = False, database_config = None):
     session = get_session(database_config)
 
-    if "sqlite:" in database_config:
+    if database_config and "sqlite:" in database_config:
         centroid_expression = "MakePoint(AVG(ST_X(centroid_coords)), AVG(ST_Y(centroid_coords)), -1)"
     else:
         centroid_expression = "Point(AVG(ST_X(centroid_coords)), AVG(ST_Y(centroid_coords)))"

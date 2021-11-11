@@ -3,11 +3,12 @@ import logging
 import sys
 import argparse
 import csv
+from tqdm import tqdm
 
 log = logging.getLogger(__name__)
 
 def main():
-	logging.basicConfig(stream=sys.stdout, level=logging.DEBUG, format='%(asctime)-15s %(name)s %(levelname)-8s %(message)s')
+	logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)-15s %(name)s %(levelname)-8s %(message)s')
 
 	parser = argparse.ArgumentParser(description='Import data source information')
 	parser.add_argument('--relax', action='store_true', dest='relax', help="Ignore invalid source ids")
@@ -21,7 +22,7 @@ def main():
 
 	with open(args.filename) as f:
 		reader = csv.DictReader(f)
-		for row in reader:
+		for row in tqdm(list(reader)):
 			row = {k: v.strip() for k, v in row.items()}
 			data = {
 				'source_id': row['SourceID'],

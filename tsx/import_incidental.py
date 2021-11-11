@@ -10,7 +10,7 @@ import shapely.wkb
 log = logging.getLogger(__name__)
 
 def main():
-	logging.basicConfig(stream=sys.stdout, level=logging.DEBUG, format='%(asctime)-15s %(name)s %(levelname)-8s %(message)s')
+	logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)-15s %(name)s %(levelname)-8s %(message)s')
 
 	parser = argparse.ArgumentParser(description='Import incidental sightings')
 	parser.add_argument('filename', type=str, help='Incidental sightings file (CSV)')
@@ -24,6 +24,8 @@ def main():
 			WHERE taxon_level.id = taxon_level_id
 			AND taxon_level.description = 'sp'""").fetchall()
 	}
+
+	session.execute("""DELETE FROM incidental_sighting""");
 
 	with open(args.filename) as f:
 		reader = csv.DictReader(f)

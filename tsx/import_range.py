@@ -8,6 +8,7 @@ import re
 import shapely.wkb
 from tsx.geo import subdivide_geometry, to_multipolygon, count_points
 from shapely.geometry import MultiPolygon, Polygon, shape
+from shapely.ops import transform
 import fiona
 import time
 import pyproj
@@ -29,7 +30,8 @@ def main():
 	for filename in tqdm(filenames):
 		spno = int(filename[0:-4])
 		try:
-			with fiona.open(os.path.join(args.dir, filename), encoding = 'Windows-1252') as shp:
+			# https://pyproj4.github.io/pyproj/stable/crs_compatibility.html#fiona
+			with fiona.Env(OSR_WKT_FORMAT="WKT2_2018"), fiona.open(os.path.join(args.dir, filename), encoding = 'Windows-1252') as shp:
 				process_shp(session, spno, shp)
 		except KeyboardInterrupt:
 			log.info("Aborting - no changes saved")
@@ -40,6 +42,7 @@ def main():
 _taxon_re = re.compile('(u?[0-9]+)([a-z](\.[a-z])*)?')
 
 def process_shp(session, spno, shp):
+	transformer = pyproj.Transformer.from_crs(pyproj.CRS.from_wkt(shp.crs_wkt), 'EPSG:4326', always_xy=True)
 	for feature in shp:
 		try:
 			props = feature['properties']
@@ -68,7 +71,6 @@ def process_shp(session, spno, shp):
 			if type(geometry) == Polygon:
 				geometry = MultiPolygon([geometry])
 
-			transformer = pyproj.Transformer.from_proj(pyproj.Proj(shp.crs), pyproj.Proj('+init=EPSG:4326'))
 			geometry = transform(transformer.transform, geometry)
 
 			for s in suffix.split("."):

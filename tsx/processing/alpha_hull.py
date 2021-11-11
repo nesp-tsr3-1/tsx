@@ -30,8 +30,8 @@ log = logging.getLogger(__name__)
 
 db_proj = pyproj.Proj('EPSG:4326') # Database always uses WGS84
 working_proj = pyproj.Proj('EPSG:3112') # GDA94 / Geoscience Australia Lambert - so that we can buffer in metres
-to_working_transformer = pyproj.Transformer.from_proj(db_proj, working_proj)
-to_db_transformer = pyproj.Transformer.from_proj(working_proj, db_proj)
+to_working_transformer = pyproj.Transformer.from_proj(db_proj, working_proj, always_xy=True)
+to_db_transformer = pyproj.Transformer.from_proj(working_proj, db_proj, always_xy=True)
 
 def plot_polygon(polygon):
     # These imports are only needed for plotting
@@ -208,14 +208,15 @@ def process_spno(spno, coastal_shape, commit):
             # We also subdivide the geometries into small pieces and insert this into the database. This allows for much faster
             # spatial queries in the database.
             for subgeom in subdivide_geometry(geom, max_points = 100):
-                session.execute("""INSERT INTO taxon_presence_alpha_hull_subdiv (taxon_id, range_id, breeding_range_id, geometry)
-                    VALUES (:taxon_id, :range_id, :breeding_range_id, ST_GeomFromWKB(_BINARY :geom_wkb))""", {
-                        'taxon_id': taxon_id,
-                        'range_id': range_id,
-                        'breeding_range_id': breeding_range_id,
-                        'geom_wkb': shapely.wkb.dumps(subgeom)
-                    }
-                )
+                if len(geom) > 0:
+                    session.execute("""INSERT INTO taxon_presence_alpha_hull_subdiv (taxon_id, range_id, breeding_range_id, geometry)
+                        VALUES (:taxon_id, :range_id, :breeding_range_id, ST_GeomFromWKB(_BINARY :geom_wkb))""", {
+                            'taxon_id': taxon_id,
+                            'range_id': range_id,
+                            'breeding_range_id': breeding_range_id,
+                            'geom_wkb': shapely.wkb.dumps(subgeom)
+                        }
+                    )
         if commit:
             session.commit()
 
@@ -256,9 +257,10 @@ def process_database(species = None, commit = False):
 
     # Load coastal shapefile
     coastal_shape_filename = tsx.config.config.get("processing.alpha_hull", "coastal_shp")
-    with fiona.open(coastal_shape_filename, 'r') as coastal_shape:
+    # https://pyproj4.github.io/pyproj/stable/crs_compatibility.html#fiona
+    with fiona.Env(OSR_WKT_FORMAT="WKT2_2018"), fiona.open(coastal_shape_filename, 'r') as coastal_shape:
         # Convert from fiona dictionary to shapely geometry and reproject
-        shp_to_working_transformer = pyproj.Transformer.from_proj(pyproj.Proj(coastal_shape.crs), working_proj)
+        shp_to_working_transformer = pyproj.Transformer.from_proj(pyproj.CRS.from_wkt(coastal_shape.crs_wkt), working_proj, always_xy=True)
         coastal_shape = reproject(shape(coastal_shape[0]['geometry']), shp_to_working_transformer)
         # Simplify coastal boundary - makes things run ~20X faster
         log.info("Simplifying coastal boundary")

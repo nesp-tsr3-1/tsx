@@ -3,11 +3,12 @@ import logging
 import sys
 import argparse
 import csv
+from tqdm import tqdm
 
 log = logging.getLogger(__name__)
 
 def main():
-	logging.basicConfig(stream=sys.stdout, level=logging.DEBUG, format='%(asctime)-15s %(name)s %(levelname)-8s %(message)s')
+	logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)-15s %(name)s %(levelname)-8s %(message)s')
 
 	parser = argparse.ArgumentParser(description='Import processing method')
 	parser.add_argument('--relax', action='store_true', dest='relax', help="Just use source/search type descriptions and ignore id")
@@ -23,7 +24,7 @@ def main():
 
 	with open(args.filename) as f:
 		reader = csv.DictReader(f)
-		for row in reader:
+		for row in tqdm(list(reader)):
 			if row['experimental_design_type_id'] in ('0', ''):
 				continue
 			if row['response_variable_type_id'] in ('0', ''):

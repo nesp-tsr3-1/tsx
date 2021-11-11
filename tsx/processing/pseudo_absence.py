@@ -10,8 +10,18 @@ log = logging.getLogger(__name__)
 def process_database(commit = False):
 	session = get_session()
 
+	# This speeds up the t2_survey_site spatial query by a factor of about 6
+	session.execute("SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED")
+
 	if not (is_empty(session, "t2_processed_survey") and is_empty(session, "t2_survey_site")):
 		log.error("Existing outputs found - please drop and recreate these tables first: t2_processed_sighting, t2_processed_survey, t2_survey_site")
+		log.info("""Run:
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE t2_processed_sighting;
+TRUNCATE t2_processed_survey;
+TRUNCATE t2_survey_site;
+SET FOREIGN_KEY_CHECKS = 1;
+			""")
 		return
 
 	process_sites(session)
@@ -174,11 +184,14 @@ def process_sites(session):
 	# (I gave up after a couple of hours) so I've split it up by taxon with is a bit slower overall but at least you can
 	# see progress
 
-	# Running this in parallel resulted in MySQL deadlock errors... probably because we are inserting and selecting from the same table
+	# Create temporary table so we aren't inserting and selecting from the same table
+	session.execute("""CREATE TEMPORARY TABLE tmp_processed_sighting SELECT survey_id, taxon_id, count, unit_id, pseudo_absence FROM t2_processed_sighting WHERE FALSE""")
+
+	# Running this in parallel originally resulted in MySQL deadlock errors, but then we were inserting and selecting from the same table.
+	# It might be worth trying a parallel approach again.
 	for taxon_id in tqdm(taxa):
-		# This query is a bit tricky. We do a left join to find taxons that are not present for a survey, and match on
-		# t2_processed_sighting.id = NULL to generate the pseudo-absences
-		session.execute("""INSERT INTO t2_processed_sighting (survey_id, taxon_id, count, unit_id, pseudo_absence)
+		# This query is a bit tricky. We do a left join to find taxa that are not present for a survey, and match on t2_processed_sighting.id = NULL to generate the pseudo-absences
+		session.execute("""INSERT INTO tmp_processed_sighting (survey_id, taxon_id, count, unit_id, pseudo_absence)
 				SELECT t2_processed_survey.id, tmp_taxon_site.taxon_id, 0, 2, 1
 				FROM t2_survey
 				INNER JOIN t2_survey_site ON t2_survey.id = t2_survey_site.survey_id
@@ -188,6 +201,8 @@ def process_sites(session):
 				WHERE t2_processed_sighting.id IS NULL""", {
 				'taxon_id': taxon_id
 			})
+
+	session.execute("""INSERT INTO t2_processed_sighting(survey_id, taxon_id, count, unit_id, pseudo_absence) SELECT survey_id, taxon_id, count, unit_id, pseudo_absence FROM tmp_processed_sighting""")
 
 	session.execute("""DROP TABLE tmp_taxon_site""")
 

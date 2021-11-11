@@ -59,6 +59,10 @@ def main():
 				log.info("Skipping long taxon id %s" % row['TaxonID'])
 				continue
 
+			if row['TaxonID'] is None:
+				log.info("Skipping row %s with no TaxonID" % i)
+				continue
+
 			if row['SpNo'] and str(row['SpNo']) not in str(row['TaxonID']):
 				raise ValueError("Invalid SpNo/TaxonID combination: %s/%s" % (row['SpNo'], row['TaxonID']))
 

@@ -236,6 +236,10 @@ def create_region_lookup_table(session):
     log.info("Pre-calculating region for each site/grid")
 
     cleanup_region_lookup_table(session)
+
+    # Since upgrading to MySQL 8 this seems to be necessary to get decent performance in some INSERT/CREATE..SELECT scenarios.
+    session.execute("SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED")
+
     session.execute("""CREATE TABLE tmp_region_lookup
         ( INDEX (site_id, grid_cell_id) )
         SELECT DISTINCT

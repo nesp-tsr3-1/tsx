@@ -60,7 +60,7 @@ def process_database(species = None, monthly = False, filter_output = False, inc
 
 
     # Without this, the GROUP_CONCAT in the export query produces rows that are too long
-    if "sqlite:" not in database_config:
+    if database_config and "sqlite:" not in database_config:
         session.execute("""SET SESSION group_concat_max_len = 50000;""")
 
     export_dir = export_dir or tsx.config.data_dir('export')
@@ -167,7 +167,7 @@ def process_database(species = None, monthly = False, filter_output = False, inc
             value_series = "GROUP_CONCAT(CONCAT(start_date_y, '=', value))"
             aggregated_table = 'aggregated_by_year'
 
-        if "sqlite:" in database_config:
+        if database_config and "sqlite:" in database_config:
             current_date_expression = "DATE('NOW')"
             current_year_expression = "strftime('%Y', 'now')"
         else:
@@ -214,7 +214,7 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                         CONCAT('site_', agg.data_type, '_', site_id),
                         CONCAT('grid_', grid_cell_id)) AS SiteDesc,
                     (SELECT description FROM intensive_management WHERE t1_site.intensive_management_id = intensive_management.id) AS IntensiveManagement,
-                    (SELECT grouping FROM intensive_management WHERE t1_site.intensive_management_id = intensive_management.id) AS IntensiveManagementGrouping,
+                    (SELECT `grouping` FROM intensive_management WHERE t1_site.intensive_management_id = intensive_management.id) AS IntensiveManagementGrouping,
                     source.id AS SourceID,
                     source.description AS SourceDesc,
                     (SELECT description FROM monitoring_program WHERE source.monitoring_program_id = monitoring_program.id) AS MonitoringProgram,
@@ -222,8 +222,8 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                     unit.description AS Unit,
                     region.name AS Region,
                     region.state AS State,
-                    region_centroid.x AS RegionCentroidLongitude,
-                    region_centroid.y AS RegionCentroidLatitude,
+                    MIN(region_centroid.x) AS RegionCentroidLongitude,
+                    MIN(region_centroid.y) AS RegionCentroidLatitude,
                     region.positional_accuracy_in_m AS RegionCentroidAccuracy,
                     {value_series} AS value_series,
                     COUNT(*) AS value_count,
