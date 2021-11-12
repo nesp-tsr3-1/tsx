@@ -166,7 +166,7 @@ class Importer:
 				self.log.info('File format: CSV')
 				format = 'csv'
 
-			if format is 'excel':
+			if format == 'excel':
 				# The processing code generally expects data to come in as strings
 				# We could convert everything to str, but that gives us issues with date formats and 'None'
 				# So we just convert numeric values to strings
@@ -200,7 +200,7 @@ class Importer:
 
 					break
 
-			elif format is 'csv':
+			elif format == 'csv':
 				# Count rows first - this is used so we can track progress
 				with open(self.filename, "r") as csvfile:
 					reader = csv.DictReader(csvfile)
