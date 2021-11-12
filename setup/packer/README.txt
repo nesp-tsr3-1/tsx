@@ -4,17 +4,17 @@ Virtual machines are created using packer (https://www.packer.io)
 
 There are 4 packer scripts which progressively build a TSX workflow environment. Each VM builds on the previous.
 
- ubuntu1804:                A fresh, minimal Ubuntu 18.04 installation
+ ubuntu2004:                A fresh, minimal Ubuntu 20.04 installation
 
- ubuntu1804-tsx-deps:		ubuntu1804, plus:
+ tsx-deps:                  ubuntu1804, plus:
                                 - All TSX workflow dependencies installed
 
- ubuntu1804-tsx:            ubuntu1804-tsx-deps, plus:
+ tsx:                       tsx-deps, plus:
                                 - Latest TSX repository cloned from git master into ~tsx/tsx
                                 - A Python virtualenv with all dependencies installed
                                 - TSX sample data downloaded
 
- ubuntu1804-tsx-desktop:    ubntu1804-tsx, plus:
+ tsx-desktop:               tsx, plus:
                                 - A minimal desktop environment (LXDE)
                                 - Auto login and auto starting terminal
 

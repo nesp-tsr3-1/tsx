@@ -10,9 +10,12 @@ echo "tsx ALL=NOPASSWD: ALL" > /etc/sudoers.d/tsx
 export DEBIAN_FRONTEND=noninteractive
 
 # Autoconfigure host-only network
-cat >> /etc/netplan/01-netcfg.yaml <<EOF
+cat >> /etc/netplan/01-enp0s8.yaml <<EOF
+network:
+  ethernets:
     enp0s8:
       dhcp4: yes
+  version: 2
 EOF
 
 # Set hostname
@@ -26,7 +29,7 @@ add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran
 
 apt-get update
 
-apt-get install -y mysql-server python python-pip virtualenv r-base git samba libxslt1-dev
+apt-get install -y mysql-server python3 python-is-python3 python3-pip virtualenv r-base git samba libxslt1-dev
 
 # Set MySQL default character encoding to utf8
 sudo tee -a /etc/mysql/mysql.conf.d/encoding-utf8.cnf > /dev/null <<EOF
@@ -41,7 +44,7 @@ sudo service mysql restart
 # For some reason I seem to have to install these one by one
 apt-get install -y libssl-dev
 apt-get install -y libgit2-dev
-#apt-get install -y libcurl4-openssl-dev # Note: This uninstall libgit2-dev because libgit2-dev is not compatible with it... it wants gnu_tls intead
+apt-get install -y libcurl4-openssl-dev
 
 # Install R packages
 R --no-save <<EOF
