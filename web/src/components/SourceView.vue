@@ -70,7 +70,6 @@
               <div>
                 <button type="button" class="button is-primary" style="margin: 0.5em 0;"
                   v-bind:disabled="trendStatus != 'idle'" v-on:click="generateTrend">Download Population Trend (CSV format)</button>
-                  <p style="font-style: italic; margin-top: 1em;">Note: Population trends are generated using the Living Planet Index methodology, which is designed for producing composite trends, not single-species trends.</p>
               </div>
               <div v-if="trendStatus == 'processing'">
                 Please wait while the population trend is generated. This may take several minutes.
@@ -79,6 +78,7 @@
               <div v-if="trendStatus == 'error'">
                 An error occurred while generating the trend.
               </div>
+              <p style="font-style: italic; margin-top: 1em;">Note: Population trends are generated using the Living Planet Index methodology, which is designed for producing composite trends, not single-species trends.</p>
             </div>
           </div>
 
