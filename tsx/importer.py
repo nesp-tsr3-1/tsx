@@ -16,6 +16,7 @@ from sqlalchemy import func
 import openpyxl
 import zipfile
 import re
+from functools import lru_cache
 
 from six import text_type
 
@@ -781,10 +782,14 @@ class Importer:
 
 			raise ValueError("Survey fields do not match for the same SourcePrimaryKey (%s):\n%s\n%s" % (primary_key, a_diff, b_diff))
 
+@lru_cache(maxsize=None)
+def get_proj_transformer(projection_ref):
+	return Transformer.from_crs(projection_ref, "EPSG:4326", always_xy=True)
+
 def create_point(x, y, projection_ref):
 	if projection_ref not in (None, 'EPSG:4326'):
 		try:
-			transformer = Transformer.from_crs(projection_ref, "EPSG:4326", always_xy=True)
+			transformer = get_proj_transformer(projection_ref)
 		except:
 			log.exception("Invalid/unrecognized projection")
 			raise ImportError("Invalid/unrecognized projection: %s" % projection_ref)
