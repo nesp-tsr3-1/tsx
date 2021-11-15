@@ -99,7 +99,7 @@
             <spinner size='small' style='display: inline-block;'></spinner>
           </div>
           <div v-if="trendStatus == 'error'">
-            An error occurred while generating the trend. Please try again later, or contact james@planticle.com.au for assistance.
+            An error occurred while generating the trend.
           </div>
           <div v-if="trendStatus == 'ready'">
             <h4 class="title is-6" style="margin: 1em 0;">Population Trend</h4>

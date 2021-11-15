@@ -24,7 +24,7 @@
         </thead>
         <tbody>
           <tr v-for="i in imports">
-            <td><a v-bind:href="importUrl(i)">{{i.filename}}</a></td>
+            <td :title="i.filename"><span class="tag is-danger" style="margin-right: 0.5em" v-if="i.data_type === 2">Type 2</span><a v-bind:href="importUrl(i)">{{i.filename}}</a></td>
             <td>
               {{humanizeStatus(i.status)}}
               <a v-bind:href="importLogUrl(i)" target="_blank">(log)</a>
@@ -114,6 +114,14 @@ export default {
 <style scoped>
   .table {
     table-layout: fixed;
+  }
+  .table td:nth-child(1) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space:  nowrap;
+  }
+  .table th:nth-child(2) {
+    width: 12em;
   }
   .table th:nth-child(3) {
     width: 12em;

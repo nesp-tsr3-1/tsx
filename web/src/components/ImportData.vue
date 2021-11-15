@@ -8,7 +8,7 @@
       <div class="select">
         <select v-model="dataType">
           <option v-bind:value="1">Type 1</option>
-          <option v-bind:value="2">Type 2/3 (Big Data)</option>
+          <option v-bind:value="2">Type 2/3 (Advanced)</option>
         </select>
       </div>
     </div>

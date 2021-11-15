@@ -21,6 +21,7 @@
         <thead>
           <tr>
             <th v-on:click="sortBy('description')">Description {{sortIcon('description')}}</th>
+            <!-- <th v-on:click="sortBy('monitoring_program')">Program {{sortIcon('monitoring_program')}}</th> -->
             <th v-on:click="sortBy('time_created')">Created {{sortIcon('time_created')}}</th>
             <th v-on:click="sortBy('status')">Status {{sortIcon('status')}}</th>
           </tr>
@@ -28,6 +29,7 @@
         <tbody>
           <tr v-for="i in sortedSources" v-on:click='$router.push("/source/" + i.id)'>
             <td :title="i.description">{{truncate(i.description, 120)}}</td>
+            <!-- <td>{{truncate(i.monitoring_program, 120)}}</td> -->
             <td>{{formatDateTime(i.time_created)}}</td>
             <!-- <td><timeago :since='i.time_created' :auto-update="60" v-if="i.time_created"></timeago></td> -->
             <td>{{humanizeStatus(i.status)}}</td>
@@ -121,7 +123,7 @@ export default {
     width: 12em;
   }
   .table th:nth-child(3) {
-    width: 12em;
+    width: 8em;
   }
   .table tbody tr {
     cursor: pointer;

@@ -16,7 +16,6 @@ import tsx.api.program_manager
 import tsx.api.subset
 
 import datetime
-# import tsx.api.auth
 
 app = Flask('tsx')
 
@@ -56,7 +55,7 @@ class DateTimeEncoder(json.JSONEncoder):
 
 app.json_encoder = DateTimeEncoder
 
-@app.before_first_request
-def app_init():
-	tsx.api.data_import.start_processing_workers()
-	tsx.api.data_import.process_unprocessed()
+# @app.before_first_request
+# def app_init():
+# 	tsx.api.data_import.start_processing_workers()
+# 	tsx.api.data_import.process_unprocessed()

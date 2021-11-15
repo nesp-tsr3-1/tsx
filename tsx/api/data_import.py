@@ -383,8 +383,10 @@ def get_monitoring_program_id(description):
 
 
 def source_to_json(source):
+	(has_t1_data,) = db_session.execute("""SELECT EXISTS (SELECT 1 FROM t1_survey WHERE source_id = :source_id)""", {"source_id": source.id}).fetchone()
 	json = {
-		'id': source.id
+		'id': source.id,
+		'has_t1_data': has_t1_data
 	}
 	for field in source_fields:
 		if field.name == 'monitoring_program' and source.monitoring_program:
@@ -630,7 +632,7 @@ def load_import(import_id):
 		return None
 
 
-# -- TODO: put this somewhere else
+# -- The following is now deprecated, and can be removed once the new on-demand processing model is fully tested
 
 def processed_data_dir(source_id, import_id):
 	return os.path.join(data_dir("processed_data"), "source-%04d" % int(source_id), "import-%04d" % int(import_id))
@@ -697,6 +699,7 @@ def process_data(source_id, import_id):
 
 processing_workers_started = False
 def start_processing_workers():
+	return
 	if processing_workers_started:
 		return
 	processing_manager_started = True

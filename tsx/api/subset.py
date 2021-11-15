@@ -104,6 +104,10 @@ def subset_sql_params():
         where_conditions.append('taxon.id = :taxon_id')
         params['taxon_id'] = args['taxon_id']
 
+    if 'source_id' in args:
+        where_conditions.append('source.id = :source_id')
+        params['source_id'] = args['source_id']
+
     return (where_conditions, having_conditions, params)
 
 def query_subset_raw_data_sql_and_params():
@@ -360,6 +364,6 @@ def subset_get_trend_status(trend_id):
 def subset_get_trend(trend_id):
     path = os.path.join(trend_work_dir(trend_id), "trend.txt")
     if os.path.exists(path):
-        return send_file(path, mimetype = 'text/plain', cache_timeout = 5)
+        return send_file(path, mimetype = 'text/plain', cache_timeout = 5, as_attachment=True, attachment_filename='trend.txt')
     else:
         return "Not found", 404

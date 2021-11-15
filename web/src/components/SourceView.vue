@@ -50,30 +50,35 @@
 
           <div class="columns">
             <div class="column">
-              <h4 class="title is-4">Downloads</h4>
-              <p class="content" v-if="processedData.status == 'loading'">
-                Loading
-              </p>
-              <p class="content" v-if="processedData.status == 'loaded'">
-                <ul>
-                  <li v-for="item in processedData.items"><a v-bind:href="itemURL(item)" target="_blank">{{item.name}}</a></li>
-                </ul>
-              </p>
-              <p class="content" v-if="processedData.status == 'failed'">
-                {{ processedData.error }}
-              </p>
-            </div>
-          </div>
-
-          <hr>
-
-          <div class="columns">
-            <div class="column">
               <h4 class="title is-4">Custodians</h4>
               <p class="content">
                 Custodians are users who have access to import data and edit details for this dataset.
               </p>
               <source-custodians v-bind:sourceId="sourceId"></source-custodians>
+            </div>
+          </div>
+
+          <hr v-if="showDownloads">
+
+          <div class="columns" v-if="showDownloads">
+            <div class="column">
+              <h4 class="title is-4">Downloads</h4>
+              <div>
+                <button type="button" class="button is-primary" style="margin: 0.5em 0;"
+                v-on:click="downloadTimeSeries">Download Time Series (CSV format)</button>
+              </div>
+              <div>
+                <button type="button" class="button is-primary" style="margin: 0.5em 0;"
+                  v-bind:disabled="trendStatus != 'idle'" v-on:click="generateTrend">Download Population Trend (CSV format)</button>
+                  <p style="font-style: italic; margin-top: 1em;">Note: Population trends are generated using the Living Planet Index methodology, which is designed for producing composite trends, not single-species trends.</p>
+              </div>
+              <div v-if="trendStatus == 'processing'">
+                Please wait while the population trend is generated. This may take several minutes.
+                <spinner size='small' style='display: inline-block;'></spinner>
+              </div>
+              <div v-if="trendStatus == 'error'">
+                An error occurred while generating the trend.
+              </div>
             </div>
           </div>
 
@@ -134,6 +139,7 @@ import ImportList from './ImportList.vue'
 import ImportData from './ImportData.vue'
 import ProcessingNotes from './ProcessingNotes.vue'
 import SourceCustodians from './SourceCustodians.vue'
+import Spinner from '../../node_modules/vue-simple-spinner/src/components/Spinner.vue'
 
 export default {
   name: 'SourceView',
@@ -141,7 +147,8 @@ export default {
     'import-list': ImportList,
     'import-data': ImportData,
     'processing-notes': ProcessingNotes,
-    'source-custodians': SourceCustodians
+    'source-custodians': SourceCustodians,
+    'spinner': Spinner
   },
   data () {
     return {
@@ -149,7 +156,9 @@ export default {
       source: null,
       latestImportId: null,
       enableDelete: false,
-      processedData: { status: 'loading' }
+      showDownloads: false,
+      trendStatus: 'idle',
+      trendDownloadURL: null
     }
   },
   computed: {
@@ -173,9 +182,31 @@ export default {
     },
     handleDataImportUpdated() {
       this.$refs.importList.refresh()
+      api.dataSource(this.sourceId).then(source => {
+        this.showDownloads = source.has_t1_data
+      })
     },
-    itemURL(item) {
-      return api.dataSourceProcessedDataItemURL(this.sourceId, item.id)
+    downloadTimeSeries() {
+      window.location = api.dataSubsetDownloadURL('time_series', { source_id: this.sourceId })
+    },
+    generateTrend: function() {
+      api.dataSubsetGenerateTrend({ source_id: this.sourceId }).then(x => {
+        this.trendStatus = 'processing'
+        setTimeout(() => this.checkTrendStatus(x.id), 3000)
+      })
+    },
+    checkTrendStatus: function(id) {
+      api.dataSubsetTrendStatus(id).then(x => {
+        if(x.status == 'ready') {
+          this.trendStatus = 'idle'
+          window.location = api.dataSubsetTrendDownloadURL(id)
+        } else if(x.status == 'processing') {
+          setTimeout(() => this.checkTrendStatus(id), 3000)
+        }
+      }).catch(e => {
+        console.log(e);
+        this.trendStatus = 'error'
+      });
     }
   },
   created () {
@@ -186,11 +217,7 @@ export default {
     })
     api.dataSource(this.sourceId).then(source => {
       this.source = source
-    })
-    api.dataSourceProcessedData(this.sourceId).then(processedData => {
-      this.processedData = { status: 'loaded', ...processedData }
-    }).catch(e => {
-      this.processedData = { status: 'failed', error: e }
+      this.showDownloads = source.has_t1_data
     })
   }
 }
