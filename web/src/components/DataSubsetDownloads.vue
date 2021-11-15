@@ -152,7 +152,7 @@ Chart.register(
   Title,
   Tooltip,
   SubTitle
-);
+)
 
 
 export default {
@@ -247,10 +247,14 @@ export default {
     generateTrend: function() {
       let params = this.buildDownloadParams()
       let v = this.changeCounter // used to detect if parameters are changed during trend generation
+      this.trendStatus = 'processing'
       api.dataSubsetGenerateTrend(params).then(x => {
         this.trendId = x.id
         this.trendStatus = 'processing'
         setTimeout(() => this.checkTrendStatus(x.id, v), 3000)
+      }).catch(e => {
+        console.log(e)
+        this.trendStatus = 'error'
       })
     },
     checkTrendStatus: function(id, v) {
@@ -262,14 +266,14 @@ export default {
           this.trendStatus = 'ready'
           this.trendDownloadURL = api.dataSubsetTrendDownloadURL(id)
           
-          setTimeout(() => this.plotTrend(id, v), 0, id);
+          setTimeout(() => this.plotTrend(id, v), 0, id)
         } else if(x.status == 'processing') {
           setTimeout(() => this.checkTrendStatus(id, v), 3000)
         }
       }).catch(e => {
-        console.log(e);
+        console.log(e)
         this.trendStatus = 'error'
-      });
+      })
     },
     downloadTrend() {
       window.location = this.trendDownloadURL

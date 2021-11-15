@@ -69,7 +69,7 @@
               </div>
               <div>
                 <button type="button" class="button is-primary" style="margin: 0.5em 0;"
-                  v-bind:disabled="trendStatus != 'idle'" v-on:click="generateTrend">Download Population Trend (CSV format)</button>
+                  v-bind:disabled="trendStatus == 'processing'" v-on:click="generateTrend">Download Population Trend (TXT format)</button>
               </div>
               <div v-if="trendStatus == 'processing'">
                 Please wait while the population trend is generated. This may take several minutes.
@@ -190,9 +190,13 @@ export default {
       window.location = api.dataSubsetDownloadURL('time_series', { source_id: this.sourceId })
     },
     generateTrend: function() {
+      this.trendStatus = 'processing'
       api.dataSubsetGenerateTrend({ source_id: this.sourceId }).then(x => {
         this.trendStatus = 'processing'
         setTimeout(() => this.checkTrendStatus(x.id), 3000)
+      }).catch(e => {
+        console.log(e)
+        this.trendStatus = 'error'
       })
     },
     checkTrendStatus: function(id) {
@@ -204,9 +208,9 @@ export default {
           setTimeout(() => this.checkTrendStatus(id), 3000)
         }
       }).catch(e => {
-        console.log(e);
+        console.log(e)
         this.trendStatus = 'error'
-      });
+      })
     }
   },
   created () {
