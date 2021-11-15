@@ -11,8 +11,10 @@ setup(
 	packages=[
 		'tsx',
 		'tsx.api',
-		'tsx.db'
+		'tsx.db',
+		'tsx.resources'
 	],
+	package_data={'tsx.resources':['*']},
 	entry_points={
 		'console_scripts': [
 			'tsx-import = tsx.importer:main'
