@@ -1,5 +1,4 @@
 import os
-import tzlocal
 from datetime import datetime
 import logging
 import time
@@ -46,7 +45,7 @@ def local_iso_datetime():
     """
     Returns ISO8601 formatted timestamp for the current time and timezone
     """
-    return tzlocal.get_localzone().localize(datetime.now()).isoformat()
+    return datetime.now().isoformat()
 
 # https://stackoverflow.com/a/31142078/165783
 class CounterHandler(logging.Handler):

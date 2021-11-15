@@ -36,5 +36,4 @@ six==1.16.0
 sqlacodegen==2.3.0
 SQLAlchemy==1.4.23
 tqdm==4.62.2
-tzlocal==3.0
 Werkzeug==2.0.1
