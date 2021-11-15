@@ -5,7 +5,7 @@
         <p v-if="after_signup" style="font-weight: bold; margin-bottom: 1em;">Your account has been created</p>
         <p>Please enter your email address and password</p>
       </div>
-      <form>
+      <form v-on:submit.prevent="login">
         <fieldset v-bind:disabled="submitting">
           <div class="field">
             <label class="has-text-dark">Email address</label>
@@ -17,7 +17,7 @@
             <input class="input" type="password" v-model="password">
             <p class="help is-danger" v-if="errors.password">{{ errors.password }}</p>
           </div>
-          <button type="button" class="button is-primary" style="width: 100%; margin: 0.5em 0;" v-on:click="login">Log In</button>
+          <button class="button is-primary" style="width: 100%; margin: 0.5em 0;">Log In</button>
         </fieldset>
         <p style="font-size: 80%; text-align: center;">
           <router-link :to="{ path: '/reset_password', query: { email: email } }">Forgot password?</router-link>
