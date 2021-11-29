@@ -62,6 +62,13 @@ def create_user():
 
 	db_session.commit()
 
+	try:
+		email_body = new_account_body.substitute(name=user.first_name)
+		send_email(user.email, 'TSX Account Created', email_body)
+	except Exception as e:
+		print('Error sending email to %s' % user.email)
+		print('Error: %s' % e)
+
 	return "OK", 204 # Success
 
 @bp.route('/login', methods = ['POST'])
@@ -174,6 +181,14 @@ def user_to_json(user):
 		'roles': list(roles)
 	}
 
+new_account_body = Template(dedent("""
+	Hi $name,
+
+	Your TSX account has been created.
+
+	To login to the TSX web interface, visit: https://tsx.org.au/tsx/#/Login
+"""))
+
 reset_email_body = Template(dedent("""
 	Hi $name,
 
@@ -248,7 +263,7 @@ def reset_password():
 			email_body = reset_email_body.substitute(name=user.first_name, reset_url=reset_url, root_url=root_url)
 
 		try:
-			send_email(email, 'Password reset request', email_body)
+			send_email(email, 'TSX Password Reset Request', email_body)
 			return "OK", 200
 		except:
 			return jsonify('There was a problem sending the password reset email. Please try again later.'), 500
