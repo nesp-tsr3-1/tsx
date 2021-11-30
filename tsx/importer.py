@@ -378,8 +378,13 @@ class Importer:
 				row[key] = None
 
 		# Check that survey information doesn't change for the same SourcePrimaryKey
+		if self.source_id == None:
+			primary_key = row.get('SourcePrimaryKey')
+		else:
+			primary_key = "%s__%s" % (self.source_id, row.get('SourcePrimaryKey'))
+
 		try:
-			self.check_survey_consistency(row)
+			self.check_survey_consistency(row, primary_key)
 		except ValueError as e:
 			log.error(str(e))
 			self.commit = False # serious error
@@ -462,17 +467,17 @@ class Importer:
 
 		# Survey
 		last_survey = self.cache.get('last_survey')
-		if last_survey != None and last_survey.source_primary_key == row.get('SourcePrimaryKey'):
+		if last_survey != None and last_survey.source_primary_key == primary_key:
 			# Same survey as last row - no need to process survey fields (this yields a huge speed up for type 2/3 data)
 			survey = last_survey
 		else:
 			if self.fast_mode:
 				survey = None
 			else:
-				survey = session.query(Survey).filter_by(source_primary_key = row.get('SourcePrimaryKey'), data_import = data_import).one_or_none()
+				survey = session.query(Survey).filter_by(source_primary_key = primary_key, data_import = data_import).one_or_none()
 
 			if survey == None:
-				survey = Survey(site = site, source_primary_key = row.get('SourcePrimaryKey'), data_import = data_import)
+				survey = Survey(site = site, source_primary_key = primary_key, data_import = data_import)
 
 			self.cache['last_survey'] = survey
 
@@ -766,10 +771,9 @@ class Importer:
 
 
 	# Check that survey details don't change for the same 'SourcePrimaryKey'
-	def check_survey_consistency(self, row):
+	def check_survey_consistency(self, row, primary_key):
 		survey_keys = ['SourceType', 'SourceDesc', 'SourceProvider', 'SiteName', 'SearchTypeDesc', 'StartDate', 'FinishDate', 'StartTime', 'FinishTime', 'DurationInMinutes', 'AreaInM2', 'LengthInKm', 'LocationName', 'Y', 'X', 'ProjectionReference', 'PositionalAccuracyInM']
 		fields = {key:row.get(key) for key in survey_keys if key in row}
-		primary_key = row.get('SourcePrimaryKey')
 
 		if primary_key not in self.survey_fields_by_pk:
 			self.survey_fields_by_pk[primary_key] = fields
@@ -780,7 +784,7 @@ class Importer:
 			a_diff = { k: a[k] for k in a if a[k] != b.get(k) }
 			b_diff = { k: b[k] for k in b if b[k] != a.get(k) }
 
-			raise ValueError("Survey fields do not match for the same SourcePrimaryKey (%s):\n%s\n%s" % (primary_key, a_diff, b_diff))
+			raise ValueError("Survey fields do not match for the same SourcePrimaryKey (%s):\n%s\n%s" % (row.get('SourcePrimaryKey'), a_diff, b_diff))
 
 @lru_cache(maxsize=None)
 def get_proj_transformer(projection_ref):
