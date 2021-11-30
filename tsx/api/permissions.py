@@ -17,8 +17,8 @@ def is_custodian_of_source(user_id, source_id):
 		"""SELECT 1 FROM user_source
 		WHERE user_id = :user_id
 		AND source_id = :source_id""", {
-		'source_id': resource_id,
-		'user_id': user.id
+		'source_id': source_id,
+		'user_id': user_id
 		}).fetchall()) > 0
 
 def permitted(user, action, resource_type, resource_id=None):
