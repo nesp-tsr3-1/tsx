@@ -84,6 +84,7 @@ export default {
             return api.updateUserRole(this.user.id, this.clientRole).then(() => {
               this.serverRole = this.clientRole
               this.state = 'init'
+              this.loadPrograms()
             })
           } else {
             this.clientRole = this.serverRole
