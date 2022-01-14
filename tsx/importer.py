@@ -752,7 +752,7 @@ class Importer:
 
 	def get_projection_ref_uncached(self, session, projection_name_or_ref):
 		epsg_srid = session.query(ProjectionName.epsg_srid).filter(ProjectionName.name == projection_name_or_ref).one_or_none()
-		return "EPSG:%s" % epsg_srid if epsg_srid else projection_name_or_ref
+		return "EPSG:%s" % epsg_srid[0] if epsg_srid else projection_name_or_ref
 
 	def get_cached(self, group, key, fn, cacheNone = False):
 		if group not in self.cache:
