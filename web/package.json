@@ -21,7 +21,8 @@
     "vue": "^3.2.6",
     "vue-autofocus-directive": "^1.0.4",
     "vue-router": "^4.0.11",
-    "vue-simple-spinner": "^1.2.10"
+    "vue-simple-spinner": "^1.2.10",
+    "vue-tippy": "^6.0.0-alpha.43"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^1.6.0",

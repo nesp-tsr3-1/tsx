@@ -103,15 +103,9 @@
           <div class="tile is-parent is-vertical" v-show="!showFullMap">
             <div class="tile is-child card">
               <h4 class="has-text-black">Main index</h4>
-              <span class="info-icon icon"
-                data-tippy-html="#popup-main-index"
-                data-tippy-interactive="true"
-                data-tippy-arrow="true"
-                data-tippy-placement="left"
-                old-v-tippy>
-                <i class="far fa-question-circle"></i>
-              </span>
-              <div id="popup-main-index" style="display: none" old-v-tippy-html>
+              <tippy class="info-icon icon" arrow interactive placement="left">
+                <template #default><i class="far fa-question-circle"></i></template>
+                <template #content>
                   <div class="popup-content">
                       <p>The index shows the average change in populations compared to a base year. It shows a relative change and not population numbers themselves. At the reference year, the index gets an index score of one. A score of 1.2 would mean a 20% increase on average compared to the reference year, while a score of 0.8 would mean a 20% decrease on average compared to the reference year.</p>
                       <p>Check this index:</p>
@@ -124,7 +118,8 @@
                         <li>Go to <b>Download CSV</b> to get the aggregated data used to calculate this index.</li>
                       </ol>
                   </div>
-              </div>
+                </template>
+              </tippy>
               <div class="plot-container" v-show="!noLPI">
                 <canvas ref='lpiplot'></canvas>
               </div>
@@ -134,59 +129,44 @@
               </div>
             </div>
             <div class="tile is-child card">
-                <h4 class="has-text-black">Monitoring consistency</h4>
-                <span class="info-icon icon"
-                data-tippy-html="#popup-monitoring-consistency"
-                data-tippy-interactive="true"
-                data-tippy-arrow="true"
-                data-tippy-placement="left"
-                old-v-tippy>
-                  <i class="far fa-question-circle"></i>
-                </span>
-                <div id="popup-monitoring-consistency" style="display: none" old-v-tippy-html>
-                    <div class="popup-content">
-                      This dot plot shows the particular years for which monitoring data were available. Each row represents a time series where a species/subspecies was monitored with a consistent method at a single site. The dots represent count values for the metric used to quantify the species/subspecies while zeros indicate absences (non-detections) of those species at the site.
-                    </div>
-                </div>
-                <div class="plot-container">
-                  <canvas ref='dotplot'></canvas>
-                </div>
+              <h4 class="has-text-black">Monitoring consistency</h4>
+              <tippy class="info-icon icon" arrow interactive placement="left">
+                <template #default><i class="far fa-question-circle"></i></template>
+                <template #content>
+                  <div class="popup-content">
+                    This dot plot shows the particular years for which monitoring data were available. Each row represents a time series where a species/subspecies was monitored with a consistent method at a single site. The dots represent count values for the metric used to quantify the species/subspecies while zeros indicate absences (non-detections) of those species at the site.
+                  </div>
+                </template>
+              </tippy>
+              <div class="plot-container">
+                <canvas ref='dotplot'></canvas>
+              </div>
             </div>
           </div>
           <div class="tile is-parent is-vertical">
             <div class="tile is-child card map-tile">
               <h4 class="has-text-black">Spatial representativeness</h4>
-              <span class="info-icon icon"
-                data-tippy-html="#popup-spatial-rep"
-                data-tippy-interactive="true"
-                data-tippy-arrow="true"
-                data-tippy-placement="left"
-                old-v-tippy>
-                <i class="far fa-question-circle"></i>
-              </span>
-              <div id="popup-spatial-rep" style="display: none" old-v-tippy-html>
+              <tippy class="info-icon icon" arrow interactive placement="left">
+                <template #default><i class="far fa-question-circle"></i></template>
+                <template #content>
                   <div class="popup-content">
                     This map shows where threatened species data to calculate this index are recorded in Australia. Light blue indicates less data (fewer sites monitored), pink indicates more data (more sites monitored).
                   </div>
-              </div>
+                </template>
+              </tippy>
               <div id='intensityplot' ref='intensityplot' class='heatmap-div'></div>
               <spinner size='medium' v-show='loadingMap' class='heatmap-spinner'></spinner>
             </div>
             <div class="tile is-child card" v-show="!showFullMap">
               <h4 class="has-text-black">Time series and species accumulation</h4>
-              <span class="info-icon icon"
-                data-tippy-html="#popup-summary-plot"
-                data-tippy-interactive="true"
-                data-tippy-arrow="true"
-                data-tippy-placement="left"
-                old-v-tippy>
-                <i class="far fa-question-circle"></i>
-              </span>
-              <div id="popup-summary-plot" style="display: none" old-v-tippy-html>
+              <tippy class="info-icon icon" arrow interactive placement="left">
+                <template #default><i class="far fa-question-circle"></i></template>
+                <template #content>
                   <div class="popup-content">
                     This plot shows the number of species/subspecies (in blue) and the number of time series (in green) used to calculate the index for each year.
                   </div>
-              </div>
+                </template>
+              </tippy>
               <div class="plot-container">
                 <canvas ref='sumplot'></canvas>
               </div>
@@ -267,6 +247,7 @@ import L from 'leaflet'
 import HeatmapOverlay from 'heatmap.js/plugins/leaflet-heatmap/leaflet-heatmap.js'
 import 'leaflet-easybutton/src/easy-button.js'
 import { min, max, pluck, uniq } from '../util.js'
+import { Tippy } from 'vue-tippy'
 
 // Generated with:
 // SELECT REPLACE(REPLACE(JSON_ARRAYAGG(o), """", "'"), "], ", "],\n") FROM (SELECT DISTINCT JSON_ARRAY(taxonomic_group, group_name, subgroup_name) AS o FROM taxon JOIN taxon_group ON taxon.id = taxon_id ORDER BY taxonomic_group, group_name, subgroup_name) t\G
@@ -390,7 +371,8 @@ const years = [
 export default {
   name: 'TSX',
   components: {
-    Spinner
+    Spinner,
+    Tippy
   },
   data () {
     var data = {
