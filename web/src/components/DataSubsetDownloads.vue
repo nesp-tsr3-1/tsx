@@ -350,6 +350,16 @@ export default {
                     // Force labels to always show one decimal place
                     return (+label).toFixed(1)
                   }
+                },
+                title: {
+                  display: true,
+                  text: 'Index (1980 = 1)'
+                }
+              },
+              xAxis: {
+                title: {
+                  display: true,
+                  text: 'Year'
                 }
               }
             }
