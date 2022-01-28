@@ -116,6 +116,7 @@ def delete_source(source_id=None):
 	db_session.execute("""DELETE FROM user_source WHERE source_id = :source_id""", { 'source_id': source_id })
 	db_session.execute("""DELETE FROM data_import WHERE source_id = :source_id""", { 'source_id': source_id })
 	db_session.execute("""DELETE FROM source WHERE id = :source_id""", { 'source_id': source_id })
+	remove_orphaned_monitoring_programs()
 	db_session.commit()
 
 	return "OK", 200
@@ -350,6 +351,9 @@ def create_or_update_source(source_id=None):
 		db_session.execute("""INSERT INTO user_source (user_id, source_id) VALUES (:user_id, :source_id)""",
 				{ 'source_id': source.id, 'user_id': user.id })
 
+	else:
+		remove_orphaned_monitoring_programs()
+
 	db_session.commit()
 
 	return jsonify(source_to_json(source)), 200 if source_id else 201
@@ -566,6 +570,10 @@ def update_import(import_id=None):
 	process_import_async(import_id, new_status)
 
 	return jsonify(data_import_json(data_import))
+
+def remove_orphaned_monitoring_programs():
+	db_session.execute("""DELETE FROM user_program_manager WHERE monitoring_program_id NOT IN (SELECT monitoring_program_id FROM source WHERE monitoring_program_id IS NOT NULL)""")
+	db_session.execute("""DELETE FROM monitoring_program WHERE id NOT IN (SELECT monitoring_program_id FROM source WHERE monitoring_program_id IS NOT NULL)""")
 
 @bp.route('/imports/<int:import_id>/approve', methods = ['POST'])
 def approve_import(import_id=None):
