@@ -14,10 +14,11 @@
       <p class="table is-fullwidth is-striped is-hoverable" v-if="sources.length == 0">
         No datasets to show.
       </p>
-      <p v-if="sources.length > 0" class="title is-6">
-        Showing {{sources.length}} datasets.
-      </p>
-      <table class="table is-fullwidth is-striped is-hoverable" v-if="sources.length > 0">
+      <div v-if="sources.length > 0" class="columns">
+        <p class="column title is-6">Showing {{filteredSources.length}} / {{sources.length}} datasets</p>
+        <input class="column input" type="text" placeholder="Search datasets" v-model="searchText">
+      </div>
+      <table class="table is-fullwidth is-striped is-hoverable" v-if="filteredSources.length > 0">
         <thead>
           <tr>
             <th v-on:click="sortBy('description')">Description {{sortIcon('description')}}</th>
@@ -43,7 +44,11 @@
 
 <script>
 import * as api from '../api.js'
-import { humanizeStatus, formatDateTime } from '../util.js'
+import { humanizeStatus, formatDateTime, debounce } from '../util.js'
+
+function normalize(x) {
+  return x.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+}
 
 export default {
   name: 'sourceList',
@@ -54,7 +59,9 @@ export default {
       sort: {
         key: 'time_created',
         asc: false
-      }
+      },
+      searchText: '',
+      debouncedSearchText: ''
     }
   },
   created() {
@@ -99,14 +106,23 @@ export default {
     }
   },
   computed: {
+    filteredSources() {
+      let search = normalize(this.debouncedSearchText)
+      return search ? this.sources.filter(s => normalize(s.description).indexOf(search) != -1) : this.sources
+    },
     sortedSources() {
       let key = this.sort.key
-      let result = this.sources.slice().sort((a, b) => (a[key] || '').localeCompare(b[key] || ''))
+      let result = this.filteredSources.slice().sort((a, b) => (a[key] || '').localeCompare(b[key] || ''))
       if(!this.sort.asc) {
         result.reverse()
       }
       return result
     }
+  },
+  watch: {
+    searchText: debounce(function(searchText) {
+      this.debouncedSearchText = searchText
+    }, 500)
   },
   props: {
     completed: Boolean

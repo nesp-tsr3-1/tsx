@@ -155,3 +155,15 @@ export function formatDateTime(str) {
   }
   return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
 }
+
+export function debounce(fn, delay) {
+  var timerId
+  return function() {
+    clearTimeout(timerId)
+    var args = arguments
+    var self = this
+    timerId = setTimeout(function() {
+      fn.apply(self, args)
+    }, delay)
+  }
+}
