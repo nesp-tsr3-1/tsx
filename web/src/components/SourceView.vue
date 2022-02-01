@@ -68,6 +68,10 @@
                 <h4 class="title is-4">Downloads</h4>
                 <div>
                   <button type="button" class="button is-primary" style="margin: 0.5em 0;"
+                  v-on:click="downloadRawData">Download Raw Data (CSV format)</button>
+                </div>
+                <div>
+                  <button type="button" class="button is-primary" style="margin: 0.5em 0;"
                   v-on:click="downloadTimeSeries">Download Time Series (CSV format)</button>
                 </div>
                 <div>
@@ -205,6 +209,9 @@ export default {
     },
     downloadTimeSeries() {
       window.location = api.dataSubsetDownloadURL('time_series', { source_id: this.sourceId })
+    },
+    downloadRawData() {
+      window.location = api.dataSubsetDownloadURL('raw_data', { source_id: this.sourceId })
     },
     generateTrend: function() {
       this.trendStatus = 'processing'

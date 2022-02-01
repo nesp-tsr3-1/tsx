@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request, send_file, session, Response
 import csv
 from uuid import uuid4
 from tsx.api.util import db_session, get_user, get_roles
+from tsx.api.permissions import permitted
 from tsx.config import data_dir
 import os
 from threading import Thread, Lock
@@ -119,6 +120,8 @@ def subset_sql_params():
 def query_subset_raw_data_sql_and_params():
     where_conditions, having_conditions, params = subset_sql_params()
 
+    params['redact_location'] = ('source_id' not in params) or not permitted(get_user(), 'import_data', 'source', params['source_id'])
+
     sql = """
         SELECT
             (SELECT description FROM source_type WHERE id = source.source_type_id) AS SourceType,
@@ -151,8 +154,8 @@ def query_subset_raw_data_sql_and_params():
             t1_survey.area_in_m2 AS `AreaInM2`,
             t1_survey.length_in_km AS LengthInKm,
             t1_site.name AS SiteName,
-            ST_Y(t1_survey.coords) AS Y,
-            ST_X(t1_survey.coords) AS X,
+            IF(:redact_location, 'REDACTED', ST_Y(t1_survey.coords)) as Y,
+            IF(:redact_location, 'REDACTED', ST_X(t1_survey.coords)) as X,
             'GDA94' AS ProjectionReference,
             t1_survey.positional_accuracy_in_m AS PositionalAccuracyInM,
             t1_survey.comments AS SurveyComments,
