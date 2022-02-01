@@ -103,7 +103,13 @@ def get_source(source_id=None):
 	if source == None:
 		return "Not found", 404
 
-	return jsonify(source_to_json(source)), 200
+	result = source_to_json(source)
+
+	result['can_delete'] = permitted(user, 'delete', 'source', source_id)
+	result['can_import_data'] = permitted(user, 'import_data', 'source', source_id)
+	result['can_manage_custodians'] = permitted(user, 'manage_custodians', 'source', source_id)
+
+	return jsonify(result), 200
 
 
 @bp.route('/data_sources/<int:source_id>', methods = ['DELETE'])
@@ -243,7 +249,7 @@ def delete_source_processing_notes(source_id=None, note_id=None):
 def get_source_custodians(source_id=None):
 	user = get_user()
 
-	if not permitted(user, 'get', 'source', source_id):
+	if not permitted(user, 'manage_custodians', 'source', source_id):
 		return "Not authorized", 401
 
 	source = db_session.query(Source).get(source_id) if source_id else None
@@ -269,7 +275,7 @@ auto_create_custodians = True
 def create_source_custodian(source_id=None):
 	user = get_user()
 
-	if not permitted(user, 'update', 'source', source_id):
+	if not permitted(user, 'manage_custodians', 'source', source_id):
 		return "Not authorized", 401
 
 	body = request.json
@@ -307,7 +313,7 @@ def create_source_custodian(source_id=None):
 def delete_source_custodian(source_id=None, user_id=None):
 	user = get_user()
 
-	if not permitted(user, 'update', 'source', source_id):
+	if not permitted(user, 'manage_custodians', 'source', source_id):
 		return "Not authorized", 401
 
 	db_session.execute("""DELETE FROM user_source

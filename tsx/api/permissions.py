@@ -33,13 +33,13 @@ def permitted(user, action, resource_type, resource_id=None):
 		if 'Program manager' in user_roles:
 			if action in ('create', 'list'):
 				return True
-			if action in ('get', 'update', 'delete') and is_program_manager_of_source(user.id, resource_id):
+			if action in ('get', 'update') and is_program_manager_of_source(user.id, resource_id):
 				return True
 
 		if 'Custodian' in user_roles:
 			if action in ('create', 'list'):
 				return True
-			if action in ('get', 'update', 'delete') and is_custodian_of_source(user.id, resource_id):
+			if action in ('get', 'update', 'delete', 'import_data', 'manage_custodians') and is_custodian_of_source(user.id, resource_id):
 				return True
 				
 

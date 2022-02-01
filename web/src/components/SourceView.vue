@@ -46,86 +46,94 @@
             </div>
           </div>
 
-          <hr>
+          <div v-if="manageCustodiansPermitted">
+            <hr>
 
-          <div class="columns">
-            <div class="column">
-              <h4 class="title is-4">Custodians</h4>
-              <p class="content">
-                Custodians are users who have access to import data and edit details for this dataset.
-              </p>
-              <source-custodians v-bind:sourceId="sourceId"></source-custodians>
-            </div>
-          </div>
-
-          <hr v-if="showDownloads">
-
-          <div class="columns" v-if="showDownloads">
-            <div class="column">
-              <h4 class="title is-4">Downloads</h4>
-              <div>
-                <button type="button" class="button is-primary" style="margin: 0.5em 0;"
-                v-on:click="downloadTimeSeries">Download Time Series (CSV format)</button>
+            <div class="columns">
+              <div class="column">
+                <h4 class="title is-4">Custodians</h4>
+                <p class="content">
+                  Custodians are users who have access to import data and edit details for this dataset.
+                </p>
+                <source-custodians v-bind:sourceId="sourceId"></source-custodians>
               </div>
-              <div>
-                <button type="button" class="button is-primary" style="margin: 0.5em 0;"
-                  v-bind:disabled="trendStatus == 'processing'" v-on:click="generateTrend">Download Population Trend (TXT format)</button>
+            </div>
+          </div>
+
+          <div v-if="showDownloads">
+            <hr>
+
+            <div class="columns">
+              <div class="column">
+                <h4 class="title is-4">Downloads</h4>
+                <div>
+                  <button type="button" class="button is-primary" style="margin: 0.5em 0;"
+                  v-on:click="downloadTimeSeries">Download Time Series (CSV format)</button>
+                </div>
+                <div>
+                  <button type="button" class="button is-primary" style="margin: 0.5em 0;"
+                    v-bind:disabled="trendStatus == 'processing'" v-on:click="generateTrend">Download Population Trend (TXT format)</button>
+                </div>
+                <div v-if="trendStatus == 'processing'">
+                  Please wait while the population trend is generated. This may take several minutes.
+                  <spinner size='small' style='display: inline-block;'></spinner>
+                </div>
+                <div v-if="trendStatus == 'error'">
+                  An error occurred while generating the trend.
+                </div>
+                <p style="font-style: italic; margin-top: 1em;">Note: Population trends are generated using the Living Planet Index methodology, which is designed for producing composite trends, not single-species trends.</p>
               </div>
-              <div v-if="trendStatus == 'processing'">
-                Please wait while the population trend is generated. This may take several minutes.
-                <spinner size='small' style='display: inline-block;'></spinner>
+            </div>
+          </div>
+
+          <div v-if="importDataPermitted">
+            <hr>
+
+            <div class="columns">
+              <div class="column">
+                <h4 class="title is-4">Data Processing Notes</h4>
+
+                <processing-notes v-bind:sourceId="sourceId"></processing-notes>
               </div>
-              <div v-if="trendStatus == 'error'">
-                An error occurred while generating the trend.
+            </div>
+
+            <hr>
+
+            <div class="columns">
+              <div class="column">
+                <h4 class="title is-4">Import History</h4>
+
+                <import-list v-bind:sourceId="sourceId" ref="importList"></import-list>
               </div>
-              <p style="font-style: italic; margin-top: 1em;">Note: Population trends are generated using the Living Planet Index methodology, which is designed for producing composite trends, not single-species trends.</p>
             </div>
-          </div>
 
-          <hr>
+            <hr>
 
-          <div class="columns">
-            <div class="column">
-              <h4 class="title is-4">Data Processing Notes</h4>
-
-              <processing-notes v-bind:sourceId="sourceId"></processing-notes>
+            <div class="columns">
+              <div class="column">
+                <h4 class="title is-4">Import Data</h4>
+              </div>
             </div>
+
+            <import-data v-bind:sourceId="sourceId" v-on:data-import-updated="handleDataImportUpdated"></import-data>
           </div>
 
-          <hr>
+          <div v-if="deletePermitted">
+            <hr>
 
-          <div class="columns">
-            <div class="column">
-              <h4 class="title is-4">Import History</h4>
-
-              <import-list v-bind:sourceId="sourceId" ref="importList"></import-list>
+            <h4 class="title is-6">Delete Dataset</h4>
+            <p class="content">
+              Deleting this dataset will remove it from the index and cannot be undone. All previously imported data and processing notes will be deleted.
+            </p>
+            <p class="content">
+              If you wish to update your dataset, simply import an new file using the 'Import Data' section above.
+            </p>
+            <div class="field">
+              <input type="checkbox" id="checkbox" v-model="enableDelete">
+              <label for="checkbox"> I understand and wish to delete this dataset</label>
             </div>
+            <button class='button is-danger' :disabled="!enableDelete" v-on:click='deleteSource'>Delete this dataset</button>
           </div>
-
-          <hr>
-
-          <div class="columns">
-            <div class="column">
-              <h4 class="title is-4">Import Data</h4>
-            </div>
-          </div>
-
-          <import-data v-bind:sourceId="sourceId" v-on:data-import-updated="handleDataImportUpdated"></import-data>
-
-          <hr>
-
-          <h4 class="title is-6">Delete Dataset</h4>
-          <p class="content">
-            Deleting this dataset will remove it from the index and cannot be undone. All previously imported data and processing notes will be deleted.
-          </p>
-          <p class="content">
-            If you wish to update your dataset, simply import an new file using the 'Import Data' section above.
-          </p>
-          <div class="field">
-            <input type="checkbox" id="checkbox" v-model="enableDelete">
-            <label for="checkbox"> I understand and wish to delete this dataset</label>
-          </div>
-          <button class='button is-danger' :disabled="!enableDelete" v-on:click='deleteSource'>Delete this dataset</button>
 
         </div>
       </div>
@@ -169,6 +177,15 @@ export default {
     hasMonitoringProgram() {
       let source = this.source
       return !!source.monitoring_program
+    },
+    deletePermitted() {
+      return this.source && this.source.can_delete
+    },
+    importDataPermitted() {
+      return this.source && this.source.can_import_data
+    },
+    manageCustodiansPermitted() {
+      return this.source && this.source.can_manage_custodians
     }
   },
   methods: {
