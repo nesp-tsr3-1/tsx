@@ -63,6 +63,7 @@ def subset_stats():
             COUNT(DISTINCT survey_id) AS survey_count,
             COUNT(DISTINCT sighting_id) AS sighting_count,
             COUNT(DISTINCT taxon_id) AS taxon_count,
+            COUNT(DISTINCT source_id) AS source_count,
             COUNT(DISTINCT site_id, taxon_id, source_id, unit_id, search_type_id) AS time_series_count
         FROM t
     """.format(

@@ -70,7 +70,8 @@
           <div v-if="stats">
             Selected data subset contains
               {{formatQuantity(stats.sighting_count, "individual survey count")}},
-              {{formatQuantity(stats.taxon_count, "taxon", "taxa")}} and approx.
+              {{formatQuantity(stats.taxon_count, "taxon", "taxa")}},
+              {{formatQuantity(stats.source_count, "dataset")}} and approx.
               {{formatQuantity(stats.time_series_count, "time series", "time series")}}.
           </div>
           <div v-else style="font-style: italic;">
