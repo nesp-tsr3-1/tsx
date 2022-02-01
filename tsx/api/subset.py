@@ -43,7 +43,11 @@ def subset_stats():
             t1_survey.id AS survey_id,
             t1_sighting.id AS sighting_id,
             t1_sighting.taxon_id,
-            MIN(region.state) AS State
+            MIN(region.state) AS State,
+            t1_sighting.unit_id,
+            t1_survey.site_id,
+            t1_survey.source_id,
+            t1_site.search_type_id
         FROM t1_survey STRAIGHT_JOIN region_subdiv
         JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id
         JOIN taxon ON t1_sighting.taxon_id = taxon.id
@@ -58,7 +62,8 @@ def subset_stats():
         SELECT
             COUNT(DISTINCT survey_id) AS survey_count,
             COUNT(DISTINCT sighting_id) AS sighting_count,
-            COUNT(DISTINCT taxon_id) AS taxon_count
+            COUNT(DISTINCT taxon_id) AS taxon_count,
+            COUNT(DISTINCT site_id, taxon_id, source_id, unit_id, search_type_id) AS time_series_count
         FROM t
     """.format(
         where_clause = " AND ".join(where_conditions) if where_conditions else "TRUE",
