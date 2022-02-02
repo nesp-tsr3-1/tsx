@@ -108,8 +108,10 @@ def subset_sql_params():
             where_conditions.append("COALESCE(intensive_management.`grouping`, 'No known management') = 'No known management'")
 
     if 'taxon_id' in args:
-        where_conditions.append('taxon.id = :taxon_id')
-        params['taxon_id'] = args['taxon_id']
+        taxon_list = args['taxon_id'].split(',')
+        param_names = ['taxon_id_%s' % i for i in range(0, len(taxon_list))]
+        params.update(dict(zip(param_names, taxon_list)))
+        where_conditions .append('taxon.id IN (%s)' % ",".join(":" + p for p in param_names))
 
     if 'source_id' in args:
         where_conditions.append('source.id = :source_id')

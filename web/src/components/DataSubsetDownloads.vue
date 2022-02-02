@@ -39,15 +39,39 @@
               <div class="field">
                 <label class="label">Species</label>
                 <div class="control">
-                  <div class="select">
-                    <select v-model="criteria.species">
-                      <option v-bind:value="null" selected>All Species</option>
-                      <option v-for="sp in options.species" v-bind:value="sp">
-                        {{ sp.common_name || sp.scientific_name }} ({{sp.id}})
-                      </option>
-                    </select>
-                  </div>
+                <Multiselect
+                      mode="multiple"
+                      v-model="criteria.species"
+                      :options="options.species"
+                      :searchable="true"
+                      placeholder="All species"
+                      track-by="label"
+                      value-prop="id"
+                      label="label"
+                      />
                 </div>
+                <div class="buttons" style="margin-top: 1em;">
+                  <button class="button is-small is-light" v-on:click="importSpeciesList">Import List</button>
+                  <button v-if="criteria.species.length" class="button is-small is-light" v-on:click="exportSpeciesList">Export List</button>
+                </div>
+                <table style="border: 1px solid #ccc;" class="table is-narrow" v-if="criteria.species.length">
+                  <thead>
+                    <tr>
+                      <th>Common name</th>
+                      <th>Scientific name</th>
+                      <th>ID</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="speciesId in criteria.species">
+                      <td>{{speciesById(speciesId).common_name}}</td>
+                      <td>{{speciesById(speciesId).scientific_name}}</td>
+                      <td>{{speciesId}}</td>
+                      <td><button class="delete is-small" style="margin-top: 4px" v-on:click="deselectSpecies(speciesId)"></button></td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
               
               <div class="field">
@@ -120,7 +144,8 @@
 <script>
 import * as api from '../api.js'
 import Spinner from '../../node_modules/vue-simple-spinner/src/components/Spinner.vue'
-// import Spinner from 'vue-simple-spinner'
+import Multiselect from '@vueform/multiselect'
+
 import {
   Chart,
   LineElement,
@@ -160,7 +185,8 @@ Chart.register(
 export default {
   name: 'DataSubsetDownloads',
   components: {
-    Spinner
+    Spinner,
+    Multiselect
   },
   data () {
     return {
@@ -184,7 +210,7 @@ export default {
       criteria: {
         state: null,
         monitoringPrograms: [],
-        species: null,
+        species: [],
         intensiveManagement: null
       },
       changeCounter: 0, // Incremented every time criteria are changed
@@ -228,7 +254,7 @@ export default {
         this.criteria.monitoringPrograms = programs // select all by default
       }),
       api.species({ q: 't1_present' }).then((species) => {
-        this.options.species = species
+        this.options.species = species.map(sp => ({ ...sp, label: (sp.common_name || sp.scientific_name) + " (" + sp.id + ")" }))
       })
     ]).catch((error) => {
       console.log(error)
@@ -236,6 +262,57 @@ export default {
     })
   },
   methods: {
+    speciesById: function(id) {
+      return this.options.species.filter(x => x.id === id)[0]
+    },
+    deselectSpecies: function(id) {
+      this.criteria.species = this.criteria.species.filter(x => x !== id)
+    },
+    importSpeciesList: function() {
+      var self = this
+      var input = document.createElement("input")
+      input.type = "file"
+      input.accept = "text/plain, text/csv"
+      input.addEventListener("change", function(evt) {
+        var file = input.files[0]
+        var reader = new FileReader()
+        reader.readAsText(file)
+        reader.onload = function() {
+          self.processSpeciesList(reader.result)
+        }
+      });
+      document.body.append(input)
+      input.click()
+    },
+    processSpeciesList: function(text) {
+      var ids = text
+        .split(/[\n\r]/)
+        .flatMap(x => x.split(","))
+        .map(x => x.trim())
+        .filter(x => x.match(/^[pmu_]+[0-9]+$/))
+      this.criteria.species = ids
+    },
+    exportSpeciesList: function() {
+      function sanitise(x) {
+        return x.replace(/[,\n\"]/g, ' ')
+      }
+
+      var csv = this.criteria.species.map(id => {
+        var sp = this.speciesById(id)
+        return sanitise(sp.common_name || "") + "," + sanitise(sp.scientific_name || "") + "," + (sp.id)
+      }).join("\n")
+
+      // var csv = this.criteria.species.join("\n")
+
+      var data = new Blob([csv], {type: 'text/csv'})
+      var url = window.URL.createObjectURL(data)
+      var link = document.createElement("a")
+      link.href = url
+      link.download = "species-list.csv"
+      document.body.append(link)
+      link.click()
+      window.URL.revokeObjectURL(url)
+    },
     downloadRawData: function() {
       var params = this.buildDownloadParams()
 
@@ -382,8 +459,8 @@ export default {
         params.intensive_management = this.criteria.intensiveManagement
       }
 
-      if(this.criteria.species) {
-        params.taxon_id = this.criteria.species.id
+      if(this.criteria.species && this.criteria.species.length > 0) {
+        params.taxon_id = this.criteria.species.join(",")
       }
 
       return params
@@ -402,7 +479,7 @@ export default {
 }
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
-
+<style>
+.multiselect-search { height: 100%; } /* Fixes alignment issue with multiselect component */
 </style>
+<style src="@vueform/multiselect/themes/default.css"></style>
