@@ -8,88 +8,85 @@
           <h3 class="title is-5">1. Subset Criteria</h3>
 
           <p style="margin-bottom: 1em;">Data that meets <em>all</em> of the criteria selected below will be included in the subset download.</p>
+          <fieldset v-bind:disabled="submitting">
+            <div class="field">
+              <label class="label">State/Territory</label>
+              <div class="control">
+                <div class="select">
+                  <select v-model="criteria.state">
+                    <option v-bind:value="null" selected>All States and Territories</option>
+                    <option v-for="s in options.state" v-bind:value="s">
+                      {{ s }}
+                    </option>
+                    <option>South Australia</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="field">
+              <label class="label">Programs</label>
+              <div class="control">
+                <div v-for="program in options.monitoringPrograms">
+                  <label><input type="checkbox" v-bind:value="program" v-model="criteria.monitoringPrograms"> {{program.description}}</label>
+                </div>
+                <p style="margin-top: 1em; font-style: italic;" v-if="criteria.monitoringPrograms.length == 0">
+                  At least one program must be selected
+                </p>
+              </div>
+            </div>
+            <div class="field">
+              <label class="label">Species</label>
+              <div class="control">
+              <Multiselect
+                    mode="multiple"
+                    v-model="criteria.species"
+                    :options="options.species"
+                    :searchable="true"
+                    placeholder="All species"
+                    track-by="label"
+                    value-prop="id"
+                    label="label"
+                    />
+              </div>
+              <div class="buttons" style="margin-top: 1em;">
+                <button class="button is-small is-light" v-on:click="importSpeciesList">Import List</button>
+                <button v-if="criteria.species.length" class="button is-small is-light" v-on:click="exportSpeciesList">Export List</button>
+              </div>
+              <table style="border: 1px solid #ccc;" class="table is-narrow" v-if="criteria.species.length">
+                <thead>
+                  <tr>
+                    <th>Common name</th>
+                    <th>Scientific name</th>
+                    <th>ID</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="speciesId in criteria.species">
+                    <td>{{speciesById(speciesId).common_name}}</td>
+                    <td>{{speciesById(speciesId).scientific_name}}</td>
+                    <td>{{speciesId}}</td>
+                    <td><button class="delete is-small" style="margin-top: 4px" v-on:click="deselectSpecies(speciesId)"></button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
 
-          <form>
-            <fieldset v-bind:disabled="submitting">
-              <div class="field">
-                <label class="label">State/Territory</label>
-                <div class="control">
-                  <div class="select">
-                    <select v-model="criteria.state">
-                      <option v-bind:value="null" selected>All States and Territories</option>
-                      <option v-for="s in options.state" v-bind:value="s">
-                        {{ s }}
-                      </option>
-                      <option>South Australia</option>
-                    </select>
-                  </div>
+            <div class="field">
+              <label class="label">Intensive Management</label>
+              <div class="control">
+                <div class="select">
+                  <select v-model="criteria.intensiveManagement">
+                    <option v-bind:value="null" selected>All sites (managed & unmanaged)</option>
+                    <option>Any management</option>
+                    <option>Predator-free</option>
+                    <option>Translocation</option>
+                    <option>No known management</option>
+                  </select>
                 </div>
               </div>
-              <div class="field">
-                <label class="label">Programs</label>
-                <div class="control">
-                  <div v-for="program in options.monitoringPrograms">
-                    <label><input type="checkbox" v-bind:value="program" v-model="criteria.monitoringPrograms"> {{program.description}}</label>
-                  </div>
-                  <p style="margin-top: 1em; font-style: italic;" v-if="criteria.monitoringPrograms.length == 0">
-                    At least one program must be selected
-                  </p>
-                </div>
-              </div>
-              <div class="field">
-                <label class="label">Species</label>
-                <div class="control">
-                <Multiselect
-                      mode="multiple"
-                      v-model="criteria.species"
-                      :options="options.species"
-                      :searchable="true"
-                      placeholder="All species"
-                      track-by="label"
-                      value-prop="id"
-                      label="label"
-                      />
-                </div>
-                <div class="buttons" style="margin-top: 1em;">
-                  <button class="button is-small is-light" v-on:click="importSpeciesList">Import List</button>
-                  <button v-if="criteria.species.length" class="button is-small is-light" v-on:click="exportSpeciesList">Export List</button>
-                </div>
-                <table style="border: 1px solid #ccc;" class="table is-narrow" v-if="criteria.species.length">
-                  <thead>
-                    <tr>
-                      <th>Common name</th>
-                      <th>Scientific name</th>
-                      <th>ID</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="speciesId in criteria.species">
-                      <td>{{speciesById(speciesId).common_name}}</td>
-                      <td>{{speciesById(speciesId).scientific_name}}</td>
-                      <td>{{speciesId}}</td>
-                      <td><button class="delete is-small" style="margin-top: 4px" v-on:click="deselectSpecies(speciesId)"></button></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              
-              <div class="field">
-                <label class="label">Intensive Management</label>
-                <div class="control">
-                  <div class="select">
-                    <select v-model="criteria.intensiveManagement">
-                      <option v-bind:value="null" selected>All sites (managed & unmanaged)</option>
-                      <option>Any management</option>
-                      <option>Predator-free</option>
-                      <option>Translocation</option>
-                      <option>No known management</option>
-                    </select>
-                  </div>
-                </div>
-              </div> 
-            </fieldset>
-          </form>
+            </div>
+          </fieldset>
           <hr>
           <div v-if="stats">
             Selected data subset contains
