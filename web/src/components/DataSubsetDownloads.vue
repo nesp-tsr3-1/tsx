@@ -187,7 +187,7 @@ export default {
       return this.status === 'submitting'
     },
     enableDownload: function() {
-      return this.criteria.monitoringPrograms.length > 0
+      return this.criteria.monitoringPrograms.length > 0 && this.stats && this.stats.sighting_count > 0
     }
   },
   watch: {
