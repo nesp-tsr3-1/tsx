@@ -74,9 +74,11 @@
                   <button type="button" class="button is-primary" style="margin: 0.5em 0;"
                   v-on:click="downloadTimeSeries">Download Time Series (CSV format)</button>
                 </div>
-                <div>
+                <hr>
+
+                <div v-if="trendStatus == 'idle'">
                   <button type="button" class="button is-primary" style="margin: 0.5em 0;"
-                    v-bind:disabled="trendStatus == 'processing'" v-on:click="generateTrend">Download Population Trend (TXT format)</button>
+                    v-on:click="generateTrend">Generate Population Trend</button>
                 </div>
                 <div v-if="trendStatus == 'processing'">
                   Please wait while the population trend is generated. This may take several minutes.
@@ -85,7 +87,14 @@
                 <div v-if="trendStatus == 'error'">
                   An error occurred while generating the trend.
                 </div>
-                <p style="font-style: italic; margin-top: 1em;">Note: Population trends are generated using the Living Planet Index methodology, which is designed for producing composite trends, not single-species trends.</p>
+                <div v-if="trendStatus == 'ready'">
+                  <h4 class="title is-6" style="margin: 1em 0;">Population Trend</h4>
+                  <p style="margin: 1em 0; font-style: italic;">Note: This trend has been generated using the Living Planet Index methodology, which is designed for producing composite trends, not single-species trends.</p>
+                  <p style="margin: 1em 0">
+                    <button type="button" class="button is-primary" style="margin: 0.5em 0;" v-on:click="downloadTrend">Download Population Trend (TXT format)</button>
+                  </p>
+                  <canvas v-show="showPlot" ref="plot" style="height: 10em;"></canvas>
+                </div>
               </div>
             </div>
           </div>
@@ -152,6 +161,7 @@ import ImportData from './ImportData.vue'
 import ProcessingNotes from './ProcessingNotes.vue'
 import SourceCustodians from './SourceCustodians.vue'
 import Spinner from '../../node_modules/vue-simple-spinner/src/components/Spinner.vue'
+import { plotTrend } from '../plotTrend'
 
 export default {
   name: 'SourceView',
@@ -170,7 +180,8 @@ export default {
       enableDelete: false,
       showDownloads: false,
       trendStatus: 'idle',
-      trendDownloadURL: null
+      trendDownloadURL: null,
+      showPlot: false
     }
   },
   computed: {
@@ -226,8 +237,9 @@ export default {
     checkTrendStatus: function(id) {
       api.dataSubsetTrendStatus(id).then(x => {
         if(x.status == 'ready') {
-          this.trendStatus = 'idle'
-          window.location = api.dataSubsetTrendDownloadURL(id)
+          this.trendStatus = 'ready'
+          this.trendDownloadURL = api.dataSubsetTrendDownloadURL(id)
+          setTimeout(() => this.plotTrend(id), 0)
         } else if(x.status == 'processing') {
           setTimeout(() => this.checkTrendStatus(id), 3000)
         }
@@ -235,6 +247,15 @@ export default {
         console.log(e)
         this.trendStatus = 'error'
       })
+    },
+    plotTrend(id) {
+      api.dataSubsetTrend(id).then(data => {
+        this.showPlot = true
+        plotTrend(data, this.$refs.plot)
+      })
+    },
+    downloadTrend() {
+      window.location = this.trendDownloadURL
     }
   },
   created () {
