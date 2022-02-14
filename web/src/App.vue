@@ -75,10 +75,6 @@ h1 {
 	font-weight: normal;
 }
 
-footer {
-	border-top: 5px solid $tsr-green;
-}
-
 .is-dark {
 	background-color: $tsr-green;
 	color: white;
