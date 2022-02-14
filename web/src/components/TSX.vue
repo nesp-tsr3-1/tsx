@@ -158,12 +158,12 @@
               <spinner size='medium' v-show='loadingMap' class='heatmap-spinner'></spinner>
             </div>
             <div class="tile is-child card" v-show="!showFullMap">
-              <h4 class="has-text-black">Time series and species accumulation</h4>
+              <h4 class="has-text-black">Number of time series and species per year</h4>
               <tippy class="info-icon icon" arrow interactive placement="left">
                 <template #default><i class="far fa-question-circle"></i></template>
                 <template #content>
                   <div class="popup-content">
-                    This plot shows the number of species/subspecies (in blue) and the number of time series (in green) used to calculate the index for each year.
+                    This plot shows the number of species/subspecies (in blue) and the number of time series (in green) available in each year to calculate the index.
                   </div>
                 </template>
               </tippy>
