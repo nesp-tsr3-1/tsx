@@ -54,7 +54,7 @@
               </select>
             </div>
           </div>
-          <div class="field">
+          <div class="field" style="display: none;">
             <input type="checkbox" id="checkbox" v-model="prioritySelected">
             <label for="checkbox">National priority species</label>
           </div>
