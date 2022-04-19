@@ -1,5 +1,5 @@
 from pyproj import Transformer
-from tsx.db import T1Survey, T1Sighting, T1Site, T2Survey, T2Sighting, T2Site, Taxon, TaxonLevel, Source, DataImport, SourceType, SearchType, Unit, IntensiveManagement, ProjectionName, get_session
+from tsx.db import T1Survey, T1Sighting, T1Site, T2Survey, T2Sighting, T2Site, Taxon, TaxonLevel, Source, DataImport, SourceType, SearchType, Unit, UnitType, Management, ProjectionName, DataProcessingType, get_session
 import tsx.util
 import os
 import logging
@@ -116,6 +116,7 @@ class Importer:
 		self.non_empty_keys = [
 			'SearchTypeDesc',
 			'SourceDesc',
+			'DataProcessingType',
 			'SiteName',
 			'TaxonID',
 			'Count',
@@ -124,8 +125,24 @@ class Importer:
 			'Y',
 			'SourcePrimaryKey',
 			'UnitID',
-			'UnitOfMeasurement'
+			'UnitOfMeasurement',
+			'UnitType',
+			'ManagementCategory'
 		]
+
+		# List of columns that must contain the same value for all rows
+		if source_id:
+			self.constant_keys = [
+				'SourceProvider',
+				'SourceDesc',
+				'SourceType',
+				'SourceDescDetails',
+				'MonitoringProgram',
+				'MonitoringProgramComments'
+			]
+		else:
+			self.constant_keys = []
+
 		if self.data_type == 2:
 			self.non_empty_keys.remove('SiteName')
 			self.non_empty_keys.remove('Count')
@@ -133,10 +150,12 @@ class Importer:
 		if self.simple_mode:
 			self.non_empty_keys.remove('TaxonID')
 
-		self.sighting_keys = set(["SpNo", "TaxonID", "Breeding", "Count", "UnitID", "SightingComments"])
+		self.sighting_keys = set(["SpNo", "TaxonID", "Breeding", "Count", "UnitID", "UnitType", "SightingComments"])
 
 		self.source_id = source_id
+
 		self.data_import_id = data_import_id
+		self.first_row = None
 
 
 	def progress_wrapper(self, iterable):
@@ -253,9 +272,9 @@ class Importer:
 		required_headers = set([
 			"SourceType",
 			"SourceDesc",
-			"SourceProvider",
+			"DataProcessingType",
 			"SiteName",
-			"SearchTypeDesc",
+			"ManagementCategory",
 			"SourcePrimaryKey",
 			"StartDate",
 			"FinishDate",
@@ -272,19 +291,24 @@ class Importer:
 			"Count",
 			"SurveyComments",
 			"SightingComments",
+			"UnitType"
 		])
 
 		optional_headers = set([
+			"SourceProvider",
+			"SourceDescDetails",
 			"Breeding",
 			"CommonName",
+			"MonitoringProgram",
+			"ManagementCategoryComments",
 			"ScientificName",
-			"IntensiveManagement",
 			"DurationInMinutes",
 			"DurationInDays/Nights",
 			"NumberOfTrapsPerDay/Night",
 			"UnitID",
 			"UnitOfMeasurement",
-			"SpNo"
+			"SpNo",
+			"SearchTypeDesc"
 		])
 
 		if self.data_type == 2:
@@ -307,9 +331,6 @@ class Importer:
 
 		if len(unrecognized_headers) > 0:
 			self.log.warning("Unrecognized column(s) - will be ignored: %s" % ', '.join(unrecognized_headers))
-
-		if self.source_id:
-			self.log.info("Note: SourceDesc, SourceType and SourceProvider will be ignored since this information is specified via the web interface")
 
 	def process_row(self, session, row, row_index):
 		try:
@@ -399,32 +420,60 @@ class Importer:
 				log.error("%s: must not be empty" % key)
 				return False
 
+		# Check constant values
+		if self.first_row == None:
+			self.first_row = row
+		else:
+			for key in self.constant_keys:
+				if row[key] != self.first_row[key]:
+					log.error("%s: must match the first row of the file (%s)" % (key, first_row[key]))
+					ok[0] = False
+
 		# Source
-		if self.source_id == None:
+		source_type = None
+		with field('SourceType') as value:
+			if value:
+				source_type = validate(value, self.validate_lookup(session, SourceType))
+
+		with field('DataProcessingType') as value:
+			data_processing_type = validate(value, self.validate_lookup(session, DataProcessingType))
+
+		if self.source_id:
+			# Import via web interface
+			if row_index == 1:
+				source = session.query(Source).get(self.source_id)
+				source.description = row.get('SourceDesc')
+				source.notes = row.get('SourceDescDetails')
+				source.data_processing_type = data_processing_type
+				source.provider = row.get('SourceProvider')
+				source.monitoring_program = self.get_or_create_monitoring_program(session, row.get('MonitoringProgram'))
+				source.monitoring_program_comments = row.get('MonitoringProgramComments')
+
+				session.flush()
+
+		else:
+			# Import via command line
 			source = self.get_source(session, row.get('SourceDesc'))
 
 			if source == None:
 				source = Source(
 					description = row.get('SourceDesc'),
 					provider = row.get('SourceProvider'),
-					source_type = get_or_create(session, SourceType, description = row.get('SourceType')) if row.get('SourceType') else None)
+					notes = row.get('SourceDescDetails'),
+					source_type = source_type,
+					data_processing_type = data_processing_type,
+					monitoring_program = self.get_or_create_monitoring_program(session, row.get('MonitoringProgram')),
+					monitoring_program_comments = row.get('MonitoringProgramComments'))
 				session.add(source)
 				session.flush()
 			else:
 				# Existing source
-				if 'SourceType' in row: # 'SourceType' is optional for type 2/3 data
-					if source.source_type == None:
-						if row.get('SourceType') != None:
-							log.error("SourceType: doesn't match database for this source")
-							ok[0] = False
-					elif source.source_type.description != row.get('SourceType'):
-						log.error("SourceType: doesn't match database for this source")
-						ok[0] = False
+				if source.source_type != source_type:
+					log.error("SourceType: doesn't match database for this source")
+					ok[0] = False
 				if source.provider != row.get('SourceProvider'):
 					log.error("SourceProvider: doesn't match database for this source")
 					ok[0] = False
-		else:
-			source = session.query(Source).get(self.source_id)
 
 		# Data Import
 		if self.data_import_id == None:
@@ -433,16 +482,16 @@ class Importer:
 			data_import = session.query(DataImport).get(self.data_import_id)
 
 		# SearchType
-		search_type = self.get_or_create_search_type(session, row.get('SearchTypeDesc'))
+		search_type = self.get_or_create_search_type(session, row.get('SearchTypeDesc') or "Unspecified")
 
-		# IntensiveManagement
-		intensive_management = self.get_or_create_intensive_management(session, row.get('IntensiveManagement'))
+		with field('ManagementCategory') as value:
+			management = validate(value, self.validate_lookup(session, Management))
 
 		site = None
 		# Site
 		if self.data_type == 1 or row.get('SiteName') != None:
 			last_site = self.cache.get('last_site')
-			if last_site != None and last_site.name == row.get('SiteName') and last_site.search_type == search_type and last_site.source == source and (self.data_type != 1 or last_site.intensive_management == intensive_management):
+			if last_site != None and last_site.name == row.get('SiteName') and last_site.search_type == search_type and last_site.source == source and (self.data_type != 1 or last_site.management == management):
 				# Same site as last row - no need to process site
 				site = last_site
 			else:
@@ -454,7 +503,8 @@ class Importer:
 						'data_import': data_import
 					}
 					if self.data_type == 1:
-						site_params['intensive_management'] = intensive_management # This property only present for type 1 sites
+						site_params['management'] = management # This property only present for type 1 sites
+						site_params['management_comments'] = row.get('ManagementCategoryComments')
 
 					site = get_or_create(session, Site, **site_params)
 
@@ -660,6 +710,9 @@ class Importer:
 				if value is not None:
 					sighting.unit = self.get_or_create_unit(session, value)
 
+			with field('UnitType') as value:
+				sighting.unit_type = validate(value, self.validate_lookup(session, UnitType))
+
 			sighting.comments = row.get('SightingComments')
 
 		if ok[0]:
@@ -679,6 +732,7 @@ class Importer:
 		for sighting in self.pending_sightings:
 			sighting.survey_id = sighting.survey.id
 			sighting.unit_id = sighting.unit.id
+			sighting.unit_type_id = sighting.unit_type.id
 		session.bulk_save_objects(self.pending_sightings)
 		self.pending_sightings = []
 
@@ -724,6 +778,11 @@ class Importer:
 		session.flush()
 
 
+
+	def validate_lookup(self, session, model):
+		lookup = self.get_cached('lookup', model, lambda: { x.description: x for x in session.query(model).all() })
+		return validate_lookup(lookup)
+
 	def get_unit(self, session, unit_id):
 		return self.get_cached('unit_by_id', unit_id,
 			lambda: session.query(Unit).filter(Unit.id==unit_id).one())
@@ -736,15 +795,21 @@ class Importer:
 		return self.get_cached('source', description,
 			lambda: session.query(Source).filter_by(description = description).one_or_none())
 
+	def get_source_type(self, session, description):
+		if description == None:
+			return None
+		return self.get_cached('source_type', description,
+			lambda: session.query(SourceType).filter_by(description = description).one_or_none())
+
 	def get_or_create_search_type(self, session, description):
 		return self.get_cached('search_type', description,
 			lambda: get_or_create(session, SearchType, description = description))
 
-	def get_or_create_intensive_management(self, session, description):
+	def get_or_create_monitoring_program(self, session, description):
 		if description == None:
 			return None
-		return self.get_cached('intensive_management', description,
-			lambda: get_or_create(session, IntensiveManagement, description = description))
+		return self.get_cached('monitoring_program', description,
+			lambda: get_or_create(session, MonitoringProgram, description = description))
 
 	def get_projection_ref(self, session, projection_name_or_ref):
 		return self.get_cached('projection_name', projection_name_or_ref,
@@ -816,6 +881,9 @@ def get_or_create(session, model, **kwargs):
 		session.flush()
 		return instance
 
+def description_lookup(session, model):
+	return { x.description: x for x in session.query(model).all() }
+
 # ----- Validation helpers ------
 #
 # Use like this:
@@ -849,6 +917,14 @@ def validate_greater_than(y):
 
 def validate_greater_than_or_equal(y):
 	return validate_condition(lambda x: x >= y, 'must be greater than or equal to %s' % y)
+
+def validate_lookup(lookup):
+	def v(x):
+		if x in lookup:
+			return lookup[x]
+		else:
+			raise ValueError('must be one of %s' % quoted_strings(lookup.keys()))
+	return v
 
 def validate_condition(fn, message):
 	def v(x):
@@ -946,6 +1022,8 @@ def normalize(s):
 	else:
 		return re.sub(r'\s+', ' ', s)
 
+def quoted_strings(s):
+	return ", ".join(["'%s'" % x for x in s])
 
 if __name__ == '__main__':
 	main()

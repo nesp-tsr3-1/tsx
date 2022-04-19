@@ -163,3 +163,22 @@ INSERT INTO `projection_name` (name, epsg_srid) VALUES
   ("Australian Antarctic (geocentric)", 4340),
   ("Cocos Islands 1965", 4708),
   ("Australian Antarctic (deg)", 61766405);
+
+INSERT INTO management (description) VALUES
+  ('Actively managed'),
+  ('No management'),
+  ('Unknown');
+
+INSERT INTO unit_type (description) VALUES
+  ('Continuous'),
+  ('Percentage'),
+  ('Binary');
+
+INSERT INTO source_type (description) VALUES
+  ('paper/report'),
+  ('custodian');
+
+INSERT INTO data_processing_type (description) VALUES
+  ('None (data are raw data)'),
+  ('Data are standardised by effort'),
+  ('Data are extracted from model outputs');

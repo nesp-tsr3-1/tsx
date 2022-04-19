@@ -17,6 +17,13 @@ class DataImportStatus(Base):
     code = Column(String(255), nullable=False, unique=True)
 
 
+class DataProcessingType(Base):
+    __tablename__ = 'data_processing_type'
+
+    id = Column(Integer, primary_key=True)
+    description = Column(String(255), nullable=False)
+
+
 class ExperimentalDesignType(Base):
     __tablename__ = 'experimental_design_type'
 
@@ -28,7 +35,7 @@ class GridCell(Base):
     __tablename__ = 'grid_cell'
 
     id = Column(Integer, primary_key=True)
-    geometry = Column(NullType, nullable=False, index=True)
+    geometry = Column(NullType, nullable=False)
 
 
 class IntensiveManagement(Base):
@@ -37,6 +44,13 @@ class IntensiveManagement(Base):
     id = Column(Integer, primary_key=True)
     description = Column(String(255))
     grouping = Column(String(255))
+
+
+class Management(Base):
+    __tablename__ = 'management'
+
+    id = Column(Integer, primary_key=True)
+    description = Column(String(255), nullable=False)
 
 
 class MonitoringProgram(Base):
@@ -76,7 +90,7 @@ t_region_subdiv = Table(
     'region_subdiv', metadata,
     Column('id', Integer, nullable=False),
     Column('name', String(255)),
-    Column('geometry', NullType, nullable=False, index=True)
+    Column('geometry', NullType, nullable=False)
 )
 
 
@@ -150,6 +164,13 @@ class Unit(Base):
     description = Column(String(255), nullable=False)
 
 
+class UnitType(Base):
+    __tablename__ = 'unit_type'
+
+    id = Column(Integer, primary_key=True)
+    description = Column(String(255), nullable=False)
+
+
 class User(Base):
     __tablename__ = 'user'
 
@@ -177,9 +198,12 @@ class Source(Base):
     contact_email = Column(Text)
     contact_phone = Column(Text)
     monitoring_program_id = Column(ForeignKey('monitoring_program.id'), index=True)
+    monitoring_program_comments = Column(Text)
+    data_processing_type_id = Column(ForeignKey('data_processing_type.id'), index=True)
     time_created = Column(TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
     last_modified = Column(TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))
 
+    data_processing_type = relationship('DataProcessingType')
     monitoring_program = relationship('MonitoringProgram')
     source_type = relationship('SourceType')
     users = relationship('User', secondary='user_source')
@@ -380,7 +404,7 @@ t_taxon_presence_alpha_hull_subdiv = Table(
     Column('taxon_id', ForeignKey('taxon.id'), nullable=False, index=True),
     Column('range_id', ForeignKey('range.id'), nullable=False, index=True),
     Column('breeding_range_id', Integer),
-    Column('geometry', NullType, nullable=False, index=True)
+    Column('geometry', NullType, nullable=False)
 )
 
 
@@ -398,7 +422,7 @@ t_taxon_range_subdiv = Table(
     Column('taxon_id', ForeignKey('taxon.id'), nullable=False, index=True),
     Column('range_id', ForeignKey('range.id'), nullable=False, index=True),
     Column('breeding_range_id', ForeignKey('range.id'), index=True),
-    Column('geometry', NullType, nullable=False, index=True)
+    Column('geometry', NullType, nullable=False)
 )
 
 
@@ -414,14 +438,17 @@ class T1Site(Base):
 
     id = Column(Integer, primary_key=True)
     source_id = Column(ForeignKey('source.id', ondelete='CASCADE'), nullable=False, index=True)
-    data_import_id = Column(ForeignKey('data_import.id'), index=True)
+    data_import_id = Column(ForeignKey('data_import.id', ondelete='CASCADE'), index=True)
     name = Column(String(255))
     search_type_id = Column(ForeignKey('search_type.id'), nullable=False, index=True)
     notes = Column(Text)
     intensive_management_id = Column(ForeignKey('intensive_management.id'), index=True)
+    management_id = Column(ForeignKey('management.id'), nullable=False, index=True)
+    management_comments = Column(Text)
 
     data_import = relationship('DataImport')
     intensive_management = relationship('IntensiveManagement')
+    management = relationship('Management')
     search_type = relationship('SearchType')
     source = relationship('Source')
 
@@ -434,7 +461,7 @@ class T2Site(Base):
 
     id = Column(Integer, primary_key=True)
     source_id = Column(ForeignKey('source.id', ondelete='CASCADE'), index=True)
-    data_import_id = Column(ForeignKey('data_import.id'), index=True)
+    data_import_id = Column(ForeignKey('data_import.id', ondelete='CASCADE'), index=True)
     name = Column(String(255))
     search_type_id = Column(ForeignKey('search_type.id'), nullable=False, index=True)
     geometry = Column(NullType)
@@ -451,7 +478,7 @@ class T1Survey(Base):
     id = Column(Integer, primary_key=True)
     site_id = Column(ForeignKey('t1_site.id', ondelete='CASCADE'), nullable=False, index=True)
     source_id = Column(ForeignKey('source.id', ondelete='CASCADE'), nullable=False, index=True)
-    data_import_id = Column(ForeignKey('data_import.id'), index=True)
+    data_import_id = Column(ForeignKey('data_import.id', ondelete='CASCADE'), index=True)
     source_primary_key = Column(String(255), nullable=False, unique=True)
     start_date_d = Column(SmallInteger)
     start_date_m = Column(SmallInteger)
@@ -481,7 +508,7 @@ class T2Survey(Base):
     id = Column(Integer, primary_key=True)
     site_id = Column(ForeignKey('t2_site.id', ondelete='CASCADE'), index=True)
     source_id = Column(ForeignKey('source.id', ondelete='CASCADE'), nullable=False, index=True)
-    data_import_id = Column(ForeignKey('data_import.id'), index=True)
+    data_import_id = Column(ForeignKey('data_import.id', ondelete='CASCADE'), index=True)
     start_date_d = Column(SmallInteger)
     start_date_m = Column(SmallInteger)
     start_date_y = Column(SmallInteger, nullable=False)
@@ -493,7 +520,7 @@ class T2Survey(Base):
     duration_in_minutes = Column(Integer)
     area_in_m2 = Column(Float(asdecimal=True))
     length_in_km = Column(Float(asdecimal=True))
-    coords = Column(NullType, nullable=False, index=True)
+    coords = Column(NullType, nullable=False)
     location = Column(Text)
     positional_accuracy_in_m = Column(Float(asdecimal=True))
     comments = Column(Text)
@@ -515,11 +542,13 @@ class T1Sighting(Base):
     taxon_id = Column(ForeignKey('taxon.id'), nullable=False, index=True)
     count = Column(Float(asdecimal=True), nullable=False)
     unit_id = Column(ForeignKey('unit.id'), nullable=False, index=True)
+    unit_type_id = Column(ForeignKey('unit_type.id'), nullable=False, index=True)
     breeding = Column(TINYINT(1))
 
     survey = relationship('T1Survey')
     taxon = relationship('Taxon')
     unit = relationship('Unit')
+    unit_type = relationship('UnitType')
 
 
 class T2ProcessedSurvey(Base):
