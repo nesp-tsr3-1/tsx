@@ -155,7 +155,7 @@ def query_subset_raw_data_sql_and_params():
             t1_survey.number_of_traps_per_day AS `NumberOfTrapsPerDay/Night`,
             t1_survey.area_in_m2 AS `AreaInM2`,
             t1_survey.length_in_km AS LengthInKm,
-            t1_site.name AS SiteName,
+            IF(:redact_location, 'REDACTED', t1_site.name) AS SiteName,
             IF(:redact_location, 'REDACTED', ST_Y(t1_survey.coords)) as Y,
             IF(:redact_location, 'REDACTED', ST_X(t1_survey.coords)) as X,
             'GDA94' AS ProjectionReference,
