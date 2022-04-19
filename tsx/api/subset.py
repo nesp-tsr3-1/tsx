@@ -290,7 +290,7 @@ def query_subset_time_series():
             END AS Class,
             (SELECT description FROM search_type WHERE id = t2.search_type_id) AS SearchTypeDesc,
             t2.site_id AS SiteID,
-            t1_site.name AS SiteDesc,
+            t1_site.name AS SiteName,
             (SELECT description FROM intensive_management WHERE t1_site.intensive_management_id = intensive_management.id) AS IntensiveManagement,
             source.id AS SourceID,
             source.description AS SourceDesc,

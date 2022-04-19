@@ -51,6 +51,7 @@ def read_data(filename):
 				'RegionCentroidAccuracy':float,
 				'SiteID': int,
 				'SiteDesc': str,
+				'SiteName': str,
 				'SourceID': int,
 				'SourceDesc': str,
 				'UnitID': int,
@@ -81,7 +82,7 @@ def read_data(filename):
 				'IntensiveManagementGrouping': str
 			})
 			# Important: remove sensitive information that must not be exposed publicly
-			df = df.drop(['SurveysCentroidLatitude', 'SurveysCentroidLongitude', 'SurveysSpatialAccuracy', 'DataAgreement', 'SiteDesc', 'StatePlantStatus'], axis=1, errors='ignore')
+			df = df.drop(['SurveysCentroidLatitude', 'SurveysCentroidLongitude', 'SurveysSpatialAccuracy', 'DataAgreement', 'SiteDesc', 'SiteName', 'StatePlantStatus'], axis=1, errors='ignore')
 
 			if get_dataset_name() != 'tsx2019':
 				df = df.drop(['IntensiveManagement'], axis=1, errors='ignore')
