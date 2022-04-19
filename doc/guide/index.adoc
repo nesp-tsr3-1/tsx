@@ -1,5 +1,5 @@
 = Threatened Species Index (TSX) Workflow User Guide
-James Watmuff <james@planticle.com.au>; Elisa Bayraktarov <tsx@uq.edu.au>
+TSX Project Team <tsx@uq.edu.au>
 :description: This guide describes how to install, setup and run the Threatened Species Index (TSX).
 :doctype: book
 :page-layout!:
