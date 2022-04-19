@@ -39,7 +39,7 @@ This will place the sample data into a directory called `sample-data`.
 Initialise the database by running:
 ----
 sudo setup/setup-database.sh
-mysql tsx < sample-data/seed.sql
+sudo mysql tsx < sample-data/seed.sql
 ----
 
 Understanding the database schema is not essential to following the steps in this guide, but is recommended if you want to gain an in-depth understanding of the processing.
