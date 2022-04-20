@@ -129,6 +129,9 @@ def query_subset_raw_data_sql_and_params():
             (SELECT description FROM source_type WHERE id = source.source_type_id) AS SourceType,
             source.description AS SourceDesc,
             source.provider AS SourceProvider,
+            (SELECT description FROM monitoring_program WHERE id = source.monitoring_program_id) AS MonitoringProgram,
+            source.monitoring_program_comments AS MonitoringProgramComments,
+            (SELECT description FROM data_processing_type WHERE id = source.data_processing_type_id) AS DataProcessingType,
             t1_survey.location AS LocationName,
             (SELECT description FROM search_type WHERE id = t1_site.search_type_id) AS SearchTypeDesc,
             t1_survey.source_primary_key AS SourcePrimaryKey,
@@ -167,8 +170,11 @@ def query_subset_raw_data_sql_and_params():
             taxon.scientific_name AS ScientificName,
             t1_sighting.`count` AS Count,
             (SELECT description FROM unit WHERE id = t1_sighting.unit_id) AS UnitOfMeasurement,
+            (SELECT description FROM unit_type WHERE id = t1_sighting.unit_type_id) AS UnitType,
             MIN(region.state) AS State,
             MIN(region.name) AS Region,
+            (SELECT description FROM management WHERE id = t1_site.management_id) AS ManagementCategory,
+            t1_site.management_comments AS ManagementCategoryComments,
             CASE WHEN intensive_management_id IS NULL THEN NULL ELSE COALESCE(intensive_management.`grouping`, 'Other') END AS intensive_management_grouping
         FROM t1_survey STRAIGHT_JOIN region_subdiv
         JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id

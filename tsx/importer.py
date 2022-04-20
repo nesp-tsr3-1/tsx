@@ -1,5 +1,5 @@
 from pyproj import Transformer
-from tsx.db import T1Survey, T1Sighting, T1Site, T2Survey, T2Sighting, T2Site, Taxon, TaxonLevel, Source, DataImport, SourceType, SearchType, Unit, UnitType, Management, ProjectionName, DataProcessingType, get_session
+from tsx.db import T1Survey, T1Sighting, T1Site, T2Survey, T2Sighting, T2Site, Taxon, TaxonLevel, Source, DataImport, SourceType, SearchType, Unit, UnitType, Management, ProjectionName, DataProcessingType, get_session, MonitoringProgram
 import tsx.util
 import os
 import logging
@@ -212,6 +212,7 @@ class Importer:
 						if i == 0:
 							headers = row
 							self.check_headers(row)
+							self.processed_rows = 1
 						else:
 							# Fill missing cells with None
 							if len(row) < len(headers):
@@ -229,6 +230,7 @@ class Importer:
 				with open(self.filename, "r") as csvfile:
 					reader = csv.DictReader(csvfile)
 					self.check_headers(reader.fieldnames)
+					self.processed_rows = 1
 					for i, row in enumerate(self.progress_wrapper(reader)):
 						self.process_row(session, row, i + 2)
 
@@ -269,46 +271,51 @@ class Importer:
 		self.warning_count = self.log_counter.count('WARNING')
 
 	def check_headers(self, headers):
-		required_headers = set([
-			"SourceType",
-			"SourceDesc",
-			"DataProcessingType",
-			"SiteName",
-			"ManagementCategory",
-			"SourcePrimaryKey",
-			"StartDate",
-			"FinishDate",
+		header_info = [
+			"SourceType*",
+			"SourceDesc*",
+			"SourceDescDetails",
+			"SourceProvider",
+			"DataProcessingType*",
+			"LocationName",
+			"SiteName*",
+			"Y*",
+			"X*",
+			"ProjectionReference*",
+			"PositionalAccuracyInM",
+			"StartDate*",
+			"FinishDate*",
 			"StartTime",
 			"FinishTime",
-			"AreaInM2",
-			"LengthInKm",
-			"LocationName",
-			"Y",
-			"X",
-			"ProjectionReference",
-			"PositionalAccuracyInM",
-			"TaxonID",
-			"Count",
-			"SurveyComments",
-			"SightingComments",
-			"UnitType"
-		])
-
-		optional_headers = set([
-			"SourceProvider",
-			"SourceDescDetails",
-			"Breeding",
-			"CommonName",
-			"MonitoringProgram",
-			"ManagementCategoryComments",
-			"ScientificName",
 			"DurationInMinutes",
 			"DurationInDays/Nights",
 			"NumberOfTrapsPerDay/Night",
-			"UnitID",
-			"UnitOfMeasurement",
+			"AreaInM2",
+			"LengthInKm",
+			"SurveyComments",
+			"MonitoringProgram",
+			"MonitoringProgramComments",
+			"ManagementCategory*",
+			"ManagementCategoryComments",
+			"TaxonID*",
+			"CommonName*",
+			"ScientificName*",
+			"Count*",
+			"UnitOfMeasurement*",
+			"UnitType*",
+			"SightingComments"
+		]
+
+		required_headers = set(x[0:-1] for x in header_info if x.endswith("*"))
+		optional_headers = set(x for x in header_info if not x.endswith("*"))
+
+		# Legacy columns
+		optional_headers |= set([
 			"SpNo",
-			"SearchTypeDesc"
+			"SearchTypeDesc",
+			"SourcePrimaryKey",
+			"UnitID",
+			"Breeding"
 		])
 
 		if self.data_type == 2:
@@ -402,7 +409,10 @@ class Importer:
 		if self.source_id == None:
 			primary_key = row.get('SourcePrimaryKey')
 		else:
-			primary_key = "%s__%s" % (self.source_id, row.get('SourcePrimaryKey'))
+			if 'SourcePrimaryKey' in row:
+				primary_key = "%s__%s" % (self.source_id, row.get('SourcePrimaryKey'))
+			else:
+				primary_key = "%s__Row_%s" % (self.source_id, row_index)
 
 		try:
 			self.check_survey_consistency(row, primary_key)
@@ -426,7 +436,7 @@ class Importer:
 		else:
 			for key in self.constant_keys:
 				if row[key] != self.first_row[key]:
-					log.error("%s: must match the first row of the file (%s)" % (key, first_row[key]))
+					log.error("%s: must match the first row of the file (%s)" % (key, self.first_row[key]))
 					ok[0] = False
 
 		# Source
@@ -440,10 +450,11 @@ class Importer:
 
 		if self.source_id:
 			# Import via web interface
-			if row_index == 1:
-				source = session.query(Source).get(self.source_id)
+			source = session.query(Source).get(self.source_id)
+			if row_index == 2:
 				source.description = row.get('SourceDesc')
 				source.notes = row.get('SourceDescDetails')
+				source.source_type = source_type
 				source.data_processing_type = data_processing_type
 				source.provider = row.get('SourceProvider')
 				source.monitoring_program = self.get_or_create_monitoring_program(session, row.get('MonitoringProgram'))
