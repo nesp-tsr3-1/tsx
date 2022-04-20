@@ -12,7 +12,7 @@ import ResetPassword from '../components/ResetPassword.vue'
 import DataSubsetDownloads from '../components/DataSubsetDownloads.vue'
 import * as api from '../api'
 
-export default createRouter({
+const router = createRouter({
   history: createWebHashHistory(),
   routes: [
     {
@@ -90,3 +90,15 @@ export default createRouter({
     }
   ]
 })
+
+// Set custom title for TSX visualisation page
+router.beforeEach((to, from, next) => {
+  try {
+    var title = (to.name === 'TSX') ? 'The Australian Threatened Species Index 2020' : 'The Australian Threatened Species Index'
+    document.getElementById('main-title').textContent = title
+  } finally {
+    next()
+  }
+})
+
+export default router
