@@ -28,6 +28,8 @@ $tsr-F: #93b479;
 $tsr-G: #636968;
 
 $primary: $tsr-E;
+$dark: $tsr-green;
+
 // $text: #fff;
 // $text-strong: #fff;
 // $label-color: #fff;
