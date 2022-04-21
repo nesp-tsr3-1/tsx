@@ -9,6 +9,9 @@ from threading import Thread, Lock
 import shutil
 import subprocess
 import importlib.resources
+import io
+import tempfile
+from zipfile import ZipFile, ZIP_DEFLATED
 
 bp = Blueprint('subset', __name__)
 
@@ -24,17 +27,26 @@ def stream_csv(result):
 
 def save_csv(result, file):
     with open(file, 'w') as f:
-        writer = csv.writer(f)
-        writer.writerow(result.keys())
-        for row in result.fetchall():
-            writer.writerow(row)
+        write_csv(result, f)
+
+def csv_string(result):
+    with io.StringIO() as out:
+        write_csv(result, out)
+        return out.getvalue()
+
+def write_csv(result, output):
+    writer = csv.writer(output)
+    writer.writerow(result.keys())
+    for row in result.fetchall():
+        writer.writerow(row)
+
 
 @bp.route('/subset/raw_data', methods = ['GET'])
 def subset_raw_data():
     result = query_subset_raw_data()
-    response = Response(stream_csv(result), mimetype='text/csv')
-    response.headers['Content-Disposition'] = 'attachment; filename=raw_data.csv'
-    return response
+    extra_dir = data_dir('raw-download-extras')
+    extra_entries = [(filename, os.path.join(extra_dir, filename), 'file') for filename in os.listdir(extra_dir)]
+    return zip_response([('raw_data.csv', csv_string(result), 'str')] + extra_entries, 'raw_data.zip')
 
 @bp.route('/subset/stats', methods = ['GET'])
 def subset_stats():
@@ -201,9 +213,41 @@ def query_subset_raw_data():
 @bp.route('/subset/time_series', methods = ['GET'])
 def subset_time_series():
     result = query_subset_time_series()
-    response = Response(stream_csv(result), mimetype='text/csv')
-    response.headers['Content-Disposition'] = 'attachment; filename=time_series.csv'
-    return response
+    extra_dir = data_dir('time-series-download-extras')
+    extra_entries = [(filename, os.path.join(extra_dir, filename), 'file') for filename in os.listdir(extra_dir)]
+    return zip_response([('time_series.csv', csv_string(result), 'str')] + extra_entries, 'time_series.zip')
+
+
+def stream_and_delete(filename):
+    with open(filename, 'rb') as f:
+        while True:
+            data = f.read(65536)
+            if not data:
+                break
+            yield data
+    os.remove(filename)
+
+def stream_zip(entries):
+    zip_filename = tempfile.mkstemp()[1]
+
+    # Write zip file to temporary file
+    with ZipFile(zip_filename, 'w', ZIP_DEFLATED) as zip_file:
+        for name, data, datatype in entries:
+            if datatype == 'str':
+                zip_file.writestr(name, data)
+            elif datatype == 'file':
+                zip_file.write(data, name)
+
+    return stream_and_delete(zip_filename)
+
+def zip_response(entries, download_file_name):
+    return Response(
+        stream_zip(entries),
+        mimetype="application/zip",
+        headers={
+            "Content-Disposition": "attachment; filename=%s" % (download_file_name)
+        }
+    )
 
 def query_subset_time_series():
     where_conditions, having_conditions, params = subset_sql_params()
