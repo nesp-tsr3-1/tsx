@@ -277,6 +277,7 @@ class Importer:
 			"SourceDescDetails",
 			"SourceProvider",
 			"DataProcessingType*",
+			"SearchTypeDesc*",
 			"LocationName",
 			"SiteName*",
 			"Y*",
@@ -298,7 +299,7 @@ class Importer:
 			"ManagementCategory*",
 			"ManagementCategoryComments",
 			"TaxonID*",
-			"CommonName*",
+			"CommonName",
 			"ScientificName*",
 			"Count*",
 			"UnitOfMeasurement*",
@@ -312,7 +313,6 @@ class Importer:
 		# Legacy columns
 		optional_headers |= set([
 			"SpNo",
-			"SearchTypeDesc",
 			"SourcePrimaryKey",
 			"UnitID",
 			"Breeding"
@@ -338,6 +338,10 @@ class Importer:
 
 		if len(unrecognized_headers) > 0:
 			self.log.warning("Unrecognized column(s) - will be ignored: %s" % ', '.join(unrecognized_headers))
+
+		if self.source_id:
+			self.log.info("Note: SourceDesc, SourceType, SourceProvider and MonitoringProgram will be ignored since this information is specified via the web interface")
+
 
 	def process_row(self, session, row, row_index):
 		try:
@@ -435,8 +439,8 @@ class Importer:
 			self.first_row = row
 		else:
 			for key in self.constant_keys:
-				if row[key] != self.first_row[key]:
-					log.error("%s: must match the first row of the file (%s)" % (key, self.first_row[key]))
+				if row.get(key) != self.first_row.get(key):
+					log.error("%s: must match the first row of the file (%s)" % (key, self.first_row,get(key)))
 					ok[0] = False
 
 		# Source
@@ -452,12 +456,12 @@ class Importer:
 			# Import via web interface
 			source = session.query(Source).get(self.source_id)
 			if row_index == 2:
-				source.description = row.get('SourceDesc')
+				# source.description = row.get('SourceDesc')
 				source.notes = row.get('SourceDescDetails')
-				source.source_type = source_type
+				# source.source_type = source_type
 				source.data_processing_type = data_processing_type
-				source.provider = row.get('SourceProvider')
-				source.monitoring_program = self.get_or_create_monitoring_program(session, row.get('MonitoringProgram'))
+				# source.provider = row.get('SourceProvider')
+				# source.monitoring_program = self.get_or_create_monitoring_program(session, row.get('MonitoringProgram'))
 				source.monitoring_program_comments = row.get('MonitoringProgramComments')
 
 				session.flush()
@@ -493,7 +497,7 @@ class Importer:
 			data_import = session.query(DataImport).get(self.data_import_id)
 
 		# SearchType
-		search_type = self.get_or_create_search_type(session, row.get('SearchTypeDesc') or "Unspecified")
+		search_type = self.get_or_create_search_type(session, row.get('SearchTypeDesc'))
 
 		with field('ManagementCategory') as value:
 			management = validate(value, self.validate_lookup(session, Management))
