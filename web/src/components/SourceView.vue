@@ -67,6 +67,13 @@
               <div class="column">
                 <h4 class="title is-4">Downloads</h4>
                 <div>
+                  <a href="static/TSX%20Dataset%20Downloads%20Factsheet.pdf" class="button is-dark" target="_blank" style="margin: 0.5em 0;">
+                    TSX Dataset Downloads Factsheet
+                  </a>
+                </div>
+                <hr>
+
+                <div>
                   <button type="button" class="button is-primary" style="margin: 0.5em 0;"
                   v-on:click="downloadRawData">Download Raw Data (CSV format)</button>
                 </div>
@@ -89,7 +96,7 @@
                 </div>
                 <div v-if="trendStatus == 'ready'">
                   <h4 class="title is-6" style="margin: 1em 0;">Population Trend</h4>
-                  <p style="margin: 1em 0; font-style: italic;">Note: This trend has been generated using the Living Planet Index methodology, which is designed for producing composite trends, not single-species trends.</p>
+                  <p style="margin: 1em 0; font-style: italic;">Note: Population trends are generated from your time-series data using the Living Planet Index methodology. To find out more on how these trends are generated see the ‘TSX Dataset Downloads Factsheet’ above.</p>
                   <p style="margin: 1em 0">
                     <button type="button" class="button is-primary" style="margin: 0.5em 0;" v-on:click="downloadTrend">Download Population Trend (TXT format)</button>
                   </p>
