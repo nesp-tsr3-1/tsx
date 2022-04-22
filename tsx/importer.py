@@ -272,6 +272,7 @@ class Importer:
 
 	def check_headers(self, headers):
 		header_info = [
+			"SourcePrimaryKey*",
 			"SourceType*",
 			"SourceDesc*",
 			"SourceDescDetails",
@@ -313,7 +314,6 @@ class Importer:
 		# Legacy columns
 		optional_headers |= set([
 			"SpNo",
-			"SourcePrimaryKey",
 			"UnitID",
 			"Breeding"
 		])
@@ -443,14 +443,22 @@ class Importer:
 					log.error("%s: must match the first row of the file (%s)" % (key, self.first_row,get(key)))
 					ok[0] = False
 
+		# Allow N/A for some columns and convert to 'None'
+		# Importantly, we do this after checking for empty values
+		for key in ['ManagementCategory', 'UnitType', 'DataProcessingType', 'FinishDate']:
+			if row.get(key) == 'N/A':
+				row[key] = None
+		if row.get('ProjectionReference') == 'N/A':
+			row['ProjectionReference'] = 'EPSG:4326'
+
 		# Source
 		source_type = None
 		with field('SourceType') as value:
 			if value:
 				source_type = validate(value, self.validate_lookup(session, SourceType))
 
-		with field('DataProcessingType') as value:
-			data_processing_type = validate(value, self.validate_lookup(session, DataProcessingType))
+		if row.get('DataProcessingType'):
+			data_processing_type = get_or_create(session, DataProcessingType, description=row.get('DataProcessingType'))
 
 		if self.source_id:
 			# Import via web interface
@@ -747,7 +755,7 @@ class Importer:
 		for sighting in self.pending_sightings:
 			sighting.survey_id = sighting.survey.id
 			sighting.unit_id = sighting.unit.id
-			sighting.unit_type_id = sighting.unit_type.id
+			sighting.unit_type_id = sighting.unit_type.id if sighting.unit_type else None
 		session.bulk_save_objects(self.pending_sightings)
 		self.pending_sightings = []
 
