@@ -443,7 +443,7 @@ class T1Site(Base):
     search_type_id = Column(ForeignKey('search_type.id'), nullable=False, index=True)
     notes = Column(Text)
     intensive_management_id = Column(ForeignKey('intensive_management.id'), index=True)
-    management_id = Column(ForeignKey('management.id'), nullable=False, index=True)
+    management_id = Column(ForeignKey('management.id'), index=True)
     management_comments = Column(Text)
 
     data_import = relationship('DataImport')
@@ -542,7 +542,7 @@ class T1Sighting(Base):
     taxon_id = Column(ForeignKey('taxon.id'), nullable=False, index=True)
     count = Column(Float(asdecimal=True), nullable=False)
     unit_id = Column(ForeignKey('unit.id'), nullable=False, index=True)
-    unit_type_id = Column(ForeignKey('unit_type.id'), nullable=False, index=True)
+    unit_type_id = Column(ForeignKey('unit_type.id'), index=True)
     breeding = Column(TINYINT(1))
     comments = Column(Text)
 
