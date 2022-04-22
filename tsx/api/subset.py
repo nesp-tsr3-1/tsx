@@ -146,13 +146,13 @@ def query_subset_raw_data_sql_and_params():
             (SELECT description FROM search_type WHERE id = t1_site.search_type_id) AS SearchTypeDesc,
             t1_survey.source_primary_key AS SourcePrimaryKey,
             CONCAT(
-                COALESCE(CONCAT(LPAD(start_date_d, 2, 0), '/'), ''),
-                COALESCE(CONCAT(LPAD(start_date_m, 2, 0), '/'), ''),
+                LPAD(COALESCE(start_date_d, 0), 2, 0), '/',
+                LPAD(COALESCE(start_date_m, 0), 2, 0), '/',
                 start_date_y
             ) AS StartDate,
             CONCAT(
-                COALESCE(CONCAT(LPAD(finish_date_d, 2, 0), '/'), ''),
-                COALESCE(CONCAT(LPAD(finish_date_m, 2, 0), '/'), ''),
+                LPAD(COALESCE(finish_date_d, 0), 2, 0), '/',
+                LPAD(COALESCE(finish_date_m, 0), 2, 0), '/',
                 finish_date_y
             ) AS FinishDate,
             TIME_FORMAT(start_time, "%H:%i") AS StartTime,
