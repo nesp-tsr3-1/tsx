@@ -141,8 +141,6 @@ def query_subset_raw_data_sql_and_params():
             (SELECT description FROM source_type WHERE id = source.source_type_id) AS SourceType,
             source.description AS SourceDesc,
             source.provider AS SourceProvider,
-            (SELECT description FROM monitoring_program WHERE id = source.monitoring_program_id) AS MonitoringProgram,
-            source.monitoring_program_comments AS MonitoringProgramComments,
             (SELECT description FROM data_processing_type WHERE id = source.data_processing_type_id) AS DataProcessingType,
             t1_survey.location AS LocationName,
             (SELECT description FROM search_type WHERE id = t1_site.search_type_id) AS SearchTypeDesc,
@@ -173,21 +171,22 @@ def query_subset_raw_data_sql_and_params():
             IF(:redact_location, 'REDACTED', t1_site.name) AS SiteName,
             IF(:redact_location, 'REDACTED', ST_Y(t1_survey.coords)) as Y,
             IF(:redact_location, 'REDACTED', ST_X(t1_survey.coords)) as X,
-            'GDA94' AS ProjectionReference,
+            'EPSG:4326' AS ProjectionReference,
             t1_survey.positional_accuracy_in_m AS PositionalAccuracyInM,
+            MIN(region.state) AS State,
+            MIN(region.name) AS Region,
             t1_survey.comments AS SurveyComments,
             (SELECT description FROM monitoring_program WHERE id = source.monitoring_program_id) AS MonitoringProgram,
+            source.monitoring_program_comments AS MonitoringProgramComments,
+            (SELECT description FROM management WHERE id = t1_site.management_id) AS ManagementCategory,
+            t1_site.management_comments AS ManagementCategoryComments,
             t1_sighting.taxon_id AS TaxonID,
             taxon.common_name AS CommonName,
             taxon.scientific_name AS ScientificName,
             t1_sighting.`count` AS Count,
             (SELECT description FROM unit WHERE id = t1_sighting.unit_id) AS UnitOfMeasurement,
             (SELECT description FROM unit_type WHERE id = t1_sighting.unit_type_id) AS UnitType,
-            MIN(region.state) AS State,
-            MIN(region.name) AS Region,
-            (SELECT description FROM management WHERE id = t1_site.management_id) AS ManagementCategory,
-            t1_site.management_comments AS ManagementCategoryComments,
-            CASE WHEN intensive_management_id IS NULL THEN NULL ELSE COALESCE(intensive_management.`grouping`, 'Other') END AS intensive_management_grouping
+            t1_sighting.comments AS SightingComments
         FROM t1_survey STRAIGHT_JOIN region_subdiv
         JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id
         JOIN taxon ON t1_sighting.taxon_id = taxon.id
@@ -252,8 +251,17 @@ def zip_response(entries, download_file_name):
 def query_subset_time_series():
     where_conditions, having_conditions, params = subset_sql_params()
 
-# Note STRAIGHT_JOINs are just trial and error to get a decent query plan
-# I actually want to a LEFT JOIN between survey and region but I can't figure out how to get usable performance.
+    if ('source_id' in params) and permitted(get_user(), 'import_data', 'source', params['source_id']):
+        coordinates_sql = """
+            ROUND(t2.surveys_centroid_lat, 7) AS SurveysCentroidLatitude,
+            ROUND(t2.surveys_centroid_lon, 7) AS SurveysCentroidLongitude"""
+    else:
+        coordinates_sql = """
+            ROUND(ST_Y(ST_Centroid(region.geometry)), 7) AS RegionCentroidLatitude,
+            ROUND(ST_X(ST_Centroid(region.geometry)), 7) AS RegionCentroidLongitude"""
+
+    # Note STRAIGHT_JOINs are just trial and error to get a decent query plan
+    # I actually want to a LEFT JOIN between survey and region but I can't figure out how to get usable performance.
     raw_data_sql = """
         SELECT
             t1_survey.id AS survey_id,
@@ -264,8 +272,7 @@ def query_subset_time_series():
             t1_site.search_type_id,
             t1_survey.start_date_y,
             t1_survey.start_date_m,
-            MIN(region.state) AS State,
-            MIN(region.name) AS Region,
+            MIN(region.id) AS region_id,
             t1_sighting.`count` AS x
         FROM t1_survey STRAIGHT_JOIN region_subdiv
         JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id
@@ -304,8 +311,7 @@ def query_subset_time_series():
             t.search_type_id,
             t.start_date_y,
             t.start_date_m,
-            t.State,
-            t.Region,
+            t.region_id,
             AVG(ST_Y(t1_survey.coords)) AS surveys_centroid_lat,
             AVG(ST_X(t1_survey.coords)) AS surveys_centroid_lon,
             COUNT(DISTINCT t.survey_id) AS survey_count,
@@ -321,12 +327,15 @@ def query_subset_time_series():
             search_type_id,
             start_date_y,
             start_date_m,
-            State, Region
+            region_id
         )
         SELECT
             SUBSTR(TRIM('_' FROM REGEXP_REPLACE(taxon.scientific_name, '[^a-zA-Z]', '_')), 1, 40) AS Binomial,
             ROW_NUMBER() OVER () AS ID,
             CONCAT(t2.source_id, '_', t2.unit_id, '_', COALESCE(t2.search_type_id, '0'), '_', t2.site_id, '_', t2.taxon_id) AS TimeSeriesID,
+            source.id AS SourceID,
+            source.description AS SourceDesc,
+            (SELECT description FROM data_processing_type WHERE id = source.data_processing_type_id) AS DataProcessingType,
             taxon.id AS TaxonID,
             taxon.common_name AS CommonName,
             taxon.`order` AS `Order`,
@@ -338,21 +347,18 @@ def query_subset_time_series():
                 WHEN 'Mammals' THEN 'Mammalia'
                 ELSE ''
             END AS Class,
-            (SELECT description FROM search_type WHERE id = t2.search_type_id) AS SearchTypeDesc,
             t2.site_id AS SiteID,
             t1_site.name AS SiteName,
-            (SELECT description FROM intensive_management WHERE t1_site.intensive_management_id = intensive_management.id) AS IntensiveManagement,
-            source.id AS SourceID,
-            source.description AS SourceDesc,
-            (SELECT description FROM monitoring_program WHERE source.monitoring_program_id = monitoring_program.id) AS MonitoringProgram,
-            (SELECT description FROM unit WHERE id = t2.unit_id) AS Unit,
-            t2.State,
-            t2.Region,
-            ROUND(t2.surveys_centroid_lat, 7) AS SurveysCentroidLatitude,
-            ROUND(t2.surveys_centroid_lon, 7) AS SurveysCentroidLongitude,
-            SUM(t2.survey_count) AS SurveyCount,
-            MAX(t2.positional_accuracy_in_m) AS SurveysSpatialAccuracyInMetres,
+            region.state AS State,
+            region.name AS Region,
             %s,
+            MAX(t2.positional_accuracy_in_m) AS SurveysSpatialAccuracyInMetres,
+            (SELECT description FROM search_type WHERE id = t2.search_type_id) AS SearchTypeDesc,
+            (SELECT description FROM unit WHERE id = t2.unit_id) AS UnitOfMeasurement,
+            (SELECT description FROM monitoring_program WHERE source.monitoring_program_id = monitoring_program.id) AS MonitoringProgram,
+            (SELECT description FROM management WHERE id = t1_site.management_id) AS ManagementCategory,
+            %s,
+            SUM(t2.survey_count) AS SurveyCount,
             MAX(start_date_y) - MIN(start_date_y) + 1 AS TimeSeriesLength,
             COUNT(DISTINCT start_date_y) AS TimeSeriesSampleYears,
             COUNT(DISTINCT start_date_y) / (MAX(start_date_y) - MIN(start_date_y) + 1) AS TimeSeriesCompleteness
@@ -360,14 +366,17 @@ def query_subset_time_series():
         JOIN taxon ON taxon.id = t2.taxon_id
         JOIN t1_site ON t1_site.id = t2.site_id
         JOIN source ON source.id = t2.source_id
+        JOIN region ON region.id = t2.region_id
         GROUP BY
             t2.site_id,
             t2.taxon_id,
             t2.source_id,
             t2.unit_id,
             t2.search_type_id,
-            State, Region, surveys_centroid_lat, surveys_centroid_lon
-        """ % (raw_data_sql, year_fields_sql)
+            t2.region_id,
+            surveys_centroid_lat,
+            surveys_centroid_lon
+        """ % (raw_data_sql, coordinates_sql, year_fields_sql)
 
     return db_session.execute(sql, params)
 
