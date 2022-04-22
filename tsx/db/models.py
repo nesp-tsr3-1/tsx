@@ -544,6 +544,7 @@ class T1Sighting(Base):
     unit_id = Column(ForeignKey('unit.id'), nullable=False, index=True)
     unit_type_id = Column(ForeignKey('unit_type.id'), nullable=False, index=True)
     breeding = Column(TINYINT(1))
+    comments = Column(Text)
 
     survey = relationship('T1Survey')
     taxon = relationship('Taxon')
@@ -579,6 +580,7 @@ class T2Sighting(Base):
     count = Column(Float(asdecimal=True))
     unit_id = Column(ForeignKey('unit.id'), index=True)
     breeding = Column(TINYINT(1))
+    comments = Column(Text)
 
     survey = relationship('T2Survey')
     taxon = relationship('Taxon')
