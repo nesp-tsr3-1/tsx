@@ -459,6 +459,8 @@ class Importer:
 
 		if row.get('DataProcessingType'):
 			data_processing_type = get_or_create(session, DataProcessingType, description=row.get('DataProcessingType'))
+		else:
+			data_processing_type = None
 
 		if self.source_id:
 			# Import via web interface
