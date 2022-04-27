@@ -45,6 +45,10 @@ export function plotTrend(data, dom) {
   let lowerCI = series.map(x => parseFloat(x[2]))
   let upperCI = series.map(x => parseFloat(x[3]))
 
+  let hasCI = index.map((x, i) => lowerCI[i] !== upperCI[i])
+  let solidIndex = index.map((x, i) => hasCI[i] || hasCI[i - 1] || hasCI[i + 1] ? x : undefined)
+  let dashedIndex = index.map((x, i) => hasCI[i] ? undefined : x)
+
   let plotData = {
     labels: labels,
     datasets: [{
@@ -54,7 +58,17 @@ export function plotTrend(data, dom) {
       fill: false,
       pointRadius: 0,
       lineTension: 0,
-      data: index
+      data: solidIndex
+    }, {
+      label: 'TSX',
+      display: false,
+      borderColor: '#36699e',
+      backgroundColor: 'black',
+      fill: false,
+      pointRadius: 0,
+      lineTension: 0,
+      borderDash: [5, 5],
+      data: dashedIndex
     }, {
       label: 'Confidence Interval (low)',
       backgroundColor: 'rgba(230,230,230,0.5)',
@@ -68,7 +82,7 @@ export function plotTrend(data, dom) {
       label: 'Confidence Interval (high)',
       // backgroundColor: '#eee',
       backgroundColor: 'rgba(230,230,230,0.5)',
-      fill: 1, // Fill between this dataset and dataset[1], i.e. between low & hi CI
+      fill: 2, // Fill between this dataset and dataset[1], i.e. between low & hi CI
       pointRadius: 0,
       lineTension: 0,
       borderColor: '#0000',
