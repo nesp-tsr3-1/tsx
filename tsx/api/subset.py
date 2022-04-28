@@ -61,15 +61,15 @@ def subset_stats():
             t1_survey.site_id,
             t1_survey.source_id,
             t1_site.search_type_id
-        FROM t1_survey STRAIGHT_JOIN region_subdiv
+        FROM t1_survey
+        STRAIGHT_JOIN region_subdiv ON ST_Contains(region_subdiv.geometry, coords)
         JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id
         JOIN taxon ON t1_sighting.taxon_id = taxon.id
         JOIN source ON t1_survey.source_id = source.id
         STRAIGHT_JOIN region ON region.id = region_subdiv.id
         JOIN t1_site ON t1_survey.site_id = t1_site.id
         LEFT JOIN intensive_management ON t1_site.intensive_management_id = intensive_management.id
-        WHERE ST_Contains(region_subdiv.geometry, coords)
-        AND {where_clause}
+        WHERE {where_clause}
         GROUP BY t1_survey.id, t1_sighting.id
         {having_clause})
         SELECT
@@ -103,10 +103,20 @@ def subset_sql_params():
         ids = args['monitoring_programs']
         if isinstance(ids, str):
             ids = ids.split(",")
-        pnames = ["mp%s" % i for i in range(0, len(ids))]
 
-        where_conditions.append("source.monitoring_program_id IN (%s)" % ", ".join([":%s" % p for p in pnames]))
-        params.update(dict(zip(pnames, ids)))
+        if 'any' in ids:
+            if 'none' in ids:
+                pass
+            else:
+                where_conditions.append("source.monitoring_program_id IS NOT NULL")
+        else:
+            if 'none' in ids:
+                ids.remove('none')
+                ids.append(-1)
+
+            pnames = ["mp%s" % i for i in range(0, len(ids))]
+            where_conditions.append("COALESCE(source.monitoring_program_id, -1) IN (%s)" % ", ".join([":%s" % p for p in pnames]))
+            params.update(dict(zip(pnames, ids)))
 
     if 'intensive_management' in args:
         management = args['intensive_management']
@@ -257,8 +267,8 @@ def query_subset_time_series():
             ROUND(t2.surveys_centroid_lon, 7) AS SurveysCentroidLongitude"""
     else:
         coordinates_sql = """
-            ROUND(ST_Y(ST_Centroid(region.geometry)), 7) AS RegionCentroidLatitude,
-            ROUND(ST_X(ST_Centroid(region.geometry)), 7) AS RegionCentroidLongitude"""
+            ROUND(ST_Y(region.centroid), 7) AS RegionCentroidLatitude,
+            ROUND(ST_X(region.centroid), 7) AS RegionCentroidLongitude"""
 
     # Note STRAIGHT_JOINs are just trial and error to get a decent query plan
     # I actually want to a LEFT JOIN between survey and region but I can't figure out how to get usable performance.
@@ -272,17 +282,16 @@ def query_subset_time_series():
             t1_site.search_type_id,
             t1_survey.start_date_y,
             t1_survey.start_date_m,
-            MIN(region.id) AS region_id,
+            MIN(region_subdiv.id) AS region_id,
             t1_sighting.`count` AS x
-        FROM t1_survey STRAIGHT_JOIN region_subdiv
+        FROM t1_survey
+        STRAIGHT_JOIN region_subdiv ON ST_Contains(region_subdiv.geometry, coords)
         JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id
         JOIN taxon ON t1_sighting.taxon_id = taxon.id
         JOIN source ON t1_survey.source_id = source.id
-        STRAIGHT_JOIN region ON region.id = region_subdiv.id
         JOIN t1_site ON t1_survey.site_id = t1_site.id
         LEFT JOIN intensive_management ON t1_site.intensive_management_id = intensive_management.id
-        WHERE ST_Contains(region_subdiv.geometry, coords)
-        AND {where_clause}
+        WHERE {where_clause}
         GROUP BY t1_survey.id, t1_sighting.id
         {having_clause}
     """.format(
@@ -290,17 +299,21 @@ def query_subset_time_series():
         having_clause = "HAVING " + " AND ".join(having_conditions) if having_conditions else "")
 
     sql = """WITH t AS (%s)
-        SELECT
-            MIN(start_date_y) AS min_year,
-            MAX(start_date_y) AS max_year
+        SELECT DISTINCT start_date_y
         FROM t""" % raw_data_sql
 
-    (min_year, max_year) = db_session.execute(sql, params).fetchone()
+    years = set(row[0] for row in db_session.execute(sql, params).fetchall())
+    min_year = min(years)
+    max_year = max(years)
 
-
+    def year_field_sql(year, has_data):
+        if has_data:
+            return  "AVG(IF(start_date_y = %s, x, NULL)) AS `%s`" % (year, year)
+        else:
+            return "NULL as `%s`" % year
 
     year_fields_sql = ",\n".join(
-        "AVG(IF(start_date_y = %s, x, NULL)) AS `%s`" % (year, year) for year in range(min_year, max_year + 1))
+        year_field_sql(year, year in years) for year in range(min_year, max_year + 1))
 
     sql = """WITH t AS (%s),
         t2 AS (SELECT

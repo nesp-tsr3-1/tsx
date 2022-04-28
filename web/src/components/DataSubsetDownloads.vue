@@ -27,7 +27,7 @@
               <label class="label">Programs</label>
               <div class="control">
                 <div v-for="program in options.monitoringPrograms">
-                  <label><input type="checkbox" v-bind:value="program" v-model="criteria.monitoringPrograms"> {{program.description}}</label>
+                  <label><input type="checkbox" v-bind:value="program" v-model="criteria.monitoringPrograms" v-bind:disabled="isProgramDisabled(program)"> {{program.description}}</label>
                 </div>
                 <p style="margin-top: 1em; font-style: italic;" v-if="criteria.monitoringPrograms.length == 0">
                   At least one program must be selected
@@ -190,6 +190,21 @@ export default {
   watch: {
     criteria: {
       handler() {
+
+        // Update programs first if necessary
+        let selectedProgramIds = this.criteria.monitoringPrograms.map(p => p.id).sort()
+        let anyProgramSelected = selectedProgramIds.includes('any')
+        let noProgramSelected = selectedProgramIds.includes('none')
+        if(anyProgramSelected) {
+          let newPrograms = this.options.monitoringPrograms.filter(p => noProgramSelected || p.id !== 'none')
+          let newProgramIds = newPrograms.map(p => p.id).sort()
+
+          if(selectedProgramIds.join() != newProgramIds.join()) {
+            this.criteria.monitoringPrograms = newPrograms
+            return
+          }
+        }
+
         var params = this.buildDownloadParams()
         this.stats = null
         api.dataSubsetStats(params).then(stats => {
@@ -212,8 +227,11 @@ export default {
           return api.programsManagedBy(user.id)
         }
       }).then((programs) => {
+        if(this.user.is_admin) {
+          programs = [{ description: "Any program", id: "any" }, { description: "No program", id: "none"}].concat(programs)
+        }
         this.options.monitoringPrograms = programs
-        this.criteria.monitoringPrograms = programs // select all by default
+        this.criteria.monitoringPrograms = programs.filter(p => p.id != "none") // select all programs by default
       }),
       api.species({ q: 't1_present' }).then((species) => {
         this.options.species = species.map(sp => ({ ...sp, label: (sp.common_name || sp.scientific_name) + " (" + sp.id + ")" }))
@@ -242,7 +260,7 @@ export default {
         reader.onload = function() {
           self.processSpeciesList(reader.result)
         }
-      });
+      })
       document.body.append(input)
       input.click()
     },
@@ -354,7 +372,14 @@ export default {
       } else if(x == 1) {
         return x + " " + singular
       } else {
-        return x + " " + plural
+        return x.toLocaleString() + " " + plural
+      }
+    },
+    isProgramDisabled: function(program) {
+      if(program.id == 'any' || program.id == 'none') {
+        return false
+      } else {
+        return this.criteria.monitoringPrograms.map(p => p.id).includes('any')
       }
     }
   }
