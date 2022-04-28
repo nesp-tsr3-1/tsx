@@ -43,6 +43,9 @@ def write_csv(result, output):
 
 @bp.route('/subset/raw_data', methods = ['GET'])
 def subset_raw_data():
+    if not params_permitted():
+        return "Not authorized", 401
+
     result = query_subset_raw_data()
     extra_dir = data_dir('raw-download-extras')
     extra_entries = [(filename, os.path.join(extra_dir, filename), 'file') for filename in os.listdir(extra_dir)]
@@ -219,8 +222,33 @@ def query_subset_raw_data():
     return db_session.execute(sql, params)
 
 
+def params_permitted():
+    if permitted(get_user(), '*', '*'):
+        return True
+
+    args = request.get_json() or request.args
+
+    # Params must either be scoped to a source or a program that the user has access to download
+    if 'source_id' in args:
+        return permitted(get_user(), 'download_data', 'source', args['source_id'])
+
+    if 'monitoring_programs' in args:
+        ids = args['monitoring_programs']
+        if isinstance(ids, str):
+            ids = ids.split(",")
+            for monitoring_program_id in ids:
+                if not permitted(get_user(), 'download_data', 'program', monitoring_program_id):
+                    return False
+            if len(ids):
+                return True
+
+    return False
+
 @bp.route('/subset/time_series', methods = ['GET'])
 def subset_time_series():
+    if not params_permitted():
+        return "Not authorized", 401
+
     result = query_subset_time_series()
     extra_dir = data_dir('time-series-download-extras')
     extra_entries = [(filename, os.path.join(extra_dir, filename), 'file') for filename in os.listdir(extra_dir)]

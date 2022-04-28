@@ -12,6 +12,15 @@ def is_program_manager_of_source(user_id, source_id):
 		'user_id': user_id
 		}).fetchall()) > 0
 
+def is_program_manager_of_program(user_id, monitoring_program_id):
+	return len(db_session.execute(
+		"""SELECT 1 FROM user_program_manager
+		WHERE user_id = :user_id
+		AND monitoring_program_id = :monitoring_program_id""", {
+		'monitoring_program_id': monitoring_program_id,
+		'user_id': user_id
+		}).fetchall()) > 0
+
 def is_custodian_of_source(user_id, source_id):
 	return len(db_session.execute(
 		"""SELECT 1 FROM user_source
@@ -33,13 +42,13 @@ def permitted(user, action, resource_type, resource_id=None):
 		if 'Program manager' in user_roles:
 			if action in ('create', 'list'):
 				return True
-			if action in ('get', 'update') and is_program_manager_of_source(user.id, resource_id):
+			if action in ('get', 'update', 'download_data') and is_program_manager_of_source(user.id, resource_id):
 				return True
 
 		if 'Custodian' in user_roles:
 			if action in ('create', 'list'):
 				return True
-			if action in ('get', 'update', 'delete', 'import_data', 'manage_custodians') and is_custodian_of_source(user.id, resource_id):
+			if action in ('get', 'update', 'delete', 'import_data', 'manage_custodians', 'download_data') and is_custodian_of_source(user.id, resource_id):
 				return True
 				
 
@@ -50,6 +59,8 @@ def permitted(user, action, resource_type, resource_id=None):
 	if resource_type == 'program':
 		if action in ('list_managers'):
 			return True
+		if action in ('download_data'):
+			return is_program_manager_of_program(user.id, resource_id)
 
 	if resource_type == 'notes' and 'Custodian' in user_roles:
 		try:
