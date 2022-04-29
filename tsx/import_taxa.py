@@ -72,20 +72,20 @@ def main():
 				taxon = Taxon(
 					id = row['TaxonID'],
 					ultrataxon = row['UltrataxonID'] == 'u',
-					taxon_level = get_or_create(session, TaxonLevel, description = row['Taxon Level']) if row['Taxon Level'] else None,
+					taxon_level = get_or_create(session, TaxonLevel, description = row['TaxonLevel']) if row['TaxonLevel'] else None,
 					spno = row['SpNo'],
-					common_name = normalize(row['Taxon name']),
-					scientific_name = normalize(row['Taxon scientific name']),
-					family_common_name = normalize(row['Family common name']),
-					family_scientific_name = normalize(row['Family scientific name']),
+					common_name = normalize(row['TaxonCommonName']),
+					scientific_name = normalize(row['TaxonScientificName']),
+					family_common_name = normalize(row['FamilyCommonName']),
+					family_scientific_name = normalize(row['FamilyScientificName']),
 					order = normalize(row['Order']),
-					population = row['Population'],
+					population = row.get('Population'),
 					# TODO - there are status in WLAB like 'Introduced' and 'Vagrant' not in Glenn's list - for now importing as NULL
 					epbc_status = get_status('EPBCStatus'),
 					iucn_status = get_status('IUCNStatus') or get_status('AustralianStatus'),
 					state_status = get_status('StatePlantStatus'),
 					taxonomic_group = row['TaxonomicGroup'],
-					national_priority = str(row['NationalPriorityTaxa']) == '1',
+					national_priority = str(row.get('NationalPriorityTaxa')) == '1',
 					suppress_spatial_representativeness = str(row.get('SuppressSpatialRep', '0')) == '1'
 				)
 
@@ -112,7 +112,6 @@ def main():
 	session.execute("SET FOREIGN_KEY_CHECKS = 1")
 
 	session.commit()
-
 
 # see: https://stackoverflow.com/questions/2546207/does-sqlalchemy-have-an-equivalent-of-djangos-get-or-create
 def get_or_create(session, model, **kwargs):
