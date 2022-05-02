@@ -154,7 +154,7 @@ def query_subset_raw_data_sql_and_params():
             (SELECT description FROM source_type WHERE id = source.source_type_id) AS SourceType,
             source.description AS SourceDesc,
             source.provider AS SourceProvider,
-            (SELECT description FROM data_processing_type WHERE id = source.data_processing_type_id) AS DataProcessingType,
+            COALESCE((SELECT description FROM data_processing_type WHERE id = source.data_processing_type_id), "N/A") AS DataProcessingType,
             t1_survey.location AS LocationName,
             (SELECT description FROM search_type WHERE id = t1_site.search_type_id) AS SearchTypeDesc,
             t1_survey.source_primary_key AS SourcePrimaryKey,
@@ -163,11 +163,11 @@ def query_subset_raw_data_sql_and_params():
                 LPAD(COALESCE(start_date_m, 0), 2, 0), '/',
                 start_date_y
             ) AS StartDate,
-            CONCAT(
+            COALESCE(CONCAT(
                 LPAD(COALESCE(finish_date_d, 0), 2, 0), '/',
                 LPAD(COALESCE(finish_date_m, 0), 2, 0), '/',
                 finish_date_y
-            ) AS FinishDate,
+            ), "N/A") AS FinishDate,
             TIME_FORMAT(start_time, "%H:%i") AS StartTime,
             TIME_FORMAT(finish_time, "%H:%i") AS FinishTime,
             CASE WHEN t1_survey.duration_in_minutes < 24 * 60 * 60 THEN
@@ -191,14 +191,14 @@ def query_subset_raw_data_sql_and_params():
             t1_survey.comments AS SurveyComments,
             (SELECT description FROM monitoring_program WHERE id = source.monitoring_program_id) AS MonitoringProgram,
             source.monitoring_program_comments AS MonitoringProgramComments,
-            (SELECT description FROM management WHERE id = t1_site.management_id) AS ManagementCategory,
+            COALESCE((SELECT description FROM management WHERE id = t1_site.management_id), "N/A") AS ManagementCategory,
             t1_site.management_comments AS ManagementCategoryComments,
             t1_sighting.taxon_id AS TaxonID,
             taxon.common_name AS CommonName,
             taxon.scientific_name AS ScientificName,
             t1_sighting.`count` AS Count,
             (SELECT description FROM unit WHERE id = t1_sighting.unit_id) AS UnitOfMeasurement,
-            (SELECT description FROM unit_type WHERE id = t1_sighting.unit_type_id) AS UnitType,
+            COALESCE((SELECT description FROM unit_type WHERE id = t1_sighting.unit_type_id), "N/A") AS UnitType,
             t1_sighting.comments AS SightingComments
         FROM t1_survey STRAIGHT_JOIN region_subdiv
         JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id
