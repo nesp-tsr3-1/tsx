@@ -440,7 +440,7 @@ class Importer:
 		else:
 			for key in self.constant_keys:
 				if row.get(key) != self.first_row.get(key):
-					log.error("%s: must match the first row of the file (%s)" % (key, self.first_row,get(key)))
+					log.error("%s: must match the first row of the file (%s)" % (key, self.first_row.get(key)))
 					ok[0] = False
 
 		# Allow N/A for some columns and convert to 'None'
