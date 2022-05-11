@@ -49,6 +49,8 @@ export function plotTrend(data, dom) {
   let solidIndex = index.map((x, i) => hasCI[i] || hasCI[i - 1] || hasCI[i + 1] ? x : undefined)
   let dashedIndex = index.map((x, i) => hasCI[i] ? undefined : x)
 
+  let minYear = labels[0]
+
   let plotData = {
     labels: labels,
     datasets: [{
@@ -117,7 +119,7 @@ export function plotTrend(data, dom) {
           },
           title: {
             display: true,
-            text: 'Index (1980 = 1)'
+            text: 'Index (' + minYear + ' = 1)'
           }
         },
         xAxis: {
