@@ -311,6 +311,7 @@ def query_subset_time_series():
             t1_survey.start_date_y,
             t1_survey.start_date_m,
             MIN(region_subdiv.id) AS region_id,
+            (SELECT state FROM region WHERE id = MIN(region_subdiv.id)) AS State,
             t1_sighting.`count` AS x
         FROM t1_survey
         STRAIGHT_JOIN region_subdiv ON ST_Contains(region_subdiv.geometry, coords)
