@@ -113,8 +113,10 @@ export function plotTrend(data, dom) {
           },
           ticks: {
             callback: function(label, index, labels) {
-              // Force labels to always show one decimal place
-              return (+label).toFixed(1)
+              // Show appropriate number of decimal places
+              let delta = (labels.length > 1) ? Math.abs(labels[1].value - labels[0].value) : 0
+              let decimalPlaces = (delta > 0) ? Math.min(5, Math.max(1, Math.floor(Math.log10(delta)))) : 1
+              return (+label).toFixed(decimalPlaces)
             }
           },
           title: {
