@@ -647,6 +647,15 @@ export default {
           tooltips: {
             mode: 'point'
           },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label(context) {
+                  return context.label + ' (' + context.parsed.x + ')'
+                }
+              }
+            }
+          },
           scales: {
             yAxis: {
               type: 'linear',
@@ -868,6 +877,15 @@ export default {
           maintainAspectRatio: false,
           hoverMode: 'nearest',
           intersect: true,
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label(context) {
+                  return '(' + context.parsed.x + ', ' + context.parsed.y + ')'
+                }
+              }
+            }
+          },
           scales: {
             year: {
               position: 'bottom',
