@@ -1,7 +1,7 @@
 import json, csv
 import csv
 from io import StringIO
-from flask import make_response, g, jsonify, _app_ctx_stack, session, current_app
+from flask import make_response, g, jsonify, _app_ctx_stack, session, current_app, jsonify
 from tsx.db.connect import Session
 from tsx.db import User
 from sqlalchemy import orm
@@ -68,3 +68,7 @@ def setup_db(app):
 		def shutdown_session(response_or_exc):
 			db_session.remove()
 			return response_or_exc
+
+# Useful for converting a DB query result into a JSON response
+def jsonify_rows(rows):
+	return jsonify([dict(row) for row in rows])

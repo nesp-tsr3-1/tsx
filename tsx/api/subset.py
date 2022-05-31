@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request, send_file, session, Response
 import csv
 from uuid import uuid4
-from tsx.api.util import db_session, get_user, get_roles
+from tsx.api.util import db_session, get_user, get_roles, jsonify_rows
 from tsx.api.permissions import permitted
 from tsx.config import data_dir
 import os
@@ -65,11 +65,11 @@ def subset_stats():
             t1_survey.source_id,
             t1_site.search_type_id
         FROM t1_survey
-        STRAIGHT_JOIN region_subdiv ON ST_Contains(region_subdiv.geometry, coords)
+        LEFT JOIN t1_survey_region ON t1_survey.id = survey_id
+        JOIN region ON region.id = t1_survey_region.region_id
         JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id
         JOIN taxon ON t1_sighting.taxon_id = taxon.id
         JOIN source ON t1_survey.source_id = source.id
-        STRAIGHT_JOIN region ON region.id = region_subdiv.id
         JOIN t1_site ON t1_survey.site_id = t1_site.id
         LEFT JOIN intensive_management ON t1_site.intensive_management_id = intensive_management.id
         WHERE {where_clause}
@@ -89,7 +89,40 @@ def subset_stats():
     result = db_session.execute(sql, params).fetchone()
     return jsonify(dict(result))
 
-def subset_sql_params():
+@bp.route('/subset/sites', methods = ['GET'])
+def subset_sites():
+    where_conditions, having_conditions, params = subset_sql_params(state_via_region=True)
+
+    order_by_expressions = []
+
+    if request.args.get('site_name_query'):
+        params['site_name_query'] = request.args['site_name_query'].strip()
+        params['site_name_query_pattern'] = '%' + request.args['site_name_query'].strip() + '%'
+
+        where_conditions.append("t1_site.name LIKE :site_name_query_pattern")
+        order_by_expressions.append("INSTR(t1_site.name, :site_name_query)")
+
+    order_by_expressions.append("t1_site.name")
+
+    sql = """SELECT DISTINCT t1_site.id, t1_site.name
+        FROM t1_survey
+        LEFT JOIN t1_survey_region ON t1_survey.id = survey_id
+        JOIN region ON region.id = t1_survey_region.region_id
+        JOIN t1_site ON t1_survey.site_id = t1_site.id
+        JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id
+        JOIN taxon ON t1_sighting.taxon_id = taxon.id
+        JOIN source ON t1_survey.source_id = source.id
+        LEFT JOIN intensive_management ON t1_site.intensive_management_id = intensive_management.id
+        WHERE {where_clause}
+        ORDER BY {order_by_clause}
+        LIMIT 300
+    """.format(where_clause=" AND ".join(where_conditions) or "TRUE",
+        order_by_clause=", ".join(order_by_expressions))
+
+    result = db_session.execute(sql, params).fetchall()
+    return jsonify_rows(result)
+
+def subset_sql_params(state_via_region=False):
     where_conditions = []
     having_conditions = []
     params = {}
@@ -99,8 +132,12 @@ def subset_sql_params():
     print(args)
 
     if 'state' in args:
-        having_conditions.append("State = :state")
-        params['state'] = args['state']
+        if state_via_region:
+            where_conditions.append("region.state = :state")
+            params['state'] = args['state']
+        else:
+            having_conditions.append("State = :state")
+            params['state'] = args['state']
 
     if 'monitoring_programs' in args:
         ids = args['monitoring_programs']
@@ -141,6 +178,15 @@ def subset_sql_params():
     if 'source_id' in args:
         where_conditions.append('source.id = :source_id')
         params['source_id'] = args['source_id']
+
+    if 'site_id' in args:
+        try:
+            ids = args['site_id'].split(",")
+            pnames = ["site%s" % i for i in range(0, len(ids))]
+            where_conditions.append("t1_site.id IN (%s)" % ", ".join([":%s" % p for p in pnames]))
+            params.update(dict(zip(pnames, ids)))
+        except:
+            pass
 
     return (where_conditions, having_conditions, params)
 

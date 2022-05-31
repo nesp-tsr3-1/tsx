@@ -25,6 +25,8 @@ def main():
 
 	session = get_session()
 
+	session.execute("DELETE FROM t1_survey_region")
+
 	with fiona.open(args.filename, encoding = 'Windows-1252') as shp:
 		for index, feature in enumerate(tqdm(shp)):
 			props = feature['properties']
@@ -49,6 +51,9 @@ def main():
 						'name': props['RegName'],
 						'geometry_wkb': shapely.wkb.dumps(to_multipolygon(geometry))
 					})
+
+	log.info("Updating t1_survey_region (this may take a while)")
+	session.execute("CALL update_t1_survey_region(NULL)")
 
 	session.commit()
 

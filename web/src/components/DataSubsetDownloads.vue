@@ -48,28 +48,65 @@
                     label="label"
                     />
               </div>
-              <div class="buttons" style="margin-top: 1em;">
-                <button class="button is-small is-light" v-on:click="importSpeciesList">Import List</button>
-                <button v-if="criteria.species.length" class="button is-small is-light" v-on:click="exportSpeciesList">Export List</button>
+              <div style="border-left: 2px solid #eee; padding-left: 1em;">
+                <div class="buttons" style="margin-top: 1em;">
+                  <button class="button is-small is-light" v-on:click="importSpeciesList">Import List</button>
+                  <button v-if="criteria.species.length" class="button is-small is-light" v-on:click="exportSpeciesList">Export List</button>
+                </div>
+                <table style="border: 1px solid #ccc;" class="table is-narrow" v-if="criteria.species.length">
+                  <thead>
+                    <tr>
+                      <th>Common name</th>
+                      <th>Scientific name</th>
+                      <th>ID</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="speciesId in criteria.species">
+                      <td>{{speciesById(speciesId).common_name}}</td>
+                      <td>{{speciesById(speciesId).scientific_name}}</td>
+                      <td>{{speciesId}}</td>
+                      <td><button class="delete is-small" style="margin-top: 4px" v-on:click="deselectSpecies(speciesId)"></button></td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
-              <table style="border: 1px solid #ccc;" class="table is-narrow" v-if="criteria.species.length">
-                <thead>
-                  <tr>
-                    <th>Common name</th>
-                    <th>Scientific name</th>
-                    <th>ID</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="speciesId in criteria.species">
-                    <td>{{speciesById(speciesId).common_name}}</td>
-                    <td>{{speciesById(speciesId).scientific_name}}</td>
-                    <td>{{speciesId}}</td>
-                    <td><button class="delete is-small" style="margin-top: 4px" v-on:click="deselectSpecies(speciesId)"></button></td>
-                  </tr>
-                </tbody>
-              </table>
+            </div>
+
+            <div class="field">
+              <label class="label">Sites</label>
+              <div class="control">
+                <Multiselect
+                  mode="multiple"
+                  v-model="criteria.sites"
+                  :options="querySites"
+                  :min-chars="1"
+                  :delay="700"
+                  :searchable="true"
+                  placeholder="All sites"
+                  label="name"
+                  value-prop="id"
+                  />
+              </div>
+              <div style="border-left: 2px solid #eee; padding-left: 1em; margin-top: 1em">
+                <table style="border: 1px solid #ccc;" class="table is-narrow" v-if="criteria.sites.length">
+                  <thead>
+                    <tr>
+                      <th>Site name</th>
+                      <th>ID</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="siteInfo in criteria.sites">
+                      <td>{{siteInfo.split(',')[1]}}</td>
+                      <td>{{siteInfo.split(',')[0]}}</td>
+                      <td><button class="delete is-small" style="margin-top: 4px" v-on:click="deselectSite(siteInfo)"></button></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             <div class="field">
@@ -169,10 +206,12 @@ export default {
         monitoringPrograms: [],
         species: []
       },
+      sitesLoading: false,
       criteria: {
         state: null,
         monitoringPrograms: [],
         species: [],
+        sites: [],
         intensiveManagement: null
       },
       changeCounter: 0, // Incremented every time criteria are changed
@@ -247,6 +286,9 @@ export default {
     },
     deselectSpecies: function(id) {
       this.criteria.species = this.criteria.species.filter(x => x !== id)
+    },
+    deselectSite: function(site) {
+      this.criteria.sites = this.criteria.sites.filter(x => x != site)
     },
     importSpeciesList: function() {
       var self = this
@@ -363,6 +405,10 @@ export default {
         params.taxon_id = this.criteria.species.join(",")
       }
 
+      if(this.criteria.sites && this.criteria.sites.length > 0) {
+        params.site_id = this.criteria.sites.map(x => x.split(',')[0]).join(",")
+      }
+
       return params
     },
     formatQuantity: function(x, singular, plural) {
@@ -381,9 +427,17 @@ export default {
       } else {
         return this.criteria.monitoringPrograms.map(p => p.id).includes('any')
       }
+    },
+    querySites: function(query) {
+      let params = this.buildDownloadParams()
+      delete params.site_id
+      params.site_name_query = query
+      return api.dataSubsetSites(params)
+        .then(sites => sites.map(site => ({ name: site.name, id: site.id + "," + site.name })))
     }
   }
 }
+
 </script>
 
 <style>

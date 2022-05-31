@@ -148,6 +148,10 @@ export function dataSubsetStats(params) {
   return get('/subset/stats', params)
 }
 
+export function dataSubsetSites(params) {
+  return get('/subset/sites', params)
+}
+
 export function dataSubsetGenerateTrend(params) {
   return post('/subset/trend', params)
 }
