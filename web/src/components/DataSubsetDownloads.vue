@@ -81,12 +81,15 @@
                   mode="multiple"
                   v-model="criteria.sites"
                   :options="querySites"
-                  :min-chars="1"
-                  :delay="700"
+                  :delay="500"
                   :searchable="true"
+                  :close-on-select="false"
+                  :filter-results="false"
+                  no-options-text="No sites found"
                   placeholder="All sites"
                   label="name"
                   value-prop="id"
+                  @open="(select) => select.refreshOptions()"
                   />
               </div>
               <div style="border-left: 2px solid #eee; padding-left: 1em; margin-top: 1em">
@@ -431,7 +434,7 @@ export default {
     querySites: function(query) {
       let params = this.buildDownloadParams()
       delete params.site_id
-      params.site_name_query = query
+      params.site_name_query = query || ""
       return api.dataSubsetSites(params)
         .then(sites => sites.map(site => ({ name: site.name, id: site.id + "," + site.name })))
     }
