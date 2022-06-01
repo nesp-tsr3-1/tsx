@@ -24,6 +24,7 @@
 import * as api from '../api.js'
 
 export default {
+  name: 'SourceCustodian',
   data() {
     return {
       state: 'init'

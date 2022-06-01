@@ -104,7 +104,7 @@ import _ from 'underscore'
 const sourceProps = ['description', 'provider', 'authors', 'monitoring_program', 'contact_name', 'contact_institution', 'contact_position', 'contact_email', 'contact_phone']
 
 export default {
-  name: 'ImportHome',
+  name: 'SourceEdit',
   components: {
     'source-list': SourceList
   },

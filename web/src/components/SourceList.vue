@@ -1,3 +1,4 @@
+
 <template>
   <div class="source-list">
     <div v-if="status == 'loading'">
@@ -51,7 +52,7 @@ function normalize(x) {
 }
 
 export default {
-  name: 'sourceList',
+  name: 'SourceList',
   data () {
     return {
       sources: [],
