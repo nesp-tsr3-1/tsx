@@ -1,4 +1,3 @@
-import Promise from 'bluebird' // We can drop this when browser support is better
 import * as util from './util'
 import _ from 'underscore'
 
