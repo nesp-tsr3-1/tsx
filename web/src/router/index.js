@@ -3,9 +3,7 @@ import SourceHome from '../components/SourceHome.vue'
 import SourceEdit from '../components/SourceEdit.vue'
 import SourceView from '../components/SourceView.vue'
 import UserManage from '../components/UserManage.vue'
-// import Plot from '../components/Plot.vue'
 import TSX from '../components/TSX.vue'
-// import Intensity from '../components/Intensity.vue'
 import Login from '../components/Login.vue'
 import SignUp from '../components/SignUp.vue'
 import ResetPassword from '../components/ResetPassword.vue'
@@ -59,11 +57,6 @@ const router = createRouter({
       name: 'SourceView',
       component: SourceView
     },
-    // {
-    //   path: '/plot',
-    //   name: 'Plot',
-    //   component: Plot
-    // },
     {
       path: '/',
       name: 'TSX',
@@ -73,11 +66,6 @@ const router = createRouter({
       path: '/tsx',
       redirect: '/'
     },
-    // {
-    //   path: '/intensity',
-    //   name: 'Intensity',
-    //   component: Intensity
-    // },
     {
       path: '/manager-users',
       name: 'UserManage',
