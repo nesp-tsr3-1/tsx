@@ -71,7 +71,7 @@ const router = createRouter({
       redirect: '/'
     },
     {
-      path: '/manager-users',
+      path: '/manage_users',
       name: 'UserManage',
       component: UserManage
     },
