@@ -785,7 +785,7 @@ CREATE TABLE IF NOT EXISTS `region` (
   `geometry` MULTIPOLYGON NOT NULL,
   `state` VARCHAR(255) NULL,
   `positional_accuracy_in_m` INT NULL,
-  `centroid` POINT GENERATED ALWAYS AS () STORED,
+  `centroid` POINT GENERATED ALWAYS AS (ST_Centroid(geometry)) STORED,
   PRIMARY KEY (`id`))
 ENGINE = InnoDB;
 
@@ -1363,7 +1363,7 @@ DELIMITER $$
 
 DROP TRIGGER IF EXISTS `t1_survey_region_survey_ai` $$
 CREATE DEFINER = CURRENT_USER TRIGGER `t1_survey_region_survey_ai` AFTER INSERT ON `t1_survey` FOR EACH ROW
-REPLACE INTO t1_survey_region(survey_id, region_id) SELECT NEW.id, MIN(region_subdiv.id) FROM region_subdiv WHERE ST_Contains(region_subdiv.geometry, NEW.coords)$$
+REPLACE INTO t1_survey_region(survey_id, region_id) SELECT NEW.id, MIN(region_subdiv.id) AS region_id FROM region_subdiv WHERE ST_Contains(region_subdiv.geometry, NEW.coords) HAVING region_id IS NOT NULL$$
 
 
 DROP TRIGGER IF EXISTS `t1_survey_region_survey_bu` $$
@@ -1373,7 +1373,7 @@ DELETE  FROM t1_survey_region WHERE survey_id = OLD.id$$
 
 DROP TRIGGER IF EXISTS `t1_survey_region_survey_au` $$
 CREATE DEFINER = CURRENT_USER TRIGGER `t1_survey_region_survey_au` AFTER UPDATE ON `t1_survey` FOR EACH ROW
-REPLACE INTO t1_survey_region(survey_id, region_id) SELECT NEW.id, MIN(region_subdiv.id) FROM region_subdiv WHERE ST_Contains(region_subdiv.geometry, NEW.coords)$$
+REPLACE INTO t1_survey_region(survey_id, region_id) SELECT NEW.id, MIN(region_subdiv.id) AS region_id FROM region_subdiv WHERE ST_Contains(region_subdiv.geometry, NEW.coords) HAVING region_id IS NOT NULL$$
 
 
 DROP TRIGGER IF EXISTS `t1_survey_region_survey_bd` $$

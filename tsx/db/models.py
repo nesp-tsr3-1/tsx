@@ -86,6 +86,9 @@ class Region(Base):
     geometry = Column(NullType, nullable=False)
     state = Column(String(255))
     positional_accuracy_in_m = Column(Integer)
+    centroid = Column(NullType, Computed('(st_centroid(`geometry`))', persisted=True))
+
+    surveys = relationship('T1Survey', secondary='t1_survey_region')
 
 
 t_region_subdiv = Table(
@@ -552,6 +555,13 @@ class T1Sighting(Base):
     taxon = relationship('Taxon')
     unit = relationship('Unit')
     unit_type = relationship('UnitType')
+
+
+t_t1_survey_region = Table(
+    't1_survey_region', metadata,
+    Column('survey_id', ForeignKey('t1_survey.id', ondelete='CASCADE'), primary_key=True, index=True),
+    Column('region_id', ForeignKey('region.id', ondelete='CASCADE'), nullable=False, index=True)
+)
 
 
 class T2ProcessedSurvey(Base):
