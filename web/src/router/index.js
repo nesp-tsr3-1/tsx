@@ -11,6 +11,7 @@ import Login from '../components/Login.vue'
 import SignUp from '../components/SignUp.vue'
 import ResetPassword from '../components/ResetPassword.vue'
 import DataSubsetDownloads from '../components/DataSubsetDownloads.vue'
+import UserEdit from '../components/UserEdit.vue'
 import * as api from '../api'
 
 const router = createRouter({
@@ -93,6 +94,11 @@ const router = createRouter({
       path: '/downloads',
       name: 'DataSubsetDownloads',
       component: DataSubsetDownloads
+    },
+    {
+      path: '/manage_account',
+      name: 'UserEdit',
+      component: UserEdit
     }
   ]
 })

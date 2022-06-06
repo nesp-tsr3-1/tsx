@@ -71,6 +71,46 @@ def create_user():
 
 	return "OK", 204 # Success
 
+@bp.route('/users/<int:user_id>', methods = ['PUT'])
+def update_user(user_id):
+	body = request.json
+
+	fields = [
+		Field(name='email', title='Email address', validators=[validate_required, validate_email]),
+		Field(name='first_name', title='First name', validators=[validate_required, validate_max_chars(255)]),
+		Field(name='last_name', title='Last name', validators=[validate_required, validate_max_chars(255)]),
+		Field(name='phone_number', title='Phone number', validators=[validate_max_chars(32)])
+		# Field(name='password', title='Password', validators=[validate_required, validate_min_chars(8)])
+	]
+
+	errors = validate_fields(fields, body)
+
+	if len(errors):
+		return jsonify(errors), 400
+
+	user = db_session.query(User).filter(User.id == user_id).one_or_none()
+
+	if not user:
+		return 'Not found', 404
+
+	email = body['email'].strip()
+
+	email_user = db_session.query(User).filter(User.email == email).one_or_none()
+
+	if user != email_user:
+		return jsonify({ 'email': 'Email is used by another account' }), 400
+
+	user.email = email
+	user.first_name = body['first_name'].strip()
+	user.last_name = body['last_name'].strip()
+	user.phone_number = body['phone_number'].strip()
+	# user.password_hash=pwd_context.hash(body['password'])
+
+	db_session.commit()
+
+	return "OK", 204 # Success
+
+
 @bp.route('/login', methods = ['POST'])
 def login():
 	body = request.json
