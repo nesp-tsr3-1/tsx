@@ -2,9 +2,10 @@
   <ul class='user-nav' v-if="user">
     <li><router-link :to="{ name: 'SourceHome' }">Datasets</router-link></li>
     <li v-if="canManageUsers"><router-link :to="{ name: 'UserManage' }">Manage Users</router-link></li>
+    <!-- <li v-if="canManagePrograms"><router-link :to="{ name: 'ProgramManage' }">Manage Programs</router-link></li> -->
     <li v-if="isProgramManager"><router-link :to="{ name: 'DataSubsetDownloads' }">Downloads</router-link></li>
     <li><router-link :to="{ name: 'Logout' }">Logout</router-link></li>
-    <li style="color: #888">{{user.first_name}} {{user.last_name}}</li>
+    <li style="color: #888"><router-link :to="{ name: 'UserEdit' }">{{user.first_name}} {{user.last_name}}</router-link></li>
   </ul>
 </template>
 
@@ -25,6 +26,9 @@ export default {
     },
     isProgramManager: function() {
       return this.user && (this.user.is_admin || this.user.roles.indexOf("Program manager") != -1)
+    },
+    canManagePrograms: function() {
+      return this.user && this.user.is_admin
     }
   },
   created () {

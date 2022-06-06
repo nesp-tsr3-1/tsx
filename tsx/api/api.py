@@ -14,6 +14,7 @@ import tsx.api.misc
 import tsx.api.user
 import tsx.api.program_manager
 import tsx.api.subset
+import tsx.api.program
 
 import datetime
 
@@ -40,6 +41,7 @@ app.register_blueprint(tsx.api.misc.bp)
 app.register_blueprint(tsx.api.user.bp)
 app.register_blueprint(tsx.api.program_manager.bp)
 app.register_blueprint(tsx.api.subset.bp)
+app.register_blueprint(tsx.api.program.bp)
 
 
 class DateTimeEncoder(json.JSONEncoder):

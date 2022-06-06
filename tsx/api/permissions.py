@@ -59,8 +59,11 @@ def permitted(user, action, resource_type, resource_id=None):
 	if resource_type == 'program':
 		if action in ('list_managers'):
 			return True
-		if action in ('download_data'):
+		if action in ('download_data', 'update'):
 			return is_program_manager_of_program(user.id, resource_id)
+		if action in ('create'):
+			return 'Program manager' in user_roles
+
 
 	if resource_type == 'notes' and 'Custodian' in user_roles:
 		try:

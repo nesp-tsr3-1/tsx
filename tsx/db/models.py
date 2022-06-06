@@ -1,8 +1,8 @@
 # coding: utf-8
 from sqlalchemy import CHAR, Column, Computed, Date, Float, ForeignKey, Index, Integer, SmallInteger, String, TIMESTAMP, Table, Text, Time, text
 from sqlalchemy.sql.sqltypes import NullType
+from sqlalchemy.dialects.mysql import MEDIUMTEXT, TINYINT
 from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -57,7 +57,9 @@ class MonitoringProgram(Base):
     __tablename__ = 'monitoring_program'
 
     id = Column(Integer, primary_key=True)
-    description = Column(String(255))
+    description = Column(String(255), nullable=False)
+    summary = Column(MEDIUMTEXT)
+    lead = Column(String(255))
 
     users = relationship('User', secondary='user_program_manager')
 

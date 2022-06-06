@@ -132,6 +132,10 @@ export function uniq(array) {
   return [...new Set(array)]
 }
 
+export function pick(obj, keys) {
+  return Object.fromEntries(keys.map(key => [key, obj[key]]))
+}
+
 export function humanizeStatus(str) {
   return {
     init: 'Not checked yet',

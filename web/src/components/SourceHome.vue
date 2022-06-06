@@ -19,7 +19,7 @@
           <div v-if="state === 'loaded'">
             <router-link to="/source/edit/new" tag="button" class="button is-primary">Create New Dataset</router-link>
             <hr>
-            <source-list></source-list>
+            <source-list @click-source='(source) => $router.push("/source/" + source.id)'></source-list>
           </div>
         </div>
       </div>

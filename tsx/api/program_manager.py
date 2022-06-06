@@ -22,7 +22,7 @@ def get_program_managers(program_id = None):
 		SELECT user.id, email, first_name, last_name
 		FROM user, user_program_manager
 		WHERE user.id = user_id
-		AND program_id = :program_id""", { "program_id": program_id })
+		AND monitoring_program_id = :program_id""", { "program_id": program_id })
 
 	return jsonify_rows(rows)
 

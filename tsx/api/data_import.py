@@ -47,6 +47,8 @@ def get_sources():
 
 	db_session.execute("SET time_zone = '+00:00'")
 
+	program_id = request.args.get('program_id')
+
 	print(user.id)
 
 	rows = db_session.execute(
@@ -72,8 +74,9 @@ def get_sources():
 					source.monitoring_program_id IN (SELECT monitoring_program_id FROM user_program_manager WHERE user_id = :user_id)
 				)
 			)
+		AND (:program_id IS NULL OR monitoring_program_id = :program_id)
 		""",
-		{ 'user_id': user.id })
+		{ 'user_id': user.id, 'program_id': program_id })
 
 	return jsonify_rows(rows)
 

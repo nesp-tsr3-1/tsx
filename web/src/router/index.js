@@ -3,6 +3,9 @@ import SourceHome from '../components/SourceHome.vue'
 import SourceEdit from '../components/SourceEdit.vue'
 import SourceView from '../components/SourceView.vue'
 import UserManage from '../components/UserManage.vue'
+import ProgramManage from '../components/ProgramManage.vue'
+import ProgramEdit from '../components/ProgramEdit.vue'
+import ProgramView from '../components/ProgramView.vue'
 import TSX from '../components/TSX.vue'
 import Login from '../components/Login.vue'
 import SignUp from '../components/SignUp.vue'
@@ -70,6 +73,21 @@ const router = createRouter({
       path: '/manager-users',
       name: 'UserManage',
       component: UserManage
+    },
+    {
+      path: '/manage_programs',
+      name: 'ProgramManage',
+      component: ProgramManage
+    },
+    {
+      path: '/program/edit/:id',
+      name: 'ProgramEdit',
+      component: ProgramEdit
+    },
+    {
+      path: '/program/:id',
+      name: 'ProgramView',
+      component: ProgramView
     },
     {
       path: '/downloads',

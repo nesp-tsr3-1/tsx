@@ -23,8 +23,8 @@ export function approveImport(id) {
   return post('/imports/' + id + '/approve')
 }
 
-export function dataSources() {
-  return get('/data_sources')
+export function dataSources(criteria) {
+  return get('/data_sources', criteria)
 }
 
 export function dataSource(id) {
@@ -93,6 +93,34 @@ export function dataImportLogUrl(id) {
 
 export function monitoringPrograms() {
   return get('/monitoring_program')
+}
+
+export function monitoringProgram(program_id) {
+  return get('/monitoring_programs/' + program_id)
+}
+
+export function createMonitoringProgram(program) {
+  return post('/monitoring_programs', program)
+}
+
+export function updateMonitoringProgram(program) {
+  return put('/monitoring_programs/' + program.id, program)
+}
+
+export function deleteMonitoringProgram(id) {
+  return del('/monitoring_programs/' + id)
+}
+
+export function removeSourceFromMonitoringProgram(program_id, source_id) {
+  return del('/monitoring_programs/' + program_id + '/sources/' + source_id)
+}
+
+export function removeManagerFromMonitoringProgram(program_id, user_id) {
+  return del('/monitoring_programs/' + program_id + '/managers/' + user_id)
+}
+
+export function addManagerToMonitoringProgram(programId, email) {
+  return post('/monitoring_programs/' + programId + '/managers', { email })
 }
 
 export function programManagers(program_id) {

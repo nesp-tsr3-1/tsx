@@ -1,4 +1,3 @@
-
 <template>
   <div class="source-list">
     <div v-if="status == 'loading'">
@@ -19,22 +18,26 @@
         <p class="column title is-6">Showing {{filteredSources.length}} / {{sources.length}} datasets</p>
         <input class="column input" type="text" placeholder="Search datasets" v-model="searchText">
       </div>
-      <table class="table is-fullwidth is-striped is-hoverable" v-if="filteredSources.length > 0">
+      <table :class="{clickable: clickableRows}" class="table is-fullwidth is-striped is-hoverable" v-if="filteredSources.length > 0">
         <thead>
           <tr>
             <th v-on:click="sortBy('description')">Description {{sortIcon('description')}}</th>
-            <!-- <th v-on:click="sortBy('monitoring_program')">Program {{sortIcon('monitoring_program')}}</th> -->
             <th v-on:click="sortBy('time_created')">Created {{sortIcon('time_created')}}</th>
-            <th v-on:click="sortBy('status')">Status {{sortIcon('status')}}</th>
+            <th v-if="showStatus" v-on:click="sortBy('status')">Status {{sortIcon('status')}}</th>
+            <th v-if="actions">Manage</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="i in sortedSources" v-on:click='$router.push("/source/" + i.id)'>
-            <td :title="i.description">{{truncate(i.description, 120)}}</td>
-            <!-- <td>{{truncate(i.monitoring_program, 120)}}</td> -->
-            <td>{{formatDateTime(i.time_created)}}</td>
-            <!-- <td><timeago :since='i.time_created' :auto-update="60" v-if="i.time_created"></timeago></td> -->
-            <td>{{humanizeStatus(i.status)}}</td>
+          <tr v-for="source in sortedSources" @click="$emit('clickSource', source)">
+            <td :title="source.description">{{truncate(source.description, 120)}}</td>
+            <td>{{formatDateTime(source.time_created)}}</td>
+            <td v-if="showStatus">{{humanizeStatus(source.status)}}</td>
+            <td v-if="actions">
+              <button
+                class="button is-small is-primary"
+                v-for="action in actions"
+                @click.stop="$emit('action', action, source)">{{action}}</button>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -66,17 +69,24 @@ export default {
     }
   },
   created() {
-    api.dataSources().then((sources) => {
-      console.log(sources)
-      this.sources = sources
-      // .sort((a, b) => (b.time_created || '').localeCompare(a.time_created || ''))
-      this.status = 'loaded'
-    }).catch((error) => {
-      console.log(error)
-      this.status = 'error'
-    })
+    this.refresh()
   },
   methods: {
+    refresh() {
+      let criteria = {}
+      if(this.programId) {
+        criteria.program_id = this.programId
+      }
+
+      api.dataSources(criteria).then((sources) => {
+        this.sources = sources
+        // .sort((a, b) => (b.time_created || '').localeCompare(a.time_created || ''))
+        this.status = 'loaded'
+      }).catch((error) => {
+        console.log(error)
+        this.status = 'error'
+      })
+    },
     humanizeStatus,
     formatDateTime,
     truncate(str, maxLength) {
@@ -126,7 +136,16 @@ export default {
     }, 500)
   },
   props: {
-    completed: Boolean
+    programId: Number,
+    showStatus: {
+      type: Boolean,
+      default: true
+    },
+    actions: Array,
+    clickableRows: {
+      type: Boolean,
+      default: true
+    }
   }
 }
 </script>
@@ -142,7 +161,7 @@ export default {
   .table th:nth-child(3) {
     width: 8em;
   }
-  .table tbody tr {
+  .table.clickable tbody tr {
     cursor: pointer;
   }
   .table thead th {

@@ -56,7 +56,12 @@ def get_source():
 
 @bp.route('/monitoring_program', methods = ['GET'])
 def get_monitoring_program():
-	return query_to_json("""SELECT id, description FROM monitoring_program ORDER BY description""")
+	return query_to_json("""
+		SELECT id,
+			description,
+			(SELECT COUNT(*) FROM source WHERE monitoring_program_id = monitoring_program.id) AS source_count
+		FROM monitoring_program
+		ORDER BY description""")
 
 @bp.route('/intensive_management_group', methods = ['GET'])
 def get_intensive_management_group():

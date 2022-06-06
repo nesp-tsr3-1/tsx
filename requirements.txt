@@ -18,7 +18,7 @@ itsdangerous==2.0.1
 Jinja2==3.0.1
 MarkupSafe==2.0.1
 munch==2.5.0
-mysql-connector-python==8.0.26
+mysql-connector-python==8.0.29
 numpy==1.21.2
 openpyxl==3.0.7
 packaging==21.0
@@ -34,6 +34,6 @@ scipy==1.7.1
 Shapely==1.7.1
 six==1.16.0
 sqlacodegen==2.3.0
-SQLAlchemy==1.4.23
+SQLAlchemy==1.4.37
 tqdm==4.62.2
 Werkzeug==2.0.1
