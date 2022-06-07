@@ -52,13 +52,23 @@
                 <div class="buttons" style="margin-top: 1em;">
                   <button class="button is-small is-light" v-on:click="importSpeciesList">Import List</button>
                   <button v-if="criteria.species.length" class="button is-small is-light" v-on:click="exportSpeciesList">Export List</button>
+                  <tippy class="info-icon icon" arrow interactive placement="right" style="margin-bottom: 0.5rem;">
+                    <template #default><i class="far fa-question-circle"></i></template>
+                    <template #content>
+                      <div class="popup-content content has-text-white">
+                          <p>The list of selected species can be imported from a file in CSV format.</p>
+                          <p>The file must have a column named <em>TaxonID</em> containing the taxon ID of each species. (Other columns are ignored.)</p>
+                          <p>A full list of taxon IDs can be found in the <a href="http://tsx.org.au/files/TaxonList.xlsx">Taxon List</a>.</p>
+                      </div>
+                    </template>
+                  </tippy>
                 </div>
                 <table style="border: 1px solid #ccc;" class="table is-narrow" v-if="criteria.species.length">
                   <thead>
                     <tr>
                       <th>Common name</th>
                       <th>Scientific name</th>
-                      <th>ID</th>
+                      <th>Taxon ID</th>
                       <th></th>
                     </tr>
                   </thead>
@@ -97,7 +107,7 @@
                   <thead>
                     <tr>
                       <th>Site name</th>
-                      <th>ID</th>
+                      <th>Site ID</th>
                       <th></th>
                     </tr>
                   </thead>
@@ -183,12 +193,14 @@ import * as api from '../api.js'
 import Spinner from '../../node_modules/vue-simple-spinner/src/components/Spinner.vue'
 import Multiselect from '@vueform/multiselect'
 import { plotTrend } from '../plotTrend.js'
+import { Tippy } from 'vue-tippy'
 
 export default {
   name: 'DataSubsetDownloads',
   components: {
     Spinner,
-    Multiselect
+    Multiselect,
+    Tippy
   },
   data () {
     return {
@@ -276,7 +288,11 @@ export default {
         this.criteria.monitoringPrograms = programs.filter(p => p.id != "none") // select all programs by default
       }),
       api.species({ q: 't1_present' }).then((species) => {
-        this.options.species = species.map(sp => ({ ...sp, label: (sp.common_name || sp.scientific_name) + " (" + sp.id + ")" }))
+        function label(sp) {
+          return sp.scientific_name + " (" + (sp.common_name ? (sp.common_name + ", ") : "") + sp.id + ")";
+        }
+
+        this.options.species = species.map(sp => ({ ...sp, label: label(sp) }))
       })
     ]).catch((error) => {
       console.log(error)
@@ -322,7 +338,9 @@ export default {
         return x.replace(/[,\n\"]/g, ' ')
       }
 
-      var csv = this.criteria.species.map(id => {
+      var header = "TaxonCommonName,TaxonScientificName,TaxonID\n"
+
+      var csv = header + this.criteria.species.map(id => {
         var sp = this.speciesById(id)
         return sanitise(sp.common_name || "") + "," + sanitise(sp.scientific_name || "") + "," + (sp.id)
       }).join("\n")
@@ -369,7 +387,6 @@ export default {
         if(x.status == 'ready') {
           this.trendStatus = 'ready'
           this.trendDownloadURL = api.dataSubsetTrendDownloadURL(id)
-          
           setTimeout(() => this.plotTrend(id, v), 0, id)
         } else if(x.status == 'processing') {
           setTimeout(() => this.checkTrendStatus(id, v), 3000)
@@ -445,5 +462,7 @@ export default {
 
 <style>
 .multiselect-search { height: 100%; } /* Fixes alignment issue with multiselect component */
+.popup-content a { color: #aaa; text-decoration: underline; }
+.popup-content a:hover { color: #ccc; }
 </style>
 <style src="@vueform/multiselect/themes/default.css"></style>
