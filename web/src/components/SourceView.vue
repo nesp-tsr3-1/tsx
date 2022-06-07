@@ -73,35 +73,7 @@
                 </div>
                 <hr>
 
-                <div>
-                  <button type="button" class="button is-primary" style="margin: 0.5em 0;"
-                  v-on:click="downloadRawData">Download Raw Data (CSV format)</button>
-                </div>
-                <div>
-                  <button type="button" class="button is-primary" style="margin: 0.5em 0;"
-                  v-on:click="downloadTimeSeries">Download Time Series (CSV format)</button>
-                </div>
-                <hr>
-
-                <div v-if="trendStatus == 'idle'">
-                  <button type="button" class="button is-primary" style="margin: 0.5em 0;"
-                    v-on:click="generateTrend">Generate Population Trend</button>
-                </div>
-                <div v-if="trendStatus == 'processing'">
-                  Please wait while the population trend is generated. This may take several minutes.
-                  <spinner size='small' style='display: inline-block;'></spinner>
-                </div>
-                <div v-if="trendStatus == 'error'">
-                  An error occurred while generating the trend.
-                </div>
-                <div v-if="trendStatus == 'ready'">
-                  <h4 class="title is-6" style="margin: 1em 0;">Population Trend</h4>
-                  <p style="margin: 1em 0; font-style: italic;">Note: Population trends are generated from your time-series data using the Living Planet Index methodology. To find out more on how these trends are generated see the ‘TSX Dataset Downloads Factsheet’ above.</p>
-                  <p style="margin: 1em 0">
-                    <button type="button" class="button is-primary" style="margin: 0.5em 0;" v-on:click="downloadTrend">Download Population Trend (TXT format)</button>
-                  </p>
-                  <canvas v-show="showPlot" ref="plot" style="height: 10em;"></canvas>
-                </div>
+                <source-downloads :sourceId="sourceId"></source-downloads>
               </div>
             </div>
           </div>
@@ -167,8 +139,7 @@ import ImportList from './ImportList.vue'
 import ImportData from './ImportData.vue'
 import ProcessingNotes from './ProcessingNotes.vue'
 import SourceCustodians from './SourceCustodians.vue'
-import Spinner from '../../node_modules/vue-simple-spinner/src/components/Spinner.vue'
-import { plotTrend } from '../plotTrend'
+import SourceDownloads from './SourceDownloads.vue'
 
 export default {
   name: 'SourceView',
@@ -177,7 +148,7 @@ export default {
     'import-data': ImportData,
     'processing-notes': ProcessingNotes,
     'source-custodians': SourceCustodians,
-    'spinner': Spinner
+    'source-downloads': SourceDownloads
   },
   data () {
     return {
@@ -185,10 +156,7 @@ export default {
       source: null,
       latestImportId: null,
       enableDelete: false,
-      showDownloads: false,
-      trendStatus: 'idle',
-      trendDownloadURL: null,
-      showPlot: false
+      showDownloads: false
     }
   },
   computed: {
@@ -224,45 +192,6 @@ export default {
       api.dataSource(this.sourceId).then(source => {
         this.showDownloads = source.has_t1_data
       })
-    },
-    downloadTimeSeries() {
-      window.location = api.dataSubsetDownloadURL('time_series', { source_id: this.sourceId })
-    },
-    downloadRawData() {
-      window.location = api.dataSubsetDownloadURL('raw_data', { source_id: this.sourceId })
-    },
-    generateTrend: function() {
-      this.trendStatus = 'processing'
-      api.dataSubsetGenerateTrend({ source_id: this.sourceId }).then(x => {
-        this.trendStatus = 'processing'
-        setTimeout(() => this.checkTrendStatus(x.id), 3000)
-      }).catch(e => {
-        console.log(e)
-        this.trendStatus = 'error'
-      })
-    },
-    checkTrendStatus: function(id) {
-      api.dataSubsetTrendStatus(id).then(x => {
-        if(x.status == 'ready') {
-          this.trendStatus = 'ready'
-          this.trendDownloadURL = api.dataSubsetTrendDownloadURL(id)
-          setTimeout(() => this.plotTrend(id), 0)
-        } else if(x.status == 'processing') {
-          setTimeout(() => this.checkTrendStatus(id), 3000)
-        }
-      }).catch(e => {
-        console.log(e)
-        this.trendStatus = 'error'
-      })
-    },
-    plotTrend(id) {
-      api.dataSubsetTrend(id).then(data => {
-        this.showPlot = true
-        plotTrend(data, this.$refs.plot)
-      })
-    },
-    downloadTrend() {
-      window.location = this.trendDownloadURL
     }
   },
   created () {
