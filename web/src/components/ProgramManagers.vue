@@ -19,8 +19,8 @@
               <div v-if="manager.first_name">
                 <span style="font-weight: bold">{{manager.first_name + ' ' + manager.last_name}}</span>
               </div>
-              <div>
-                <a v-bind:href="'mailto: ' + manager.email">{{manager.email}}</a>
+              <div style="overflow: hidden; text-overflow: ellipsis;">
+                <a :href="'mailto: ' + manager.email" :title="manager.email">{{manager.email}}</a>
               </div>
               <div v-if="!manager.first_name" class="is-size-7">
                 This user has not signed up for an account yet

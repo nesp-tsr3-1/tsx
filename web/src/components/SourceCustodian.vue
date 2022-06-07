@@ -6,8 +6,8 @@
         <div>
           <span style="font-weight: bold">{{displayName}}</span>
         </div>
-        <div>
-          <a v-bind:href="'mailto: ' + user.email">{{user.email}}</a>
+        <div style="overflow: hidden; text-overflow: ellipsis;">
+          <a :href="'mailto: ' + user.email" :title="user.email">{{user.email}}</a>
         </div>
         <div v-if="!isRegistered" class="is-size-7">
           This user has not signed up for an account yet
