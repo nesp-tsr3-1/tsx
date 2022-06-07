@@ -171,3 +171,114 @@ export function debounce(fn, delay) {
     }, delay)
   }
 }
+
+export function readTextFile(mimeType, callback) {
+  var input = document.createElement("input")
+  input.type = "file"
+  input.accept = mimeType
+  input.addEventListener("change", function(evt) {
+    var file = input.files[0]
+    var reader = new FileReader()
+    reader.readAsText(file)
+    reader.onload = function() {
+      callback(reader.result)
+    }
+  })
+  document.body.append(input)
+  input.click()
+}
+
+export function saveTextFile(text, mimeType, fileName) {
+  var data = new Blob([text], { type: mimeType })
+  var url = window.URL.createObjectURL(data)
+  var link = document.createElement("a")
+  link.href = url
+  link.download = fileName
+  document.body.append(link)
+  link.click()
+  window.URL.revokeObjectURL(url)
+}
+
+// Not currently used, but might be useful for Species IDs list
+function parseCSV(input) {
+  var p = 0
+  var c = input[0]
+  var quote = '"'
+  var comma = ','
+  var rows = []
+  var row = []
+
+  function endRow() {
+    rows.push(row)
+    row = []
+  }
+
+  function next() {
+    if(eof()) { throw "Unexpected EOF" }
+    c = input[++p]
+  }
+
+  function eof() {
+    return p >= input.length
+  }
+
+  while(true) {
+    var w = ''
+    if(c === quote) {
+      next()
+      while(true) {
+        if(c !== quote) {
+          w += c; next()
+        } else if(input[p + 1] === quote) {
+          w += c; p++; next()
+        } else {
+          next(); break
+        }
+      }
+    } else {
+      w = ''
+      while(!eof() && c !== comma && c !== '\n' && c !== '\r') {
+        w += c; next()
+      }
+    }
+
+    row.push(w)
+
+    if(c === comma) {
+      next()
+    } else if(c === '\n') {
+      next(); endRow()
+    } else if(c === '\r') {
+      next()
+      if(c === '\n') { next() }
+      endRow()
+    } else if(eof()) {
+      endRow(); break
+    } else {
+      throw "Unexpected char at index " + p + ": " + c
+    }
+  }
+  return rows
+}
+
+export function extractSpeciesIDsFromCSV(csv) {
+  return csv
+        .split(/[\n\r]/)
+        .flatMap(x => x.split(","))
+        .map(x => x.trim())
+        .filter(x => x.match(/^[pmu_]+[0-9]+[a-z]?$/))
+}
+
+export function generateSpeciesCSV(species) {
+  function sanitise(x) {
+    return x.replace(/[,\n\"]/g, ' ')
+  }
+
+  var header = "TaxonCommonName,TaxonScientificName,TaxonID\n"
+
+  var csv = header + species.map(sp => {
+    return sanitise(sp.common_name || "") + "," + sanitise(sp.scientific_name || "") + "," + (sp.id)
+  }).join("\n")
+
+  return csv
+}

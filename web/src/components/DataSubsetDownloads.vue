@@ -192,6 +192,7 @@ import Spinner from '../../node_modules/vue-simple-spinner/src/components/Spinne
 import Multiselect from '@vueform/multiselect'
 import { plotTrend } from '../plotTrend.js'
 import { Tippy } from 'vue-tippy'
+import { readTextFile, extractSpeciesIDsFromCSV, saveTextFile, generateSpeciesCSV } from '../util.js'
 
 export default {
   name: 'DataSubsetDownloads',
@@ -308,51 +309,14 @@ export default {
       this.criteria.sites = this.criteria.sites.filter(x => x != site)
     },
     importSpeciesList: function() {
-      var self = this
-      var input = document.createElement("input")
-      input.type = "file"
-      input.accept = "text/plain, text/csv"
-      input.addEventListener("change", function(evt) {
-        var file = input.files[0]
-        var reader = new FileReader()
-        reader.readAsText(file)
-        reader.onload = function() {
-          self.processSpeciesList(reader.result)
-        }
+      readTextFile("text/plain, text/csv", (text) => {
+        this.criteria.species = extractSpeciesIDsFromCSV(text)
       })
-      document.body.append(input)
-      input.click()
-    },
-    processSpeciesList: function(text) {
-      var ids = text
-        .split(/[\n\r]/)
-        .flatMap(x => x.split(","))
-        .map(x => x.trim())
-        .filter(x => x.match(/^[pmu_]+[0-9]+$/))
-      this.criteria.species = ids
     },
     exportSpeciesList: function() {
-      function sanitise(x) {
-        return x.replace(/[,\n\"]/g, ' ')
-      }
-
-      var header = "TaxonCommonName,TaxonScientificName,TaxonID\n"
-
-      var csv = header + this.criteria.species.map(id => {
-        var sp = this.speciesById(id)
-        return sanitise(sp.common_name || "") + "," + sanitise(sp.scientific_name || "") + "," + (sp.id)
-      }).join("\n")
-
-      // var csv = this.criteria.species.join("\n")
-
-      var data = new Blob([csv], {type: 'text/csv'})
-      var url = window.URL.createObjectURL(data)
-      var link = document.createElement("a")
-      link.href = url
-      link.download = "species-list.csv"
-      document.body.append(link)
-      link.click()
-      window.URL.revokeObjectURL(url)
+      var species = this.criteria.species.map(id => this.speciesById(id))
+      var csv = generateSpeciesCSV(species)
+      saveTextFile(csv, 'text/csv', 'species-list.csv')
     },
     downloadRawData: function() {
       var params = this.buildDownloadParams()
