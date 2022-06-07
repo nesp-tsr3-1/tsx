@@ -85,8 +85,6 @@ def subset_stats():
         where_clause = " AND ".join(where_conditions) if where_conditions else "TRUE",
         having_clause = "HAVING " + " AND ".join(having_conditions) if having_conditions else "")
 
-    print(sql)
-
     result = db_session.execute(sql, params).fetchone()
     return jsonify(dict(result))
 
@@ -160,7 +158,7 @@ def subset_sql_params(state_via_region=False):
 
     if 'management' in args:
         management = args['management']
-        where_conditions.append("t1_site.management_id = 1")
+        where_conditions.append("t1_site.management_id = (SELECT id FROM management WHERE description = :management)")
         params['management'] = management
 
     if 'taxon_id' in args:
