@@ -71,7 +71,6 @@ def subset_stats():
         JOIN taxon ON t1_sighting.taxon_id = taxon.id
         JOIN source ON t1_survey.source_id = source.id
         JOIN t1_site ON t1_survey.site_id = t1_site.id
-        LEFT JOIN intensive_management ON t1_site.intensive_management_id = intensive_management.id
         WHERE {where_clause}
         GROUP BY t1_survey.id, t1_sighting.id
         {having_clause})
@@ -85,6 +84,8 @@ def subset_stats():
     """.format(
         where_clause = " AND ".join(where_conditions) if where_conditions else "TRUE",
         having_clause = "HAVING " + " AND ".join(having_conditions) if having_conditions else "")
+
+    print(sql)
 
     result = db_session.execute(sql, params).fetchone()
     return jsonify(dict(result))
@@ -112,7 +113,6 @@ def subset_sites():
         JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id
         JOIN taxon ON t1_sighting.taxon_id = taxon.id
         JOIN source ON t1_survey.source_id = source.id
-        LEFT JOIN intensive_management ON t1_site.intensive_management_id = intensive_management.id
         WHERE {where_clause}
         ORDER BY {order_by_clause}
         LIMIT 300
@@ -158,16 +158,10 @@ def subset_sql_params(state_via_region=False):
             where_conditions.append("COALESCE(source.monitoring_program_id, -1) IN (%s)" % ", ".join([":%s" % p for p in pnames]))
             params.update(dict(zip(pnames, ids)))
 
-    if 'intensive_management' in args:
-        management = args['intensive_management']
-        if management == "Any management":
-            where_conditions.append("COALESCE(intensive_management.`grouping`, 'No known management') != 'No known management'")
-        elif management == "Predator-free":
-            where_conditions.append("intensive_management.`grouping` LIKE '%predator-free%'")
-        elif management == "Translocation":
-            where_conditions.append("intensive_management.`grouping` LIKE '%translocation%'")
-        elif management == "No known management":
-            where_conditions.append("COALESCE(intensive_management.`grouping`, 'No known management') = 'No known management'")
+    if 'management' in args:
+        management = args['management']
+        where_conditions.append("t1_site.management_id = 1")
+        params['management'] = management
 
     if 'taxon_id' in args:
         taxon_list = args['taxon_id'].split(',')
@@ -252,7 +246,6 @@ def query_subset_raw_data_sql_and_params():
         JOIN source ON t1_survey.source_id = source.id
         JOIN region ON region.id = region_subdiv.id
         JOIN t1_site ON t1_survey.site_id = t1_site.id
-        LEFT JOIN intensive_management ON t1_site.intensive_management_id = intensive_management.id
         WHERE ST_Contains(region_subdiv.geometry, coords)
         AND {where_clause}
         GROUP BY t1_survey.id, t1_sighting.id
@@ -365,7 +358,6 @@ def query_subset_time_series():
         JOIN taxon ON t1_sighting.taxon_id = taxon.id
         JOIN source ON t1_survey.source_id = source.id
         JOIN t1_site ON t1_survey.site_id = t1_site.id
-        LEFT JOIN intensive_management ON t1_site.intensive_management_id = intensive_management.id
         WHERE {where_clause}
         GROUP BY t1_survey.id, t1_sighting.id
         {having_clause}

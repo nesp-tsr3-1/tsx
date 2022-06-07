@@ -123,15 +123,13 @@
             </div>
 
             <div class="field">
-              <label class="label">Intensive Management</label>
+              <label class="label">Management category</label>
               <div class="control">
                 <div class="select">
-                  <select v-model="criteria.intensiveManagement">
+                  <select v-model="criteria.management">
                     <option v-bind:value="null" selected>All sites (managed & unmanaged)</option>
-                    <option>Any management</option>
-                    <option>Predator-free</option>
-                    <option>Translocation</option>
-                    <option>No known management</option>
+                    <option>No management</option>
+                    <option>Actively managed</option>
                   </select>
                 </div>
               </div>
@@ -227,7 +225,7 @@ export default {
         monitoringPrograms: [],
         species: [],
         sites: [],
-        intensiveManagement: null
+        management: null
       },
       changeCounter: 0, // Incremented every time criteria are changed
       stats: null
@@ -417,8 +415,8 @@ export default {
         params.state = this.criteria.state
       }
 
-      if(this.criteria.intensiveManagement) {
-        params.intensive_management = this.criteria.intensiveManagement
+      if(this.criteria.management) {
+        params.management = this.criteria.management
       }
 
       if(this.criteria.species && this.criteria.species.length > 0) {
