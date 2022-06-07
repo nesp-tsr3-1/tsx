@@ -6,8 +6,8 @@ import json
 
 bp = Blueprint('misc', __name__)
 
-def query_to_json(query):
-	return jsonify([dict(row) for row in db_session.execute(query)])
+def query_to_json(query, params={}):
+	return jsonify([dict(row) for row in db_session.execute(query, params)])
 
 @bp.route('/region', methods = ['GET'])
 def get_region():
@@ -33,6 +33,12 @@ def get_species():
 			WHERE (id IN (SELECT taxon_id FROM t1_sighting))
 			ORDER BY COALESCE(common_name, scientific_name)
 		""")
+	elif request.args.get('source_id'):
+		return query_to_json("""SELECT id, common_name, scientific_name
+			FROM taxon
+			WHERE id IN (SELECT taxon_id FROM t1_sighting, t1_survey WHERE t1_sighting.survey_id = t1_survey.id AND t1_survey.source_id = :source_id)
+			ORDER BY COALESCE(common_name, scientific_name)
+			""", { 'source_id': request.args.get('source_id') })
 	else:
 		return query_to_json("""SELECT spno, common_name
 			FROM taxon
