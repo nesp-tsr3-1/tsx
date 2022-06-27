@@ -8,7 +8,8 @@
           <CommonDownloads
             :enable-program-filter="true"
             :enable-state-filter="true"
-            :enable-management-filter="true">
+            :enable-management-filter="true"
+            :enable-map="true">
             <template #criteria-title>
               <h3 class="title is-5">1. Subset Criteria</h3>
               <p class="block">Data that meets <em>all</em> of the criteria selected below will be included in the subset download.</p>

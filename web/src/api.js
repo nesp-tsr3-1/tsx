@@ -179,6 +179,10 @@ export function dataSubsetStats(params) {
   return get('/subset/stats', params)
 }
 
+export function dataSubsetIntensityMap(params) {
+  return get('/subset/intensity_map', params)
+}
+
 export function dataSubsetSites(params) {
   return get('/subset/sites', params)
 }

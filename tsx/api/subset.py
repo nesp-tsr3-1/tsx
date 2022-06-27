@@ -88,6 +88,43 @@ def subset_stats():
     result = db_session.execute(sql, params).fetchone()
     return jsonify(dict(result))
 
+@bp.route('/subset/intensity_map', methods = ['GET'])
+def subset_intensity_map():
+    where_conditions, having_conditions, params = subset_sql_params()
+
+    sql = """WITH t AS (SELECT
+            t1_survey.id AS survey_id,
+            t1_survey.coords AS coords,
+            t1_sighting.id AS sighting_id,
+            t1_sighting.taxon_id,
+            MIN(region.state) AS State,
+            t1_sighting.unit_id,
+            t1_survey.site_id,
+            t1_survey.source_id,
+            t1_site.search_type_id
+        FROM t1_survey
+        LEFT JOIN t1_survey_region ON t1_survey.id = survey_id
+        JOIN region ON region.id = t1_survey_region.region_id
+        JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id
+        JOIN taxon ON t1_sighting.taxon_id = taxon.id
+        JOIN source ON t1_survey.source_id = source.id
+        JOIN t1_site ON t1_survey.site_id = t1_site.id
+        WHERE {where_clause}
+        GROUP BY t1_survey.id, t1_sighting.id
+        {having_clause})
+        SELECT
+            ROUND(ST_X(coords), 2) AS lon,
+            ROUND(ST_Y(coords), 2) AS lat,
+            COUNT(DISTINCT site_id, taxon_id, source_id, unit_id, search_type_id) AS c
+        FROM t
+        GROUP BY lat, lon
+    """.format(
+        where_clause = " AND ".join(where_conditions) if where_conditions else "TRUE",
+        having_clause = "HAVING " + " AND ".join(having_conditions) if having_conditions else "")
+
+    result = db_session.execute(sql, params).fetchall()
+    return jsonify_rows(result)
+
 @bp.route('/subset/sites', methods = ['GET'])
 def subset_sites():
     where_conditions, having_conditions, params = subset_sql_params(state_via_region=True)

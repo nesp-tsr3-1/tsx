@@ -138,6 +138,10 @@
       <spinner size='small' style='display: inline-block;'></spinner>
   </div>
 
+  <div v-if="enableMap" class="block" style="width: 100%; max-width: 400px; height: 300px; display: block; background: #eee;">
+    <HeatMap :heatmap-data="heatmapData" :loading="heatmapLoading"></HeatMap>
+  </div>
+
   <slot name="downloads-title"></slot>
 
   <div class="block">
@@ -176,16 +180,19 @@
 import * as api from '../api.js'
 import Spinner from '../../node_modules/vue-simple-spinner/src/components/Spinner.vue'
 import Multiselect from '@vueform/multiselect'
+import HeatMap from './HeatMap.vue'
 import { plotTrend } from '../plotTrend.js'
 import { Tippy } from 'vue-tippy'
 import { readTextFile, extractSpeciesIDsFromCSV, saveTextFile, generateSpeciesCSV } from '../util.js'
+import { markRaw } from 'vue'
 
 export default {
   name: 'CommonDownloads',
   components: {
     Spinner,
     Multiselect,
-    Tippy
+    Tippy,
+    HeatMap
   },
   data () {
     return {
@@ -215,7 +222,9 @@ export default {
         management: null
       },
       changeCounter: 0, // Incremented every time criteria are changed
-      stats: null
+      stats: null,
+      heatmapLoading: false,
+      heatmapData: []
     }
   },
   computed: {
@@ -436,13 +445,26 @@ export default {
           this.stats = stats
         }
       })
+      if(this.enableMap) {
+        this.heatmapLoading = true
+        api.dataSubsetIntensityMap(params).then(data => {
+          if(v === this.changeCounter) {
+            this.heatmapData = markRaw(data)
+          }
+        }).finally(() => {
+          if(v === this.changeCounter) {
+            this.heatmapLoading = false
+          }
+        })
+      }
     }
   },
   props: {
     sourceId: Number,
     enableProgramFilter: Boolean,
     enableStateFilter: Boolean,
-    enableManagementFilter: Boolean
+    enableManagementFilter: Boolean,
+    enableMap: Boolean
   }
 }
 </script>
