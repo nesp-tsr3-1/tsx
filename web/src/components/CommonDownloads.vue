@@ -140,33 +140,33 @@
 
   <slot name="downloads-title"></slot>
 
-  <div>
-    <button type="button" class="button is-primary" style="margin: 0.5em 0;"
+  <div class="block">
+    <button type="button" class="button is-primary"
       @click="downloadRawData"
       :disabled="!enableDownload">Download Raw Data (CSV format)</button>
   </div>
-  <div>
-    <button type="button" class="button is-primary" style="margin: 0.5em 0;"
+  <div class="block">
+    <button type="button" class="button is-primary"
       @click="downloadTimeSeries"
       :disabled="!enableDownload">Download Time Series (CSV format)</button>
   </div>
-  <div v-if="trendStatus == 'idle'">
-    <button type="button" class="button is-primary" style="margin: 0.5em 0;"
+  <div v-if="trendStatus == 'idle'" class="block">
+    <button type="button" class="button is-primary"
       @click="generateTrend"
       :disabled="!enableDownload">Generate Population Trend</button>
   </div>
-  <div v-if="trendStatus == 'processing'">
+  <div v-if="trendStatus == 'processing'" class="block">
     Please wait while the population trend is generated. This may take several minutes.
     <spinner size='small' style='display: inline-block;'></spinner>
   </div>
-  <div v-if="trendStatus == 'error'">
+  <div v-if="trendStatus == 'error'" class="block">
     An error occurred while generating the trend.
   </div>
-  <div v-if="trendStatus == 'ready'">
-    <h4 class="title is-6" style="margin: 1em 0;">Population Trend</h4>
-    <p style="margin: 1em 0; font-style: italic;">Note: This trend has been generated using the Living Planet Index methodology, which is designed for producing composite trends, not single-species trends.</p>
-    <p style="margin: 1em 0">
-      <button type="button" class="button is-primary" style="margin: 0.5em 0;" @click="downloadTrend">Download Population Trend (TXT format)</button>
+  <div v-if="trendStatus == 'ready'" class="content">
+    <h4 class="title is-6">Population Trend</h4>
+    <p style="font-style: italic;">Note: This trend has been generated using the Living Planet Index methodology, which is designed for producing composite trends, not single-species trends.</p>
+    <p>
+      <button type="button" class="button is-primary" @click="downloadTrend">Download Population Trend (TXT format)</button>
     </p>
     <canvas v-show="showPlot" ref="plot" style="height: 10em;"></canvas>
   </div>
