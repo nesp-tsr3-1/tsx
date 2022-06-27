@@ -7,16 +7,16 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "postinstall": "if grep -q '^\\s*img.data = imgData' node_modules/heatmap.js/build/heatmap.js; then echo 'WARNING: Buggy version of heatmap.js found'; fi"
   },
   "dependencies": {
     "@vueform/multiselect": "^2.4.2",
     "bulma": "^0.9.3",
     "chart.js": "^3.5.1",
-    "heatmap.js-fixed": "^2.0.2",
+    "heatmap.js": "^2.0.5",
     "leaflet": "^1.7.1",
     "leaflet-easybutton": "^2.4.0",
-    "leaflet-heatmap": "^1.0.0",
     "underscore": "^1.13.1",
     "vue": "^3.2.6",
     "vue-autofocus-directive": "^1.0.4",
