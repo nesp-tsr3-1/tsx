@@ -331,9 +331,6 @@ class Importer:
 		if set(["UnitID", "UnitOfMeasurement"]).isdisjoint(set(headers)):
 			raise ImportError("Either UnitID or UnitOfMeasurement column is required")
 
-		if set(["DurationInMinutes", "DurationInDays/Nights"]).isdisjoint(set(headers)):
-			raise ImportError("Either DurationInMinutes or DurationInDays/Nights column is required")
-
 		unrecognized_headers = set(headers) - required_headers - optional_headers - set([None])
 
 		if len(unrecognized_headers) > 0:
