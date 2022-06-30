@@ -42,12 +42,13 @@ export default {
   mounted () {
     var baseLayer = L.tileLayer(
       '//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 5
+        maxZoom: 5,
+        minZoom: 2
       }
     )
     this.heatmapLayer = new HeatmapOverlay({
       fullscreenControl: true,
-      radius: 0.45,
+      radius: 0.15,
       maxOpacity: 0.8,
       minOpacity: 0.5,
       blur: 0.75,

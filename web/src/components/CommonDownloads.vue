@@ -138,7 +138,7 @@
       <spinner size='small' style='display: inline-block;'></spinner>
   </div>
 
-  <div v-if="enableMap" class="block" style="width: 100%; max-width: 400px; height: 300px; display: block; background: #eee;">
+  <div v-if="enableMap" class="block" style="width: 100%; max-width: 640px; height: 480px; display: block; background: #eee;">
     <HeatMap :heatmap-data="heatmapData" :loading="heatmapLoading"></HeatMap>
   </div>
 
