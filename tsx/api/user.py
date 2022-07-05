@@ -290,8 +290,13 @@ def reset_password():
 		email = body['email'].strip()
 
 		user = db_session.query(User).filter(User.email == email).one_or_none()
+
+		if user.password_hash == None:
+			user = None
+
 		if user == None:
-			email_body = reset_email_no_account_body.substitute(email=email)
+			root_url = config.get("api", "root_url")
+			email_body = reset_email_no_account_body.substitute(email=email, root_url=root_url)
 		else:
 			# Update reset code in database
 			user.password_reset_code = secrets.token_urlsafe(16)
