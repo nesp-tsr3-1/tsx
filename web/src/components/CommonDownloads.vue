@@ -323,7 +323,7 @@ export default {
     },
     importSpeciesList: function() {
       readTextFile("text/plain, text/csv", (text) => {
-        this.criteria.species = extractSpeciesIDsFromCSV(text)
+        this.criteria.species = extractSpeciesIDsFromCSV(text).filter(this.speciesById)
       })
     },
     exportSpeciesList: function() {
