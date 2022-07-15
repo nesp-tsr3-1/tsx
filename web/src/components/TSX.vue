@@ -321,17 +321,17 @@ function generateSubgroupList(index, group) {
 }
 
 const states = [
-  {value: 'None', text: 'All'},
-  {value: 'Australian Capital Territory', text: 'Australian Capital Territory'},
+  {value: 'None', text: 'All', shortValue: null},
+  {value: 'Australian Capital Territory', text: 'Australian Capital Territory', shortValue: "ACT"},
   // {value: 'Commonwealth', text: 'Commonwealth'},
-  {value: 'Queensland', text: 'Queensland'},
-  {value: 'New South Wales', text: 'New South Wales'},
-  {value: 'Australian Capital Territory+New South Wales', text: 'Australian Capital Territory + New South Wales'},
-  {value: 'Northern Territory', text: 'Northern Territory'},
-  {value: 'South Australia', text: 'South Australia'},
-  {value: 'Western Australia', text: 'Western Australia'},
-  {value: 'Tasmania', text: 'Tasmania'},
-  {value: 'Victoria', text: 'Victoria'}
+  {value: 'Queensland', text: 'Queensland', shortValue: "QLD"},
+  {value: 'New South Wales', text: 'New South Wales', shortValue: "NSW"},
+  {value: 'Australian Capital Territory+New South Wales', text: 'Australian Capital Territory + New South Wales', shortValue: "ACT,NSW"},
+  {value: 'Northern Territory', text: 'Northern Territory', shortValue: "NT"},
+  {value: 'South Australia', text: 'South Australia', shortValue: "SA"},
+  {value: 'Western Australia', text: 'Western Australia', shortValue: "WA"},
+  {value: 'Tasmania', text: 'Tasmania', shortValue: "TAS"},
+  {value: 'Victoria', text: 'Victoria', shortValue: "VIC"}
 ]
 
 const statusAuthorities = [
@@ -342,12 +342,15 @@ const statusAuthorities = [
 
 const statuses = [
   {
+    shortValue: 'VU_EN_CR',
     value: 'Vulnerable+Endangered+Critically Endangered',
     text: 'Threatened species (all Vulnerable + Endangered + Critically Endangered)'
   }, {
+    shortValue: 'NT_VU_EN_CR',
     value: 'Near Threatened+Vulnerable+Endangered+Critically Endangered',
     text: 'All (all Near Threatened + Vulnerable + Endangered + Critically Endangered)'
   }, {
+    shortValue: 'NT',
     value: 'Near Threatened',
     text: 'Near Threatened species (Near Threatened species only)'
   }
@@ -426,7 +429,7 @@ export default {
   },
   mounted: function() {
     Chart.defaults.font.size = 14
-    this.createMonitoringConsistencyPlot()    
+    this.createMonitoringConsistencyPlot()
     this.createSummaryPlot()
     this.createMainIndexPlot()
 
@@ -516,11 +519,42 @@ export default {
     },
     filterParams(val, oldVal) {
       this.updateMapAndPlots()
+    },
+    filterQueryString(val) {
+      window.location.hash = val
     }
   },
   computed: {
     filterParams() {
       return this.getFilterParams()
+    },
+    filterQueryString() {
+      var params = {
+        ref: this.selectedYear.value
+      }
+
+      function addParam(key, selectedItem) {
+        if(selectedItem.value !== 'None') {
+          params[key] = selectedItem.shortValue || selectedItem.value
+        }
+      }
+
+      if(this.prioritySelected) {
+        params['priority'] = '1'
+        addParam('management', this.selectedManagement)
+      } else {
+        addParam('index', this.selectedIndex)
+        addParam('group', this.selectedGroup)
+        addParam('subgroup', this.selectedSubgroup)
+        addParam('state', this.selectedState)
+        addParam('status_auth', this.selectedStatusAuthority)
+        addParam('status', this.selectedStatus)
+        if(this.selectedIndex.value === 'Mammals' || this.selectedIndex.value === 'Plants') {
+          addParam('management', this.selectedManagement)
+        }
+      }
+
+      return Object.entries(params).map(x => x[0] + '=' + encodeURIComponent(x[1])).join("&")
     },
     managementEnabled() {
       return this.selectedIndex.value === 'Mammals' || this.selectedIndex.value === 'Plants' || this.prioritySelected
@@ -730,7 +764,7 @@ export default {
           for (year in timeSeriesCountData) {
             this.summaryPlotData.datasets[1].data.push({'x': +year, 'y': +timeSeriesCountData[year]})
           }
-          
+
           this.monitoringConsistencyPlot.update()
           this.refreshSummaryPlot() // note: this.summaryPlot.update() will cause exception as the axis might be change
         })

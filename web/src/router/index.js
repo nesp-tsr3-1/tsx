@@ -1,4 +1,4 @@
-import { createRouter, createWebHashHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import SourceHome from '../components/SourceHome.vue'
 import SourceEdit from '../components/SourceEdit.vue'
 import SourceView from '../components/SourceView.vue'
@@ -15,7 +15,7 @@ import UserEdit from '../components/UserEdit.vue'
 import * as api from '../api'
 
 const router = createRouter({
-  history: createWebHashHistory(),
+  history: createWebHistory('/data'),
   routes: [
     {
       path: '/logout',
@@ -43,32 +43,19 @@ const router = createRouter({
       component: ResetPassword
     },
     {
-      path: '/source',
+      path: '/datasets',
       name: 'SourceHome',
       component: SourceHome
     },
     {
-      path: '/import',
-      redirect: '/source'
-    },
-    {
-      path: '/source/edit/:id',
+      path: '/datasets/edit/:id',
       name: 'SourceEdit',
       component: SourceEdit
     },
     {
-      path: '/source/:id',
+      path: '/datasets/:id',
       name: 'SourceView',
       component: SourceView
-    },
-    {
-      path: '/',
-      name: 'TSX',
-      component: TSX
-    },
-    {
-      path: '/tsx',
-      redirect: '/'
     },
     {
       path: '/manage_users',
@@ -81,12 +68,12 @@ const router = createRouter({
       component: ProgramManage
     },
     {
-      path: '/program/edit/:id',
+      path: '/programs/edit/:id',
       name: 'ProgramEdit',
       component: ProgramEdit
     },
     {
-      path: '/program/:id',
+      path: '/programs/:id',
       name: 'ProgramView',
       component: ProgramView
     },
@@ -99,18 +86,12 @@ const router = createRouter({
       path: '/manage_account',
       name: 'UserEdit',
       component: UserEdit
+    },
+    {
+      path: '/',
+      redirect: '/datasets'
     }
   ]
-})
-
-// Set custom title for TSX visualisation page
-router.beforeEach((to, from, next) => {
-  try {
-    var title = (to.name === 'TSX') ? 'The Australian Threatened Species Index 2020' : 'The Australian Threatened Species Index'
-    document.getElementById('main-title').textContent = title
-  } finally {
-    next()
-  }
 })
 
 export default router
