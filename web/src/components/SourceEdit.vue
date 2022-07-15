@@ -168,7 +168,7 @@ export default {
       }
 
       promise.then(source => {
-        this.$router.push({ path: '/source/' + source.id })
+        this.$router.push({ path: '/datasets/' + source.id })
       }).catch(error => {
         if(error.xhr.status === 400) {
           this.errors = JSON.parse(error.xhr.response)
