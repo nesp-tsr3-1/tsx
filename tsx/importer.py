@@ -656,7 +656,7 @@ class Importer:
 			else:
 				taxon = None
 
-			if taxon is None and args.simple_mode:
+			if taxon is None and self.simple_mode:
 				taxon = self.create_taxon(session, None, scientific_name, common_name or 'Unknown')
 
 			if spno:
