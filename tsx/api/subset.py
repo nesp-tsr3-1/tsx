@@ -365,8 +365,8 @@ def query_subset_time_series():
 
     if ('source_id' in params) and permitted(get_user(), 'import_data', 'source', params['source_id']):
         coordinates_sql = """
-            ROUND(t2.surveys_centroid_lat, 7) AS SurveysCentroidLatitude,
-            ROUND(t2.surveys_centroid_lon, 7) AS SurveysCentroidLongitude"""
+            t2.surveys_centroid_lat AS SurveysCentroidLatitude,
+            t2.surveys_centroid_lon AS SurveysCentroidLongitude"""
     else:
         coordinates_sql = """
             ROUND(ST_Y(region.centroid), 7) AS RegionCentroidLatitude,
@@ -427,8 +427,8 @@ def query_subset_time_series():
             t.start_date_y,
             t.start_date_m,
             t.region_id,
-            AVG(ST_Y(t1_survey.coords)) AS surveys_centroid_lat,
-            AVG(ST_X(t1_survey.coords)) AS surveys_centroid_lon,
+            ROUND(AVG(ST_Y(t1_survey.coords)), 7) AS surveys_centroid_lat,
+            ROUND(AVG(ST_X(t1_survey.coords)), 7) AS surveys_centroid_lon,
             COUNT(DISTINCT t.survey_id) AS survey_count,
             MAX(t1_survey.positional_accuracy_in_m) AS positional_accuracy_in_m,
             AVG(t.x) AS x
