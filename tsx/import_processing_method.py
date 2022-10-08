@@ -37,7 +37,8 @@ def main():
 			if source_id not in source_by_id:
 				raise ValueError("Unrecognized source_id: %s" % source_id)
 
-			if source_by_id[source_id] != row['source_description']:
+
+			if 'source_description' in row and source_by_id[source_id] != row['source_description']:
 				msg = "Source description does not match (source_id: %s, source_description: %s, database description: %s)" % (
 					row['source_id'], row['source_description'], source_by_id[source_id])
 				if args.relax:
@@ -47,11 +48,10 @@ def main():
 
 			search_type_id = int(row['search_type_id'])
 
-
 			if search_type_id not in search_type_by_id:
 				raise ValueError("Unrecognized search_type_id: %s" % search_type_id)
 
-			if search_type_by_id[search_type_id] != row['search_type_description']:
+			if 'search_type_description' in row and search_type_by_id[search_type_id] != row['search_type_description']:
 				msg = "Search type description does not match (search_type_id: %s, search_type_description: %s, database description: %s)" % (
 					row['search_type_id'], row['search_type_description'], search_type_by_id[search_type_id])
 				if args.relax:
@@ -59,9 +59,8 @@ def main():
 				else:
 					raise ValueError(msg)
 
-
-			if int(row['DataType']) not in (1,2):
-				raise ValueError("Invalid data type (%s): must be 1 or 2", row['DataType'])
+			if int(row['data_type']) not in (1,2):
+				raise ValueError("Invalid data type (%s): must be 1 or 2", row['data_type'])
 
 			session.execute("""INSERT INTO processing_method (
 					taxon_id,
@@ -77,7 +76,7 @@ def main():
 					:unit_id,
 					:source_id,
 					:search_type_id,
-					:DataType,
+					:data_type,
 					:experimental_design_type_id,
 					:response_variable_type_id,
 					:positional_accuracy_threshold_in_m
