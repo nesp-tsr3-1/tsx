@@ -40,18 +40,18 @@ def process_database(species = None, commit = False):
 def aggregate_by_month(taxon_id, commit = False):
     session = get_session()
     try:
-        sql = """SELECT source_id, MAX(experimental_design_type_id), MAX(response_variable_type_id), MAX(positional_accuracy_threshold_in_m), COUNT(DISTINCT response_variable_type_id, experimental_design_type_id, COALESCE(positional_accuracy_threshold_in_m, 0)) AS cnt
+        sql = """SELECT source_id, unit_id, search_type_id, MAX(experimental_design_type_id), MAX(response_variable_type_id), MAX(positional_accuracy_threshold_in_m), COUNT(DISTINCT response_variable_type_id, experimental_design_type_id, COALESCE(positional_accuracy_threshold_in_m, 0)) AS cnt
                 FROM processing_method
                 WHERE taxon_id = :taxon_id
                 AND data_type = 2
-                GROUP BY source_id"""
+                GROUP BY source_id, unit_id, search_type_id"""
 
         for row in session.execute(sql, { 'taxon_id': taxon_id }).fetchall():
 
-            source_id, experimental_design_type_id, response_variable_type_id, positional_accuracy_threshold_in_m, count = row
+            source_id, unit_id, search_type_id, experimental_design_type_id, response_variable_type_id, positional_accuracy_threshold_in_m, count = row
 
             if count > 1:
-                log.warning("More than one experimental design type / response variable type / accuracy threshold for taxon %s, source %s" % (taxon_id, source_id))
+                log.warning("More than one experimental design type / response variable type / accuracy threshold for taxon %s, source %s, unit %s, search_type_id %s" % (taxon_id, source_id, unit_id, search_type_id))
                 log.warning("Using experimental_design_type_id = %s, response_variable_type_id = %s, positional_accuracy_threshold_in_m = %s" %
                     (experimental_design_type_id, response_variable_type_id, positional_accuracy_threshold_in_m))
 
@@ -126,6 +126,8 @@ def aggregate_by_month(taxon_id, commit = False):
                 INNER JOIN t2_processed_sighting sighting ON survey_id = survey.id
             WHERE taxon_id = :taxon_id
             AND source_id = :source_id
+            AND unit_id = :unit_id
+            AND ((:search_type_id IS NULL) OR (search_type_id = :search_type_id))
             AND raw_survey_id IN (
                 SELECT id
                 FROM t2_survey
@@ -150,8 +152,10 @@ def aggregate_by_month(taxon_id, commit = False):
                 'response_variable_type_id': response_variable_type_id,
                 'taxon_id': taxon_id,
                 'source_id': source_id,
-                'unit_id': 1 if response_variable_type_id == 3 else 2,
-                'positional_accuracy_threshold_in_m': positional_accuracy_threshold_in_m
+                # 'unit_id': 1 if response_variable_type_id == 3 else 2,
+                'positional_accuracy_threshold_in_m': positional_accuracy_threshold_in_m,
+                'unit_id': unit_id,
+                'search_type_id': search_type_id
             })
 
         if commit:
