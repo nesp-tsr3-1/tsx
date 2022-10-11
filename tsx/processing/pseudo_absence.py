@@ -3,11 +3,17 @@ from tqdm import tqdm
 import logging
 from tsx.util import run_parallel
 import time
+import tempfile
 log = logging.getLogger(__name__)
 
 # I originally wanted to make this able to process each taxon separately, however this is not trivial to implement
 # It's much easier to generate the whole dataset for all taxa in one go.
 def process_database(commit = False):
+
+	if not commit:
+		log.info("Dry-run not supported. Pass -c option.")
+		return
+
 	session = get_session()
 
 	# This speeds up the t2_survey_site spatial query by a factor of about 6
@@ -27,12 +33,7 @@ SET FOREIGN_KEY_CHECKS = 1;
 	process_sites(session)
 	process_grid(session)
 
-	if commit:
-		log.info("Committing changes")
-		session.commit()
-	else:
-		log.info("Rolling back changes (dry-run only)")
-		session.rollback()
+	session.commit();
 
 def process_grid(session):
 	taxa = [taxon_id for (taxon_id,) in session.execute("""SELECT DISTINCT taxon_id
@@ -126,6 +127,8 @@ def process_sites(session):
 	# Query OK, 14073 rows affected (0.68 sec)
 	# Records: 14073  Duplicates: 0  Warnings: 0
 
+	session.commit()
+
 	run_sql(session, "Populate t2_survey_site (spatial)",
 		"""INSERT INTO t2_survey_site
 			SELECT t2_survey.id, t2_site.id
@@ -136,6 +139,8 @@ def process_sites(session):
 	# Query OK, 278678 rows affected (15.77 sec)
 	# Records: 278678  Duplicates: 0  Warnings: 0
 
+	session.commit()
+
 	run_sql(session, "Populate standardised site surveys",
 		"""INSERT INTO t2_processed_survey (raw_survey_id, site_id, search_type_id, start_date_y, start_date_m, source_id, experimental_design_type_id)
 			SELECT t2_survey.id, t2_survey_site.site_id, search_type_id, start_date_y, start_date_m, source_id, 1
@@ -143,6 +148,8 @@ def process_sites(session):
 			WHERE t2_survey.id = t2_survey_site.survey_id""")
 	# Query OK, 292751 rows affected (5.00 sec)
 	# Records: 292751  Duplicates: 0  Warnings: 0
+
+	session.commit()
 
 	run_sql(session, "Populate presences / non-pseudo-absences",
 		"""INSERT INTO t2_processed_sighting (survey_id, taxon_id, count, unit_id, pseudo_absence)
@@ -153,6 +160,8 @@ def process_sites(session):
 			AND t2_processed_survey.experimental_design_type_id = 1""")
 	# Query OK, 5775718 rows affected (2 min 35.55 sec)
 	# Records: 5775718  Duplicates: 0  Warnings: 0
+
+	session.commit()
 
 	log.info("Identify taxa for each site based on alpha hulls")
 
@@ -177,34 +186,53 @@ def process_sites(session):
 		if len(result) > 0:
 			insert_data = [{ 'site_id': site_id, 'taxon_id': taxon_id } for site_id, taxon_id in result]
 			session.execute("""INSERT INTO tmp_taxon_site (site_id, taxon_id) VALUES (:site_id, :taxon_id)""", insert_data)
+			session.commit()
 
-	log.info("Insert pseudo absences")
+	log.info("Generate pseudo absences")
 
 	# This next step originally ran in about 15 minutes on my laptop as a single query, but took forever on the server
 	# (I gave up after a couple of hours) so I've split it up by taxon with is a bit slower overall but at least you can
 	# see progress
 
-	# Create temporary table so we aren't inserting and selecting from the same table
-	session.execute("""CREATE TEMPORARY TABLE tmp_processed_sighting SELECT survey_id, taxon_id, count, unit_id, pseudo_absence FROM t2_processed_sighting WHERE FALSE""")
+	# We store all pseudo absences in a temporary file and then write back to the database afterward
+	# I tried a number of other approaches:
+	#  - INSERT .. SELECT into table (too slow)
+	#  - INSERT into temporary table, then INSERT .. SELECT into final table (too slow)
+	#  - Store all pseudo absences in memory and then batch insert (too much memory usage)
+	with tempfile.TemporaryFile(mode='r+') as temp:
+		total_rows = 0
+		for result, error in tqdm(run_parallel(get_pseudo_asbences, taxa), total = len(taxa)):
+			if len(result):
+				total_rows += len(result)
+				temp.writelines(["%s,%s\n" % (survey_id, taxon_id) for survey_id, taxon_id in result])
 
-	# Running this in parallel originally resulted in MySQL deadlock errors, but then we were inserting and selecting from the same table.
-	# It might be worth trying a parallel approach again.
-	for taxon_id in tqdm(taxa):
-		# This query is a bit tricky. We do a left join to find taxa that are not present for a survey, and match on t2_processed_sighting.id = NULL to generate the pseudo-absences
-		session.execute("""INSERT INTO tmp_processed_sighting (survey_id, taxon_id, count, unit_id, pseudo_absence)
-				SELECT t2_processed_survey.id, tmp_taxon_site.taxon_id, 0, 2, 1
-				FROM t2_survey
-				INNER JOIN t2_survey_site ON t2_survey.id = t2_survey_site.survey_id
-				INNER JOIN t2_processed_survey ON t2_survey.id = t2_processed_survey.raw_survey_id AND t2_processed_survey.experimental_design_type_id = 1
-				INNER JOIN tmp_taxon_site ON t2_survey_site.site_id = tmp_taxon_site.site_id AND taxon_id = :taxon_id
-				LEFT JOIN t2_processed_sighting ON t2_processed_sighting.survey_id = t2_processed_survey.id AND t2_processed_sighting.taxon_id = tmp_taxon_site.taxon_id
-				WHERE t2_processed_sighting.id IS NULL""", {
-				'taxon_id': taxon_id
-			})
+		log.info("Insert pseudo absences")
+		temp.seek(0)
 
-	session.execute("""INSERT INTO t2_processed_sighting(survey_id, taxon_id, count, unit_id, pseudo_absence) SELECT survey_id, taxon_id, count, unit_id, pseudo_absence FROM tmp_processed_sighting""")
+		chunk_size = 10000
+		for start in tqdm(range(0, total_rows, chunk_size)):
+			chunk = [temp.readline().strip().split(",") for i in range(min(chunk_size, total_rows - start))]
+			rows = [{ 'survey_id': survey_id, 'taxon_id': taxon_id } for survey_id, taxon_id in chunk]
+			session.execute("""INSERT INTO t2_processed_sighting (survey_id, taxon_id, `count`, unit_id, pseudo_absence) VALUES (:survey_id, :taxon_id, 0, 2, 1)""", rows)
+			session.commit()
+
 
 	session.execute("""DROP TABLE tmp_taxon_site""")
+
+def get_pseudo_asbences(taxon_id):
+	session = get_session()
+	# This query is a bit tricky. We do a left join to find taxa that are not present for a survey, and match on t2_processed_sighting.id = NULL to generate the pseudo-absences
+	rows = session.execute("""
+		SELECT t2_processed_survey.id, tmp_taxon_site.taxon_id
+		FROM t2_survey
+		INNER JOIN t2_survey_site ON t2_survey.id = t2_survey_site.survey_id
+		INNER JOIN t2_processed_survey ON t2_survey.id = t2_processed_survey.raw_survey_id AND t2_processed_survey.experimental_design_type_id = 1
+		INNER JOIN tmp_taxon_site ON t2_survey_site.site_id = tmp_taxon_site.site_id AND taxon_id = :taxon_id
+		LEFT JOIN t2_processed_sighting ON t2_processed_sighting.survey_id = t2_processed_survey.id AND t2_processed_sighting.taxon_id = tmp_taxon_site.taxon_id
+		WHERE t2_processed_sighting.id IS NULL""", {
+		'taxon_id': taxon_id
+	}).fetchall()
+	return [(survey_id, taxon_id) for survey_id, taxon_id in rows]
 
 def run_sql(session, msg, sql, params = None):
 	log.info(msg)
