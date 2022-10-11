@@ -320,9 +320,9 @@ class Importer:
 		])
 
 		if self.data_type == 2:
-			required_headers -= set(['SourceType', 'TaxonID', 'UnitOfMeasurement'])
+			required_headers -= set(['SourceType', 'TaxonID', 'UnitOfMeasurement', 'ScientificName'])
 			required_headers |= set(['SecondarySourceID'])
-			optional_headers.add('TaxonID')
+			optional_headers |= set(['TaxonID', 'UnitOfMeasurement', 'ScientificName'])
 
 		missing_headers = required_headers - set(headers)
 
