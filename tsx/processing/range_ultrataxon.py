@@ -52,6 +52,11 @@ def process_taxon(taxon_id, commit):
 
         taxon = session.query(Taxon).get(taxon_id)
 
+        if taxon is None:
+            log.info("Could not find taxon with id = %s, skipping", taxon_id)
+            log.info("(This means a range polygon exists for a non-existent taxon, which may be due to an error in the range polygons or because the taxonomy has changed)")
+            return
+
         for range_id, breeding_range_id, geom_wkb in get_taxon_range_polygons(session, taxon.id):
             if not taxon.ultrataxon:
                 log.info("Skipping range polygon for non-ultrataxon: %s" % taxon.id)
