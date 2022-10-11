@@ -41,6 +41,7 @@ def main():
 	parser.add_argument('-t', action='store_true', dest='test', help='test database connection')
 	parser.add_argument('--type', dest='data_type', choices=[1,2], type=int, help='Type of data (1 or 2)')
 	parser.add_argument('-c', action='store_true', dest='commit', help='commit changes (default is dry-run)')
+	parser.add_argument('-s', dest='source_id', type=int, help='Source ID')
 	parser.add_argument('--simple', action='store_true', dest='simple_mode', help='Simple mode')
 	args = parser.parse_args()
 
@@ -55,7 +56,7 @@ def main():
 			else:
 				args.data_type = 1
 
-		importer = Importer(args.filename, data_type = args.data_type, commit = args.commit, simple_mode = args.simple_mode)
+		importer = Importer(args.filename, data_type = args.data_type, commit = args.commit, simple_mode = args.simple_mode, source_id = args.source_id)
 		importer.ingest_data()
 	elif args.test:
 		test_db()
