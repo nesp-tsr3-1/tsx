@@ -60,7 +60,7 @@ def process_database(species = None, monthly = False, filter_output = False, inc
 
 
     # Without this, the GROUP_CONCAT in the export query produces rows that are too long
-    if database_config and "sqlite:" not in database_config:
+    if database_config == None or "sqlite:" not in database_config:
         session.execute("""SET SESSION group_concat_max_len = 50000;""")
 
     export_dir = export_dir or tsx.config.data_dir('export')
@@ -230,7 +230,7 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                     agg.data_type AS DataType,
                     (SELECT description FROM experimental_design_type WHERE agg.experimental_design_type_id = experimental_design_type.id) AS ExperimentalDesignType,
                     (SELECT description FROM response_variable_type WHERE agg.response_variable_type_id = response_variable_type.id) AS ResponseVariableType,
-                    (CASE WHEN taxon.suppress_spatial_representativeness THEN NULL ELSE ROUND(alpha.alpha_hull_area_in_m2 / alpha.core_range_area_in_m2, 4) END) AS SpatialRepresentativeness,
+                    (CASE WHEN taxon.suppress_spatial_representativeness AND alpha.core_range_area_in_m2 THEN NULL ELSE ROUND(alpha.alpha_hull_area_in_m2 / alpha.core_range_area_in_m2, 4) END) AS SpatialRepresentativeness,
                     data_source.absences_recorded AS AbsencesRecorded,
                     data_source.standardisation_of_method_effort_id AS StandardisationOfMethodEffort,
                     data_source.objective_of_monitoring_id AS ObjectiveOfMonitoring,
@@ -275,6 +275,7 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                     agg.region_id,
                     agg.unit_id,
                     agg.data_type
+                {having_clause}
                 ORDER BY
                     agg.source_id,
                     agg.search_type_id,
@@ -285,7 +286,6 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                     agg.region_id,
                     agg.unit_id,
                     agg.data_type
-                {having_clause}
                     """.format(
                         value_series = value_series,
                         aggregated_table = aggregated_table,
@@ -314,7 +314,7 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                 year_data = dict(item.split('=') for item in data['value_series'].split(','))
 
                 if len(year_data) != data['value_count']:
-                    raise ValueError("Aggregation problem - duplicate years found in time series: %s" % row)
+                    raise ValueError("Aggregation problem - number of years/months in value series (%s) does not match expected value count (%s)" % (len(year_data), data['value_count']))
 
                 # Populate years in output
                 data.update(year_data)
