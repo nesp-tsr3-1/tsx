@@ -55,3 +55,52 @@ def process_database():
 	session.execute("""DROP TABLE tmp_filtered_ts""")
 
 	log.info("Done")
+
+
+# It could be useful to generate a report listing the reason(s) why time series were excluded
+# Following are some queries that could be useful for this:
+
+# CREATE TEMPORARY TABLE excluded
+# SELECT DISTINCT taxon_id, unit_id, t1_survey.source_id, search_type_id, 1 AS data_type
+# FROM t1_survey
+# JOIN t1_site ON t1_site.id = t1_survey.site_id
+# JOIN t1_sighting ON t1_survey.id = t1_sighting.survey_id;
+
+# INSERT INTO excluded
+# SELECT DISTINCT taxon_id, unit_id, source_id, search_type_id, 2
+# FROM t2_survey
+# JOIN t2_sighting ON t2_survey.id = t2_sighting.survey_id;
+
+# ^^ (4 min 9.57 sec)
+
+# DELETE FROM excluded
+# WHERE (taxon_id, unit_id, source_id, search_type_id, data_type) NOT IN (SELECT taxon_id, unit_id, source_id, search_type_id, data_type FROM aggregated_by_year WHERE include_in_analysis);
+
+# CREATE TEMPORARY TABLE exclusion_reason (
+#   taxon_id CHAR(8),
+#   unit_id INT,
+#   source_id INT,
+#   search_type_id INT,
+#   data_type INT,
+#   reason TEXT
+# );
+
+# INSERT INTO exclusion_reason
+# SELECT taxon_id, unit_id, source_id, search_type_id, data_type, 'Not present in processing methods file'
+# FROM excluded
+# WHERE (taxon_id, unit_id, source_id, search_type_id, 1) NOT IN (SELECT taxon_id, unit_id, source_id, search_type_id, data_type FROM processing_method);
+
+# INSERT INTO exclusion_reason
+# SELECT taxon_id, unit_id, source_id, search_type_id, data_type, 'Not present in master list'
+# FROM excluded
+# WHERE (taxon_id, source_id) NOT IN (SELECT taxon_id, source_id FROM data_source);
+
+# INSERT INTO exclusion_reason
+# SELECT taxon_id, unit_id, source_id, search_type_id, data_type, 'Excluded by master list (NotInIndex)'
+# FROM excluded
+# WHERE (taxon_id, source_id) IN (SELECT taxon_id, source_id FROM data_source WHERE exclude_from_analysis);
+
+# INSERT INTO exclusion_reason
+# SELECT taxon_id, unit_id, source_id, search_type_id, data_type, 'SearchTypeID = 6 (Incidental)'
+# FROM excluded
+# WHERE search_type_id = 6;
