@@ -5,9 +5,12 @@
   "author": "James Watmuff <james@planticle.com.au>",
   "private": true,
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "serve": "vite preview",
+    "dev-data": "vite data",
+    "build-data": "vite build data",
+    "serve-data": "vite preview data",
+    "dev-tsx": "vite tsx",
+    "build-tsx": "vite build tsx",
+    "serve-tsx": "vite preview tsx",
     "postinstall": "if grep -q '^\\s*img.data = imgData' node_modules/heatmap.js/build/heatmap.js; then echo 'WARNING: Buggy version of heatmap.js found'; fi"
   },
   "dependencies": {

@@ -4,7 +4,7 @@ import vue from '@vitejs/plugin-vue'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [vue()],
-  base: '/tsx/',
+  base: '/data/',
   build: {
    sourcemap: true,
   },
