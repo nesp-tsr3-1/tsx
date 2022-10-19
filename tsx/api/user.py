@@ -310,6 +310,7 @@ def reset_password():
 		try:
 			send_email(email, 'TSX Password Reset Request', email_body)
 			return "OK", 200
-		except:
+		except Exception as e:
+			print('Failed to send password reset email')
+			print(e)
 			return jsonify('There was a problem sending the password reset email. Please try again later.'), 500
-
