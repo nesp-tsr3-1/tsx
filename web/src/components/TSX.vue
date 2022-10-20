@@ -223,7 +223,7 @@ import {
   Title,
   Tooltip,
   SubTitle
-} from 'chart.js';
+} from 'chart.js'
 
 Chart.register(
   LineElement,
@@ -240,13 +240,13 @@ Chart.register(
   Title,
   Tooltip,
   SubTitle
-);
+)
 
 import Spinner from 'vue-simple-spinner/src/components/Spinner.vue'
 import L from 'leaflet'
 import HeatmapOverlay from 'heatmap.js/plugins/leaflet-heatmap/leaflet-heatmap.js'
 import 'leaflet-easybutton/src/easy-button.js'
-import { min, max, pluck, uniq } from '../util.js'
+import { min, max, pluck, uniq, parseParams } from '../util.js'
 import { Tippy } from 'vue-tippy'
 
 // Generated with:
@@ -487,6 +487,8 @@ export default {
       console.log('---update plot----')
     }, 2000)
     this.updateMapAndPlots()
+
+    this.updateFromQueryString()
   },
   watch: {
     selectedIndex(val) {
@@ -521,7 +523,11 @@ export default {
       this.updateMapAndPlots()
     },
     filterQueryString(val) {
-      window.location.hash = val
+      var url = window.location.pathname
+      if(val) {
+        url += '?' + val
+      }
+      history.replaceState(null, '', url)
     }
   },
   computed: {
@@ -561,6 +567,27 @@ export default {
     }
   },
   methods: {
+    updateFromQueryString() {
+      console.log("updateFromQueryString")
+      var params = parseParams(window.location.search.substr(1))
+
+      var self = this
+      function updateFromParam(key, valueKey, list) {
+        if(params[key]) {
+          var value = list.filter(x => x.shortValue == params[key] || x.value == params[key])[0]
+          console.log("key = " + key + ", value = " + value)
+          self[valueKey] = value
+        }
+      }
+
+      updateFromParam('ref', 'selectedYear', this.yearList)
+      updateFromParam('index', 'selectedIndex', this.indexList)
+      updateFromParam('group', 'selectedGroup', this.groupList)
+      updateFromParam('state', 'selectedState', this.stateList)
+      updateFromParam('status_auth', 'selectedStatusAuthority', this.statusAuthorityList)
+      updateFromParam('status', 'selectedStatus', this.statusList)
+      updateFromParam('management', 'selectedManagement', this.managementList)
+    },
     createMainIndexPlot() {
       var data = {
         labels: [],
@@ -621,7 +648,7 @@ export default {
             }
           }
         }
-      });
+      })
     },
     updateMainIndexPlot() {
       let plotData = this.mainIndexPlot.data
@@ -814,7 +841,7 @@ export default {
           min: min(counts),
           max: max(counts) / 20,
           data: surveyData
-        });
+        })
         // this.map.invalidateSize()
       }).finally(() => {
         this.loadingMap = false
