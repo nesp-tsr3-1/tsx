@@ -90,6 +90,11 @@ const router = createRouter({
     {
       path: '/',
       redirect: '/datasets'
+    },
+    {
+      // legacy URL redirect
+      path: '/source',
+      redirect: '/datasets'
     }
   ]
 })
