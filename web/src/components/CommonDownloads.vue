@@ -25,6 +25,19 @@
         </p>
       </div>
     </div>
+    <div class="field" v-if="enableTaxonomicGroupFilter">
+      <label class="label">Taxonomic Group</label>
+      <div class="control">
+        <div class="select">
+          <select v-model="criteria.taxonomicGroup">
+            <option :value="null" selected>All</option>
+            <option v-for="s in options.taxonomicGroup" :value="s">
+              {{ s }}
+            </option>
+          </select>
+        </div>
+      </div>
+    </div>
     <div class="field">
       <label class="label">Species</label>
       <div class="control">
@@ -215,6 +228,7 @@ export default {
           'Victoria'
         ],
         monitoringPrograms: [],
+        taxonomicGroup: [],
         species: []
       },
       sitesLoading: false,
@@ -223,7 +237,8 @@ export default {
         monitoringPrograms: [],
         species: [],
         sites: [],
-        management: null
+        management: null,
+        taxonomicGroup: null
       },
       changeCounter: 0, // Incremented every time criteria are changed
       stats: null,
@@ -295,6 +310,12 @@ export default {
       speciesPromise = api.species({ q: 't1_present' })
     }
     this.speciesLookup = {}
+
+    if(this.enableTaxonomicGroupFilter) {
+      initialisationPromises.push(
+        api.taxonomicGroups().then(options =>
+          this.options.taxonomicGroup = options.map(option => option.description)))
+    }
 
     initialisationPromises.push(speciesPromise.then((species) => {
       species.forEach(sp => {
@@ -419,6 +440,10 @@ export default {
         params.site_id = this.criteria.sites.map(x => x.split(',')[0]).join(",")
       }
 
+      if(this.enableTaxonomicGroupFilter && this.criteria.taxonomicGroup) {
+        params.taxonomic_group = this.criteria.taxonomicGroup
+      }
+
       return params
     },
     formatQuantity: function(x, singular, plural) {
@@ -480,6 +505,7 @@ export default {
     enableProgramFilter: Boolean,
     enableStateFilter: Boolean,
     enableManagementFilter: Boolean,
+    enableTaxonomicGroupFilter: Boolean,
     enableMap: Boolean
   }
 }

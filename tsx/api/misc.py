@@ -90,3 +90,7 @@ def get_monitoring_program():
 @bp.route('/intensive_management_group', methods = ['GET'])
 def get_intensive_management_group():
 	return query_to_json("""SELECT DISTINCT `grouping` AS description FROM intensive_management WHERE `grouping` IS NOT NULL ORDER BY description""")
+
+@bp.route('/taxonomic_group', methods = ['GET'])
+def get_taxonomic_group():
+	return query_to_json("""SELECT DISTINCT taxonomic_group AS description FROM taxon""")

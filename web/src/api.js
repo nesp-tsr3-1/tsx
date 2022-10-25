@@ -303,6 +303,10 @@ export function intensiveManagementGroup(id) {
   return get('/intensive_management_group')
 }
 
+export function taxonomicGroups() {
+  return get('/taxonomic_group')
+}
+
 export function upload(file, progressCallback) {
   // Flask seems to need files to be uploaded as multipart/form-data for some reason..
   var data = new FormData()

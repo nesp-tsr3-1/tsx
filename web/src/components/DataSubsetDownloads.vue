@@ -9,6 +9,7 @@
             :enable-program-filter="true"
             :enable-state-filter="true"
             :enable-management-filter="true"
+            :enable-taxonomic-group-filter="true"
             :enable-map="true">
             <template #criteria-title>
               <h3 class="title is-5">1. Subset Criteria</h3>

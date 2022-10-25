@@ -247,7 +247,11 @@ def subset_sql_params(state_via_region=False):
         taxon_list = args['taxon_id'].split(',')
         param_names = ['taxon_id_%s' % i for i in range(0, len(taxon_list))]
         params.update(dict(zip(param_names, taxon_list)))
-        where_conditions .append('taxon.id IN (%s)' % ",".join(":" + p for p in param_names))
+        where_conditions.append('taxon.id IN (%s)' % ",".join(":" + p for p in param_names))
+
+    if 'taxonomic_group' in args:
+        params.update({ 'taxonomic_group': args['taxonomic_group'] })
+        where_conditions.append('taxon.taxonomic_group = :taxonomic_group')
 
     if 'source_id' in args:
         where_conditions.append('source.id = :source_id')
