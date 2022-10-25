@@ -59,14 +59,14 @@ def subset_stats():
             t1_survey.id AS survey_id,
             t1_sighting.id AS sighting_id,
             t1_sighting.taxon_id,
-            MIN(region.state) AS State,
+            region.state AS State,
             t1_sighting.unit_id,
             t1_survey.site_id,
             t1_survey.source_id,
             t1_site.search_type_id
         FROM t1_survey
-        LEFT JOIN t1_survey_region ON t1_survey.id = survey_id
-        JOIN region ON region.id = t1_survey_region.region_id
+        LEFT JOIN t1_survey_region ON t1_survey.id = t1_survey_region.survey_id
+        LEFT JOIN region ON region.id = t1_survey_region.region_id
         JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id
         JOIN taxon ON t1_sighting.taxon_id = taxon.id
         JOIN source ON t1_survey.source_id = source.id
@@ -97,14 +97,14 @@ def subset_intensity_map():
             t1_survey.coords AS coords,
             t1_sighting.id AS sighting_id,
             t1_sighting.taxon_id,
-            MIN(region.state) AS State,
+            region.state AS State,
             t1_sighting.unit_id,
             t1_survey.site_id,
             t1_survey.source_id,
             t1_site.search_type_id
         FROM t1_survey
-        LEFT JOIN t1_survey_region ON t1_survey.id = survey_id
-        JOIN region ON region.id = t1_survey_region.region_id
+        LEFT JOIN t1_survey_region ON t1_survey.id = t1_survey_region.survey_id
+        LEFT JOIN region ON region.id = t1_survey_region.region_id
         JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id
         JOIN taxon ON t1_sighting.taxon_id = taxon.id
         JOIN source ON t1_survey.source_id = source.id
@@ -142,8 +142,8 @@ def subset_sites():
 
     sql = """SELECT DISTINCT t1_site.id, t1_site.name
         FROM t1_survey
-        LEFT JOIN t1_survey_region ON t1_survey.id = survey_id
-        JOIN region ON region.id = t1_survey_region.region_id
+        LEFT JOIN t1_survey_region ON t1_survey.id = t1_survey_region.survey_id
+        LEFT JOIN region ON region.id = t1_survey_region.region_id
         JOIN t1_site ON t1_survey.site_id = t1_site.id
         JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id
         JOIN taxon ON t1_sighting.taxon_id = taxon.id
@@ -185,8 +185,8 @@ def subset_species():
 
     sql = """SELECT DISTINCT taxon.id, taxon.common_name, taxon.scientific_name
             FROM t1_survey
-            LEFT JOIN t1_survey_region ON t1_survey.id = survey_id
-            JOIN region ON region.id = t1_survey_region.region_id
+            LEFT JOIN t1_survey_region ON t1_survey.id = t1_survey_region.survey_id
+            LEFT JOIN region ON region.id = t1_survey_region.region_id
             JOIN t1_site ON t1_survey.site_id = t1_site.id
             JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id
             JOIN taxon ON t1_sighting.taxon_id = taxon.id
@@ -310,8 +310,8 @@ def query_subset_raw_data_sql_and_params():
             IF(:redact_location, 'REDACTED', ST_X(t1_survey.coords)) as X,
             'EPSG:4326' AS ProjectionReference,
             t1_survey.positional_accuracy_in_m AS PositionalAccuracyInM,
-            MIN(region.state) AS State,
-            MIN(region.name) AS Region,
+            region.state AS State,
+            region.name AS Region,
             t1_survey.comments AS SurveyComments,
             (SELECT description FROM monitoring_program WHERE id = source.monitoring_program_id) AS MonitoringProgram,
             source.monitoring_program_comments AS MonitoringProgramComments,
@@ -324,14 +324,14 @@ def query_subset_raw_data_sql_and_params():
             (SELECT description FROM unit WHERE id = t1_sighting.unit_id) AS UnitOfMeasurement,
             COALESCE((SELECT description FROM unit_type WHERE id = t1_sighting.unit_type_id), "N/A") AS UnitType,
             t1_sighting.comments AS SightingComments
-        FROM t1_survey STRAIGHT_JOIN region_subdiv
+        FROM t1_survey
         JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id
         JOIN taxon ON t1_sighting.taxon_id = taxon.id
         JOIN source ON t1_survey.source_id = source.id
-        JOIN region ON region.id = region_subdiv.id
+        LEFT JOIN t1_survey_region ON t1_survey.id = t1_survey_region.survey_id
+        LEFT JOIN region ON region.id = t1_survey_region.region_id
         JOIN t1_site ON t1_survey.site_id = t1_site.id
-        WHERE ST_Contains(region_subdiv.geometry, coords)
-        AND {where_clause}
+        WHERE {where_clause}
         GROUP BY t1_survey.id, t1_sighting.id
         {having_clause}
     """.format(
@@ -421,8 +421,6 @@ def query_subset_time_series():
             ROUND(ST_Y(region.centroid), 7) AS RegionCentroidLatitude,
             ROUND(ST_X(region.centroid), 7) AS RegionCentroidLongitude"""
 
-    # Note STRAIGHT_JOINs are just trial and error to get a decent query plan
-    # I actually want to a LEFT JOIN between survey and region but I can't figure out how to get usable performance.
     raw_data_sql = """
         SELECT
             t1_survey.id AS survey_id,
@@ -433,11 +431,12 @@ def query_subset_time_series():
             t1_site.search_type_id,
             t1_survey.start_date_y,
             t1_survey.start_date_m,
-            MIN(region_subdiv.id) AS region_id,
-            (SELECT state FROM region WHERE id = MIN(region_subdiv.id)) AS State,
+            region.id AS region_id,
+            region.state AS State,
             t1_sighting.`count` AS x
         FROM t1_survey
-        STRAIGHT_JOIN region_subdiv ON ST_Contains(region_subdiv.geometry, coords)
+        LEFT JOIN t1_survey_region ON t1_survey.id = t1_survey_region.survey_id
+        LEFT JOIN region ON region.id = t1_survey_region.region_id
         JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id
         JOIN taxon ON t1_sighting.taxon_id = taxon.id
         JOIN source ON t1_survey.source_id = source.id
@@ -530,7 +529,7 @@ def query_subset_time_series():
         JOIN taxon ON taxon.id = t2.taxon_id
         JOIN t1_site ON t1_site.id = t2.site_id
         JOIN source ON source.id = t2.source_id
-        JOIN region ON region.id = t2.region_id
+        LEFT JOIN region ON region.id = t2.region_id
         GROUP BY
             t2.site_id,
             t2.taxon_id,
