@@ -187,6 +187,10 @@ export function dataSubsetSites(params) {
   return get('/subset/sites', params)
 }
 
+export function dataSubsetSpecies(params) {
+  return get('/subset/species', params)
+}
+
 export function dataSubsetGenerateTrend(params) {
   return post('/subset/trend', params)
 }
@@ -277,6 +281,10 @@ export function searchtype() {
 
 export function species(args) {
   return get('/species', args)
+}
+
+export function speciesForIDs(ids) {
+  return post('/species', { ids: ids })
 }
 
 export function source() {

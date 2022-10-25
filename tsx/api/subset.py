@@ -157,6 +157,51 @@ def subset_sites():
     result = db_session.execute(sql, params).fetchall()
     return jsonify_rows(result)
 
+@bp.route('/subset/species', methods = ['GET'])
+def subset_species():
+    where_conditions, having_conditions, params = subset_sql_params(state_via_region=True)
+    order_by_expressions = []
+
+    if request.args.get('species_name_query'):
+        params['species_name_query'] = request.args['species_name_query'].strip()
+        params['species_name_query_pattern'] = '%' + request.args['species_name_query'].strip() + '%'
+
+        where_conditions.append("""
+            (
+                COALESCE(taxon.common_name, "") LIKE :species_name_query_pattern OR
+                COALESCE(taxon.scientific_name, "") LIKE :species_name_query_pattern OR
+                COALESCE(taxon.id, "") LIKE :species_name_query_pattern
+            )
+        """)
+        order_by_expressions.append("""
+            LEAST(
+                IF(INSTR(COALESCE(taxon.common_name, ""), :species_name_query), INSTR(COALESCE(taxon.common_name, ""), :species_name_query), 100000),
+                IF(INSTR(COALESCE(taxon.scientific_name, ""), :species_name_query), INSTR(COALESCE(taxon.scientific_name, ""), :species_name_query), 100000),
+                IF(INSTR(COALESCE(taxon.id, ""), :species_name_query), INSTR(COALESCE(taxon.id, ""), :species_name_query), 100000)
+            )
+        """)
+
+    order_by_expressions.append("taxon.scientific_name")
+
+    sql = """SELECT DISTINCT taxon.id, taxon.common_name, taxon.scientific_name
+            FROM t1_survey
+            LEFT JOIN t1_survey_region ON t1_survey.id = survey_id
+            JOIN region ON region.id = t1_survey_region.region_id
+            JOIN t1_site ON t1_survey.site_id = t1_site.id
+            JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id
+            JOIN taxon ON t1_sighting.taxon_id = taxon.id
+            JOIN source ON t1_survey.source_id = source.id
+            WHERE {where_clause}
+        ORDER BY {order_by_clause}
+        LIMIT 300
+    """.format(where_clause=" AND ".join(where_conditions) or "TRUE",
+        order_by_clause=", ".join(order_by_expressions))
+
+    print(sql)
+
+    result = db_session.execute(sql, params).fetchall()
+    return jsonify_rows(result)
+
 def subset_sql_params(state_via_region=False):
     where_conditions = []
     having_conditions = []

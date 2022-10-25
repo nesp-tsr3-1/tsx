@@ -29,15 +29,19 @@
       <label class="label">Species</label>
       <div class="control">
       <Multiselect
-            mode="multiple"
-            v-model="criteria.species"
-            :options="options.species"
-            :searchable="true"
-            placeholder="All species"
-            track-by="label"
-            value-prop="id"
-            label="label"
-            />
+        mode="multiple"
+        v-model="criteria.species"
+        :options="querySpecies"
+        :delay="500"
+        :searchable="true"
+        :close-on-select="false"
+        :filter-results="false"
+        no-options-text="No species found"
+        placeholder="All species"
+        label="label"
+        value-prop="id"
+        @open="(select) => select.refreshOptions()"
+        />
       </div>
       <div style="border-left: 2px solid #eee; padding-left: 1em;">
         <div class="buttons" style="margin-top: 1em;">
@@ -290,13 +294,12 @@ export default {
     } else {
       speciesPromise = api.species({ q: 't1_present' })
     }
+    this.speciesLookup = {}
 
     initialisationPromises.push(speciesPromise.then((species) => {
-      function label(sp) {
-        return sp.scientific_name + " (" + (sp.common_name ? (sp.common_name + ", ") : "") + sp.id + ")";
-      }
-
-      this.options.species = species.map(sp => ({ ...sp, label: label(sp) }))
+      species.forEach(sp => {
+        this.speciesLookup[sp.id] = { ...sp, label: speciesLabel(sp) }
+      })
     }))
 
 
@@ -313,7 +316,7 @@ export default {
   },
   methods: {
     speciesById: function(id) {
-      return this.options.species.filter(x => x.id === id)[0]
+      return this.speciesLookup[id]
     },
     deselectSpecies: function(id) {
       this.criteria.species = this.criteria.species.filter(x => x !== id)
@@ -323,7 +326,13 @@ export default {
     },
     importSpeciesList: function() {
       readTextFile("text/plain, text/csv", (text) => {
-        this.criteria.species = extractSpeciesIDsFromCSV(text).filter(this.speciesById)
+        var ids = extractSpeciesIDsFromCSV(text)
+        api.speciesForIDs(ids).then(species => {
+          species.forEach(sp => {
+            this.speciesLookup[sp.id] = { ...sp, label: speciesLabel(sp) }
+          })
+          this.criteria.species = ids
+        })
       })
     },
     exportSpeciesList: function() {
@@ -436,6 +445,13 @@ export default {
       return api.dataSubsetSites(params)
         .then(sites => sites.map(site => ({ name: site.name, id: site.id + "," + site.name })))
     },
+    querySpecies: function(query) {
+      let params = this.buildDownloadParams()
+      delete params.taxon_id
+      params.species_name_query = query || ""
+      return api.dataSubsetSpecies(params)
+        .then(species => species.map(sp => ({ ...sp, label: speciesLabel(sp) })))
+    },
     updateStats: function() {
       this.stats = null
       var params = this.buildDownloadParams()
@@ -466,6 +482,10 @@ export default {
     enableManagementFilter: Boolean,
     enableMap: Boolean
   }
+}
+
+function speciesLabel(sp) {
+  return sp.scientific_name + " (" + (sp.common_name ? (sp.common_name + ", ") : "") + sp.id + ")"
 }
 </script>
 

@@ -18,9 +18,22 @@ def get_region():
 def get_search_type():
 	return query_to_json("""SELECT id, description AS name FROM search_type""")
 
-@bp.route('/species', methods = ['GET'])
+@bp.route('/species', methods = ['GET', 'POST'])
 def get_species():
 	q = request.args.get('q', type=str)
+
+	body = request.json
+
+	if body and body['ids']:
+		ids = body['ids']
+		param_names = ['id%s' % i for i in range(len(ids))]
+		params = dict(zip(param_names, ids))
+		param_placeholders = ", ".join(':' + name for name in param_names)
+		return query_to_json(f"""SELECT id, common_name, scientific_name
+			FROM taxon
+			WHERE id IN ({param_placeholders})
+			ORDER BY COALESCE(common_name, scientific_name)
+		""", params)
 	if q == 'all_present':
 		return query_to_json("""SELECT id, common_name, scientific_name
 			FROM taxon
@@ -31,6 +44,11 @@ def get_species():
 		return query_to_json("""SELECT id, common_name, scientific_name
 			FROM taxon
 			WHERE (id IN (SELECT taxon_id FROM t1_sighting))
+			ORDER BY COALESCE(common_name, scientific_name)
+		""")
+	elif q == 'all':
+		return query_to_json("""SELECT id, common_name, scientific_name
+			FROM taxon
 			ORDER BY COALESCE(common_name, scientific_name)
 		""")
 	elif request.args.get('source_id'):
