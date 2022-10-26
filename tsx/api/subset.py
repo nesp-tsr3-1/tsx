@@ -197,8 +197,6 @@ def subset_species():
     """.format(where_clause=" AND ".join(where_conditions) or "TRUE",
         order_by_clause=", ".join(order_by_expressions))
 
-    print(sql)
-
     result = db_session.execute(sql, params).fetchall()
     return jsonify_rows(result)
 
@@ -271,7 +269,7 @@ def subset_sql_params(state_via_region=False):
 def query_subset_raw_data_sql_and_params():
     where_conditions, having_conditions, params = subset_sql_params()
 
-    params['redact_location'] = ('source_id' not in params) or not permitted(get_user(), 'import_data', 'source', params['source_id'])
+    params['redact_location'] = not permitted(get_user(), 'import_data', 'source', params.get('source_id'))
 
     sql = """
         SELECT
