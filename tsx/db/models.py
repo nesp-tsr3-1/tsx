@@ -230,10 +230,12 @@ class Taxon(Base):
     epbc_status_id = Column(ForeignKey('taxon_status.id'), index=True)
     iucn_status_id = Column(ForeignKey('taxon_status.id'), index=True)
     state_status_id = Column(ForeignKey('taxon_status.id'), index=True)
+    bird_action_plan_status_id = Column(ForeignKey('taxon_status.id'), index=True)
     national_priority = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
     taxonomic_group = Column(String(255), nullable=False)
     suppress_spatial_representativeness = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
 
+    bird_action_plan_status = relationship('TaxonStatus', primaryjoin='Taxon.bird_action_plan_status_id == TaxonStatus.id')
     epbc_status = relationship('TaxonStatus', primaryjoin='Taxon.epbc_status_id == TaxonStatus.id')
     iucn_status = relationship('TaxonStatus', primaryjoin='Taxon.iucn_status_id == TaxonStatus.id')
     state_status = relationship('TaxonStatus', primaryjoin='Taxon.state_status_id == TaxonStatus.id')
