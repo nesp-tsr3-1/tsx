@@ -202,7 +202,7 @@ class Source(Base):
     contact_position = Column(Text)
     contact_email = Column(Text)
     contact_phone = Column(Text)
-    monitoring_program_id = Column(ForeignKey('monitoring_program.id'), index=True)
+    monitoring_program_id = Column(ForeignKey('monitoring_program.id', ondelete='SET NULL', onupdate='CASCADE'), index=True)
     monitoring_program_comments = Column(Text)
     data_processing_type_id = Column(ForeignKey('data_processing_type.id'), index=True)
     time_created = Column(TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
@@ -244,8 +244,8 @@ class Taxon(Base):
 
 t_user_program_manager = Table(
     'user_program_manager', metadata,
-    Column('user_id', ForeignKey('user.id'), primary_key=True, nullable=False, index=True),
-    Column('monitoring_program_id', ForeignKey('monitoring_program.id'), primary_key=True, nullable=False, index=True)
+    Column('user_id', ForeignKey('user.id', ondelete='CASCADE', onupdate='CASCADE'), primary_key=True, nullable=False, index=True),
+    Column('monitoring_program_id', ForeignKey('monitoring_program.id', ondelete='CASCADE', onupdate='CASCADE'), primary_key=True, nullable=False, index=True)
 )
 
 
