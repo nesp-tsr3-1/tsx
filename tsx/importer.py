@@ -151,7 +151,7 @@ class Importer:
 		if self.simple_mode:
 			self.non_empty_keys.remove('TaxonID')
 
-		self.sighting_keys = set(["SpNo", "TaxonID", "Breeding", "Count", "UnitID", "UnitType", "SightingComments"])
+		self.sighting_keys = set(["SpNo", "TaxonID", "Breeding", "Count", "UnitID", "UnitOfMeasurement", "UnitType", "SightingComments"])
 
 		self.source_id = source_id
 
@@ -634,6 +634,7 @@ class Importer:
 					log.warning('Suspicious zero coordinate after projection: %s, %s' % (x, y))
 
 
+		sighting = None
 		if not sighting_empty:
 			# Taxon
 			# There are a few different ways to identify the taxon, which are tried in the following order:
@@ -740,7 +741,8 @@ class Importer:
 
 		if ok[0]:
 			session.add(survey)
-			self.pending_sightings.append(sighting)
+			if sighting:
+				self.pending_sightings.append(sighting)
 			# session.add(sighting)
 
 		# Performance optimisation: instead of adding sightings to the session straight away, we periodically flush them in
