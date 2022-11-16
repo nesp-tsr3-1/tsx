@@ -623,7 +623,7 @@ class Importer:
 
 				# This produces the necessary SQL to insert WKB geometry with SQLAlchemy.
 				# Simpler than using GeoAlchemy in the end, which wasn't compatible with python-mysql-connector anyway.
-				survey.coords = func.ST_GeomFromWKB(coords.to_wkb())
+				survey.coords = func.ST_GeomFromWKB(coords.wkb)
 
 				x, y = coords.x, coords.y
 
