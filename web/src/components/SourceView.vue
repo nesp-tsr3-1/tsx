@@ -67,7 +67,7 @@
               <div class="column">
                 <h4 class="title is-4">Downloads</h4>
                 <div>
-                  <a href="TSX%20Dataset%20Downloads%20Factsheet.pdf" class="button is-dark" target="_blank" style="margin: 0.5em 0;">
+                  <a href="/data/TSX%20Dataset%20Downloads%20Factsheet.pdf" class="button is-dark" target="_blank" style="margin: 0.5em 0;">
                     TSX Dataset Downloads Factsheet
                   </a>
                 </div>
