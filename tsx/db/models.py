@@ -594,11 +594,13 @@ class T2Sighting(Base):
     count = Column(Float(asdecimal=True))
     unit_id = Column(ForeignKey('unit.id'), index=True)
     breeding = Column(TINYINT(1))
+    unit_type_id = Column(ForeignKey('unit_type.id'), index=True)
     comments = Column(Text)
 
     survey = relationship('T2Survey')
     taxon = relationship('Taxon')
     unit = relationship('Unit')
+    unit_type = relationship('UnitType')
 
 
 t_t2_survey_site = Table(
