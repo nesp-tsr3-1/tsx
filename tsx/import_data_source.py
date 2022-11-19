@@ -35,7 +35,8 @@ def main():
 				'start_year': row.get('StartYear') or None,
 				'end_year': row.get('EndYear') or None,
 				'exclude_from_analysis': get_bool(row, 'NotInIndex', False, unknown_value_default=True, optional=True),
-				'suppress_aggregated_data': get_bool(row, 'SuppressAggregatedDataUntil', False, unknown_value_default=True, optional=True)
+				'suppress_aggregated_data': get_bool(row, 'SuppressAggregatedDataUntil', False, unknown_value_default=True, optional=True),
+				'citation': row.get('Citation') or None
 			}
 
 			# In relaxed mode, silently skip rows without SourceID value
@@ -84,7 +85,8 @@ def main():
 					start_year,
 					end_year,
 					exclude_from_analysis,
-					suppress_aggregated_data
+					suppress_aggregated_data,
+					citation
 				) VALUES (
 					:source_id,
 					:taxon_id,
@@ -96,7 +98,8 @@ def main():
 					:start_year,
 					:end_year,
 					:exclude_from_analysis,
-					:suppress_aggregated_data
+					:suppress_aggregated_data,
+					:citation
 				)""",
 				data
 			)
@@ -107,7 +110,7 @@ def main():
 LOOKUPS = {
 	'ObjectiveOfMonitoring': {
 		'Monitoring for targeted conservation management': 4,
-		'Monitoring for general conservation management – ‘surveillance’ monitoring.': 3,
+		'Monitoring for general conservation management – ‘surveillance’ monitoring': 3,
 		'Baseline monitoring': 2,
 		'Monitoring for community engagement': 1
 	},
