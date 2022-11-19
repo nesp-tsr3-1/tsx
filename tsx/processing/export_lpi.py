@@ -133,11 +133,9 @@ def process_database(species = None, monthly = False, filter_output = False, inc
             'StandardisationOfMethodEffort',
             'ObjectiveOfMonitoring',
             'SpatialRepresentativeness',
-            # 'SeasonalConsistency', # TBD
             'ConsistencyOfMonitoring',
-            # 'MonitoringFrequencyAndTiming', # TBD
-            'IntensiveManagement',
-            'IntensiveManagementGrouping',
+            'ManagementCategory',
+            'ManagementCategoryComments',
             'DataAgreement',
             'SuppressAggregatedData',
             'SurveysCentroidLatitude',
@@ -215,8 +213,8 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                         t2_site.name,
                         CONCAT('site_', agg.data_type, '_', site_id),
                         CONCAT('grid_', grid_cell_id)) AS SiteName,
-                    (SELECT description FROM intensive_management WHERE t1_site.intensive_management_id = intensive_management.id) AS IntensiveManagement,
-                    (SELECT `grouping` FROM intensive_management WHERE t1_site.intensive_management_id = intensive_management.id) AS IntensiveManagementGrouping,
+                    COALESCE((SELECT description FROM management WHERE t1_site.management_id = management.id), 'Unknown') AS ManagementCategory,
+                    t1_site.management_comments AS ManagementCategoryComments,
                     source.id AS SourceID,
                     source.description AS SourceDesc,
                     (SELECT description FROM monitoring_program WHERE source.monitoring_program_id = monitoring_program.id) AS MonitoringProgram,
@@ -243,14 +241,15 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                     MAX(ST_Y(agg.centroid_coords)) AS SurveysCentroidLatitude,
                     MAX(agg.positional_accuracy_in_m) AS SurveysSpatialAccuracy,
                     SUM(agg.survey_count) AS SurveyCount,
-                    CONCAT(
-                        COALESCE(CONCAT(source.authors, ' '), ''),
-                        '(', {current_year_expression}, '). ',
-                        COALESCE(CONCAT(source.description, '. '), ''),
-                        COALESCE(CONCAT(source.provider, '. '), ''),
-                        'Aggregated for National Environmental Science Program Threatened Species Recovery Hub Project 3.1. Generated on ',
-                        {current_date_expression}
-                    ) AS Citation
+                    data_source.citation AS Citation
+                    -- CONCAT(
+                    --     COALESCE(CONCAT(source.authors, ' '), ''),
+                    --     '(', {current_year_expression}, '). ',
+                    --     COALESCE(CONCAT(source.description, '. '), ''),
+                    --     COALESCE(CONCAT(source.provider, '. '), ''),
+                    --     'Aggregated for National Environmental Science Program Threatened Species Recovery Hub Project 3.1. Generated on ',
+                    --     {current_date_expression}
+                    -- ) AS Citation
                 FROM
                     {aggregated_table} agg
                     INNER JOIN taxon ON taxon.id = agg.taxon_id
