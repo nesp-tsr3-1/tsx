@@ -548,7 +548,7 @@ def build_filter_string():
 
 	# national priority
 	if 'priority' in request.args:
-		filters.append("NationalPriorityTaxa=='%d'" %(request.args.get('priority', type=int)))
+		filters.append("NationalPriorityTaxa==%d" % (request.args.get('priority', type=int)))
 
 	if len(filters) > 0:
 		return " and ".join(filters)
