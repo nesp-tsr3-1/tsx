@@ -54,9 +54,9 @@
               </select>
             </div>
           </div>
-          <div class="field" style="display: none;">
+          <div class="field">
             <input type="checkbox" id="checkbox" v-model="prioritySelected">
-            <label for="checkbox">National priority species</label>
+            <label for="checkbox"> National priority species</label>
           </div>
 
           <hr>
@@ -337,7 +337,8 @@ const states = [
 const statusAuthorities = [
   {value: 'Max', text: 'Max'},
   {value: 'EPBC', text: 'EPBC'},
-  {value: 'IUCN', text: 'Australian IUCN status'}
+  {value: 'IUCN', text: 'Australian IUCN status'},
+  {value: 'BirdActionPlan', text:'2020 Bird Action Plan'}
 ]
 
 const statuses = [
@@ -358,10 +359,8 @@ const statuses = [
 
 const managementTypes = [
   { value: 'None', text: 'All sites', groups: ['Mammals', 'Plants'] },
-  { value: 'Any management', text: 'Any management', groups: ['Mammals', 'Plants'] },
-  { value: 'Predator-free', text: 'Predator-free', groups: ['Mammals'] },
-  { value: 'Translocation', text: 'Translocation', groups: ['Plants'] },
-  { value: 'No management', text: 'No (known) management', groups: ['Mammals', 'Plants'] }
+  { value: 'Actively managed', text: 'Actively managed', groups: ['Mammals', 'Plants'] },
+  { value: 'No management', text: 'No management', groups: ['Mammals', 'Plants'] }
 ]
 
 const years = [

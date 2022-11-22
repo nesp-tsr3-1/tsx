@@ -484,7 +484,8 @@ def get_filtered_data():
 			df = df[df.IntensiveManagement.isna() == False]
 		elif management == 'Predator-free':
 			df = df[df.IntensiveManagementGrouping.str.contains('predator-free', na=False)]
-	else:
+	elif get_dataset_name() == 'tsx2020':
+		# also legacy
 		if management == "Any management":
 			df = df[~(df.IntensiveManagementGrouping.isna() | (df.IntensiveManagementGrouping == "No known management"))]
 		elif management == "Predator-free":
@@ -494,6 +495,9 @@ def get_filtered_data():
 		elif management == "No management":
 			pass
 			df = df[df.IntensiveManagementGrouping.isna() | (df.IntensiveManagementGrouping == "No known management")]
+	else:
+		if management:
+			df = df[df.ManagementCategory == management]
 
 	return df
 
@@ -631,14 +635,15 @@ def build_filter_sql(taxon_only=False):
 			management = request.args.get('management', type=str)
 
 			if get_dataset_name() == 'tsx2019':
-				#legacy
+				# legacy
 				if management == 'Predator-free':
 					expressions.append("site_id IN (SELECT t1_site.id FROM t1_site, intensive_management WHERE intensive_management.id = intensive_management_id AND grouping LIKE '%%predator-free%%')")
 				elif management == 'Any management':
 					expressions.append("site_id IN (SELECT id FROM t1_site WHERE intensive_management_id IS NOT NULL)")
 				elif management == 'No management':
 					expressions.append("site_id IN (SELECT id FROM t1_site WHERE intensive_management_id IS NULL)")
-			else:
+			elif get_dataset_name() == 'tsx2020':
+				# also legacy
 				if management == "Any management":
 					expressions.append("site_id IN (SELECT t1_site.id FROM t1_site, intensive_management WHERE intensive_management.id = intensive_management_id AND grouping != 'No known management')")
 				elif management == "Predator-free":
@@ -647,6 +652,9 @@ def build_filter_sql(taxon_only=False):
 					expressions.append("site_id IN (SELECT t1_site.id FROM t1_site, intensive_management WHERE intensive_management.id = intensive_management_id AND grouping LIKE '%%Translocation%%')")
 				elif management == "No management":
 					expressions.append("site_id NOT IN (SELECT t1_site.id FROM t1_site, intensive_management WHERE intensive_management.id = intensive_management_id AND grouping != 'No known management')")
+			else:
+				expressions.append("site_id IN (SELECT t1_site.id FROM t1_site, management WHERE management.id = t1_site.management_id AND management.description = %s)")
+				values.append(management)
 
 
 	if len(expressions):
