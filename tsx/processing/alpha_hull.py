@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import shapely.geometry as geometry
-from shapely.ops import cascaded_union, polygonize, transform
+from shapely.ops import unary_union, polygonize, transform
 from scipy.spatial import Delaunay
 from scipy.spatial import KDTree
 import numpy as np
@@ -118,7 +118,7 @@ def alpha_shape(coords, alpha):
 
     m = geometry.MultiLineString(edge_points)
     triangles = list(polygonize(m))
-    return cascaded_union(triangles), edge_points
+    return unary_union(triangles), edge_points
 
 def thinning(coords, thinning_distance):
     """
@@ -196,7 +196,7 @@ def process_spno(spno, coastal_shape, commit):
             # Intersect and insert into DB
             geom = shapely.wkb.loads(binascii.unhexlify(geom_wkb)).buffer(0)
             geom = to_multipolygon(geom.intersection(alpha_shp)) # slow
-            if len(geom) > 0:
+            if len(geom.geoms) > 0:
                 session.execute("""INSERT INTO taxon_presence_alpha_hull (taxon_id, range_id, breeding_range_id, geometry)
                     VALUES (:taxon_id, :range_id, :breeding_range_id, ST_GeomFromWKB(_BINARY :geom_wkb))""", {
                         'taxon_id': taxon_id,
@@ -208,7 +208,7 @@ def process_spno(spno, coastal_shape, commit):
             # We also subdivide the geometries into small pieces and insert this into the database. This allows for much faster
             # spatial queries in the database.
             for subgeom in subdivide_geometry(geom, max_points = 100):
-                if len(geom) > 0:
+                if len(geom.geoms) > 0:
                     session.execute("""INSERT INTO taxon_presence_alpha_hull_subdiv (taxon_id, range_id, breeding_range_id, geometry)
                         VALUES (:taxon_id, :range_id, :breeding_range_id, ST_GeomFromWKB(_BINARY :geom_wkb))""", {
                             'taxon_id': taxon_id,

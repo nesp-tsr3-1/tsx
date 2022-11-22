@@ -66,7 +66,7 @@ def to_multipolygon(geom):
 	elif type(geom) == Polygon:
 		return MultiPolygon([geom])
 	elif type(geom) == GeometryCollection:
-		return MultiPolygon([poly for g in geom for poly in to_multipolygon(g)])
+		return MultiPolygon([poly for g in geom.geoms for poly in to_multipolygon(g).geoms])
 	else:
 		return MultiPolygon([])
 
@@ -119,7 +119,7 @@ def count_points(geom):
 	if type(geom) in (LineString, MultiPoint):
 		return len(geom)
 	else:
-		return sum([count_points(g) for g in geom])
+		return sum([count_points(g) for g in geom.geoms])
 
 def point_intersects_geom(poly, x, y, cache, z = 2, tile_key = None, tile_bounds = None): # z = 2 chosen based on testing
 	"""
@@ -171,7 +171,7 @@ def fast_difference(a, b):
 
 	cache = {}
 	result = []
-	for point in a:
+	for point in a.geoms:
 		if not point_intersects_geom(b, point.x, point.y, cache):
 			result.append(point)
 
