@@ -84,6 +84,9 @@
             <button class='button is-primary is-small' v-on:click='downloadCSV'>Download CSV</button>
           </p>
           <p>
+            <button class='button is-primary is-small' v-on:click='downloadTrend' :disabled='trendData == null'>Download Trend</button>
+          </p>
+          <p>
             <button class='button is-primary is-small' v-on:click='viewDataSummary'>Data Summary</button>
           </p>
         </div>
@@ -418,6 +421,7 @@ export default {
       // intensity plot
       loadingMap: false,
       // heatmapLayer: null,
+      trendData: null,
 
       // map: null,
       showFullMap: false,
@@ -563,6 +567,13 @@ export default {
     },
     managementEnabled() {
       return this.selectedIndex.value === 'Mammals' || this.selectedIndex.value === 'Plants' || this.prioritySelected
+    },
+    downloadTrendURL() {
+      if(this.trendData) {
+        return "data:text/plain," + encodeURIComponent(this.trendData)
+      } else {
+        return ""
+      }
     }
   },
   methods: {
@@ -661,8 +672,11 @@ export default {
       plotData.labels = []
       plotData.datasets.forEach(x => x.data = [])
 
+      this.trendData = null
+
       return api.lpiRunData(this.getFilterString(), this.selectedYear.value, 'txt').then((data) => {
         if(data && data.indexOf('"LPI_final"') === 0) {
+          this.trendData = data
           // format:
           // "LPI_final" "CI_low" "CI_low"
           // "1980" float float float
@@ -863,6 +877,12 @@ export default {
       filterParams['download'] = 'tsxdata.zip'
       var url = api.lpiDownloadURL(filterParams)
       window.open(url)
+    },
+    downloadTrend: function() {
+      var a = document.createElement('a');
+      a.href = this.downloadTrendURL;
+      a.download = "tsx-trend.txt";
+      a.click();
     },
     viewDataSummary: function() {
       var filterParams = this.getFilterParams()
