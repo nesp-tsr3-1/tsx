@@ -501,10 +501,10 @@ export default {
 
       this.selectedSubgroup = this.subgroupList.find(x => x.value === this.selectedSubgroup.value) || this.subgroupList[0]
 
-      this.managementList = managementTypes.filter(x => x.groups.includes(this.selectedIndex.value))
-      if(this.selectedManagement) {
-        this.selectedManagement = this.managementList.find(x => x.value === this.selectedManagement.value) || managementTypes[0]
-      }
+      this.updateManagementList()
+    },
+    prioritySelected(val) {
+      this.updateManagementList()
     },
     selectedGroup(val) {
       this.subgroupList = generateSubgroupList(this.selectedIndex, this.selectedGroup)
@@ -546,7 +546,6 @@ export default {
 
       if(this.prioritySelected) {
         params['priority'] = '1'
-        addParam('management', this.selectedManagement)
       } else {
         addParam('index', this.selectedIndex)
         addParam('group', this.selectedGroup)
@@ -554,9 +553,10 @@ export default {
         addParam('state', this.selectedState)
         addParam('status_auth', this.selectedStatusAuthority)
         addParam('status', this.selectedStatus)
-        if(this.selectedIndex.value === 'Mammals' || this.selectedIndex.value === 'Plants') {
-          addParam('management', this.selectedManagement)
-        }
+      }
+
+      if(this.managementEnabled) {
+        addParam('management', this.selectedManagement)
       }
 
       return Object.entries(params).map(x => x[0] + '=' + encodeURIComponent(x[1])).join("&")
@@ -586,6 +586,13 @@ export default {
       updateFromParam('status_auth', 'selectedStatusAuthority', this.statusAuthorityList)
       updateFromParam('status', 'selectedStatus', this.statusList)
       updateFromParam('management', 'selectedManagement', this.managementList)
+    },
+    updateManagementList() {
+      if(this.managementEnabled) {
+        this.managementList = managementTypes
+      } else {
+        this.managementList = []
+      }
     },
     createMainIndexPlot() {
       var data = {
