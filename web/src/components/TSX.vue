@@ -686,7 +686,13 @@ export default {
 
       this.trendData = null
 
+      var token = this.updateMainIndexPlot.token = {}
+      var stale = () => this.updateMainIndexPlot.token != token
+
       return api.lpiRunData(this.getFilterString(), this.selectedYear.value, 'txt').then((data) => {
+        if(stale()) {
+          return
+        }
         if(data && data.indexOf('"LPI_final"') === 0) {
           this.trendData = data
           // format:
@@ -711,8 +717,10 @@ export default {
           this.noLPI = true
         }
       }).catch((e) => {
-        console.log(e)
-        this.noLPI = true
+        if(!stale()) {
+          console.log(e)
+          this.noLPI = true
+        }
       })
     },
     createMonitoringConsistencyPlot() {
