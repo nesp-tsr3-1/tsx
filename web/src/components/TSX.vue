@@ -505,9 +505,11 @@ export default {
 
       this.selectedSubgroup = this.subgroupList.find(x => x.value === this.selectedSubgroup.value) || this.subgroupList[0]
 
+      this.updateStatusAuthorityList()
       this.updateManagementList()
     },
     prioritySelected(val) {
+      this.updateStatusAuthorityList()
       this.updateManagementList()
     },
     selectedGroup(val) {
@@ -603,6 +605,16 @@ export default {
         this.managementList = managementTypes
       } else {
         this.managementList = []
+      }
+    },
+    updateStatusAuthorityList() {
+      if(this.prioritySelected || this.selectedIndex.value === 'Birds' || this.selectedIndex.value === 'None') {
+        this.statusAuthorityList = statusAuthorities
+      } else {
+        this.statusAuthorityList = statusAuthorities.filter(x => x.value != 'BirdActionPlan')
+      }
+      if(!this.statusAuthorityList.includes(this.selectedStatusAuthority)) {
+        this.selectedStatusAuthority = this.statusAuthorityList[0];
       }
     },
     createMainIndexPlot() {
