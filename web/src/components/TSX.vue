@@ -363,7 +363,7 @@ const statuses = [
 const managementTypes = [
   { value: 'None', text: 'All sites', groups: ['Mammals', 'Plants'] },
   { value: 'Actively managed', text: 'Actively managed', groups: ['Mammals', 'Plants'] },
-  { value: 'No management', text: 'No management', groups: ['Mammals', 'Plants'] }
+  { value: 'No known management', text: 'No known management', groups: ['Mammals', 'Plants'] }
 ]
 
 const years = [
