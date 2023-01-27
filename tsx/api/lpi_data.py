@@ -497,7 +497,7 @@ def get_filtered_data():
 			df = df[df.IntensiveManagementGrouping.isna() | (df.IntensiveManagementGrouping == "No known management")]
 	else:
 		if management:
-			df = df[df.ManagementCategory == management]
+			df = df[df.Management == management]
 
 	return df
 

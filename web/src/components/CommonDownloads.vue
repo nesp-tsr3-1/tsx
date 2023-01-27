@@ -131,13 +131,22 @@
     </div>
 
     <div class="field" v-if="enableManagementFilter">
-      <label class="label">Management category</label>
+      <label class="label">Management
+        <tippy class="info-icon icon" arrow interactive placement="right" style="margin-bottom: 0.5rem;">
+          <template #default><i class="far fa-question-circle"></i></template>
+          <template #content>
+            <div class="popup-content content has-text-white" style="font-weight: normal;">
+                <p>The ‘No known management’ filtering option includes sites that fall into the ‘No management’ and ‘Unknown’ categories from the TSX data import template.</p>
+            </div>
+          </template>
+        </tippy>
+      </label>
       <div class="control">
         <div class="select">
           <select v-model="criteria.management">
             <option :value="null" selected>All sites (managed & unmanaged)</option>
-            <option>No management</option>
             <option>Actively managed</option>
+            <option>No known management</option>
           </select>
         </div>
       </div>

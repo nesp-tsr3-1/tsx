@@ -51,6 +51,7 @@ class Management(Base):
 
     id = Column(Integer, primary_key=True)
     description = Column(String(255), nullable=False)
+    type = Column(String(255))
 
 
 class MonitoringProgram(Base):

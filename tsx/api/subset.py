@@ -238,7 +238,7 @@ def subset_sql_params(state_via_region=False):
 
     if 'management' in args:
         management = args['management']
-        where_conditions.append("t1_site.management_id = (SELECT id FROM management WHERE description = :management)")
+        where_conditions.append("t1_site.management_id IN (SELECT id FROM management WHERE type = :management)")
         params['management'] = management
 
     if 'taxon_id' in args:
@@ -313,7 +313,8 @@ def query_subset_raw_data_sql_and_params():
             t1_survey.comments AS SurveyComments,
             (SELECT description FROM monitoring_program WHERE id = source.monitoring_program_id) AS MonitoringProgram,
             source.monitoring_program_comments AS MonitoringProgramComments,
-            COALESCE((SELECT description FROM management WHERE id = t1_site.management_id), "N/A") AS ManagementCategory,
+            COALESCE((SELECT type FROM management WHERE id = t1_site.management_id), "No known management") AS Management,
+            COALESCE((SELECT description FROM management WHERE id = t1_site.management_id), "Unknown") AS ManagementCategory,
             t1_site.management_comments AS ManagementCategoryComments,
             t1_sighting.taxon_id AS TaxonID,
             taxon.common_name AS CommonName,
@@ -517,7 +518,8 @@ def query_subset_time_series():
             (SELECT description FROM search_type WHERE id = t2.search_type_id) AS SearchTypeDesc,
             (SELECT description FROM unit WHERE id = t2.unit_id) AS UnitOfMeasurement,
             (SELECT description FROM monitoring_program WHERE source.monitoring_program_id = monitoring_program.id) AS MonitoringProgram,
-            (SELECT description FROM management WHERE id = t1_site.management_id) AS ManagementCategory,
+            COALESCE((SELECT type FROM management WHERE id = t1_site.management_id), "No known management") AS Management,
+            COALESCE((SELECT description FROM management WHERE id = t1_site.management_id), "Unknown") AS ManagementCategory,
             %s,
             SUM(t2.survey_count) AS SurveyCount,
             MAX(start_date_y) - MIN(start_date_y) + 1 AS TimeSeriesLength,

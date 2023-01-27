@@ -192,18 +192,7 @@ if(length(statuses) > 0){
 }
 
 if(!is.null(management)){
-  if(management == "Any management") {
-    data <- data[!(is.na(data$IntensiveManagementGrouping) | data$IntensiveManagementGrouping == "No known management"),]
-  }
-  if(management == "Predator-free") {
-    data <- data[grepl("predator-free", data$IntensiveManagementGrouping),]
-  }
-  if(management == "Translocation") {
-    data <- data[grepl("Translocation", data$IntensiveManagementGrouping),]
-  }
-  if(management == "No management") {
-    data <- data[is.na(data$IntensiveManagementGrouping) | data$IntensiveManagementGrouping == "No known management",]
-  }
+  data <- data[data$Management == management,]
 }
 
 if(nationalpriority) {

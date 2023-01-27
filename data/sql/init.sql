@@ -164,10 +164,10 @@ INSERT INTO `projection_name` (name, epsg_srid) VALUES
   ("Cocos Islands 1965", 4708),
   ("Australian Antarctic (deg)", 61766405);
 
-INSERT INTO management (description) VALUES
-  ('Actively managed'),
-  ('No management'),
-  ('Unknown');
+INSERT INTO management (description, type) VALUES
+  ('Actively managed', 'Actively managed'),
+  ('No management', 'No known management'),
+  ('Unknown', 'No known management');
 
 INSERT INTO unit_type (description) VALUES
   ('Continuous'),
