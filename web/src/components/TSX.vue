@@ -249,7 +249,7 @@ import Spinner from 'vue-simple-spinner/src/components/Spinner.vue'
 import L from 'leaflet'
 import HeatmapOverlay from 'heatmap.js/plugins/leaflet-heatmap/leaflet-heatmap.js'
 import 'leaflet-easybutton/src/easy-button.js'
-import { min, max, pluck, uniq, parseParams } from '../util.js'
+import { min, max, pluck, uniq, parseParams, encodeParams } from '../util.js'
 import { Tippy } from 'vue-tippy'
 
 // Generated with:
@@ -898,11 +898,54 @@ export default {
       var url = api.lpiDownloadURL(filterParams)
       window.open(url)
     },
-    downloadTrend: function() {
+    downloadTrend: function(evt) {
       var a = document.createElement('a');
       a.href = this.downloadTrendURL;
       a.download = "tsx-trend.txt";
       a.click();
+      if(evt.shiftKey) {
+        this.downloadPlotData();
+      }
+    },
+    downloadPlotData: function() {
+      function quote(v) {
+        if(typeof v === "string" && v.match(/["\n\r]/)) {
+          return JSON.stringify(v)
+        } else {
+          return v
+        }
+      }
+
+      function csv(rows) {
+        return rows.map(row => row.map(quote).join(',')).join('\n')
+      }
+
+      function download(text, filename) {
+        var dl = document.createElement("a")
+        dl.href="data:text/plain,"+encodeURIComponent(text)
+        dl.setAttribute("download", filename)
+        dl.click();
+      }
+
+      async function save(prefix, params) {
+        var data = await fetch("https://tsx.org.au/tsxapi/lpi-data/plot?" + params)
+        var json = await data.json();
+
+        var rows = json.dotplot.flatMap((a, i) => [a.map(b => [i, b[0], b[1]])]).flat()
+        rows = [["TimeSeries", "Year", "NonZeroCount"]].concat(rows)
+
+        download(csv(rows), prefix + "-dotplot.csv");
+
+        download(csv([["Year", "NumberOfTimeSeries"]].concat(Object.entries(json.summary.timeseries))), prefix + "-ts.csv")
+        download(csv([["Year", "NumberOfTaxa"]].concat(Object.entries(json.summary.taxa))), prefix + "-taxa.csv")
+
+        data = await fetch("https://tsx.org.au/tsxapi/lpi-data/intensity?" + params)
+        json = await data.json()
+        download(csv([["Lat", "Lon", "NumberOfSurveys"]].concat(json.map(x => [x[0], x[1], x[2][0][1]]))), prefix + "-intensity.csv")
+      }
+
+      var filterParams = encodeParams(this.getFilterParams())
+      save(filterParams.replace('&', '_'), filterParams)
     },
     viewDataSummary: function() {
       var filterParams = this.getFilterParams()
