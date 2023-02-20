@@ -939,9 +939,9 @@ export default {
         download(csv([["Year", "NumberOfTimeSeries"]].concat(Object.entries(json.summary.timeseries))), prefix + "-ts.csv")
         download(csv([["Year", "NumberOfTaxa"]].concat(Object.entries(json.summary.taxa))), prefix + "-taxa.csv")
 
-        data = await fetch("https://tsx.org.au/tsxapi/lpi-data/intensity?" + params)
-        json = await data.json()
-        download(csv([["Lat", "Lon", "NumberOfSurveys"]].concat(json.map(x => [x[0], x[1], x[2][0][1]]))), prefix + "-intensity.csv")
+        // data = await fetch("https://tsx.org.au/tsxapi/lpi-data/intensity?" + params)
+        // json = await data.json()
+        // download(csv([["Lat", "Lon", "NumberOfSurveys"]].concat(json.map(x => [x[0], x[1], x[2][0][1]]))), prefix + "-intensity.csv")
       }
 
       var filterParams = encodeParams(this.getFilterParams())
