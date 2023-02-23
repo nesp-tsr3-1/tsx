@@ -571,7 +571,7 @@ export default {
       var filterParams = this.getFilterParams()
       var name = decodeURIComponent(this.filterQueryString).replace(/[<>:"/\\|?*]/g, '-')
       if(filterParams.dataset) {
-        name = "dataset=" + filterParams.dataset + "-" + name
+        name = "dataset=" + filterParams.dataset + "&" + name
       }
       return name
     },
