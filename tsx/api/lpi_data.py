@@ -132,7 +132,8 @@ def lpi_data():
 		# Write zip file to temporary file
 		with ZipFile(zip_filename, 'w', ZIP_DEFLATED) as zip_file:
 			# Write out data
-			zip_file.writestr('tsxdata.csv', filtered_dat.to_csv())
+			filename = request.args.get('data_filename', default='tsxdata.csv', type=str)
+			zip_file.writestr(filename, filtered_dat.to_csv())
 			# Write out extra files
 			try:
 				dataset = get_dataset_name()

@@ -902,7 +902,8 @@ export default {
     downloadCSV: function() {
       var filterParams = this.getFilterParams()
       filterParams['format'] = 'zip'
-      filterParams['download'] = "tsx-aggregated-data-" + this.filterFilenamePart + ".zip"
+      filterParams['data_filename'] = "tsx-aggregated-data-" + this.filterFilenamePart + ".csv"
+      filterParams['download'] = "tsxdata.zip"
       var url = api.lpiDownloadURL(filterParams)
       window.open(url)
     },
