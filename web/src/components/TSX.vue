@@ -567,6 +567,14 @@ export default {
 
       return Object.entries(params).map(x => x[0] + '=' + encodeURIComponent(x[1])).join("&")
     },
+    filterFilenamePart() {
+      var filterParams = this.getFilterParams()
+      var name = decodeURIComponent(this.filterQueryString).replace(/[<>:"/\\|?*]/g, '-')
+      if(filterParams.dataset) {
+        name = "dataset=" + filterParams.dataset + "-" + name
+      }
+      return name
+    },
     managementEnabled() {
       return this.selectedIndex.value === 'Mammals' || this.selectedIndex.value === 'Plants' || this.prioritySelected
     },
@@ -894,14 +902,14 @@ export default {
     downloadCSV: function() {
       var filterParams = this.getFilterParams()
       filterParams['format'] = 'zip'
-      filterParams['download'] = 'tsxdata.zip'
+      filterParams['download'] = "tsxdata-" + this.filterFilenamePart + ".zip"
       var url = api.lpiDownloadURL(filterParams)
       window.open(url)
     },
     downloadTrend: function(evt) {
       var a = document.createElement('a');
       a.href = this.downloadTrendURL;
-      a.download = "tsx-trend.txt";
+      a.download = "tsx-trend-" + this.filterFilenamePart + ".txt"
       a.click();
       if(evt.shiftKey) {
         this.downloadPlotData();
@@ -927,25 +935,24 @@ export default {
         dl.click();
       }
 
-      async function save(prefix, params) {
+      async function save(name, params) {
         var data = await fetch("https://tsx.org.au/tsxapi/lpi-data/plot?" + params)
         var json = await data.json();
 
         var rows = json.dotplot.flatMap((a, i) => [a.map(b => [i, b[0], b[1]])]).flat()
         rows = [["TimeSeries", "Year", "NonZeroCount"]].concat(rows)
 
-        download(csv(rows), prefix + "-dotplot.csv");
+        download(csv(rows), "tsx-dotplot-" + name + ".csv");
 
-        download(csv([["Year", "NumberOfTimeSeries"]].concat(Object.entries(json.summary.timeseries))), prefix + "-ts.csv")
-        download(csv([["Year", "NumberOfTaxa"]].concat(Object.entries(json.summary.taxa))), prefix + "-taxa.csv")
+        download(csv([["Year", "NumberOfTimeSeries"]].concat(Object.entries(json.summary.timeseries))), "tsx-time-series-" + name + ".csv")
+        download(csv([["Year", "NumberOfTaxa"]].concat(Object.entries(json.summary.taxa))), "tsx-taxa-" + name + ".csv")
 
         // data = await fetch("https://tsx.org.au/tsxapi/lpi-data/intensity?" + params)
         // json = await data.json()
         // download(csv([["Lat", "Lon", "NumberOfSurveys"]].concat(json.map(x => [x[0], x[1], x[2][0][1]]))), prefix + "-intensity.csv")
       }
 
-      var filterParams = encodeParams(this.getFilterParams())
-      save(filterParams.replace('&', '_'), filterParams)
+      save(this.filterFilenamePart, this.getFilterParams())
     },
     viewDataSummary: function() {
       var filterParams = this.getFilterParams()
