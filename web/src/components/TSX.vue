@@ -729,7 +729,7 @@ export default {
               },
               ticks: {
                 callback: function(label, index, labels) {
-                  return Number.isInteger(label) ? label : ''
+                  return Number.isInteger(label) ? label.toLocaleString() : ''
                 }
               }
             },
@@ -746,7 +746,7 @@ export default {
               },
               ticks: {
                 callback: function(label, index, labels) {
-                  return Number.isInteger(label) ? label : ''
+                  return Number.isInteger(label) ? label.toLocaleString() : ''
                 }
               }
             }
