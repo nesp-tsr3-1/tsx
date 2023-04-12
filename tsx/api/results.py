@@ -15,11 +15,11 @@ import re
 from zipfile import ZipFile, ZIP_DEFLATED
 from collections import defaultdict
 import sqlite3
-from functools import cache
+from functools import lru_cache
 
 bp = Blueprint('results', __name__, url_prefix='/results')
 
-@cache
+@lru_cache
 def read_data(filename, table="time_series", index_col="ID"):
 	export_dir = tsx.config.data_dir('export')
 	data_path = os.path.join(export_dir, filename)
