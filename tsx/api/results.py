@@ -382,6 +382,7 @@ def get_filtered_taxa():
 			taxa_params[key] = value
 
 	taxa = filter_data(taxa, taxa_params)
+	return taxa
 
 def get_stats(filtered_data):
 	df = filtered_data
@@ -490,8 +491,6 @@ def get_parameter_values():
 		}
 	else:
 		return {
-			'TaxonomicGroup': 		request.args.get('tgroup', default='All', type=str),
-			'FunctionalGroup': 		request.args.get('group', default='All', type=str),
 			'TaxonID':				request.args.get('taxon', default=None, type=str)
 		}
 
@@ -532,31 +531,15 @@ def option_label(value, param, has_data, has_trend):
 
 
 def get_taxon_options(param_values):
-	# taxa = get_taxon_data()
-	# df = get_unfiltered_data()
-	# df = df[['TaxonID']].drop_duplicates().join(taxa, 'TaxonID')[['TaxonID', 'TaxonomicGroup', 'FunctionalGroup', 'CommonName', 'ScientificName']]
-
-	# if param_values['TaxonomicGroup'] != 'All':
-	# 	df = df[df['TaxonomicGroup'] == param_values['TaxonomicGroup']]
-
-	# if param_values['FunctionalGroup'] != 'All':
-	# 	df['FunctionalGroup'] = df['FunctionalGroup'].str.split(',')
-	# 	df = df.explode(['FunctionalGroup'])
-	# 	df['FunctionalGroup'] = df['FunctionalGroup'].apply(lambda x: str(x).split(':')[0])
-	# 	df = df[df['FunctionalGroup'] == param_values['FunctionalGroup']]
-
-	# df = df[['TaxonID', 'CommonName', 'ScientificName']].drop_duplicates().replace({ np.nan: None })
-
 	# Get just the taxa that meet current filters
-	taxa = get_filtered_taxa()
+	taxa = get_filtered_taxa()[['CommonName', 'ScientificName']]
 
 	# Get all individual taxa trends
 	trends = get_trend_data()
 	trends = trends[trends["TaxonID"].notna()]
 	trends = trends.groupby('TaxonID').agg({'has_trend':'any'})
 
-
-	df = taxa.set_index('TaxonID').join(taxa_trends, how='inner').reset_index()
+	df = taxa.join(trends, how='inner').reset_index()
 
 	options = [get_taxon_option(*row) for row in df.itertuples(index=False)]
 
@@ -680,17 +663,21 @@ def get_parameters():
 		]
 
 	elif query_type == 'individual':
+		tgroup = request.args.get('tgroup', type=str, default='All')
+		group = request.args.get('group', type=str, default='All')
+
 		params += [
 			dict(name='tgroup',
 				label='Index',
 				type='select',
-				options=get_options('TaxonomicGroup', param_values),
-				value = param_values['TaxonomicGroup']),
+				options=get_options('TaxonomicGroup', {}),
+				value = tgroup),
 			dict(name='group',
 				label='Group',
 				type='select',
-				options=get_options('FunctionalGroup', param_values),
-				value = param_values['FunctionalGroup']),
+				options=get_options('FunctionalGroup', {
+					'TaxonomicGroup': tgroup, 'TaxonID': None }),
+				value = group),
 			dict(name='taxon',
 				label='Available Species',
 				type='select',
