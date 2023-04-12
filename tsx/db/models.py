@@ -348,6 +348,7 @@ class DataSource(Base):
     start_year = Column(Integer)
     end_year = Column(Integer)
     suppress_aggregated_data = Column(TINYINT(1), nullable=False)
+    citation = Column(Text)
 
     source = relationship('Source')
     taxon = relationship('Taxon')
