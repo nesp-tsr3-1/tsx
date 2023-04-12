@@ -8,7 +8,7 @@
         <div class="tile is-child">
           <div style="margin-bottom: 2em">
             <div class="field" v-for="field in sidebarFields">
-              <Field :field="field" v-model:value="fieldValues[field.name]"></Field>
+              <Field v-if="!field.disabled" :field="field" v-model:value="fieldValues[field.name]"></Field>
             </div>
           </div>
 <!--           <p>
