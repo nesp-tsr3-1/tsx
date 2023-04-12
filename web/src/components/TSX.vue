@@ -6,88 +6,22 @@
     <div class="tile is-ancestor">
       <div class="tile is-2 is-parent">
         <div class="tile is-child">
-          <div class="field">
-            <label class="label">Index</label>
-            <div class="select is-fullwidth">
-              <select v-model='selectedIndex' :disabled='prioritySelected'>
-                <option v-for="option in indexList" v-bind:value="option">{{option.text}}</option>
-              </select>
+          <div style="margin-bottom: 2em">
+            <div class="field" v-for="field in sidebarFields">
+              <Field :field="field" v-model:value="fieldValues[field.name]"></Field>
             </div>
           </div>
-          <div class="field">
-            <label class="label">Group</label>
-            <div class="select is-fullwidth">
-              <select v-model='selectedGroup' :disabled='prioritySelected'>
-                <option v-for="option in groupList" v-bind:value="option">{{option.text}}</option>
-              </select>
-            </div>
-          </div>
-          <div class="field">
-            <label class="label">Sub-group</label>
-            <div class="select is-fullwidth">
-              <select v-model='selectedSubgroup' :disabled='prioritySelected || !subgroupEnabled'>
-                <option v-for="option in subgroupList" v-bind:value="option">{{option.text}}</option>
-              </select>
-            </div>
-          </div>
-          <div class="field">
-            <label class="label">State / Territory</label>
-            <div class="select is-fullwidth">
-              <select v-model='selectedState' :disabled='prioritySelected'>
-                <option v-for="option in stateList" v-bind:value="option">{{option.text}}</option>
-              </select>
-            </div>
-          </div>
-          <div class="field">
-            <label class="label">Status authority</label>
-            <div class="select is-fullwidth">
-              <select v-model='selectedStatusAuthority' :disabled='prioritySelected'>
-                <option v-for="option in statusAuthorityList" v-bind:value="option">{{option.text}}</option>
-              </select>
-            </div>
-          </div>
-          <div class="field">
-            <label class="label">Status</label>
-            <div class="select is-fullwidth">
-              <select v-model='selectedStatus' :disabled='prioritySelected'>
-                <option v-for="option in statusList" v-bind:value="option">{{option.text}}</option>
-              </select>
-            </div>
-          </div>
-          <div class="field">
-            <input type="checkbox" id="checkbox" v-model="prioritySelected">
-            <label for="checkbox"> National priority species</label>
-          </div>
-
-          <hr>
-
-          <div class="field" v-if='managementEnabled'>
-            <label class="label">Management</label>
-            <div class="select is-fullwidth">
-              <select v-model='selectedManagement'>
-                <option v-for="option in managementList" v-bind:value="option">{{option.text}}</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="field">
-            <label class="label">Reference year</label>
-            <div class="select is-fullwidth">
-              <select v-model='selectedYear'>
-                <option v-for="option in yearList" v-bind:value="option">{{option.text}}</option>
-              </select>
-            </div>
-          </div>
-
-
+<!--           <p>
+            <button class='button is-primary is-small' @click='reset'>Reset</button>
+          </p> -->
           <p>
-            <button class='button is-primary is-small' v-on:click='downloadCSV'>Download CSV</button>
+            <button class='button is-primary is-small' @click='downloadCSV'>Download CSV</button>
           </p>
           <p>
-            <button class='button is-primary is-small' v-on:click='downloadTrend' :disabled='trendData == null'>Download Trend</button>
+            <button class='button is-primary is-small' @click='downloadTrend' :disabled='trendData == null'>Download Trend</button>
           </p>
           <p>
-            <button class='button is-primary is-small' v-on:click='viewDataSummary'>Data Summary</button>
+            <button class='button is-primary is-small' @click='viewDataSummary'>Data Summary</button>
           </p>
         </div>
       </div>
@@ -105,7 +39,10 @@
         <div class="tile">
           <div class="tile is-parent is-vertical" v-show="!showFullMap">
             <div class="tile is-child card">
-              <h4 class="has-text-black">Main index</h4>
+              <div style="display: flex; flex-wrap: nowrap; gap: 1em;">
+                <h4 class="has-text-black">Main index</h4>
+                <Field :field="referenceYearField" v-if="fieldValues" v-model:value="fieldValues.refyear" style="position: relative; top: -0.5em;"></Field>
+              </div>
               <tippy class="info-icon icon" arrow interactive placement="left">
                 <template #default><i class="far fa-question-circle"></i></template>
                 <template #content>
@@ -127,8 +64,7 @@
                 <canvas ref='lpiplot'></canvas>
               </div>
               <div class="has-text-black" v-show="noLPI">
-                <p>No index generated – less than 3 taxa present at the selected reference year.</p>
-                <p>Try changing the reference year to build an index</p>
+                <p>No index available – less than 3 taxa present at all possible reference years.</p>
               </div>
             </div>
             <div class="tile is-child card">
@@ -180,7 +116,7 @@
       </div>
 
       <div class="tile is-child" v-show="noData">
-        <p style="margin: 0.8em">(No data to show)</p>
+        <p style="margin: 0.8em">{{noDataMessage()}}</p>
       </div>
     </div>
 
@@ -249,166 +185,24 @@ import Spinner from 'vue-simple-spinner/src/components/Spinner.vue'
 import L from 'leaflet'
 import HeatmapOverlay from 'heatmap.js/plugins/leaflet-heatmap/leaflet-heatmap.js'
 import 'leaflet-easybutton/src/easy-button.js'
-import { min, max, pluck, uniq, parseParams, encodeParams } from '../util.js'
+import { min, max, pluck, uniq, parseParams, encodeParams, deepEquals, saveTextFile } from '../util.js'
 import { Tippy } from 'vue-tippy'
+import Field from './Field.vue'
 
-// Generated with:
-// SELECT REPLACE(REPLACE(JSON_ARRAYAGG(o), """", "'"), "], ", "],\n") FROM (SELECT DISTINCT JSON_ARRAY(taxonomic_group, group_name, subgroup_name) AS o FROM taxon JOIN taxon_group ON taxon.id = taxon_id ORDER BY taxonomic_group, group_name, subgroup_name) t\G
-
-// Note: Have manually commented out combinations without enough time series to make a trend. TODO - make this automated somehow.
-
-const groupings = [
-  ['Birds', 'Marine', null],
-  ['Birds', 'Marine', 'Albatrosses and Giant-Petrels'],
-  // ['Birds', 'Marine', 'Gulls Terns Noddies Skuas Jaegers'],
-  // ['Birds', 'Marine', 'Penguins'],
-  // ['Birds', 'Marine', 'Petrels and Shearwaters'],
-  // ['Birds', 'Marine', 'Tropicbirds Frigatebirds Gannets Boobies'],
-  ['Birds', 'Shoreline (migratory)', null],
-  // ['Birds', 'Shoreline (resident)', null],
-  ['Birds', 'Terrestrial', null],
-  // ['Birds', 'Terrestrial', 'Arid Woodland/ shrubland'],
-  ['Birds', 'Terrestrial', 'Dry sclerophyll woodland/forest'],
-  // ['Birds', 'Terrestrial', 'Grassland'],
-  // ['Birds', 'Terrestrial', 'Heathland'],
-  // ['Birds', 'Terrestrial', 'Island endemic'],
-  // ['Birds', 'Terrestrial', 'Mallee woodland'],
-  // ['Birds', 'Terrestrial', 'Parrots Lorikeets Rosellas Cockatoos Corellas'],
-  // ['Birds', 'Terrestrial', 'Rainforest'],
-  ['Birds', 'Terrestrial', 'Tropical savanna woodland'],
-  // ['Birds', 'Wetland', null],
-  // ['Birds', 'Wetland', 'Gulls Terns Noddies Skuas Jaegers'],
-  ['Mammals', '<50g', null],
-  ['Mammals', '50-5000g', null],
-  ['Mammals', '>5000g', null],
-  ['Mammals', 'Marine', null],
-  ['Mammals', 'Terrestrial', null],
-  ['Mammals', 'Terrestrial', 'Arboreal'],
-  ['Mammals', 'Terrestrial', 'Volant'],
-  // ['Plants', 'Grass', null],
-  ['Plants', 'Herbaceous', null],
-  ['Plants', 'Orchid', null],
-  ['Plants', 'Shrub', null],
-  ['Plants', 'Tree', null],
-  // ['Plants', 'Terrestrial', null]
-]
-
-const noneOption = {value: 'None', text: 'All'}
-
-function generateIndexList() {
-  let indexList = uniq(groupings.map(x => x[0]))
-
-  return [noneOption].concat(indexList.map(x => ({value: x, text: x})))
-}
-
-function generateGroupList(index) {
-  var groupList
-  if(index.value === 'None') {
-    groupList = ['Marine', 'Terrestrial']
-  } else {
-    groupList = uniq(groupings.filter(x => index.value === x[0]).map(x => x[1]))
-  }
-
-  return [noneOption].concat(groupList.map(x => ({value: x, text: x})))
-}
-
-function generateSubgroupList(index, group) {
-  var subgroupList
-  if(index.value === 'None' || group.value === 'None') {
-    subgroupList = []
-  } else {
-    subgroupList = uniq(groupings.filter(x => index.value === x[0] && group.value === x[1] && x[2] !== null).map(x => x[2]))
-  }
-
-  return [noneOption].concat(subgroupList.map(x => ({value: x, text: x})))
-}
-
-const states = [
-  {value: 'None', text: 'All', shortValue: null},
-  {value: 'Australian Capital Territory', text: 'Australian Capital Territory', shortValue: "ACT"},
-  // {value: 'Commonwealth', text: 'Commonwealth'},
-  {value: 'Queensland', text: 'Queensland', shortValue: "QLD"},
-  {value: 'New South Wales', text: 'New South Wales', shortValue: "NSW"},
-  {value: 'Australian Capital Territory+New South Wales', text: 'Australian Capital Territory + New South Wales', shortValue: "ACT,NSW"},
-  {value: 'Northern Territory', text: 'Northern Territory', shortValue: "NT"},
-  {value: 'South Australia', text: 'South Australia', shortValue: "SA"},
-  {value: 'Western Australia', text: 'Western Australia', shortValue: "WA"},
-  {value: 'Tasmania', text: 'Tasmania', shortValue: "TAS"},
-  {value: 'Victoria', text: 'Victoria', shortValue: "VIC"}
-]
-
-const statusAuthorities = [
-  {value: 'Max', text: 'Max'},
-  {value: 'EPBC', text: 'EPBC'},
-  {value: 'IUCN', text: 'Australian IUCN status'},
-  {value: 'BirdActionPlan', text:'2020 Bird Action Plan'}
-]
-
-const statuses = [
-  {
-    shortValue: 'VU_EN_CR',
-    value: 'Vulnerable+Endangered+Critically Endangered',
-    text: 'Threatened species (all Vulnerable + Endangered + Critically Endangered)'
-  }, {
-    shortValue: 'NT_VU_EN_CR',
-    value: 'Near Threatened+Vulnerable+Endangered+Critically Endangered',
-    text: 'All (all Near Threatened + Vulnerable + Endangered + Critically Endangered)'
-  }, {
-    shortValue: 'NT',
-    value: 'Near Threatened',
-    text: 'Near Threatened species (Near Threatened species only)'
-  }
-]
-
-const managementTypes = [
-  { value: 'None', text: 'All sites', groups: ['Mammals', 'Plants'] },
-  { value: 'Actively managed', text: 'Actively managed', groups: ['Mammals', 'Plants'] },
-  { value: 'No known management', text: 'No known management', groups: ['Mammals', 'Plants'] }
-]
-
-const years = [
-  {value: '1985', text: '1985'},
-  {value: '1990', text: '1990'},
-  {value: '1995', text: '1995'},
-  {value: '2000', text: '2000'}
-]
+const dataset = 'test'
 
 export default {
   name: 'TSX',
   components: {
     Spinner,
-    Tippy
+    Tippy,
+    Field
   },
   data () {
     var data = {
-      // index
-      indexList: generateIndexList(),
-      selectedIndex: noneOption,
-      // group
-      groupList: generateGroupList(noneOption),
-      selectedGroup: noneOption,
-      // subgroup
-      subgroupList: generateSubgroupList(noneOption, noneOption),
-      selectedSubgroup: noneOption,
-      subgroupEnabled: false,
-      // states
-      stateList: states,
-      selectedState: states[0],
-      // status auth
-      statusAuthorityList: statusAuthorities,
-      selectedStatusAuthority: statusAuthorities[0],
-      // status
-      statusList: statuses,
-      selectedStatus: statuses[1],
-      // management
-      managementList: managementTypes,
-      selectedManagement: managementTypes[0],
-
-      // year
-      yearList: years,
-      selectedYear: years[0],
-      // charts
-
+      fields: [], // Field definitions from server
+      fieldValues: null, // Curent field values, bound to inputs
+      dataParams: null,
       // is loading data
       loadingData: false,
       // no data to show
@@ -430,7 +224,10 @@ export default {
 
     return data
   },
-  mounted: function() {
+  created () {
+    // this.updateFields()
+  },
+  mounted () {
     Chart.defaults.font.size = 14
     this.createMonitoringConsistencyPlot()
     this.createSummaryPlot()
@@ -487,45 +284,18 @@ export default {
     // this is a hack so that leaflet displays properlly
     setTimeout(() => {
       this.map.invalidateSize()
-      console.log('---update plot----')
     }, 2000)
-    this.updateMapAndPlots()
 
     this.updateFromQueryString()
   },
   watch: {
-    selectedIndex(val) {
-      this.groupList = generateGroupList(this.selectedIndex)
-      this.groupEnabled = this.subgroupList.length > 1
-
-      this.selectedGroup = this.groupList.find(x => x.value === this.selectedGroup.value) || this.groupList[0]
-
-      this.subgroupList = generateSubgroupList(this.selectedIndex, this.selectedGroup)
-      this.subgroupEnabled = this.subgroupList.length > 1
-
-      this.selectedSubgroup = this.subgroupList.find(x => x.value === this.selectedSubgroup.value) || this.subgroupList[0]
-
-      this.updateStatusAuthorityList()
-      this.updateManagementList()
-    },
-    prioritySelected(val) {
-      this.updateStatusAuthorityList()
-      this.updateManagementList()
-    },
-    selectedGroup(val) {
-      this.subgroupList = generateSubgroupList(this.selectedIndex, this.selectedGroup)
-      this.subgroupEnabled = this.subgroupList.length > 1
-
-      this.selectedSubgroup = this.subgroupList.find(x => x.value === this.selectedSubgroup.value) || this.subgroupList[0]
-    },
-    selectedStatusAuthority(val) {
-      if(val.value === 'None') {
-        this.selectedStatusDisabled = true
-        this.selectedStatus = {value: 'None', text: 'All'}
-      }
-    },
-    filterParams(val, oldVal) {
-      this.updateMapAndPlots()
+    fieldValues: {
+      handler(val, oldVal) {
+        if(oldVal == null || !deepEquals(val, this.latestFieldValuesFromServer())) {
+          this.updateFields()
+        }
+      },
+      deep: true
     },
     filterQueryString(val) {
       var url = window.location.pathname
@@ -536,93 +306,69 @@ export default {
     }
   },
   computed: {
-    filterParams() {
-      return this.getFilterParams()
+    sidebarFields() {
+      return this.fields.filter(f => f.name != 'refyear')
+    },
+    referenceYearField() {
+      return this.fields.filter(f => f.name == 'refyear')[0]
     },
     filterQueryString() {
-      var params = {
-        ref: this.selectedYear.value
-      }
-
-      function addParam(key, selectedItem) {
-        if(selectedItem.value !== 'None') {
-          params[key] = selectedItem.shortValue || selectedItem.value
-        }
-      }
-
-      if(this.prioritySelected) {
-        params['priority'] = '1'
-      } else {
-        addParam('index', this.selectedIndex)
-        addParam('group', this.selectedGroup)
-        addParam('subgroup', this.selectedSubgroup)
-        addParam('state', this.selectedState)
-        addParam('status_auth', this.selectedStatusAuthority)
-        addParam('status', this.selectedStatus)
-      }
-
-      if(this.managementEnabled) {
-        addParam('management', this.selectedManagement)
-      }
-
+      var params = this.latestFieldValuesFromServer()
+      delete params.dataset
       return Object.entries(params).map(x => x[0] + '=' + encodeURIComponent(x[1])).join("&")
     },
     filterFilenamePart() {
-      var filterParams = this.getFilterParams()
       var name = decodeURIComponent(this.filterQueryString).replace(/[<>:"/\\|?*]/g, '-')
-      if(filterParams.dataset) {
-        name = "dataset=" + filterParams.dataset + "&" + name
+      if(dataset) {
+        name = "dataset=" + dataset + "&" + name
       }
       return name
     },
-    managementEnabled() {
-      return this.selectedIndex.value === 'Mammals' || this.selectedIndex.value === 'Plants' || this.prioritySelected
-    },
     downloadTrendURL() {
-      if(this.trendData) {
-        return "data:text/plain," + encodeURIComponent(this.trendData)
-      } else {
-        return ""
-      }
+      return api.trendURL(this.dataParams)
     }
   },
   methods: {
-    updateFromQueryString() {
-      console.log("updateFromQueryString")
-      var params = parseParams(window.location.search.substr(1))
-
-      var self = this
-      function updateFromParam(key, valueKey, list) {
-        if(params[key]) {
-          var value = list.filter(x => x.shortValue == params[key] || x.value == params[key])[0]
-          console.log("key = " + key + ", value = " + value)
-          self[valueKey] = value
-        }
+    // reset() {
+    //   this.fieldValues = { type: this.fieldValues.type }
+    // },
+    noDataMessage() {
+      if(this.fieldValues && this.fieldValues.type == 'individual') {
+        return "(Please select a species)"
+      } else {
+        return "(No data to show)"
+      }
+    },
+    updateFields() {
+      let params = {
+        dataset: dataset,
+        ...this.fieldValues
       }
 
-      updateFromParam('ref', 'selectedYear', this.yearList)
-      updateFromParam('index', 'selectedIndex', this.indexList)
-      updateFromParam('group', 'selectedGroup', this.groupList)
-      updateFromParam('state', 'selectedState', this.stateList)
-      updateFromParam('status_auth', 'selectedStatusAuthority', this.statusAuthorityList)
-      updateFromParam('status', 'selectedStatus', this.statusList)
-      updateFromParam('management', 'selectedManagement', this.managementList)
+      api.visualisationParameters(params).then(result => {
+        this.fields = result.fields
+        this.fieldValues = this.latestFieldValuesFromServer()
+        this.dataParams = result.data_params
+        this.updateMapAndPlots(this.dataParams)
+      })
+    },
+    latestFieldValuesFromServer() {
+      return Object.fromEntries(
+        this.fields.map(field => [field.name, field.value]))
+    },
+    isDisabled(field) {
+      return false
+    },
+    updateFromQueryString() {
+      var params = parseParams(window.location.search.substr(1))
+      delete params.dataset
+      this.fieldValues = params
     },
     updateManagementList() {
       if(this.managementEnabled) {
         this.managementList = managementTypes
       } else {
         this.managementList = []
-      }
-    },
-    updateStatusAuthorityList() {
-      if(this.prioritySelected || this.selectedIndex.value === 'Birds' || this.selectedIndex.value === 'None') {
-        this.statusAuthorityList = statusAuthorities
-      } else {
-        this.statusAuthorityList = statusAuthorities.filter(x => x.value != 'BirdActionPlan')
-      }
-      if(!this.statusAuthorityList.includes(this.selectedStatusAuthority)) {
-        this.selectedStatusAuthority = this.statusAuthorityList[0];
       }
     },
     createMainIndexPlot() {
@@ -687,7 +433,7 @@ export default {
         }
       })
     },
-    updateMainIndexPlot() {
+    updateMainIndexPlot(params) {
       let plotData = this.mainIndexPlot.data
       plotData.labels = []
       plotData.datasets.forEach(x => x.data = [])
@@ -697,29 +443,20 @@ export default {
       var token = this.updateMainIndexPlot.token = {}
       var stale = () => this.updateMainIndexPlot.token != token
 
-      return api.lpiRunData(this.getFilterString(), this.selectedYear.value, 'txt').then((data) => {
+      return api.trend(params).then((data) => {
         if(stale()) {
           return
         }
-        if(data && data.indexOf('"LPI_final"') === 0) {
+        if(data) {
           this.trendData = data
-          // format:
-          // "LPI_final" "CI_low" "CI_low"
-          // "1980" float float float
 
-          let series = data.split('\n')
-            .slice(1) // Ignore first line
-            .filter(line => line.trim().length > 0 && !/NA/.test(line)) // Ignore empty or NA lines
-            .map(line => line.split(' '))
-
-          plotData.labels = series.map(x => parseInt(x[0].replace(/"/g, '')))
-          plotData.datasets[0].data = series.map(x => parseFloat(x[1]))
-          plotData.datasets[1].data = series.map(x => parseFloat(x[2]))
-          plotData.datasets[2].data = series.map(x => parseFloat(x[3]))
+          plotData.labels = data.year
+          plotData.datasets[0].data = data.value
+          plotData.datasets[1].data = data.low
+          plotData.datasets[2].data = data.high
 
           // update lpi plot
           this.noLPI = false
-          console.log(plotData)
           this.mainIndexPlot.update()
         } else {
           this.noLPI = true
@@ -804,14 +541,11 @@ export default {
         }]
       }
     },
-    updateMonitoringConsistencyAndSummaryPlot() {
-      const filterParams = this.getFilterParams()
-      filterParams['format'] = 'plot'
-
+    updateMonitoringConsistencyAndSummaryPlot(params) {
       this.monitoringConsistencyPlot.data.datasets.forEach(x => x.data = [])
       this.summaryPlotData.datasets.forEach(x => x.data = [])
 
-      return api.lpiPlot(filterParams).then((data) => {
+      return api.diagnosticPlots(params).then((data) => {
           this.noData = data['dotplot'].length === 0
 
           var dotPlotData = data['dotplot']
@@ -844,42 +578,29 @@ export default {
           this.refreshSummaryPlot() // note: this.summaryPlot.update() will cause exception as the axis might be change
         })
     },
-    updatePlots() {
+    updatePlots(params) {
       this.loadingData = true
       Promise.all([
-        this.updateMainIndexPlot(),
-        this.updateMonitoringConsistencyAndSummaryPlot(),
+        this.updateMainIndexPlot(params),
+        this.updateMonitoringConsistencyAndSummaryPlot(params),
       ]).finally(x => {
         this.loadingData = false
       })
     },
-    updateMap() {
+    updateMap(params) {
       // intensity plot
       this.loadingMap = true
 
-      // using lpi wide table per Elisa'request
-      // filterParams.source = 'lpi_wide_table'
-
-      api.intensityPlot(this.getFilterParams()).then((data) => {
-        console.log('--loading map data----')
-
-        var surveyData = []
-        data.forEach(function(timeSeries) {
-          var lat = timeSeries[1]
-          var long = timeSeries[0]
-          var yearCounts = timeSeries[2]
-          yearCounts.forEach(function(yearCount) {
-            surveyData.push({
-              lat: lat,
-              long: long,
-              count: yearCount[1],
-              year: yearCount[0]
-            })
-          })
+      api.spatialIntensity(params).then((data) => {
+        let surveyData = data.map(function(timeSeries) {
+          return {
+            lat: timeSeries[1],
+            long: timeSeries[0],
+            count: timeSeries[2]
+          }
         })
 
-
-        var counts = pluck(surveyData, 'value')
+        let counts = pluck(surveyData, 'value')
 
         // A scaling factor (/20) is chosen for aesthetic reasons.
         // Previously we were stacking points from many years on top of each other on the map, but
@@ -890,30 +611,32 @@ export default {
           max: max(counts) / 20,
           data: surveyData
         })
-        // this.map.invalidateSize()
+        this.map.invalidateSize()
       }).finally(() => {
         this.loadingMap = false
       })
     },
-    updateMapAndPlots() {
-      this.updatePlots()
-      this.updateMap()
+    updateMapAndPlots(params) {
+      this.updatePlots(params)
+      this.updateMap(params)
     },
     downloadCSV: function() {
-      var filterParams = this.getFilterParams()
-      filterParams['format'] = 'zip'
-      filterParams['data_filename'] = "tsx-aggregated-data-" + this.filterFilenamePart + ".csv"
-      filterParams['download'] = "tsxdata.zip"
-      var url = api.lpiDownloadURL(filterParams)
+      let params = {
+        format: 'zip',
+        download: 'tsxdata.zip',
+        data_filename: "tsx-aggregated-data-" + this.filterFilenamePart + ".csv",
+        ...this.dataParams
+      }
+      var url = api.lpiDownloadURL(params)
       window.open(url)
     },
     downloadTrend: function(evt) {
-      var a = document.createElement('a');
-      a.href = this.downloadTrendURL;
-      a.download = "tsx-trend-" + this.filterFilenamePart + ".txt"
-      a.click();
+      api.trend({ format: 'raw', ...this.dataParams}).then((data) => {
+        saveTextFile(data, 'text/plain', "tsx-trend-" + this.filterFilenamePart + ".txt")
+      })
+
       if(evt.shiftKey) {
-        this.downloadPlotData();
+        this.downloadPlotData()
       }
     },
     downloadPlotData: function() {
@@ -953,11 +676,10 @@ export default {
         // download(csv([["Lat", "Lon", "NumberOfSurveys"]].concat(json.map(x => [x[0], x[1], x[2][0][1]]))), prefix + "-intensity.csv")
       }
 
-      save(this.filterFilenamePart, this.getFilterParams())
+      save(this.filterFilenamePart, this.dataParams)
     },
     viewDataSummary: function() {
-      var filterParams = this.getFilterParams()
-      var url = api.lpiSummaryURL(filterParams)
+      var url = api.summaryURL(this.dataParams)
       window.open(url)
     },
     acceptWarning: function() {
@@ -966,60 +688,6 @@ export default {
     },
     goBack: function() {
       window.history.back()
-    },
-    getFilterParams: function() {
-      var filterParams = {}
-      filterParams['reference_year'] = this.selectedYear.value
-
-      function addParam(key, selectedItem) {
-        if(selectedItem.value !== 'None') {
-          filterParams[key] = selectedItem.value
-        }
-      }
-
-      if(this.prioritySelected) {
-        filterParams['priority'] = '1'
-        addParam('management', this.selectedManagement)
-      } else {
-        addParam('tgroup', this.selectedIndex)
-        addParam('group', this.selectedGroup)
-        addParam('subgroup', this.selectedSubgroup)
-        addParam('state', this.selectedState)
-        addParam('statusauth', this.selectedStatusAuthority)
-        addParam('status', this.selectedStatus)
-        if(this.selectedIndex.value === 'Mammals' || this.selectedIndex.value === 'Plants') {
-          addParam('management', this.selectedManagement)
-        }
-      }
-
-      return filterParams
-    },
-    getFilterString: function() {
-      var components
-
-      if(this.prioritySelected) {
-        components = [
-          ['management', this.selectedManagement],
-          ['priority', {value: 1}]
-        ]
-      } else {
-        components = [
-          ['tgroup', this.selectedIndex],
-          ['group', this.selectedGroup],
-          ['subgroup', this.selectedSubgroup],
-          ['state', this.selectedState],
-          ['statusauth', this.selectedStatusAuthority],
-          ['status', this.selectedStatus],
-          ['management', this.selectedIndex.value === 'Mammals' || this.selectedIndex.value === 'Plants' ? this.selectedManagement : noneOption]
-        ]
-      }
-
-      return components.map(function(pair) {
-        var key = pair[0]
-        var value = pair[1].value
-
-        return value === 'None' ? '' : key + '-' + value + '_'
-      }).join('')
     },
     // refresh summary plot
     refreshSummaryPlot: function() {
@@ -1047,9 +715,6 @@ export default {
           scales: {
             year: {
               position: 'bottom',
-              // gridLines: {
-              //   zeroLineColor: 'rgba(0,0,0,1)'
-              // },
               ticks: {
                 callback: (label, index, labels) => '' + label
               }
@@ -1062,12 +727,11 @@ export default {
                 display: true,
                 text: 'Number of taxa'
               },
-              // ticks: {
-              //   // precision: 1 // Doesn't seem to work (contrary to documentation) so we use callback as a workaround
-              //   callback: function(label, index, labels) {
-              //     return Math.floor(label) === label ? label : ''
-              //   }
-              // }
+              ticks: {
+                callback: function(label, index, labels) {
+                  return Number.isInteger(label) ? label : ''
+                }
+              }
             },
             numTimeSeries: {
               type: 'linear',
@@ -1080,12 +744,11 @@ export default {
               grid: {
                 display: false
               },
-              // ticks: {
-              //   // See comment for other axis
-              //   callback: function(label, index, labels) {
-              //     return Math.floor(label) === label ? label : ''
-              //   }
-              // }
+              ticks: {
+                callback: function(label, index, labels) {
+                  return Number.isInteger(label) ? label : ''
+                }
+              }
             }
           }
         }

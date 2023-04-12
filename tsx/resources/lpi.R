@@ -1,6 +1,6 @@
 library(rlpi)
 
-## Usage: lpi.R input_file work_dir
+## Usage: lpi.R input_file work_dir [refYear] [plotMax]
 
 args <- commandArgs(TRUE)
 
@@ -14,12 +14,15 @@ data <- read.csv(inputFile, na.strings = "", quote = "\"",sep = ",")
 yearCols <- grep("X[0-9]+", colnames(data), value=TRUE)
 years <- strtoi(substr(yearCols, 2, 5))
 
+refYear <- ifelse(is.na(args[3]), min(years), strtoi(args[3]))
+plotMax <- ifelse(is.na(args[4]), max(years), strtoi(args[4]))
+
 infile_name <- create_infile(data, name='data', start_col_name=min(yearCols), end_col_name=max(yearCols))
 
 nesp_lpi<-LPIMain(
   infile_name,
-  REF_YEAR=min(years),
-  PLOT_MAX=max(years),
+  REF_YEAR=refYear,
+  PLOT_MAX=plotMax,
   BOOT_STRAP_SIZE=1000,
   VERBOSE=TRUE,
   goParallel=FALSE,

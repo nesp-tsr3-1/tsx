@@ -22,7 +22,7 @@ mysql-connector-python==8.0.29
 numpy==1.23.2
 openpyxl==3.0.7
 packaging==21.0
-pandas==1.4.4
+pandas==1.5.3
 passlib==1.7.4
 protobuf==3.17.3
 pycparser==2.20

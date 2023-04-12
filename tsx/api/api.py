@@ -8,13 +8,14 @@ from flask_session import Session
 import os.path
 
 import tsx.api.upload
-import tsx.api.lpi_data
+import tsx.api.lpi_data # legacy
 import tsx.api.data_import
 import tsx.api.misc
 import tsx.api.user
 import tsx.api.program_manager
 import tsx.api.subset
 import tsx.api.program
+import tsx.api.results
 
 import datetime
 
@@ -35,14 +36,14 @@ Session(app)
 setup_db(app)
 
 app.register_blueprint(tsx.api.upload.bp)
-app.register_blueprint(tsx.api.lpi_data.bp)
+app.register_blueprint(tsx.api.lpi_data.bp) # legacy
 app.register_blueprint(tsx.api.data_import.bp)
 app.register_blueprint(tsx.api.misc.bp)
 app.register_blueprint(tsx.api.user.bp)
 app.register_blueprint(tsx.api.program_manager.bp)
 app.register_blueprint(tsx.api.subset.bp)
 app.register_blueprint(tsx.api.program.bp)
-
+app.register_blueprint(tsx.api.results.bp)
 
 class DateTimeEncoder(json.JSONEncoder):
 	def default(self, obj):

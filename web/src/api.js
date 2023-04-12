@@ -135,25 +135,33 @@ export function updateProgramsManagedBy(user_id, program_ids) {
   return put('/users/' + user_id + '/programs', program_ids)
 }
 
-export function lpidata(params) {
-  return get('/lpi-data', params)
+// -- visualisation urls
+
+export function spatialIntensity(params) {
+  return get('/results/spatial', params)
 }
 
-export function lpiDownloadURL(params) {
-  return ROOT_URL + '/lpi-data?' + util.encodeParams(params)
+export function diagnosticPlots(params) {
+  return get('/results/plots', params)
 }
 
-export function lpiSummaryURL(params) {
-  return ROOT_URL + '/lpi-data/stats.html?' + util.encodeParams(params)
+export function visualisationParameters(params) {
+  return get('/results/params', params)
 }
 
-export function lpiPlot(params) {
-  return get('/lpi-data/plot', params)
+export function trend(params) {
+  return get('/results/trends', params)
 }
 
-export function intensityPlot(params) {
-  return get('/lpi-data/intensity', params)
+export function trendURL(params) {
+  return ROOT_URL + '/results/trends?format=raw&' + util.encodeParams(params)
 }
+
+export function summaryURL(params) {
+  return ROOT_URL + '/results/stats.html?' + util.encodeParams(params)
+}
+
+// -- end visualisation urls
 
 export function createUser(user) {
   return post('/users', user)

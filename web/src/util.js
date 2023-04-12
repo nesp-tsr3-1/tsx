@@ -282,3 +282,26 @@ export function generateSpeciesCSV(species) {
 
   return csv
 }
+
+export function deepClone(a) {
+  if(typeof a != "object" || a === null) {
+    return a
+  } else if(Array.isArray(a)) {
+    return a.map(x => deepClone(x))
+  } else {
+    return Object.fromEntries(Object.entries(a).map(e => [e[0], deepClone(e[1])]))
+  }
+}
+
+export function deepEquals(a, b) {
+  if(Object.is(a, b)) {
+    return true
+  } else if(Array.isArray(a) && Array.isArray(b)) {
+    return a.length === b.length && a.every((ai, i) => deepEquals(ai, b[i]))
+  } else if(typeof a === "object" && typeof b === "object") {
+    let ak = Object.keys(a), bk = Object.keys(b)
+    return ak.length === bk.length && ak.every(k => deepEquals(a[k], b[k]))
+  } else {
+    return false;
+  }
+}
