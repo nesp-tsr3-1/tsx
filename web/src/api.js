@@ -1,12 +1,6 @@
 import * as util from './util'
 import _ from 'underscore'
 
-// const LPI_RUNS_URL = 'https://tsx.org.au/lpi_runs'
-// export const ROOT_URL = 'https://tsx.org.au/tsxapi'
-
-const LPI_RUNS_URL = 'http://localhost:3000/static/lpi_runs'
-export const ROOT_URL = 'http://localhost:5000'
-
 export function isLoggedIn() {
   return get('/is_logged_in')
 }
@@ -248,35 +242,6 @@ export function requestPasswordReset(email) {
 
 export function resetPassword(code, password) {
   return post('/reset_password', { code, password })
-}
-
-// TODO: if files are in object stores, update this
-export function lpiRunData(filterString, year) {
-  if(_.isEmpty(filterString)) {
-    filterString = 'statusauth-Max_'
-  }
-
-  // URI Encode everything except spaces and pluses because that's how the files are named on the server
-  // filterString = filterString.split(' ').map(encodeURIComponent).join(' ')
-
-  var url = encodeURI(LPI_RUNS_URL + '/' + filterString + '/nesp_' + year + '_infile_Results.txt')
-
-  console.log(url)
-
-  var xhr = new XMLHttpRequest()
-  xhr.open('GET', url)
-
-  // Used for debugging (e.g. in exceptions)
-  xhr._meta = {
-    url: url,
-    method: 'GET'
-  }
-  xhr.responseType = ''
-  xhr.withCredentials = true
-
-  return xhrPromise(xhr).then(function(xhr) {
-    return xhr.responseText
-  })
 }
 
 export function region() {
