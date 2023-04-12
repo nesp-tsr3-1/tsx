@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Usage: run.sh | parallel
+
 ## Note: the 'GROUPING' parameter below is generated using the following SQL query:
 ##
 ## SET SESSION group_concat_max_len = 4096;
@@ -19,21 +21,21 @@
 ## ) t
 ##
 
-GROUPING=("Birds:Terrestrial:All" "Birds:Wetland:All" "Birds:Marine:Tropicbirds Frigatebirds Gannets Boobies" "Birds:Wetland:Gulls Terns Noddies Skuas Jaegers" "Birds:Marine:Gulls Terns Noddies Skuas Jaegers" "Birds:Shoreline (migratory):All" "Birds:Shoreline (resident):All" "Birds:Terrestrial:Rainforest" "Birds:Marine:Penguins" "Birds:Terrestrial:Tropical savanna woodland" "Birds:Terrestrial:Island endemic" "Birds:Marine:Petrels and Shearwaters" "Birds:Terrestrial:Grassland" "Birds:Marine:All" "Birds:Marine:Albatrosses and Giant-Petrels" "Mammals:<50g:All" "Mammals:Terrestrial:Volant" "Mammals:Terrestrial:All" "Mammals:50-5000g:All" "Mammals:>5000g:All" "Mammals:Marine:All" "Mammals:Terrestrial:Arboreal" "Plants:Terrestrial:All" "Plants:Shrub:All" "Plants:Herbaceous:All" "Plants:Orchid:All" "Plants:Tree:All" "Plants:Grass:All" "Birds:Terrestrial:Dry sclerophyll woodland/forest" "Birds:Terrestrial:Arid Woodland/ shrubland" "Birds:Terrestrial:Parrots Lorikeets Rosellas Cockatoos Corellas" "Birds:Terrestrial:Heathland" "Birds:Terrestrial:Mallee woodland" "Birds:All:All" "Mammals:All:All" "Plants:All:All" "All:All:All" "All:Marine:All" "All:Terrestrial:All")
+GROUPING=("Birds:Shoreline (migratory):All" "Birds:Marine:Petrels and Shearwaters" "Mammals:50-5000g:All" "Mammals:Terrestrial:All" "Mammals:>5000g:All" "Mammals:Marine:All" "Mammals:Terrestrial:Arboreal" "Mammals:<50g:All" "Mammals:Terrestrial:Volant" "Plants:Shrub:All" "Plants:Herbaceous:All" "Plants:Orchid:All" "Plants:Tree/Shrub:All" "Plants:Tree:All" "Plants:Grass:All" "Birds:Marine:Tropicbirds Frigatebirds Gannets Boobies" "Birds:Marine:Gulls Terns Noddies Skuas Jaegers" "Birds:Wetland:All" "Birds:Terrestrial:Grassland" "Birds:Terrestrial:Island endemic" "Birds:Terrestrial:All" "Birds:Terrestrial:Rainforest" "Birds:Terrestrial:Dry sclerophyll woodland/forest" "Birds:Terrestrial:Tropical savanna woodland" "Birds:Terrestrial:Heathland" "Birds:Terrestrial:Mallee woodland" "Birds:Marine:Albatrosses and Giant-Petrels" "Birds:Marine:All" "Birds:All:All" "Mammals:All:All" "Plants:All:All" "All:All:All" "All:Marine:All" "All:Terrestrial:All")
 
 STATE=("All" "Australian Capital Territory" "Commonwealth" "Queensland" "New South Wales" "Northern Territory" "South Australia" "Western Australia" "Tasmania" "Victoria" "Australian Capital Territory+New South Wales")
 
-STATUSAUTH=("Max" "EPBC" "IUCN")
+STATUSAUTH=("Max" "EPBC" "IUCN" "BirdActionPlan")
 
 STATUS=("Vulnerable+Endangered+Critically Endangered" "Near Threatened+Vulnerable+Endangered+Critically Endangered" "Near Threatened")
 
-MANAGEMENT=("All sites" "Any management" "Predator-free" "Translocation" "No management")
+MANAGEMENT=("All sites" "Actively managed" "No known management")
 
 export OUTPUT_DIR=output-$(date +%Y-%m-%d)
 export INPUT="$(pwd)/lpi-filtered.csv"
 export LPI_SCRIPT=lpi_run1.R
 export START_YEAR=1950
-export END_YEAR=2017
+export END_YEAR=2019
 
 mkdir -p "$OUTPUT_DIR"
 

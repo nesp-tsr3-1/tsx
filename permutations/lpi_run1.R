@@ -58,10 +58,10 @@ management <- NULL
 nationalpriority <- FALSE
 bootstrap <- 1000
 referenceyear <- 1970
-plotmax <- 2015
+plotmax <- 2019
 output <- "output"
 startyear <- "X1950"
-endyear <- "X2015"
+endyear <- "X2019"
 ## using numbers or not
 ## lpi
 if(!is.null(inputArg)){
@@ -212,21 +212,23 @@ uniqueTaxonIDs <- unique(taxonlist)
 write (paste("\nTaxonIDs:", uniqueTaxonIDs), file="runoutput.txt", append=TRUE)
 if ( length(uniqueTaxonIDs) < 3 ) {
   print ("The number of taxa is less than 3. Quit!!!!")
+  system(paste(original_wd, "/clean.sh \"", getwd(), "\"", sep=""))
   q(save="no")
 }
 
+start <- strtoi(substring(startyear, 2))
+end <- strtoi(substring(endyear, 2))
+
 ref_years <- c(referenceyear, referenceyear+5, referenceyear+10, referenceyear+15)
 for (year in ref_years){
-  #### check whether it has enough 3 taxa
-  dataThisYear <- data[!is.na(data[paste("X", year, sep="")]),]
-  if ( length(unique(as.vector(dataThisYear[['TaxonID']] ) )) < 3 ) {
+  # Check which time series have observations on or before reference year AND on or after reference year
+  yearsBefore <- paste('X', start:year, sep="")
+  yearsAfter <- paste('X', year:end, sep="")
+  taxa = unique(data[!apply(is.na(data[yearsBefore]), 1, all) & !apply(is.na(data[yearsAfter]), 1, all), 'TaxonID'])
+  if(length(taxa) < 3) {
     print(paste0("Skipping year due to insufficient data: ", year))
     next
   }
-
-  # or should it be.. (no, it shouldn't, I checked with Elisa)
-  # yearRange <- paste('X', year:plotmax, sep="")
-  # if(length(unique(data[!apply(is.na(data[yearRange]), 1, all), 'TaxonID'])) < 3) { next }
 
   yfname <- paste("nesp", year, sep="_")
   ytitle <- paste("lpi", year, sep="_")
