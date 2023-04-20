@@ -639,13 +639,12 @@ export default {
         })
 
         let coordinates = data.map(([lng,lat,count]) => L.latLng(lat, lng))
-        console.log(coordinates)
-        console.log(L.latLngBounds(coordinates))
         if(coordinates.length > 0) {
-          this.map.fitBounds(L.latLngBounds(coordinates), { padding: L.point(10, 10) })
+          setTimeout(() => {
+            this.map.invalidateSize()
+            this.map.fitBounds(L.latLngBounds(coordinates), { padding: L.point(10, 10) })
+          }, 200)
         }
-
-        this.map.invalidateSize()
       }).finally(() => {
         this.loadingMap = false
       })
