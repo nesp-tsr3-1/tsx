@@ -130,22 +130,31 @@ def iterate_tasks(df, work_path, script_path):
         if len(df) == 0:
             continue
 
-        # Minimum number of taxa that must be present in the reference year to generate a trend
-        min_taxa = 1 if 'TaxonID' in perm else 3
-
-        for year in reference_years:
-            perm = dict(perm)
-            perm['ReferenceYear'] = year
-
-            if df[(df['MinYear'] <= year) & (df['MaxYear'] >= year)]['TaxonID'].nunique() < min_taxa:
-                yield perm, None, None
-                continue
-
+        if 'TaxonID' in perm:
             path = os.path.join(work_path, permutation_dir(perm))
             os.makedirs(path, exist_ok=True)
-            df.to_csv(os.path.join(path, 'input.csv'))
 
+            min_year = str(df['MinYear'].min())
+            max_year = str(df['MaxYear'].max())
+            drop_cols = [col for col in list(df.columns) if col.isnumeric() and (col < min_year or col > max_year)]
+            df = df.drop(columns = drop_cols)
+
+            df.to_csv(os.path.join(path, 'input.csv'))
             yield perm, path, script_path
+        else:
+            for year in reference_years:
+                perm = dict(perm)
+                perm['ReferenceYear'] = year
+
+                if df[(df['MinYear'] <= year) & (df['MaxYear'] >= year)]['TaxonID'].nunique() < 3:
+                    yield perm, None, None
+                    continue
+
+                path = os.path.join(work_path, permutation_dir(perm))
+                os.makedirs(path, exist_ok=True)
+                df.to_csv(os.path.join(path, 'input.csv'))
+
+                yield perm, path, script_path
 
 def run_task(perm, work_path, script_path):
     if work_path is None:
@@ -155,7 +164,10 @@ def run_task(perm, work_path, script_path):
     if not os.path.exists(result_file):
         with open(os.path.join(work_path, "stdout.txt"), "wb") as stdout:
             with open(os.path.join(work_path, "stderr.txt"), "wb") as stderr:
-                subprocess.run(["Rscript", script_path, os.path.join(work_path, "input.csv"), work_path, str(perm['ReferenceYear']), str(end_year)], stdout=stdout, stderr=stderr)
+                if 'ReferenceYear' in perm:
+                    subprocess.run(["Rscript", script_path, os.path.join(work_path, "input.csv"), work_path, str(perm['ReferenceYear']), str(end_year)], stdout=stdout, stderr=stderr)
+                else:
+                    subprocess.run(["Rscript", script_path, os.path.join(work_path, "input.csv"), work_path], stdout=stdout, stderr=stderr)
     with open(result_file) as f:
         trend_data = f.read()
     # Clean up extraneous files

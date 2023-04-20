@@ -101,7 +101,7 @@ def stream_and_delete(path):
 			if not data:
 				break
 			yield data
-	os.remove(zip_filename)
+	os.remove(path)
 
 @bp.route('/plots', methods = ['GET'])
 def plot():
@@ -176,12 +176,16 @@ def get_summary_data(filtered_data):
 	# Discard years with no data
 	year_df = year_df.loc[:, year_df.any()]
 
-	return {
-		# Get number of time series per year
-		'timeseries': year_df.sum().to_dict(),
-		# Get number of unique taxa per year
-		'taxa': year_df.groupby(df['TaxonID']).any().sum().to_dict()
+	query_type = request.args.get('type', default='all', type=str)
+
+	result = {
+		'timeseries': year_df.sum().to_dict()
 	}
+
+	if query_type != 'individual':
+		result['taxa'] = year_df.groupby(df['TaxonID']).any().sum().to_dict()
+
+	return result
 
 def suppress_aggregated_data(df):
 	df = df.copy()
@@ -210,7 +214,8 @@ def get_taxon_data():
 
 def get_trend_data():
 	df = read_data(get_database_filename(), table='trend', index_col=None)
-	df['ReferenceYear'] = df['ReferenceYear'].astype(str)
+	if df['ReferenceYear'].dtype != object:
+		df['ReferenceYear'] = df['ReferenceYear'].apply(lambda x: '' if np.isnan(x) else str(int(x)))
 	df['has_trend'] = df['TrendData'].notna()
 	return df
 
@@ -305,6 +310,7 @@ def unabbreviate_status(status):
 		'CR': 'Critically Endangered'
 	}.get(status, status)
 
+
 @bp.route('/stats.html', methods = ['GET'])
 def stats_html():
 	# Filter data
@@ -315,7 +321,9 @@ def stats_html():
 
 	stats = get_stats(df)
 
-	html = u"""
+	query_type = request.args.get('type', default='all', type=str)
+
+	template = u"""
 	<html>
 		<head>
 		</head>
@@ -325,13 +333,25 @@ def stats_html():
 			</p>
 			<p>
 				Number of samples (years) per time series (mean ± SD): {ts_years_mean:.1f} ± {ts_years_stddev:.1f}
-			</p>
+			</p>"""
+
+	if query_type != "individual":
+		template += u"""
 			<p>
 				Number of data sources in Index: {num_sources}
 			</p>
 			<p>
 				Number of taxa in Index: {num_taxa}
 			</p>
+		"""
+	else:
+		template += u"""
+			<p>
+				Number of data sources: {num_sources}
+			</p>
+		"""
+
+	template += u"""
 			<table>
 				<thead>
 					<tr>
@@ -347,7 +367,9 @@ def stats_html():
 					</tr>
 				</thead>
 				<tbody>
-	""".format(**stats)
+	"""
+
+	html = template.format(**stats)
 
 	for row in stats['taxa']:
 		html += """
@@ -400,6 +422,9 @@ def get_stats(filtered_data):
 	})
 
 	taxa = get_filtered_taxa()
+
+	if 'taxon' in request.args:
+		taxa = taxa[taxa.index == request.args.get('taxon', type=str)]
 
 	taxa = taxa.join(grouped_by_taxon, how='outer')
 	taxa['no_data'] = taxa['num_ts'].isna()
@@ -457,6 +482,8 @@ def get_options_cached(name, params):
 		df['included'] = True
 		df['has_trend'] = True
 
+	df = df[df['included'] & df['has_trend']]
+
 	options = [{
 		'label': option_label(row[name], name, row['included'], row['has_trend']),
 		'value': row[name],
@@ -469,6 +496,8 @@ def get_options_cached(name, params):
 	return options
 
 def get_parameter_values():
+	# Note: ReferenceYear is not included here because it is treated specially
+
 	query_type = request.args.get('type', default='all', type=str)
 
 	if query_type == 'all':
@@ -551,7 +580,7 @@ def get_taxon_options(param_values):
 	return [default_option] + sorted(options, key=lambda x: x['label'])
 
 def get_taxon_option(taxon_id, common_name, scientific_name, has_trend):
-	if common_name:
+	if common_name and pd.notna(common_name):
 		label = "%s (%s)" % (common_name, scientific_name)
 	else:
 		label = scientific_name
@@ -569,14 +598,15 @@ def get_parameters():
 	df = get_trend_data()
 	param_values = get_parameter_values()
 
-	# Special logic for reference year: try to maintain current reference year, but if there is no trend for that year, switch to the earliest year that has a trend (if any)
-	reference_year = request.args.get('refyear', default='1985', type=str)
-	reference_year_options = get_options('ReferenceYear', param_values)
-	ok_reference_years = [opt['value'] for opt in reference_year_options if not opt['disabled']]
-	if reference_year not in ok_reference_years and len(ok_reference_years) > 0:
-		reference_year = ok_reference_years[0]
-
 	query_type = request.args.get('type', default='all', type=str)
+
+	if query_type in ['all', 'priority']:
+		# Special logic for reference year: try to maintain current reference year, but if there is no trend for that year, switch to the earliest year that has a trend (if any)
+		reference_year = request.args.get('refyear', default='1985', type=str)
+		reference_year_options = get_options('ReferenceYear', param_values)
+		ok_reference_years = [opt['value'] for opt in reference_year_options if not opt['disabled']]
+		if reference_year not in ok_reference_years and len(ok_reference_years) > 0:
+			reference_year = ok_reference_years[0]
 
 	results = {}
 
@@ -666,6 +696,17 @@ def get_parameters():
 		tgroup = request.args.get('tgroup', type=str, default='All')
 		group = request.args.get('group', type=str, default='All')
 
+		taxon_id = param_values['TaxonID']
+		taxon_options = get_taxon_options(param_values)
+		group_options = get_options('FunctionalGroup', {
+					'TaxonomicGroup': tgroup, 'TaxonID': None })
+
+		if taxon_id and taxon_id not in [option['value'] for option in taxon_options]:
+			taxon_id = None
+
+		if group and group not in [option['value'] for option in group_options]:
+			group = 'All'
+
 		params += [
 			dict(name='tgroup',
 				label='Index',
@@ -675,19 +716,13 @@ def get_parameters():
 			dict(name='group',
 				label='Group',
 				type='select',
-				options=get_options('FunctionalGroup', {
-					'TaxonomicGroup': tgroup, 'TaxonID': None }),
+				options=group_options,
 				value = group),
 			dict(name='taxon',
 				label='Available Species',
 				type='select',
-				options=get_taxon_options(param_values),
-				value=param_values['TaxonID']),
-			dict(name='refyear',
-				label='Reference year',
-				type='button-radio',
-				options=reference_year_options,
-				value=reference_year)
+				options=taxon_options,
+				value=taxon_id)
 		]
 	else:
 		return jsonify('Invalid type (must be one of: all, priority, individual)'), 400
@@ -719,14 +754,13 @@ def parse_trend(trend):
 
 @bp.route('/trends', methods = ['GET'])
 def get_trend():
-	param_values = get_parameter_values()
-	param_values['ReferenceYear'] = request.args.get('refyear', default='1985', type=str)
-
 	if request.args.get('type', default='all', type=str) == 'individual':
 		param_values = {
-			'TaxonID': param_values['TaxonID'],
-			'ReferenceYear': param_values['ReferenceYear']
+			'TaxonID': request.args.get("taxon", type=str, default=None)
 		}
+	else:
+		param_values = get_parameter_values()
+		param_values['ReferenceYear'] = request.args.get('refyear', default='1985', type=str)
 
 	df = get_filtered_trends(param_values)
 

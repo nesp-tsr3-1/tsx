@@ -1,8 +1,10 @@
 <template>
+  <div :class="classes">
     <SelectField v-if="fieldType == 'select'" :field="field" v-model:value='fieldValue'></SelectField>
     <RadioField v-else-if="fieldType == 'radio'" :field="field" v-model:value='fieldValue'></RadioField>
     <ButtonRadioField v-else-if="fieldType == 'button-radio'" :field="field" v-model:value='fieldValue'></ButtonRadioField>
     <div v-else>(Unknown field type)</div>
+  </div>
 </template>
 
 <script>
@@ -34,6 +36,9 @@ export default {
       } else {
         return null
       }
+    },
+    classes() {
+      return "field-named-" + this.field.name
     },
     fieldValue: {
       get() {

@@ -159,6 +159,10 @@ export function summaryURL(params) {
   return ROOT_URL + '/results/stats.html?' + util.encodeParams(params)
 }
 
+export function timeSeriesURL(params) {
+  return ROOT_URL + '/results/time_series?' + util.encodeParams(params)
+}
+
 // -- end visualisation urls
 
 export function createUser(user) {

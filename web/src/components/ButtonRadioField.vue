@@ -1,7 +1,7 @@
 <template>
   <!-- <div class="field">
     <label class="label">{{field.label}}</label> -->
-    <div class="buttons has-addons inline">
+    <div class="buttons has-addons inline" style="flex-wrap: nowrap;">
       <button v-for="option in field.options"
         class="button is-small"
         :class="buttonClasses(option)"

@@ -22,7 +22,7 @@ infile_name <- create_infile(data, name='data', start_col_name=min(yearCols), en
 nesp_lpi<-LPIMain(
   infile_name,
   REF_YEAR=refYear,
-  PLOT_MAX=plotMax,
+  PLOT_MAX=plotMax - 1, # Note: this is because rlpi adds an extra year for some reason
   BOOT_STRAP_SIZE=1000,
   VERBOSE=TRUE,
   goParallel=FALSE,

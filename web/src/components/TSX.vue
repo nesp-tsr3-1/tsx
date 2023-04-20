@@ -6,15 +6,54 @@
     <div class="tile is-ancestor">
       <div class="tile is-2 is-parent">
         <div class="tile is-child">
-          <div style="margin-bottom: 2em">
-            <div class="field" v-for="field in sidebarFields">
-              <Field v-if="!field.disabled" :field="field" v-model:value="fieldValues[field.name]"></Field>
-            </div>
+          <div class="field">
+            <Field v-if="queryTypeField" :field="queryTypeField" v-model:value="fieldValues.type"></Field>
           </div>
-<!--           <p>
-            <button class='button is-primary is-small' @click='reset'>Reset</button>
-          </p> -->
+          <hr>
+          <div style="display: flex; justify-content: space-between;">
+            <h4 class="is-title has-text-white">Filters</h4>
+            <!-- <tippy class="info-icon icon" arrow interactive placement="right">
+              <template #default><i class="far fa-question-circle"></i></template>
+              <template #content>
+                <div class="popup-content">
+                  <p>Filter the available data using the menus below.</p>
+                  <p>Only selections with enough data are shown</p>
+                </div>
+              </template>
+            </tippy> -->
+            <button class='button is-primary is-small' @click='reset' style="position: relative; top: -0.3em;">Reset</button>
+          </div>
+          <p class="is-size-7">Only selections with enough data are shown.</p>
+
+          <div style="margin-bottom: 1em">
+            <template v-for="field in sidebarFields">
+              <Field v-if="!field.disabled" :field="field" v-model:value="fieldValues[field.name]" style="margin-bottom: 0.8em;"></Field>
+            </template>
+          </div>
+
+          <p class="is-size-7" v-if="fieldValues && fieldValues.type == 'individual'">Note: The LPI method was not designed for single-species trends. These trends are likely to be subject to considerable noise.</p>
+          <hr>
+
           <p>
+            <div class="dropdown is-hoverable">
+              <div class="dropdown-trigger">
+                <button class="button is-primary is-small" aria-haspopup="true" area-controls="dropdown-menu">
+                  <span>Download</span>
+                  <span class="icon is-small">
+                    <i class="fas fa-angle-down" aria-hidden="true"></i>
+                  </span>
+                </button>
+              </div>
+              <div class="dropdown-menu">
+                <div class="dropdown-content">
+                  <div class="dropdown-item is-clickable hover-highlight" @click='downloadCSV'>Time series (CSV)</div>
+                  <div class="dropdown-item is-clickable hover-highlight" @click='downloadTrend'>Trend (Text)</div>
+                  <div class="dropdown-item is-clickable hover-highlight" @click='viewDataSummary'>Data summary</div>
+                </div>
+              </div>
+            </div>
+          </p>
+          <!-- <p>
             <button class='button is-primary is-small' @click='downloadCSV'>Download CSV</button>
           </p>
           <p>
@@ -22,7 +61,7 @@
           </p>
           <p>
             <button class='button is-primary is-small' @click='viewDataSummary'>Data Summary</button>
-          </p>
+          </p> -->
         </div>
       </div>
 
@@ -35,13 +74,31 @@
         </div>
       </div>
 
-      <div class="tile is-vertical ie11-bugfix" v-show="!noData">
-        <div class="tile">
+      <div class="tile is-vertical" v-show="!noData">
+        <div class="tile is-block-tablet is-flex-widescreen">
           <div class="tile is-parent is-vertical" v-show="!showFullMap">
             <div class="tile is-child card">
-              <div style="display: flex; flex-wrap: nowrap; gap: 1em;">
-                <h4 class="has-text-black">Main index</h4>
-                <Field :field="referenceYearField" v-if="fieldValues" v-model:value="fieldValues.refyear" style="position: relative; top: -0.5em;"></Field>
+              <div style="
+                display: flex;
+                flex-wrap: nowrap;
+                gap: 1em;
+                justify-content: space-between;
+                margin-right: 2.5em;
+                align-items: center;
+                margin-bottom: 0.8em;
+                "><h4 class="has-text-black" style="
+                  white-space:nowrap;
+                  margin-bottom: 0;
+                  ">Main index</h4>
+                <div v-if="referenceYearField" style="
+                  display: flex;
+                  flex-wrap: nowrap;
+                  gap: 0.5em;
+                  align-items: center;">
+                  <div class="is-content refyear-label" style="font-size: 0.8rem">Reference year</div>
+                  <Field :field="referenceYearField" v-model:value="fieldValues.refyear"></Field>
+
+                </div>
               </div>
               <tippy class="info-icon icon" arrow interactive placement="left">
                 <template #default><i class="far fa-question-circle"></i></template>
@@ -225,12 +282,10 @@ export default {
     return data
   },
   created () {
-    // this.updateFields()
   },
   mounted () {
     Chart.defaults.font.size = 14
     this.createMonitoringConsistencyPlot()
-    this.createSummaryPlot()
     this.createMainIndexPlot()
 
     // -------intensity plot ----------------
@@ -307,10 +362,13 @@ export default {
   },
   computed: {
     sidebarFields() {
-      return this.fields.filter(f => f.name != 'refyear')
+      return this.fields.filter(f => f.name != 'refyear' && f.name != 'type')
+    },
+    queryTypeField() {
+      return this.fields.find(f => f.name == 'type')
     },
     referenceYearField() {
-      return this.fields.filter(f => f.name == 'refyear')[0]
+      return this.fields.find(f => f.name == 'refyear')
     },
     filterQueryString() {
       var params = this.latestFieldValuesFromServer()
@@ -329,9 +387,9 @@ export default {
     }
   },
   methods: {
-    // reset() {
-    //   this.fieldValues = { type: this.fieldValues.type }
-    // },
+    reset() {
+      this.fieldValues = { type: this.fieldValues.type }
+    },
     noDataMessage() {
       if(this.fieldValues && this.fieldValues.type == 'individual') {
         return "(Please select a species)"
@@ -340,9 +398,19 @@ export default {
       }
     },
     updateFields() {
-      let params = {
+      let params
+
+      // Special logic to reset fields when type changes
+      let lastType = this.latestFieldValuesFromServer().type
+      if(lastType && lastType != this.fieldValues.type) {
+        params = { type: this.fieldValues.type }
+      } else {
+        params = this.fieldValues
+      }
+
+      params = {
         dataset: dataset,
-        ...this.fieldValues
+        ...params
       }
 
       api.visualisationParameters(params).then(result => {
@@ -422,12 +490,12 @@ export default {
               grid: {
                 display: true
               },
-              ticks: {
-                callback: function(label, index, labels) {
-                  // Force labels to always show one decimal place
-                  return (+label).toFixed(1)
-                }
-              }
+              // ticks: {
+                // callback: function(label, index, labels) {
+                //   // Force labels to always show one decimal place
+                //   return (+label).toFixed(1)
+                // }
+              // }
             }
           }
         }
@@ -510,72 +578,30 @@ export default {
               title: {
                 display: true,
                 text: 'Sites (time series)'
+              },
+              ticks: {
+                callback: function(label, index, labels) {
+                  return Number.isInteger(label) ? label.toString() : ''
+                }
               }
             },
             xAxis: {
               type: 'linear',
               ticks: {
-                callback: (label, index, labels) => '' + label
+                callback: function(label, index, labels) {
+                  return Number.isInteger(label) ? label.toString() : ''
+                }
               }
             }
           }
         }
       })
     },
-    createSummaryPlot() {
-      this.summaryPlotData = {
-        datasets: [{
-          label: 'Number of taxa',
-          xAxisID: 'year',
-          yAxisID: 'numTaxa',
-          borderColor: '#58899e',
-          backgroundColor: '#58899e',
-          data: []
-        }, {
-          label: 'Number of time series',
-          xAxisID: 'year',
-          yAxisID: 'numTimeSeries',
-          borderColor: '#a3c489',
-          backgroundColor: '#a3c489',
-          data: []
-        }]
-      }
-    },
     updateMonitoringConsistencyAndSummaryPlot(params) {
-      this.monitoringConsistencyPlot.data.datasets.forEach(x => x.data = [])
-      this.summaryPlotData.datasets.forEach(x => x.data = [])
-
       return api.diagnosticPlots(params).then((data) => {
-          this.noData = data['dotplot'].length === 0
-
-          var dotPlotData = data['dotplot']
-          var plotData = this.monitoringConsistencyPlot.data
-
-          dotPlotData.forEach(function(timeSeries, i) {
-            timeSeries.forEach(function(value) {
-              var year = value[0]
-              var count = value[1]
-              plotData.datasets[count === 0 ? 1 : 0].data.push({
-                x: year,
-                y: i + 1,
-                r: 1
-              })
-            })
-          })
-
-          // summary plot
-          var taxaCountData = data['summary']['taxa']
-          var timeSeriesCountData = data['summary']['timeseries']
-          var year = 0
-          for (year in taxaCountData) {
-            this.summaryPlotData.datasets[0].data.push({'x': +year, 'y': +taxaCountData[year]})
-          }
-          for (year in timeSeriesCountData) {
-            this.summaryPlotData.datasets[1].data.push({'x': +year, 'y': +timeSeriesCountData[year]})
-          }
-
-          this.monitoringConsistencyPlot.update()
-          this.refreshSummaryPlot() // note: this.summaryPlot.update() will cause exception as the axis might be change
+          this.noData = data.dotplot.length === 0
+          this.refreshMonitoringConsistencyPlot(data.dotplot)
+          this.refreshSummaryPlot(data.summary)
         })
     },
     updatePlots(params) {
@@ -611,6 +637,14 @@ export default {
           max: max(counts) / 20,
           data: surveyData
         })
+
+        let coordinates = data.map(([lng,lat,count]) => L.latLng(lat, lng))
+        console.log(coordinates)
+        console.log(L.latLngBounds(coordinates))
+        if(coordinates.length > 0) {
+          this.map.fitBounds(L.latLngBounds(coordinates), { padding: L.point(10, 10) })
+        }
+
         this.map.invalidateSize()
       }).finally(() => {
         this.loadingMap = false
@@ -627,7 +661,7 @@ export default {
         data_filename: "tsx-aggregated-data-" + this.filterFilenamePart + ".csv",
         ...this.dataParams
       }
-      var url = api.lpiDownloadURL(params)
+      var url = api.timeSeriesURL(params)
       window.open(url)
     },
     downloadTrend: function(evt) {
@@ -656,17 +690,17 @@ export default {
         var dl = document.createElement("a")
         dl.href="data:text/plain,"+encodeURIComponent(text)
         dl.setAttribute("download", filename)
-        dl.click();
+        dl.click()
       }
 
       async function save(name, params) {
         var data = await fetch("https://tsx.org.au/tsxapi/lpi-data/plot?" + params)
-        var json = await data.json();
+        var json = await data.json()
 
         var rows = json.dotplot.flatMap((a, i) => [a.map(b => [i, b[0], b[1]])]).flat()
         rows = [["TimeSeries", "Year", "NonZeroCount"]].concat(rows)
 
-        download(csv(rows), "tsx-dotplot-" + name + ".csv");
+        download(csv(rows), "tsx-dotplot-" + name + ".csv")
 
         download(csv([["Year", "NumberOfTimeSeries"]].concat(Object.entries(json.summary.timeseries))), "tsx-time-series-" + name + ".csv")
         download(csv([["Year", "NumberOfTaxa"]].concat(Object.entries(json.summary.taxa))), "tsx-taxa-" + name + ".csv")
@@ -689,15 +723,30 @@ export default {
     goBack: function() {
       window.history.back()
     },
-    // refresh summary plot
-    refreshSummaryPlot: function() {
+    refreshMonitoringConsistencyPlot(data) {
+     let datasets = this.monitoringConsistencyPlot.data.datasets
+
+      datasets.forEach((dataset, datasetIndex) => {
+        dataset.data = data.flatMap((timeSeries, timeSeriesIndex) =>
+          timeSeries.filter(([year, count]) => count === 1 - datasetIndex)
+            .map(([year, count]) => ({
+              x: year,
+              y: timeSeriesIndex + 1,
+              r: 1
+            }))
+        )
+      })
+
+      this.monitoringConsistencyPlot.update()
+    },
+    refreshSummaryPlot: function(data) {
       if (this.summaryPlot) {
         this.summaryPlot.destroy()
       }
-      // create new one
-      this.summaryPlot = new Chart(this.$refs.sumplot.getContext('2d'), {
+
+      let chart = {
         type: 'scatter',
-        data: this.summaryPlotData,
+        data: { datasets: [] },
         options: {
           responsive: true,
           maintainAspectRatio: false,
@@ -716,48 +765,83 @@ export default {
             year: {
               position: 'bottom',
               ticks: {
-                callback: (label, index, labels) => '' + label
-              }
-            },
-            numTaxa: {
-              type: 'linear',
-              display: true,
-              position: 'left',
-              title: {
-                display: true,
-                text: 'Number of taxa'
-              },
-              ticks: {
                 callback: function(label, index, labels) {
-                  return Number.isInteger(label) ? label.toLocaleString() : ''
-                }
-              }
-            },
-            numTimeSeries: {
-              type: 'linear',
-              display: true,
-              position: 'right',
-              title: {
-                display: true,
-                text: 'Number of time series'
-              },
-              grid: {
-                display: false
-              },
-              ticks: {
-                callback: function(label, index, labels) {
-                  return Number.isInteger(label) ? label.toLocaleString() : ''
+                  return Number.isInteger(label) ? label.toString() : ''
                 }
               }
             }
           }
         }
-      })
+      }
+
+      if(data.taxa) {
+        chart.data.datasets.push({
+          label: 'Number of taxa',
+          xAxisID: 'year',
+          yAxisID: 'numTaxa',
+          borderColor: '#58899e',
+          backgroundColor: '#58899e',
+          data: Object.entries(data.taxa).map(([year, value]) => ({ x: +year, y: +value }))
+        })
+
+        chart.options.scales.numTaxa = {
+          type: 'linear',
+          display: true,
+          position: 'left',
+          title: {
+            display: true,
+            text: 'Number of taxa'
+          },
+          ticks: {
+            callback: function(label, index, labels) {
+              return Number.isInteger(label) ? label.toLocaleString() : ''
+            }
+          }
+        }
+      }
+
+      if(data.timeseries) {
+        chart.data.datasets.push({
+          label: 'Number of time series',
+          xAxisID: 'year',
+          yAxisID: 'numTimeSeries',
+          borderColor: '#a3c489',
+          backgroundColor: '#a3c489',
+          data: Object.entries(data.timeseries).map(([year, value]) => ({ x: +year, y: +value }))
+        })
+
+        chart.options.scales.numTimeSeries = {
+          type: 'linear',
+          display: true,
+          position: 'right',
+          title: {
+            display: true,
+            text: 'Number of time series'
+          },
+          grid: {
+            display: !data.taxa
+          },
+          ticks: {
+            callback: function(label, index, labels) {
+              return Number.isInteger(label) ? label.toLocaleString() : ''
+            }
+          }
+        }
+      }
+
+      this.summaryPlot = new Chart(this.$refs.sumplot.getContext('2d'), chart)
     }
   }
 }
 </script>
 
+<style>
+  /*.field-named-state {
+    margin-top: 1em;
+    border-top: 1px solid white;
+    padding-top: 1em;
+  }*/
+</style>
 <style src='leaflet/dist/leaflet.css'>
 </style>
 <style src='leaflet-easybutton/src/easy-button.css'>
@@ -803,7 +887,7 @@ export default {
     margin-left: 1em;
   }
 
-  .info-icon {
+  .card .info-icon {
     color: #aaa;
     position: absolute;
     top: 0.7em;
@@ -823,10 +907,15 @@ export default {
   .popup-content li {
     margin-bottom: 0.5em;
   }
-  @media screen and (min-width: 768px) {
-    .ie11-bugfix {
-      /* Fix flexbox bug */
-      height: 48em;
+  .hover-highlight:hover {
+    background: #eee;
+  }
+  hr {
+    height: 0px;
+  }
+  @media screen and (max-width: 500px) {
+    .refyear-label {
+      display: none;
     }
   }
 </style>
