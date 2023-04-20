@@ -413,6 +413,7 @@ export default {
         ...params
       }
 
+      this.loadingData = true
       api.visualisationParameters(params).then(result => {
         this.fields = result.fields
         this.fieldValues = this.latestFieldValuesFromServer()
