@@ -392,7 +392,7 @@ export default {
     },
     noDataMessage() {
       if(this.fieldValues && this.fieldValues.type == 'individual') {
-        return "(Please select a species)"
+        return "";
       } else {
         return "(No data to show)"
       }

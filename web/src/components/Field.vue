@@ -1,6 +1,7 @@
 <template>
   <div :class="classes">
     <SelectField v-if="fieldType == 'select'" :field="field" v-model:value='fieldValue'></SelectField>
+    <SearchableSelectField v-else-if="fieldType == 'searchable-select'" :field="field" v-model:value='fieldValue'></SearchableSelectField>
     <RadioField v-else-if="fieldType == 'radio'" :field="field" v-model:value='fieldValue'></RadioField>
     <ButtonRadioField v-else-if="fieldType == 'button-radio'" :field="field" v-model:value='fieldValue'></ButtonRadioField>
     <div v-else>(Unknown field type)</div>
@@ -10,6 +11,7 @@
 <script>
 import * as api from '../api.js'
 import SelectField from "./SelectField.vue"
+import SearchableSelectField from "./SearchableSelectField.vue"
 import RadioField from "./RadioField.vue"
 import ButtonRadioField from "./ButtonRadioField.vue"
 
@@ -18,7 +20,8 @@ export default {
   components: {
     SelectField,
     RadioField,
-    ButtonRadioField
+    ButtonRadioField,
+    SearchableSelectField
   },
   data () {
     return {

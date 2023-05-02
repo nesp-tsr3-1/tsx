@@ -720,7 +720,7 @@ def get_parameters():
 				value = group),
 			dict(name='taxon',
 				label='Available Species',
-				type='select',
+				type='searchable-select',
 				options=taxon_options,
 				value=taxon_id)
 		]
