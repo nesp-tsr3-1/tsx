@@ -2,7 +2,7 @@
   <div class="section is-dark" style="padding-bottom: 1em;">
     <div class="container is-widescreen">
 
-  <div class='plot content'>
+  <div>
     <div class="tile is-ancestor">
       <div class="tile is-2 is-parent">
         <div class="tile is-child">
@@ -10,20 +10,11 @@
             <Field v-if="queryTypeField" :field="queryTypeField" v-model:value="fieldValues.type"></Field>
           </div>
           <hr>
-          <div style="display: flex; justify-content: space-between;">
+          <div class="content" style="display: flex; justify-content: space-between; margin-bottom: 0;">
             <h4 class="is-title has-text-white">Filters</h4>
-            <!-- <tippy class="info-icon icon" arrow interactive placement="right">
-              <template #default><i class="far fa-question-circle"></i></template>
-              <template #content>
-                <div class="popup-content">
-                  <p>Filter the available data using the menus below.</p>
-                  <p>Only selections with enough data are shown</p>
-                </div>
-              </template>
-            </tippy> -->
             <button class='button is-primary is-small' @click='reset' style="position: relative; top: -0.3em;">Reset</button>
           </div>
-          <p class="is-size-7">Only selections with enough data are shown.</p>
+          <p class="content is-size-7">Only selections with adequate data are shown.</p>
 
           <div style="margin-bottom: 1em">
             <template v-for="field in sidebarFields">
