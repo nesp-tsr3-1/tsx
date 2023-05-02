@@ -22,7 +22,7 @@
             </template>
           </div>
 
-          <p class="is-size-7" v-if="fieldValues && fieldValues.type == 'individual'">Note: The LPI method was not designed for single-species trends. These trends are likely to be subject to considerable noise.</p>
+          <p class="content is-size-7" v-if="fieldValues && fieldValues.type == 'individual'">NOTE: The LPI method was not designed for single-species trends. These trends vary greatly in reliability, with some having very sparse underlying data.</p>
           <hr>
 
           <p v-if="!noData">
