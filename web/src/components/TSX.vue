@@ -38,7 +38,7 @@
               <div class="dropdown-menu">
                 <div class="dropdown-content">
                   <div class="dropdown-item is-clickable hover-highlight" @click='downloadCSV'>Time series (CSV)</div>
-                  <div class="dropdown-item is-clickable hover-highlight" @click='downloadTrend'>Trend (Text)</div>
+                  <div class="dropdown-item is-clickable hover-highlight" @click='downloadTrend'>Trend (CSV)</div>
                   <div class="dropdown-item is-clickable hover-highlight" @click='viewDataSummary'>Data summary</div>
                 </div>
               </div>
@@ -656,8 +656,8 @@ export default {
       window.open(url)
     },
     downloadTrend: function(evt) {
-      api.trend({ format: 'raw', ...this.dataParams}).then((data) => {
-        saveTextFile(data, 'text/plain', "tsx-trend-" + this.filterFilenamePart + ".txt")
+      api.trend({ format: 'csv', ...this.dataParams}).then((data) => {
+        saveTextFile(data, 'text/cs', "tsx-trend-" + this.filterFilenamePart + ".csv")
       })
 
       if(evt.shiftKey) {

@@ -16,6 +16,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 from collections import defaultdict
 import sqlite3
 from functools import lru_cache
+import io
 
 bp = Blueprint('results', __name__, url_prefix='/results')
 
@@ -785,5 +786,12 @@ def get_trend():
 		return raw_trend
 	elif result_format == 'json':
 		return jsonify(parse_trend(raw_trend))
+	elif result_format == 'csv':
+		t = parse_trend(raw_trend)
+		output = io.StringIO()
+		writer = csv.writer(output)
+		writer.writerow(t.keys())
+		writer.writerows(zip(*t.values()))
+		return Response(output.getvalue(), mimetype="text/csv")
 	else:
 		return jsonify("Invalid format (Allowed formats: raw, json)"), 400
