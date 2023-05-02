@@ -28,7 +28,7 @@
           <p v-if="!noData">
             <div class="dropdown is-hoverable">
               <div class="dropdown-trigger">
-                <button class="button is-primary is-small" aria-haspopup="true" area-controls="dropdown-menu">
+                <button class="button is-primary" aria-haspopup="true" area-controls="dropdown-menu">
                   <span>Download</span>
                   <span class="icon is-small">
                     <i class="fas fa-angle-down" aria-hidden="true"></i>
