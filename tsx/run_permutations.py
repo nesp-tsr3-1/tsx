@@ -96,16 +96,16 @@ def iterate_permutations(df):
 
     for tgroup, df in iterate_partitions(df, 'TaxonomicGroup'):
         for group, df in iterate_groups(df, tgroup):
-            for subgroup, df in iterate_subgroups(df, tgroup, group):
-                for state, df in iterate_states(df):
-                    for management, df in iterate_partitions(df, 'Management'):
-                        yield ({
-                          'State': state,
-                          'TaxonomicGroup': tgroup,
-                          'Management': management,
-                          'FunctionalGroup': group,
-                          'NationalPriorityTaxa': 1
-                        }, df[df['NationalPriorityTaxa'] == 1])
+            for state, df in iterate_states(df):
+                for management, df in iterate_partitions(df, 'Management'):
+                    yield ({
+                      'State': state,
+                      'TaxonomicGroup': tgroup,
+                      'Management': management,
+                      'FunctionalGroup': group,
+                      'NationalPriorityTaxa': 1
+                    }, df[df['NationalPriorityTaxa'] == 1])
+                    for subgroup, df in iterate_subgroups(df, tgroup, group):
                         for status_authority, status, df in iterate_status(df):
                             yield ({
                                 'State': state,
