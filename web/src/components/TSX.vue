@@ -105,6 +105,9 @@
                         <li>Go to <b>Data Summary</b> to see which species/subspecies were included in this index</li>
                         <li>Go to <b>Download CSV</b> to get the aggregated data used to calculate this index.</li>
                       </ol>
+                      <p>
+                        The three-year lag in the index is implemented due to a downturn in data availability closer to the release year of the index. To read more about this, please see the pop-up info box for the ‘Number of time series and species per year’ plot in the bottom right of this tool.
+                      </p>
                   </div>
                 </template>
               </tippy>
@@ -121,7 +124,7 @@
                 <template #default><i class="far fa-question-circle"></i></template>
                 <template #content>
                   <div class="popup-content">
-                    This dot plot shows the particular years for which monitoring data were available. Each row represents a time series where a species/subspecies was monitored with a consistent method at a single site. The dots represent count values for the metric used to quantify the species/subspecies while zeros indicate absences (non-detections) of those species at the site.
+                    This dot plot shows the particular years for which monitoring data were available, from a random 50 site sample of the whole dataset (or data subset). Each row represents a time series where a species/subspecies was monitored with a consistent method at a single site. The dots represent count values for the metric used to quantify the species/subspecies while zeros indicate absences (non-detections) of those species at the site.
                   </div>
                 </template>
               </tippy>
@@ -137,7 +140,7 @@
                 <template #default><i class="far fa-question-circle"></i></template>
                 <template #content>
                   <div class="popup-content">
-                    This map shows where threatened species data to calculate this index are recorded in Australia. Light blue indicates less data (fewer sites monitored), pink indicates more data (more sites monitored).
+                    The spatial representativeness map shows where the monitoring data used to calculate a particular index was recorded in Australia. Sites are buffered to obscure precise locations.
                   </div>
                 </template>
               </tippy>
@@ -150,7 +153,7 @@
                 <template #default><i class="far fa-question-circle"></i></template>
                 <template #content>
                   <div class="popup-content">
-                    This plot shows the number of species/subspecies (in blue) and the number of time series (in green) available in each year to calculate the index.
+                    This plot shows the number of species/subspecies (in blue) and the number of time series (in green) available in each year to calculate the index. The number of species and time series will always decline closer to the final year, given the lag in integration of datasets into the index (resulting primarily from the lag in the availability of data, given that it takes time for data providers to collate and submit, or takes time for the TSX team to identify data in the literature). This downturn in data availability closer to the release year is the reason that a 3-year lag is implemented in trend calculation, as data quality is poorer closer to the release year.
                   </div>
                 </template>
               </tippy>
