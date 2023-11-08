@@ -82,9 +82,9 @@ def main():
 					population = row.get('Population'),
 					# TODO - there are status in WLAB like 'Introduced' and 'Vagrant' not in Glenn's list - for now importing as NULL
 					epbc_status = get_status('EPBCStatus'),
-					iucn_status = get_status('IUCNStatus') or get_status('AustralianStatus'),
+					iucn_status = get_status('IUCNStatus'),
 					state_status = get_status('StatePlantStatus'),
-					bird_action_plan_status = get_status('BirdActionPlanStatus'),
+					bird_action_plan_status = get_status('AP2020Status'),
 					taxonomic_group = row['TaxonomicGroup'],
 					national_priority = str(row.get('NationalPriorityTaxa')) == '1',
 					suppress_spatial_representativeness = str(row.get('SuppressSpatialRep', '0')) == '1'
