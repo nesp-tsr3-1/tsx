@@ -4,6 +4,7 @@ import sys
 import argparse
 import csv
 from tqdm import tqdm
+from datetime import date
 
 log = logging.getLogger(__name__)
 
@@ -35,7 +36,7 @@ def main():
 				'start_year': row.get('StartYear') or None,
 				'end_year': row.get('EndYear') or None,
 				'exclude_from_analysis': get_bool(row, 'NotInIndex', False, unknown_value_default=True, optional=True),
-				'suppress_aggregated_data': get_bool(row, 'SuppressAggregatedDataUntil', False, unknown_value_default=True, optional=True),
+				'suppress_aggregated_data': get_suppress_aggregated_data(row),
 				'citation': row.get('Citation') or None
 			}
 
@@ -130,6 +131,38 @@ LOOKUPS = {
 	}
 }
 
+TRUE_VALUES = ('1', 'yes', 'true', 'y', 't')
+FALSE_VALUES = ('0', 'no', 'false', 'n', 'f')
+NA_VALUES = ('', 'na', 'null')
+
+def get_suppress_aggregated_data(row):
+	value = row.get('SuppressAggregatedDataUntil')
+	raw_value = value
+
+	if value is None:
+		return False
+
+	value = value.strip().lower()
+
+	if value in TRUE_VALUES:
+		return True
+	if value in FALSE_VALUES or value in NA_VALUES:
+		return False
+
+	try:
+		dmy = value.split('/')
+		if(len(dmy) == 3):
+			d = max(int(dmy[0]), 1)
+			m = max(int(dmy[1]), 1)
+			y = int(dmy[2])
+
+			return date.today() < date(y, m, d)
+	except:
+		pass
+
+	log.warning("Unknown value for SuppressAggregatedDataUntil: '%s', defaulting to False" % (raw_value))
+	return False
+
 def get_bool(row, column, default=None, unknown_value_default=None, optional=False):
 	raw_value = row.get(column)
 	if optional and raw_value is None:
@@ -138,11 +171,11 @@ def get_bool(row, column, default=None, unknown_value_default=None, optional=Fal
 	raw_value = raw_value.strip()
 	value = raw_value.lower()
 
-	if value in ('1', 'yes', 'true', 'y', 't'):
+	if value in TRUE_VALUES:
 		return True
-	if value in ('0', 'no', 'false', 'n', 'f'):
+	if value in FALSE_VALUES:
 		return False
-	if value in ('', 'na', 'null'):
+	if value in NA_VALUES:
 		return default
 	else:
 		log.warning("Unknown value for %s: '%s', defaulting to %s" % (column, raw_value, unknown_value_default))
