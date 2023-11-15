@@ -119,11 +119,30 @@ def iterate_permutations(df):
                                 'Status': status
                             }, df)
 
+def abbreviate(x):
+    subs = [
+        ("Victoria", "VIC"),
+        ("South Australia", "SA"),
+        ("Western Australia", "WA"),
+        ("New South Wales", "NSW"),
+        ("Australian Capital Territory", "ACT"),
+        ("Northern Territory", "NT"),
+        ("Queensland", "QLD"),
+        ("Tasmania", "TAS"),
+        (">", "gt-"),
+        ("<", "lt-")
+    ]
+    for old, new in subs:
+        x = x.replace(old, new)
+    return x
+
 def sanitise_filename(name):
-    return re.sub(r"[/\\:$><?*\"]", "_", name)
+    return re.sub(r"[/\\:$?*\"]", "_", name)
 
 def permutation_dir(perm):
-    return os.path.join(*[sanitise_filename("%s=%s" % (k, v)) for k, v in perm.items()])
+    path = os.path.join(*[sanitise_filename("%s=%s" % (k, v)) for k, v in perm.items()])
+    path = abbreviate(path)
+    return path
 
 def iterate_tasks(df, work_path, script_path):
     for perm, df in iterate_permutations(df):
