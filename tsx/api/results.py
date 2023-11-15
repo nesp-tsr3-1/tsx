@@ -111,7 +111,7 @@ def plot():
 
 	return jsonify({
 		'dotplot': get_dotplot_data(df),
-		'summary': get_summary_data(df)
+		'summary': get_summary_data(df, query_type=request.args.get('type', default='all', type=str))
 	})
 
 @bp.route('/spatial', methods = ['GET'])
@@ -121,14 +121,23 @@ def get_intensity():
 	if len(filtered_data) == 0:
 		return jsonify([])
 
+	return jsonify(get_intensity_data(filtered_data))
+
+
+def get_intensity_data(filtered_data, format='json'):
 	df = filtered_data
 	df = df[['SurveysCentroidLongitude', 'SurveysCentroidLatitude', 'SurveyCount']]
 	df = df.groupby(['SurveysCentroidLongitude', 'SurveysCentroidLatitude'], as_index=False).agg(np.sum)
 
-	return jsonify([[x[0], x[1], x[2]] for x in df.values])
+	if format == 'json':
+		return [[x[0], x[1], x[2]] for x in df.values]
+	elif format == 'csv':
+		return df.to_csv(index=False)
+	else:
+		raise ValueError('Invalid format')
 
 
-def get_dotplot_data(filtered_data):
+def get_dotplot_data(filtered_data, format='json'):
 	"""Converts time-series to a minimal form for generating dot plots:
 	[
 		[[year,count],[year,count] .. ],
@@ -139,7 +148,10 @@ def get_dotplot_data(filtered_data):
 	df = filtered_data
 
 	if len(df) == 0:
-		return []
+		if format == 'json':
+			return []
+		else:
+			return ''
 
 	# Get year columns
 	years = [col for col in df.columns if col.isdigit()]
@@ -158,15 +170,29 @@ def get_dotplot_data(filtered_data):
 	# x = np.random.randn(len(df))
 	df = df.assign(x = x).sort_values(['x'])
 
+
 	# Convert Pandas data to numpy array so we can iterate over it efficiently
 	raw_data = df.loc[:,years].values
-	result = []
-	for i, row in enumerate(raw_data):
-		result.append([[int_years[j], 1 if value > 0 else 0] for j, value in enumerate(row) if value >= 0])
 
-	return result
+	if format == 'json':
+		result = []
+		for i, row in enumerate(raw_data):
+			result.append([[int_years[j], 1 if value > 0 else 0] for j, value in enumerate(row) if value >= 0])
 
-def get_summary_data(filtered_data):
+		return result
+	elif format == 'csv':
+		output = io.StringIO()
+		writer = csv.writer(output)
+		writer.writerow(['TimeSeries', 'Year', 'NonZeroCount'])
+		for i, row in enumerate(raw_data):
+			for j, value in enumerate(row):
+				if value >= 0:
+					writer.writerow([i, int_years[j], 1 if value > 0 else 0])
+		return output.getvalue()
+	else:
+		raise ValueError('Invalid format')
+
+def get_summary_data(filtered_data, format='json', query_type='all'):
 	"""Calculates the number of time-series and distinct taxa per year"""
 	df = filtered_data
 
@@ -177,16 +203,30 @@ def get_summary_data(filtered_data):
 	# Discard years with no data
 	year_df = year_df.loc[:, year_df.any()]
 
-	query_type = request.args.get('type', default='all', type=str)
+	if format == 'json':
+		result = {
+			'timeseries': year_df.sum().to_dict()
+		}
 
-	result = {
-		'timeseries': year_df.sum().to_dict()
-	}
+		if query_type != 'individual':
+			result['taxa'] = year_df.groupby(df['TaxonID']).any().sum().to_dict()
 
-	if query_type != 'individual':
-		result['taxa'] = year_df.groupby(df['TaxonID']).any().sum().to_dict()
-
-	return result
+		return result
+	elif format == 'csv':
+		a = year_df.sum()
+		b = year_df.groupby(df['TaxonID']).any().sum()
+		return (
+			pd.concat((a,b),axis=1)
+			.reset_index()
+			.rename(columns={
+				'index':'Year',
+				0:'NumberOfTimeSeries',
+				1:'NumberOfTaxa'
+			})
+			.to_csv(index=False)
+		)
+	else:
+		raise ValueError('Invalid format')
 
 def suppress_aggregated_data(df):
 	df = df.copy()

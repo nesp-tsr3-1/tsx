@@ -1,4 +1,3 @@
-from tsx.db import get_session
 import sqlite3
 import logging
 import pandas as pd
@@ -13,11 +12,13 @@ import importlib.resources
 import subprocess
 from tqdm import tqdm
 import shutil
+from tsx.api.results import get_dotplot_data, get_summary_data, get_intensity_data
 
 log = logging.getLogger(__name__)
 
 reference_years = [1985, 1990, 1995, 2000]
 end_year = 2019
+generate_plot_data = True
 
 def main():
     logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)-15s %(name)s %(levelname)-8s %(message)s')
@@ -172,8 +173,17 @@ def run_task(perm, work_path, script_path):
         trend_data = f.read()
     # Clean up extraneous files
     for file in os.listdir(work_path):
-        if file not in ["data_infile_Results.txt", "stdout.txt", "stderr.txt"]:
+        if file not in ["data_infile_Results.txt", "stdout.txt", "stderr.txt", "input.csv"]:
             remove_file_or_dir(os.path.join(work_path, file))
+
+    if generate_plot_data:
+        df = load_lpi_wide(os.path.join(work_path, "input.csv"))
+        with open(os.path.join(work_path, "dotplot.csv"), "w") as f:
+            f.write(get_dotplot_data(df, format='csv'))
+        with open(os.path.join(work_path, "summary-plot.csv"), "w") as f:
+            f.write(get_summary_data(df, format='csv'))
+        with open(os.path.join(work_path, "map.csv"), "w") as f:
+            f.write(get_intensity_data(df, format='csv'))
 
     return (perm, trend_data)
 
