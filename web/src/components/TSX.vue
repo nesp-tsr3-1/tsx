@@ -44,15 +44,6 @@
               </div>
             </div>
           </p>
-          <!-- <p>
-            <button class='button is-primary is-small' @click='downloadCSV'>Download CSV</button>
-          </p>
-          <p>
-            <button class='button is-primary is-small' @click='downloadTrend' :disabled='trendData == null'>Download Trend</button>
-          </p>
-          <p>
-            <button class='button is-primary is-small' @click='viewDataSummary'>Data Summary</button>
-          </p> -->
         </div>
       </div>
 
