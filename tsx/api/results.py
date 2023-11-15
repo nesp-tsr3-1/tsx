@@ -364,9 +364,17 @@ def stats_html():
 
 	query_type = request.args.get('type', default='all', type=str)
 
+	include_spatial_rep = get_dataset_name() != 'tsx2023'
+
 	template = u"""
 	<html>
 		<head>
+	"""
+
+	if not include_spatial_rep:
+		template += "<style>.spatial_rep {{ display: none; }}</style>"
+
+	template += u"""
 		</head>
 		<body>
 			<p>
@@ -404,7 +412,7 @@ def stats_html():
 						<th># data sources</th>
 						<th># time series</th>
 						<th>Mean time-series length</th>
-						<th>Spatial representativeness</th>
+						<th class='spatial_rep'>Spatial representativeness</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -423,7 +431,7 @@ def stats_html():
 			<td>{num_sources:.0f}</td>
 			<td>{num_ts:.0f}</td>
 			<td>{ts_length_mean:.1f}</td>
-			<td>{spatial_rep:.1f}</td>
+			<td class='spatial_rep'>{spatial_rep:.1f}</td>
 		</tr>""".format(**row).replace(">nan<", ">-<")
 
 	html += """
