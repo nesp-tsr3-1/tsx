@@ -625,10 +625,22 @@ export default {
         })
 
         let coordinates = data.map(([lng,lat,count]) => L.latLng(lat, lng))
+
         if(coordinates.length > 0) {
+          let bounds = L.latLngBounds(coordinates)
+
+          let australia = [[-43.6, 113.3], [-10.7, 153.6]]
+          if(bounds.contains(australia)) {
+            bounds = australia
+          }
+
           setTimeout(() => {
             this.map.invalidateSize()
-            this.map.fitBounds(L.latLngBounds(coordinates), { padding: L.point(10, 10) })
+            this.map.fitBounds(bounds, { padding: L.point(10, 10) })
+            setTimeout(() => {
+              this.map.invalidateSize()
+              this.map.fitBounds(bounds, { padding: L.point(10, 10) })
+            }, 200)
           }, 200)
         }
       }).finally(() => {
