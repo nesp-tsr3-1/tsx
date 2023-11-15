@@ -688,8 +688,7 @@ export default {
       }
 
       async function save(name, params) {
-        var data = await fetch("https://tsx.org.au/tsxapi/lpi-data/plot?" + params)
-        var json = await data.json()
+        var json = await api.diagnosticPlots(params)
 
         var rows = json.dotplot.flatMap((a, i) => [a.map(b => [i, b[0], b[1]])]).flat()
         rows = [["TimeSeries", "Year", "NonZeroCount"]].concat(rows)
