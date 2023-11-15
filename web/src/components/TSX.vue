@@ -2,7 +2,7 @@
   <div class="section is-dark" style="padding-bottom: 1em;">
     <div class="container is-widescreen">
 
-  <div>
+  <div class="content">
     <div class="tile is-ancestor">
       <div class="tile is-2 is-parent">
         <div class="tile is-child">
