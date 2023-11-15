@@ -18,7 +18,7 @@ from random import shuffle
 log = logging.getLogger(__name__)
 
 reference_years = [1985, 1990, 1995, 2000]
-end_year = 2019
+end_year = 2020
 generate_plot_data = True
 
 def main():
