@@ -13,6 +13,7 @@ import subprocess
 from tqdm import tqdm
 import shutil
 from tsx.api.results import get_dotplot_data, get_summary_data, get_intensity_data
+from random import shuffle
 
 log = logging.getLogger(__name__)
 
@@ -218,7 +219,8 @@ def run_permutations(db, df):
 
     # This first generates all tasks (takes a few minutes), so that we can show a meaningful progress indicator for the next phase
     tasks = list(tqdm(iterate_tasks(df, work_path, script_path)))
-    # tasks = iterate_tasks(df, work_path, script_path)
+    # Randomise tasks to get a more consistent progress rate
+    shuffle(tasks)
 
     for result, error in run_parallel(run_task, tqdm(tasks)):
         if result:
