@@ -12,6 +12,7 @@ import importlib.resources
 import io
 import tempfile
 from zipfile import ZipFile, ZIP_DEFLATED
+import json
 
 bp = Blueprint('subset', __name__)
 
@@ -63,7 +64,9 @@ def subset_stats():
             t1_sighting.unit_id,
             t1_survey.site_id,
             t1_survey.source_id,
-            t1_site.search_type_id
+            t1_site.search_type_id,
+            MIN(t1_survey.start_date_y) AS min_year,
+            MAX(t1_survey.start_date_y) AS max_year
         FROM t1_survey
         LEFT JOIN t1_survey_region ON t1_survey.id = t1_survey_region.survey_id
         LEFT JOIN region ON region.id = t1_survey_region.region_id
@@ -79,7 +82,9 @@ def subset_stats():
             COUNT(DISTINCT sighting_id) AS sighting_count,
             COUNT(DISTINCT taxon_id) AS taxon_count,
             COUNT(DISTINCT source_id) AS source_count,
-            COUNT(DISTINCT site_id, taxon_id, source_id, unit_id, search_type_id) AS time_series_count
+            COUNT(DISTINCT site_id, taxon_id, source_id, unit_id, search_type_id) AS time_series_count,
+            MIN(min_year) AS min_year,
+            MAX(max_year) AS max_year
         FROM t
     """.format(
         where_clause = " AND ".join(where_conditions) if where_conditions else "TRUE",
@@ -556,7 +561,20 @@ def process_trend(trend_id):
         processing_trend_ids.add(trend_id)
     try:
         path = trend_work_dir(trend_id)
-        subprocess.run(["Rscript", os.path.join(path, "lpi.R"), os.path.join(path, "lpi.csv"), path])
+
+        script_params = [os.path.join(path, "lpi.csv"), path]
+
+        try:
+            with open(os.path.join(path, 'params.json')) as f:
+                params_json = json.load(f)
+                if 'reference_year' in params_json:
+                    script_params.append(str(params_json['reference_year']))
+                    if 'final_year' in params_json:
+                        script_params.append(str(params_json['final_year']))
+        except:
+            pass
+
+        subprocess.run(["Rscript", os.path.join(path, "lpi.R")] + script_params)
         shutil.copy(os.path.join(path, "data_infile_Results.txt"), os.path.join(path, "trend.txt"))
     finally:
         with lock:
@@ -574,6 +592,16 @@ def subset_generate_trend():
 
     result = query_subset_time_series()
     save_csv(result, os.path.join(path, "lpi.csv"))
+
+    # Save extra trend parameters e.g. reference/final year
+    args = request.get_json() or request.args
+    trend_params = {}
+    for p in ['reference_year', 'final_year']:
+        if p in args:
+            trend_params[p] = args[p]
+
+    with open(os.path.join(path, "params.json"), "w") as f:
+        json.dump(trend_params, f)
 
     t = Thread(target = process_trend, args = (trend_id,))
     t.start()

@@ -5,7 +5,7 @@
     :enable-program-filter="false"
     :enable-management-filter="false">
     <template #criteria-title>
-      <h3 class="title is-6">Filtering criteria for downloads</h3>
+      <h3 class="title is-6">Filtering criteria for downloads and trends</h3>
     </template>
   </CommonDownloads>
 </template>

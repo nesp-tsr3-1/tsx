@@ -180,25 +180,62 @@
       @click="downloadTimeSeries"
       :disabled="!enableDownload">Download Time Series (CSV format)</button>
   </div>
-  <div v-if="trendStatus == 'idle'" class="block">
+  <div class="block">
+    <h4 class="title is-6">Population Trend</h4>
+    <div class="sideborder block">
+      <div class="field is-horizontal">
+        <div class="field-label is-normal">
+          <label class="label">Reference year</label>
+        </div>
+        <div class="field-body">
+          <div class="control">
+            <div class="select">
+              <select v-model="trendReferenceYear" :disabled="!enableTrendParams">
+                <option v-for="year in availableYears" :value="year">
+                  {{ year }}
+                </option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="field is-horizontal">
+        <div class="field-label is-normal">
+          <label class="label">Final year</label>
+        </div>
+        <div class="field-body">
+          <div class="control">
+            <div class="select">
+              <select v-model="trendFinalYear" :disabled="!enableTrendParams">
+                <option v-for="year in availableYears" :value="year">
+                  {{ year }}
+                </option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="help is-danger block" v-if="trendParamsError">{{trendParamsError}}</p>
+    </div>
+  </div>
+
+  <div class="block">
     <button type="button" class="button is-primary"
       @click="generateTrend"
-      :disabled="!enableDownload">Generate Population Trend</button>
+      :disabled="!enableGenerateTrend">Generate Population Trend</button>
+    <p class="help is-danger block" v-if="trendStatus == 'error'">An error occurred while generating the trend.</p>
   </div>
+
   <div v-if="trendStatus == 'processing'" class="block">
     Please wait while the population trend is generated. This may take several minutes.
     <spinner size='small' style='display: inline-block;'></spinner>
   </div>
-  <div v-if="trendStatus == 'error'" class="block">
-    An error occurred while generating the trend.
-  </div>
   <div v-if="trendStatus == 'ready'" class="content">
-    <h4 class="title is-6">Population Trend</h4>
     <p style="font-style: italic;">Note: This trend has been generated using the Living Planet Index methodology, which is designed for producing composite trends, not single-species trends.</p>
+    <canvas v-show="showPlot" ref="plot" style="height: 10em;"></canvas>
     <p>
       <button type="button" class="button is-primary" @click="downloadTrend">Download Population Trend (TXT format)</button>
     </p>
-    <canvas v-show="showPlot" ref="plot" style="height: 10em;"></canvas>
   </div>
 </template>
 
@@ -224,6 +261,7 @@ export default {
     return {
       status: 'loading',
       trendStatus: 'idle',
+      trendError: null,
       showPlot: false,
       options: {
         state: [
@@ -252,7 +290,9 @@ export default {
       changeCounter: 0, // Incremented every time criteria are changed
       stats: null,
       heatmapLoading: false,
-      heatmapData: []
+      heatmapData: [],
+      trendReferenceYear: null,
+      trendFinalYear: null
     }
   },
   computed: {
@@ -261,6 +301,35 @@ export default {
     },
     enableDownload: function() {
       return (!this.enableProgramFilter || this.criteria.monitoringPrograms.length > 0) && this.stats && this.stats.sighting_count > 0
+    },
+    enableGenerateTrend: function() {
+      return this.enableDownload &&
+        this.trendParamsError === undefined &&
+        this.trendStatus !== 'processing'
+    },
+    enableTrendParams: function() {
+      return this.trendStatus !== 'processing'
+    },
+    availableYears: function() {
+      let min = this.stats?.min_year
+      let max = this.stats?.max_year
+      if(min && max) {
+        let years = new Array(max - min + 1)
+        for(let i = 0; i < max - min + 1; i++) {
+          years[i] = min + i
+        }
+        return years
+      } else {
+        return []
+      }
+    },
+    trendParamsError: function() {
+      if(this.stats && this.stats.min_year === this.stats.max_year) {
+        return "Insufficient data available to generate a trend"
+      }
+      if(this.trendReferenceYear >= this.trendFinalYear) {
+        return "Reference year must be earlier than final year"
+      }
     }
   },
   watch: {
@@ -381,7 +450,11 @@ export default {
       window.location = api.dataSubsetDownloadURL('time_series', params)
     },
     generateTrend: function() {
-      let params = this.buildDownloadParams()
+      let params = {
+        reference_year: this.trendReferenceYear,
+        final_year: this.trendFinalYear,
+        ...this.buildDownloadParams()
+      }
       let v = this.changeCounter // used to detect if parameters are changed during trend generation
       this.trendStatus = 'processing'
       api.dataSubsetGenerateTrend(params).then(x => {
@@ -493,6 +566,8 @@ export default {
       api.dataSubsetStats(params).then(stats => {
         if(v === this.changeCounter) {
           this.stats = stats
+          this.trendReferenceYear = this.stats.min_year;
+          this.trendFinalYear = this.stats.max_year;
         }
       })
       if(this.enableMap) {
