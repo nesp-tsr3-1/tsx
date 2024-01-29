@@ -542,6 +542,9 @@ def get_options_cached(name, params):
 	if name == 'StatusAuthority' and param_dict['TaxonomicGroup'] not in ['Birds', 'All']:
 		options = [x for x in options if x['value'] != 'BirdActionPlan']
 
+	# Make default option first
+	options = sorted(options, key=lambda o: o['label'] not in ['All', 'All sites'])
+
 	return options
 
 def get_parameter_values():
