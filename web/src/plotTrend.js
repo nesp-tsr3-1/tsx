@@ -15,7 +15,7 @@ import {
   Title,
   Tooltip,
   SubTitle
-} from 'chart.js';
+} from 'chart.js'
 
 Chart.register(
   LineElement,
@@ -34,6 +34,9 @@ Chart.register(
   SubTitle
 )
 
+let solidFill = 'rgba(230,230,230,0.5)'
+let stripeFill = createDiagonalPattern('grey', 1, 4)
+
 export function plotTrend(data, dom) {
   let series = data.split('\n')
       .slice(1) // Ignore first line
@@ -44,10 +47,13 @@ export function plotTrend(data, dom) {
   let index = series.map(x => parseFloat(x[1]))
   let lowerCI = series.map(x => parseFloat(x[2]))
   let upperCI = series.map(x => parseFloat(x[3]))
+  let numSpecies = series.map(x => parseInt(x[4] ?? -1))
 
-  let hasCI = index.map((x, i) => lowerCI[i] !== upperCI[i])
-  let solidIndex = index.map((x, i) => hasCI[i] || hasCI[i - 1] || hasCI[i + 1] ? x : undefined)
-  let dashedIndex = index.map((x, i) => hasCI[i] ? undefined : x)
+  let isSingleSpecies = index.map((x, i) => (lowerCI[i] === upperCI[i]) || (numSpecies[i] === 1))
+  let solidIndex = index.map((x, i) => !isSingleSpecies[i] || !isSingleSpecies[i - 1] || !isSingleSpecies[i + 1] ? x : undefined)
+  let dashedIndex = index.map((x, i) => isSingleSpecies[i] ? x : undefined)
+
+  let allSingleSpecies = isSingleSpecies.every(x => x)
 
   let minYear = labels[0]
 
@@ -73,7 +79,8 @@ export function plotTrend(data, dom) {
       data: dashedIndex
     }, {
       label: 'Confidence Interval (low)',
-      backgroundColor: 'rgba(230,230,230,0.5)',
+      borderColor: solidFill,
+      backgroundColor: allSingleSpecies ? stripeFill : solidFill,
       fill: false,
       pointRadius: 0,
       lineTension: 0,
@@ -83,12 +90,12 @@ export function plotTrend(data, dom) {
     }, {
       label: 'Confidence Interval (high)',
       // backgroundColor: '#eee',
-      backgroundColor: 'rgba(230,230,230,0.5)',
+      borderColor: solidFill,
+      backgroundColor: allSingleSpecies ? stripeFill : solidFill,
       fill: 2, // Fill between this dataset and dataset[1], i.e. between low & hi CI
       pointRadius: 0,
       lineTension: 0,
-      borderColor: '#0000',
-      borderWidth: 0,
+      borderWidth: 1,
       data: upperCI
     }]
   }
@@ -133,4 +140,25 @@ export function plotTrend(data, dom) {
       }
     }
   })
+}
+
+function createDiagonalPattern(color = 'black', width = 2, gap = 8) {
+  let size = width + gap
+
+  let shape = document.createElement('canvas')
+  shape.width = size
+  shape.height = size
+  let c = shape.getContext('2d')
+
+  c.strokeWidth = width
+  c.strokeStyle = color
+  for(let x = 0; x < 3; x++) {
+    let x0 = (x - 1) * size
+    c.beginPath()
+    c.moveTo(x0, 0)
+    c.lineTo(x0 + size, size)
+    c.stroke()
+  }
+  // create the pattern from the shape
+  return c.createPattern(shape, 'repeat')
 }
