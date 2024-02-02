@@ -45,29 +45,26 @@ nesp_lpi<-LPIMain(
 outputData <- read.table('data_infile_Results.txt', header=TRUE)
 
 if(nSpecies == 1) {
-  outputData$numSpecies = 1
-} else {
-  lpi <- read.csv("lpi.csv", header=TRUE)
-  n <- names(lpi)
-  yearCols <-  n[startsWith(n, "X")]
-
-  speciesPerYear <- lpi %>%
-    select(Binomial, ID, all_of(yearCols)) %>%
-    pivot_longer(all_of(yearCols)) %>% mutate(value2 = value) %>%
-    group_by(ID) %>%
-    fill(value, .direction = 'down') %>%
-    fill(value2, .direction='up') %>%
-    filter(!is.na(value) & !is.na(value2)) %>%
-    ungroup() %>%
-    mutate(year = as.numeric(substring(name, 2)), Binomial, .keep="none") %>%
-    group_by(year) %>%
-    summarise(numSpecies = n_distinct(Binomial))
-
-  outputData <- outputData %>%
-    tibble::rownames_to_column('year') %>%
-    mutate(year = as.numeric(year)) %>%
-    left_join(speciesPerYear, by='year') %>%
-    tibble::column_to_rownames('year')
+  # Reset binomial for calculations below
+  data$Binomial <- "Species"
 }
+
+speciesPerYear <- data %>%
+  select(Binomial, ID, all_of(yearCols)) %>%
+  pivot_longer(all_of(yearCols)) %>% mutate(value2 = value) %>%
+  group_by(ID) %>%
+  fill(value, .direction = 'down') %>%
+  fill(value2, .direction='up') %>%
+  filter(!is.na(value) & !is.na(value2)) %>%
+  ungroup() %>%
+  mutate(year = as.numeric(substring(name, 2)), Binomial, .keep="none") %>%
+  group_by(year) %>%
+  summarise(numSpecies = n_distinct(Binomial), numTimeSeries = n())
+
+outputData <- outputData %>%
+  tibble::rownames_to_column('year') %>%
+  mutate(year = as.numeric(year)) %>%
+  left_join(speciesPerYear, by='year') %>%
+  tibble::column_to_rownames('year')
 
 write.table(outputData, 'data_infile_Results.txt', col.names=TRUE)
