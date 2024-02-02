@@ -483,10 +483,10 @@ def get_stats(filtered_data):
 	return {
 		'num_sources': df['SourceDesc'].nunique(),
 		'num_taxa': df['TaxonID'].nunique(),
-		'ts_length_mean': df['TimeSeriesSampleYears'].mean(),
-		'ts_length_stddev': df['TimeSeriesSampleYears'].std(),
-		'ts_years_mean': df['TimeSeriesLength'].mean(),
-		'ts_years_stddev': df['TimeSeriesLength'].std(),
+		'ts_length_mean': df['TimeSeriesLength'].mean(),
+		'ts_length_stddev': df['TimeSeriesLength'].std(),
+		'ts_years_mean': df['TimeSeriesSampleYears'].mean(),
+		'ts_years_stddev': df['TimeSeriesSampleYears'].std(),
 		'taxa': taxa.to_dict(orient='records')
 	}
 
