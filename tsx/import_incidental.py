@@ -6,6 +6,7 @@ import csv
 from tqdm import tqdm
 from shapely.geometry import Point
 import shapely.wkb
+from sqlalchemy import text
 
 log = logging.getLogger(__name__)
 
@@ -19,13 +20,13 @@ def main():
 	session = get_session()
 
 	spno_map = { spno: taxon_id for spno, taxon_id in session.execute(
-		"""SELECT spno, taxon.id
+		text("""SELECT spno, taxon.id
 			FROM taxon, taxon_level
 			WHERE taxon_level.id = taxon_level_id
-			AND taxon_level.description = 'sp'""").fetchall()
+			AND taxon_level.description = 'sp'""")).fetchall()
 	}
 
-	session.execute("""DELETE FROM incidental_sighting""");
+	session.execute(text("""DELETE FROM incidental_sighting"""));
 
 	with open(args.filename) as f:
 		reader = csv.DictReader(f)
@@ -36,7 +37,7 @@ def main():
 		rows = []
 
 		def flush_rows():
-			session.execute("INSERT INTO incidental_sighting (taxon_id, coords) VALUES (:taxon_id, ST_GeomFromWKB(_BINARY :coords))", rows)
+			session.execute(text("INSERT INTO incidental_sighting (taxon_id, coords) VALUES (:taxon_id, ST_GeomFromWKB(_BINARY :coords))"), rows)
 			del rows[:]
 
 		for row in tqdm(reader, total = row_count):

@@ -4,6 +4,7 @@ import sys
 import argparse
 import csv
 from tqdm import tqdm
+from sqlalchemy import text
 
 log = logging.getLogger(__name__)
 
@@ -17,10 +18,10 @@ def main():
 
 	session = get_session()
 
-	source_by_id = { source_id: desc for source_id, desc in session.execute("SELECT id, description FROM source").fetchall() }
-	search_type_by_id = { search_type_id: desc for search_type_id, desc in session.execute("SELECT id, description FROM search_type").fetchall() }
+	source_by_id = { source_id: desc for source_id, desc in session.execute(text("SELECT id, description FROM source")).fetchall() }
+	search_type_by_id = { search_type_id: desc for search_type_id, desc in session.execute(text("SELECT id, description FROM search_type")).fetchall() }
 
-	session.execute("DELETE FROM processing_method")
+	session.execute(text("DELETE FROM processing_method"))
 
 	with open(args.filename) as f:
 		reader = csv.DictReader(f)
@@ -62,7 +63,7 @@ def main():
 			if int(row['data_type']) not in (1,2):
 				raise ValueError("Invalid data type (%s): must be 1 or 2", row['data_type'])
 
-			session.execute("""INSERT INTO processing_method (
+			session.execute(text("""INSERT INTO processing_method (
 					taxon_id,
 					unit_id,
 					source_id,
@@ -80,7 +81,7 @@ def main():
 					:experimental_design_type_id,
 					:response_variable_type_id,
 					:positional_accuracy_threshold_in_m
-				)""", row)
+				)"""), row)
 
 	session.commit()
 

@@ -7,6 +7,7 @@ from tsx.util import run_parallel, sql_list_placeholder, sql_list_argument
 from tsx.geo import point_intersects_geom
 import logging
 import binascii
+from sqlalchemy import text
 
 log = logging.getLogger(__name__)
 
@@ -15,9 +16,9 @@ def process_database(species = None, commit = False):
 
     # Just get taxa that have range polygons
     if species == None:
-        taxa = session.execute("SELECT DISTINCT taxon_id FROM taxon_range").fetchall()
+        taxa = session.execute(text("SELECT DISTINCT taxon_id FROM taxon_range")).fetchall()
     else:
-        taxa = session.execute("SELECT DISTINCT taxon_id FROM taxon_range, taxon WHERE taxon_id = taxon.id AND spno IN (%s)" % sql_list_placeholder('species', species),
+        taxa = session.execute(text("SELECT DISTINCT taxon_id FROM taxon_range, taxon WHERE taxon_id = taxon.id AND spno IN (%s)" % sql_list_placeholder('species', species)),
             sql_list_argument('species', species)).fetchall()
 
     # Unwrap tuple
@@ -26,7 +27,7 @@ def process_database(species = None, commit = False):
     # Delete old results
     if commit and len(taxa) > 0:
         # session.execute("DELETE FROM t2_ultrataxon_sighting WHERE taxon_id IN (:taxa)", { 'taxa': taxa })
-        session.execute("DELETE FROM t2_ultrataxon_sighting WHERE taxon_id IN (%s)" % sql_list_placeholder('taxa', taxa), sql_list_argument('taxa', taxa))
+        session.execute(text("DELETE FROM t2_ultrataxon_sighting WHERE taxon_id IN (%s)" % sql_list_placeholder('taxa', taxa)), sql_list_argument('taxa', taxa))
         session.commit()
 
     # Process in parallel
@@ -41,10 +42,10 @@ def process_database(species = None, commit = False):
 
 
 def get_taxon_range_polygons(session, taxon_id):
-    return session.execute("""SELECT range_id, breeding_range_id, HEX(ST_AsWKB(geometry))
+    return session.execute(text("""SELECT range_id, breeding_range_id, HEX(ST_AsWKB(geometry))
                         FROM taxon_range
                         WHERE taxon_id = :taxon_id
-                        """, { 'taxon_id': taxon_id }).fetchall()
+                        """), { 'taxon_id': taxon_id }).fetchall()
 
 def process_taxon(taxon_id, commit):
     try:
@@ -71,12 +72,12 @@ def process_taxon(taxon_id, commit):
             bounds_wkb = shapely.wkb.dumps(Polygon.from_bounds(*geom.bounds))
 
             # Get all sightings matching that taxon
-            q = session.execute("""SELECT t2_sighting.id, ST_X(coords), ST_Y(coords)
+            q = session.execute(text("""SELECT t2_sighting.id, ST_X(coords), ST_Y(coords)
                 FROM t2_sighting, t2_survey
                 WHERE t2_sighting.survey_id = t2_survey.id
                 AND t2_sighting.taxon_id = :taxon_id
                 AND t2_sighting.taxon_id NOT IN (SELECT taxon_id FROM t2_ultrataxon_sighting WHERE sighting_id = t2_sighting.id)
-                AND MBRContains(ST_GeomFromWKB(_BINARY :bounds_wkb), coords) """, {
+                AND MBRContains(ST_GeomFromWKB(_BINARY :bounds_wkb), coords) """), {
                 'taxon_id': taxon.id,
                 'bounds_wkb': bounds_wkb
             })
@@ -98,7 +99,7 @@ def process_taxon(taxon_id, commit):
 
             if taxon.taxon_level.description == 'ssp':
                 # Get parent taxa (species) sightings
-                q = session.execute("""SELECT t2_sighting.id, ST_X(coords), ST_Y(coords)
+                q = session.execute(text("""SELECT t2_sighting.id, ST_X(coords), ST_Y(coords)
                     FROM t2_sighting, t2_survey, taxon taxon_ssp, taxon taxon_sp
                     WHERE t2_sighting.survey_id = t2_survey.id
                     AND t2_sighting.taxon_id = taxon_sp.id
@@ -106,7 +107,7 @@ def process_taxon(taxon_id, commit):
                     AND taxon_sp.taxon_level_id = (SELECT id FROM taxon_level WHERE description = 'sp')
                     AND taxon_sp.spno = taxon_ssp.spno
                     AND taxon_ssp.id = :taxon_id
-                    AND MBRContains(ST_GeomFromWKB(_BINARY :bounds_wkb), coords) """, {
+                    AND MBRContains(ST_GeomFromWKB(_BINARY :bounds_wkb), coords) """), {
                     'taxon_id': taxon.id,
                     'bounds_wkb': bounds_wkb
                 })

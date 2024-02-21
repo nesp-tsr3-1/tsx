@@ -10,6 +10,7 @@ from shapely.geometry import shape
 from fiona.transform import transform_geom
 import fiona
 import pyproj
+from sqlalchemy import text
 
 log = logging.getLogger(__name__)
 
@@ -25,7 +26,7 @@ def main():
 
 	session = get_session()
 
-	session.execute("DELETE FROM t1_survey_region")
+	session.execute(text("DELETE FROM t1_survey_region"))
 
 	with fiona.open(args.filename, encoding = 'Windows-1252') as shp:
 		for index, feature in enumerate(tqdm(shp)):
@@ -34,8 +35,8 @@ def main():
 			geometry = shape(transform_geom(shp.crs, 'EPSG:4326', feature['geometry']))
 			geometry = geometry.buffer(0)
 
-			session.execute("""INSERT INTO region (id, name, geometry, state, positional_accuracy_in_m)
-					VALUES (:id, :name, ST_GeomFromWKB(_BINARY :geometry_wkb), :state, :positional_accuracy_in_m)""", {
+			session.execute(text("""INSERT INTO region (id, name, geometry, state, positional_accuracy_in_m)
+					VALUES (:id, :name, ST_GeomFromWKB(_BINARY :geometry_wkb), :state, :positional_accuracy_in_m)"""), {
 						'id': index,
 						'name': props['RegName'],
 						'geometry_wkb': shapely.wkb.dumps(to_multipolygon(geometry)),
@@ -45,15 +46,15 @@ def main():
 
 			for geometry in subdivide_geometry(geometry):
 
-				session.execute("""INSERT INTO region_subdiv (id, name, geometry)
-					VALUES (:id, :name, ST_GeomFromWKB(_BINARY :geometry_wkb))""", {
+				session.execute(text("""INSERT INTO region_subdiv (id, name, geometry)
+					VALUES (:id, :name, ST_GeomFromWKB(_BINARY :geometry_wkb))"""), {
 						'id': index,
 						'name': props['RegName'],
 						'geometry_wkb': shapely.wkb.dumps(to_multipolygon(geometry))
 					})
 
 	log.info("Updating t1_survey_region (this may take a while)")
-	session.execute("CALL update_t1_survey_region(NULL)")
+	session.execute(text("CALL update_t1_survey_region(NULL)"))
 
 	session.commit()
 

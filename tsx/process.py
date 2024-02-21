@@ -25,6 +25,7 @@ import tsx.processing.spatial_rep
 import tsx.processing.filter_time_series
 import fiona
 from tsx.geo import to_multipolygon
+from sqlalchemy import text
 
 log = logging.getLogger(__name__)
 
@@ -226,7 +227,7 @@ def clear_database():
     ]
 
     for sql in tqdm(statements):
-        session.execute(sql)
+        session.execute(text(sql))
 
     session.commit()
 
@@ -250,10 +251,10 @@ def export(layers, species = None):
         if export_alpha:
             filename = os.path.join(export_dir, '%s-alpha.shp' % spno)
 
-            alpha_hulls = session.execute("""SELECT taxon_id, range_id, breeding_range_id, HEX(ST_AsWKB(geometry))
+            alpha_hulls = session.execute(text("""SELECT taxon_id, range_id, breeding_range_id, HEX(ST_AsWKB(geometry))
                     FROM taxon_presence_alpha_hull, taxon
                     WHERE taxon_id = taxon.id
-                    AND spno = :spno""", {
+                    AND spno = :spno"""), {
                         'spno': spno
                     }).fetchall()
 
@@ -289,14 +290,14 @@ def export(layers, species = None):
         if export_ultrataxa:
             filename = os.path.join(export_dir, '%s-ultrataxa.shp' % spno)
 
-            items = session.execute("""SELECT ST_X(coords) AS x, ST_Y(coords) AS y, taxon.id, range_id, generated_subspecies, t2_survey_site.site_id, t2_survey.search_type_id
+            items = session.execute(text("""SELECT ST_X(coords) AS x, ST_Y(coords) AS y, taxon.id, range_id, generated_subspecies, t2_survey_site.site_id, t2_survey.search_type_id
                 FROM t2_ultrataxon_sighting, t2_sighting, taxon, t2_survey
                 LEFT JOIN t2_survey_site ON t2_survey_site.survey_id = t2_survey.id
                 WHERE t2_ultrataxon_sighting.sighting_id = t2_sighting.id
                 AND t2_sighting.survey_id = t2_survey.id
                 AND t2_ultrataxon_sighting.taxon_id = taxon.id
                 AND taxon.spno = :spno
-                """, {
+                """), {
                     'spno': spno
                 }).fetchall()
 
@@ -331,7 +332,7 @@ def export(layers, species = None):
         if export_pseudo_absence:
             filename = os.path.join(export_dir, '%s-pa.shp' % spno)
 
-            items = session.execute("""SELECT ST_X(coords) AS x, ST_Y(coords) AS y, taxon.id
+            items = session.execute(text("""SELECT ST_X(coords) AS x, ST_Y(coords) AS y, taxon.id
                 FROM t2_processed_sighting, t2_processed_survey, t2_survey, taxon
                 WHERE t2_processed_sighting.survey_id = t2_processed_survey.id
                 AND t2_processed_survey.raw_survey_id = t2_survey.id
@@ -339,7 +340,7 @@ def export(layers, species = None):
                 AND taxon.spno = :spno
                 AND pseudo_absence
                 AND experimental_design_type_id = 1
-                """, {
+                """), {
                     'spno': spno
                 }).fetchall()
 
@@ -366,14 +367,14 @@ def export(layers, species = None):
         if export_grid:
             filename = os.path.join(export_dir, '%s-grid.shp' % spno)
 
-            items = session.execute("""SELECT ST_X(coords) AS x, ST_Y(coords) AS y, grid_cell_id, taxon.id, pseudo_absence
+            items = session.execute(text("""SELECT ST_X(coords) AS x, ST_Y(coords) AS y, grid_cell_id, taxon.id, pseudo_absence
                 FROM t2_processed_sighting, t2_processed_survey, t2_survey, taxon
                 WHERE t2_processed_sighting.survey_id = t2_processed_survey.id
                 AND t2_processed_survey.raw_survey_id = t2_survey.id
                 AND t2_processed_sighting.taxon_id = taxon.id
                 AND taxon.spno = :spno
                 AND experimental_design_type_id = 2
-                """, {
+                """), {
                     'spno': spno
                 }).fetchall()
 
@@ -402,7 +403,7 @@ def export(layers, species = None):
                         })
 
 def get_all_spno(session):
-    return [spno for (spno,) in session.execute("SELECT DISTINCT spno FROM taxon").fetchall()]
+    return [spno for (spno,) in session.execute(text("SELECT DISTINCT spno FROM taxon")).fetchall()]
 
 if __name__ == '__main__':
     main()

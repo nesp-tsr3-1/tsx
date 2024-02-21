@@ -7,6 +7,7 @@ import openpyxl
 from tqdm import tqdm
 from six import text_type
 import re
+from sqlalchemy import text
 
 log = logging.getLogger(__name__)
 
@@ -20,9 +21,9 @@ def main():
 	session = get_session()
 
 	# We temporarily disable foreign key checks so that we don't have to delete all data from the database
-	session.execute("SET FOREIGN_KEY_CHECKS = 0")
-	session.execute("DELETE FROM taxon")
-	session.execute("DELETE FROM taxon_group")
+	session.execute(text("SET FOREIGN_KEY_CHECKS = 0"))
+	session.execute(text("DELETE FROM taxon"))
+	session.execute(text("DELETE FROM taxon_group"))
 
 	print("Loading workbook...")
 
@@ -110,7 +111,7 @@ def main():
 			session.add(taxon)
 			session.add_all(taxon_groups)
 
-	session.execute("SET FOREIGN_KEY_CHECKS = 1")
+	session.execute(text("SET FOREIGN_KEY_CHECKS = 1"))
 
 	session.commit()
 

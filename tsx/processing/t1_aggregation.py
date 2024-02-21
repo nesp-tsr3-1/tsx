@@ -4,17 +4,17 @@ import functools
 from tqdm import tqdm
 from tsx.db import get_session
 from tsx.util import run_parallel, sql_list_placeholder, sql_list_argument
-
+from sqlalchemy import text
 
 log = logging.getLogger(__name__)
 
 def process_database(species = None, commit = False, simple_mode = False, database_config = None):
     session = get_session(database_config)
     if species == None:
-        taxa = [taxon_id for (taxon_id,) in session.execute("SELECT DISTINCT taxon_id FROM t1_sighting").fetchall()]
+        taxa = [taxon_id for (taxon_id,) in session.execute(text("SELECT DISTINCT taxon_id FROM t1_sighting")).fetchall()]
     else:
         taxa = [taxon_id for (taxon_id,) in session.execute(
-            "SELECT DISTINCT taxon_id FROM t1_sighting, taxon WHERE taxon.id = taxon_id AND spno IN (%s)" % sql_list_placeholder('species', species),
+            text("SELECT DISTINCT taxon_id FROM t1_sighting, taxon WHERE taxon.id = taxon_id AND spno IN (%s)" % sql_list_placeholder('species', species)),
             sql_list_argument('species', species)).fetchall()]
 
     if not simple_mode:
@@ -53,7 +53,7 @@ def aggregate_monthly(taxon_id, simple_mode = False, commit = False, database_co
                 FROM processing_method
                 WHERE data_type = 1
                 AND taxon_id = :taxon_id"""
-        rows = session.execute(sql, {'taxon_id': taxon_id}).fetchall()
+        rows = session.execute(text(sql), {'taxon_id': taxon_id}).fetchall()
 
         for source_id, unit_id, search_type_id, experimental_design_type_id, response_variable_type_id in rows:
 
@@ -139,7 +139,7 @@ def aggregate_monthly(taxon_id, simple_mode = False, commit = False, database_co
                     centroid_expression = centroid_expression
                 )
 
-            session.execute(sql, {
+            session.execute(text(sql), {
                 'taxon_id': taxon_id,
                 'response_variable_type_id': response_variable_type_id,
                 'source_id': source_id,
@@ -217,7 +217,7 @@ def aggregate_yearly(taxon_id, simple_mode = False, commit = False, database_con
                 unit_id
         """.format(centroid_expression = centroid_expression)
 
-        session.execute(sql, { 'taxon_id': taxon_id })
+        session.execute(text(sql), { 'taxon_id': taxon_id })
 
         if commit:
             session.commit()
@@ -230,13 +230,13 @@ def aggregate_yearly(taxon_id, simple_mode = False, commit = False, database_con
 
 
 def cleanup_region_lookup_table(session):
-    session.execute("""DROP TABLE IF EXISTS tmp_region_lookup""")
+    session.execute(text("""DROP TABLE IF EXISTS tmp_region_lookup"""))
 
 def create_region_lookup_table(session):
     log.info("Pre-calculating region for each site")
 
     cleanup_region_lookup_table(session)
-    session.execute("""CREATE TABLE tmp_region_lookup
+    session.execute(text("""CREATE TABLE tmp_region_lookup
         ( INDEX (site_id) )
         SELECT DISTINCT
             site_id,
@@ -244,4 +244,4 @@ def create_region_lookup_table(session):
         FROM
             t1_survey
         STRAIGHT_JOIN region_subdiv USE INDEX (geometry) ON ST_Intersects(coords, geometry)
-        """)
+        """))

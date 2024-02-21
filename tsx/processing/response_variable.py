@@ -4,6 +4,7 @@ import logging
 from tsx.util import run_parallel, sql_list_placeholder, sql_list_argument
 import time
 import functools
+from sqlalchemy import text
 
 log = logging.getLogger(__name__)
 
@@ -11,10 +12,10 @@ def process_database(species = None, commit = False):
     session = get_session()
 
     if species == None:
-        taxa = [taxon_id for (taxon_id,) in session.execute("SELECT DISTINCT taxon_id FROM processing_method WHERE data_type = 2").fetchall()]
+        taxa = [taxon_id for (taxon_id,) in session.execute(text("SELECT DISTINCT taxon_id FROM processing_method WHERE data_type = 2")).fetchall()]
     else:
         taxa = [taxon_id for (taxon_id,) in session.execute(
-                "SELECT DISTINCT taxon_id FROM processing_method, taxon WHERE taxon.id = taxon_id AND data_type = 2 AND spno IN %s" % sql_list_placeholder('species', species),
+                text("SELECT DISTINCT taxon_id FROM processing_method, taxon WHERE taxon.id = taxon_id AND data_type = 2 AND spno IN %s" % sql_list_placeholder('species', species)),
                 sql_list_argument('species', species)
             ).fetchall()]
 
@@ -145,7 +146,7 @@ def aggregate_by_month(taxon_id, commit = False):
                     fields = fields
                 )
 
-            session.execute(sql, {
+            session.execute(text(sql), {
                 'experimental_design_type_id': experimental_design_type_id,
                 'response_variable_type_id': response_variable_type_id,
                 'taxon_id': taxon_id,
@@ -219,7 +220,7 @@ def aggregate_by_year(taxon_id, commit = False):
                 unit_id
         """
 
-        session.execute(sql, { 'taxon_id': taxon_id })
+        session.execute(text(sql), { 'taxon_id': taxon_id })
 
         if commit:
             session.commit()
@@ -230,7 +231,7 @@ def aggregate_by_year(taxon_id, commit = False):
         session.close()
 
 def cleanup_region_lookup_table(session):
-    session.execute("""DROP TABLE IF EXISTS tmp_region_lookup""")
+    session.execute(text("""DROP TABLE IF EXISTS tmp_region_lookup"""))
 
 def create_region_lookup_table(session):
     log.info("Pre-calculating region for each site/grid")
@@ -238,9 +239,9 @@ def create_region_lookup_table(session):
     cleanup_region_lookup_table(session)
 
     # Since upgrading to MySQL 8 this seems to be necessary to get decent performance in some INSERT/CREATE..SELECT scenarios.
-    session.execute("SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED")
+    session.execute(text("SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED"))
 
-    session.execute("""CREATE TABLE tmp_region_lookup
+    session.execute(text("""CREATE TABLE tmp_region_lookup
         ( INDEX (site_id, grid_cell_id) )
         SELECT DISTINCT
             t2_survey_site.site_id,
@@ -258,4 +259,4 @@ def create_region_lookup_table(session):
         FROM
             grid_cell, region_subdiv
             WHERE ST_Intersects(ST_Centroid(grid_cell.geometry), region_subdiv.geometry)
-        """)
+        """))

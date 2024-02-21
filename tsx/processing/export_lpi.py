@@ -10,6 +10,7 @@ from datetime import date
 import re
 import numpy as np
 import tsx.config
+from sqlalchemy import text
 
 log = logging.getLogger(__name__)
 
@@ -23,10 +24,10 @@ def process_database(species = None, monthly = False, filter_output = False, inc
     session = get_session(database_config)
 
     if species == None:
-        taxa = [taxon_id for (taxon_id,) in session.execute("SELECT DISTINCT taxon_id FROM aggregated_by_year").fetchall()]
+        taxa = [taxon_id for (taxon_id,) in session.execute(text("SELECT DISTINCT taxon_id FROM aggregated_by_year")).fetchall()]
     else:
         taxa = [taxon_id for (taxon_id,) in session.execute(
-                "SELECT DISTINCT taxon_id FROM aggregated_by_year, taxon WHERE taxon.id = taxon_id AND spno IN (%s)" % sql_list_placeholder('species', species),
+                text("SELECT DISTINCT taxon_id FROM aggregated_by_year, taxon WHERE taxon.id = taxon_id AND spno IN (%s)" % sql_list_placeholder('species', species)),
                 sql_list_argument('species', species)
             ).fetchall()]
 
@@ -41,10 +42,10 @@ def process_database(species = None, monthly = False, filter_output = False, inc
 
     log.info("Calculating region centroids")
 
-    session.execute("""CREATE TEMPORARY TABLE region_centroid AS
+    session.execute(text("""CREATE TEMPORARY TABLE region_centroid AS
         -- (PRIMARY KEY (id))
         SELECT id, ST_X(ST_Centroid(geometry)) AS x, ST_Y(ST_Centroid(geometry)) AS y
-        FROM region""")
+        FROM region"""))
 
     # Get year range
     min_year = tsx.config.config.getint("processing", "min_year")
@@ -54,14 +55,14 @@ def process_database(species = None, monthly = False, filter_output = False, inc
     # even beyond the max_year specified in the config file. However, the TimeSeriesSampleYears and other stats still
     # need to reflect only the years up to max_year, so it makes things a tad more complicated.
     if include_all_years_data:
-        (max_year,) = session.execute("""SELECT MAX(start_date_y) FROM aggregated_by_year""").fetchone()
+        (max_year,) = session.execute(text("""SELECT MAX(start_date_y) FROM aggregated_by_year""")).fetchone()
     else:
         max_year = max_analysis_year
 
 
     # Without this, the GROUP_CONCAT in the export query produces rows that are too long
     if database_config == None or "sqlite:" not in database_config:
-        session.execute("""SET SESSION group_concat_max_len = 50000;""")
+        session.execute(text("""SET SESSION group_concat_max_len = 50000;"""))
 
     export_dir = export_dir or tsx.config.data_dir('export')
 
@@ -298,7 +299,7 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                         current_year_expression = current_year_expression
                     )
 
-            result = session.execute(sql, {
+            result = session.execute(text(sql), {
                         'taxon_id': taxon_id,
                         'min_year': min_year,
                         'max_year': max_year

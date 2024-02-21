@@ -5,6 +5,7 @@ import argparse
 import csv
 from tqdm import tqdm
 from datetime import date
+from sqlalchemy import text
 
 log = logging.getLogger(__name__)
 
@@ -19,7 +20,7 @@ def main():
 
 	session = get_session()
 
-	session.execute("DELETE FROM data_source");
+	session.execute(text("DELETE FROM data_source"));
 
 	with open(args.filename) as f:
 		reader = csv.DictReader(f)
@@ -44,7 +45,7 @@ def main():
 			if args.relax and row['SourceID'].strip() in ('', 'NULL', 'NA'):
 				continue
 
-			r = session.execute("SELECT 1 FROM source WHERE id = :id", { 'id': data['source_id'] }).fetchall()
+			r = session.execute(text("SELECT 1 FROM source WHERE id = :id"), { 'id': data['source_id'] }).fetchall()
 			if len(r) == 0:
 				if args.relax:
 					log.warning("Skipping unknown source id: %s" % data['source_id'])
@@ -73,9 +74,9 @@ def main():
 				data['provider'] = strip_and_warn(row['SourceProvider'])
 				data['description'] = strip_and_warn(row['SourceDesc'])
 
-				session.execute("""UPDATE source SET authors = :authors, provider = :provider, description = :description WHERE id = :source_id""", data)
+				session.execute(text("""UPDATE source SET authors = :authors, provider = :provider, description = :description WHERE id = :source_id"""), data)
 
-			session.execute("""INSERT INTO data_source (
+			session.execute(text("""INSERT INTO data_source (
 					source_id,
 					taxon_id,
 					data_agreement_id,
@@ -101,7 +102,7 @@ def main():
 					:exclude_from_analysis,
 					:suppress_aggregated_data,
 					:citation
-				)""",
+				)"""),
 				data
 			)
 

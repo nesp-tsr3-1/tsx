@@ -10,6 +10,7 @@ from contextlib import contextmanager
 import csv
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import text
 from shapely.geometry import Point
 from tqdm import tqdm
 from sqlalchemy import func
@@ -261,10 +262,10 @@ class Importer:
 	def clear_previous_data(self, session):
 		if self.source_id:
 			self.log.info('Deleting all previous data for this source')
-			session.execute('DELETE FROM t1_survey WHERE source_id = :source_id', { 'source_id': self.source_id })
-			session.execute('DELETE FROM t1_site WHERE source_id = :source_id', { 'source_id': self.source_id })
-			session.execute('DELETE FROM t2_survey WHERE source_id = :source_id', { 'source_id': self.source_id })
-			session.execute('DELETE FROM t2_site WHERE source_id = :source_id', { 'source_id': self.source_id })
+			session.execute(text('DELETE FROM t1_survey WHERE source_id = :source_id'), { 'source_id': self.source_id })
+			session.execute(text('DELETE FROM t1_site WHERE source_id = :source_id'), { 'source_id': self.source_id })
+			session.execute(text('DELETE FROM t2_survey WHERE source_id = :source_id'), { 'source_id': self.source_id })
+			session.execute(text('DELETE FROM t2_site WHERE source_id = :source_id'), { 'source_id': self.source_id })
 
 
 	def update_log_counts(self):
@@ -783,7 +784,7 @@ class Importer:
 
 	def create_taxon(self, session, taxon_id, scientific_name, common_name):
 		if taxon_id is None:
-			taxon_id = session.execute("""SELECT CONCAT('a', LPAD(COALESCE(SUBSTR((SELECT MAX(id) FROM taxon WHERE id LIKE 'a%'), 2), 0) + 1, 5, '0'));""")
+			taxon_id = session.execute(text("""SELECT CONCAT('a', LPAD(COALESCE(SUBSTR((SELECT MAX(id) FROM taxon WHERE id LIKE 'a%'), 2), 0) + 1, 5, '0'));"""))
 
 		if scientific_name is None:
 			scientific_name = taxon_id

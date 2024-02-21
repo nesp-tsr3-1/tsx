@@ -1,6 +1,7 @@
 from tsx.db import get_session
 import logging
 import tsx.config
+from sqlalchemy import text
 
 log = logging.getLogger(__name__)
 
@@ -14,7 +15,7 @@ def process_database():
 	max_year = tsx.config.config.getint("processing", "max_year")
 	min_tssy = tsx.config.config.getint("processing", "min_time_series_sample_years")
 
-	session.execute("""CREATE TEMPORARY TABLE tmp_filtered_ts
+	session.execute(text("""CREATE TEMPORARY TABLE tmp_filtered_ts
 		( INDEX (time_series_id) )
 		SELECT time_series_id
 		FROM aggregated_by_year agg
@@ -33,7 +34,7 @@ def process_database():
 		GROUP BY agg.time_series_id
 		HAVING MAX(value) > 0
 		AND COUNT(DISTINCT start_date_y) >= :min_tssy;
-	""", {
+	"""), {
 		'min_year': min_year,
 		'max_year': max_year,
 		'min_tssy': min_tssy
@@ -41,18 +42,18 @@ def process_database():
 
 	log.info("Step 2/2 - Updating aggregated_by_year table")
 
-	session.execute("""UPDATE aggregated_by_year agg
+	session.execute(text("""UPDATE aggregated_by_year agg
 		LEFT JOIN data_source ON data_source.taxon_id = agg.taxon_id AND data_source.source_id = agg.source_id
 		SET agg.include_in_analysis =
 			agg.time_series_id IN (SELECT time_series_id FROM tmp_filtered_ts)
 			AND agg.start_date_y <= COALESCE(data_source.end_year, :max_year)
 			AND agg.start_date_y >= COALESCE(data_source.start_year, :min_year)
-	""", {
+	"""), {
 		'min_year': min_year,
 		'max_year': max_year
 	})
 
-	session.execute("""DROP TABLE tmp_filtered_ts""")
+	session.execute(text("""DROP TABLE tmp_filtered_ts"""))
 
 	log.info("Done")
 

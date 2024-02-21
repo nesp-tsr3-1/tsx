@@ -8,6 +8,7 @@ from tsx.geo import open_shapefile, to_multipolygon
 from shapely.geometry import shape
 from shapely.ops import transform
 import pyproj
+from sqlalchemy import text
 
 log = logging.getLogger(__name__)
 
@@ -25,8 +26,8 @@ def main():
 			props = feature['properties']
 			geometry = to_multipolygon(reproject(shape(feature['geometry'])))
 
-			session.execute("""INSERT INTO t2_site (search_type_id, geometry)
-				VALUES (:search_type_id, ST_GeomFromWKB(_BINARY :geometry_wkb))""", {
+			session.execute(text("""INSERT INTO t2_site (search_type_id, geometry)
+				VALUES (:search_type_id, ST_GeomFromWKB(_BINARY :geometry_wkb))"""), {
 					'search_type_id': props['SiteType'],
 					'geometry_wkb': shapely.wkb.dumps(geometry)
 				})

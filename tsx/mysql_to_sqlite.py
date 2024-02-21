@@ -1,6 +1,7 @@
 from tsx.db import get_session
 import sqlite3
 import logging
+from sqlalchemy import text
 
 log = logging.getLogger(__name__)
 
@@ -50,7 +51,7 @@ def export_to_sqlite(source_id, path):
     return path
 
 def copy_db(session, dest_db):
-    tables = [table for (table,) in session.execute("show tables").fetchall()]
+    tables = [table for (table,) in session.execute(text("show tables")).fetchall()]
     for table in tables:
         copy_table_schema(session, table, dest_db)
         copy_table_data(session, table, dest_db)
@@ -66,7 +67,7 @@ def copy_table_schema(session, table, dest_db):
     # Note: we create columns one by one because that is the only supported way to create spatial columns
     # (https://www.gaia-gis.it/gaia-sins/spatialite-cookbook/html/new-geom.html)
     # However you can't create a table with no columns.
-    for (name, datatype, nullable, key, default, extra) in session.execute("describe `%s`" % table).fetchall():
+    for (name, datatype, nullable, key, default, extra) in session.execute(text("describe `%s`" % table)).fetchall():
         datatype = datatype.decode("utf-8")
         if is_spatial_datatype(datatype):
             if created == False:
@@ -114,7 +115,7 @@ def select_expr(name, datatype):
 
 
 def copy_table_data(session, table, dest_db, select_where_clause = None, select_params = {}):
-    fields = [(name, datatype.decode('utf-8')) for (name, datatype, nullable, key, default, extra) in session.execute("describe `%s`" % table).fetchall()]
+    fields = [(name, datatype.decode('utf-8')) for (name, datatype, nullable, key, default, extra) in session.execute(text("describe `%s`" % table)).fetchall()]
     select_exprs = ", ".join(select_expr(name, datatype) for (name, datatype) in fields)
     insert_exprs = ", ".join(quote_identifier(name) for (name, datatype) in fields)
     placeholders = ', '.join(placeholder(datatype) for (name, datatype) in fields)
@@ -131,7 +132,7 @@ def copy_table_data(session, table, dest_db, select_where_clause = None, select_
         pos = 0
         while True:
             select_params['pos'] = pos
-            rows = session.execute(select_sql + " WHERE id > :pos ORDER BY id LIMIT 10000", select_params).fetchall()
+            rows = session.execute(text(select_sql + " WHERE id > :pos ORDER BY id LIMIT 10000"), select_params).fetchall()
             if len(rows) == 0:
                 break
             else:
@@ -139,7 +140,7 @@ def copy_table_data(session, table, dest_db, select_where_clause = None, select_
             dest_db.executemany(insert_sql, rows)
             dest_db.commit()
     else:
-        result = session.execute(select_sql, select_params)
+        result = session.execute(text(select_sql), select_params)
         def flush(rows):
             if len(rows) > 0:
                 # print(rows[0])

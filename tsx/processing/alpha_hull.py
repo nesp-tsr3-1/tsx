@@ -19,6 +19,7 @@ from tqdm import tqdm
 import logging
 import shapely.wkb
 import binascii
+from sqlalchemy import text
 import gc
 import fiona # Important - moving this dependency to the top causes a segfault loading sqlite extensions in mysql_to_sqlite!
 
@@ -197,8 +198,8 @@ def process_spno(spno, coastal_shape, commit):
             geom = shapely.wkb.loads(binascii.unhexlify(geom_wkb)).buffer(0)
             geom = to_multipolygon(geom.intersection(alpha_shp)) # slow
             if len(geom.geoms) > 0:
-                session.execute("""INSERT INTO taxon_presence_alpha_hull (taxon_id, range_id, breeding_range_id, geometry)
-                    VALUES (:taxon_id, :range_id, :breeding_range_id, ST_GeomFromWKB(_BINARY :geom_wkb))""", {
+                session.execute(text("""INSERT INTO taxon_presence_alpha_hull (taxon_id, range_id, breeding_range_id, geometry)
+                    VALUES (:taxon_id, :range_id, :breeding_range_id, ST_GeomFromWKB(_BINARY :geom_wkb))"""), {
                         'taxon_id': taxon_id,
                         'range_id': range_id,
                         'breeding_range_id': breeding_range_id,
@@ -209,8 +210,8 @@ def process_spno(spno, coastal_shape, commit):
             # spatial queries in the database.
             for subgeom in subdivide_geometry(geom, max_points = 100):
                 if len(geom.geoms) > 0:
-                    session.execute("""INSERT INTO taxon_presence_alpha_hull_subdiv (taxon_id, range_id, breeding_range_id, geometry)
-                        VALUES (:taxon_id, :range_id, :breeding_range_id, ST_GeomFromWKB(_BINARY :geom_wkb))""", {
+                    session.execute(text("""INSERT INTO taxon_presence_alpha_hull_subdiv (taxon_id, range_id, breeding_range_id, geometry)
+                        VALUES (:taxon_id, :range_id, :breeding_range_id, ST_GeomFromWKB(_BINARY :geom_wkb))"""), {
                             'taxon_id': taxon_id,
                             'range_id': range_id,
                             'breeding_range_id': breeding_range_id,
@@ -238,18 +239,18 @@ def process_database(species = None, commit = False):
     if commit:
         log.info("Deleting previous alpha hulls")
         if species is None:
-            session.execute("""DELETE FROM taxon_presence_alpha_hull""")
-            session.execute("""DELETE FROM taxon_presence_alpha_hull_subdiv""")
+            session.execute(text("""DELETE FROM taxon_presence_alpha_hull"""))
+            session.execute(text("""DELETE FROM taxon_presence_alpha_hull_subdiv"""))
         else:
             for spno in tqdm(species):
-                session.execute("""
+                session.execute(text("""
                     DELETE FROM taxon_presence_alpha_hull
                     WHERE taxon_id IN (SELECT id FROM taxon WHERE spno = :spno)
-                    """, { 'spno': spno })
-                session.execute("""
+                    """), { 'spno': spno })
+                session.execute(text("""
                     DELETE FROM taxon_presence_alpha_hull_subdiv
                     WHERE taxon_id IN (SELECT id FROM taxon WHERE spno = :spno)
-                    """, { 'spno': spno })
+                    """), { 'spno': spno })
         session.commit()
 
     if species is None:
@@ -285,7 +286,7 @@ def reproject(geom, transformer):
     return transform(transformer.transform, geom)
 
 def get_all_spno(session):
-    return [spno for (spno,) in session.execute("SELECT DISTINCT spno FROM taxon").fetchall()]
+    return [spno for (spno,) in session.execute(text("SELECT DISTINCT spno FROM taxon")).fetchall()]
 
 def get_species_points(session, spno):
     sql = """SELECT DISTINCT ST_X(coords), ST_Y(coords)
@@ -306,14 +307,14 @@ def get_species_points(session, spno):
         AND spno = :spno
         """
 
-    return [Point(x,y) for x, y in session.execute(sql, { 'spno': spno }).fetchall()]
+    return [Point(x,y) for x, y in session.execute(text(sql), { 'spno': spno }).fetchall()]
 
 def get_species_range_polygons(session, spno):
-    return session.execute("""SELECT taxon_id, range_id, breeding_range_id, HEX(ST_AsWKB(geometry))
+    return session.execute(text("""SELECT taxon_id, range_id, breeding_range_id, HEX(ST_AsWKB(geometry))
                         FROM taxon_range, taxon
                         WHERE taxon_id = taxon.id
                         AND spno = :spno
-                        """, { 'spno': spno }).fetchall()
+                        """), { 'spno': spno }).fetchall()
 
 # The rest of the functions below are only used when this file is called as a stand-alone script
 # (Leaving this here from Hoang's original script)

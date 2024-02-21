@@ -46,9 +46,9 @@ def get_session_maker(database_config=None):
         if url.startswith("mysql"):
             connect_args['use_pure'] = True
         engine = create_engine(url,
-            convert_unicode=True,
             pool_recycle=600, # Avoid DB connection timeout
-            connect_args = connect_args) # This avoids weird intermittent 'Access denied for user' error (maybe due to a bug in the MySQL C connector?)
+            connect_args = connect_args,
+            future=True) # This avoids weird intermittent 'Access denied for user' error (maybe due to a bug in the MySQL C connector?)
 
         @event.listens_for(engine, "connect")
         def connect(dbapi_connection, connection_record):
@@ -56,7 +56,7 @@ def get_session_maker(database_config=None):
                 setup_sqlite_conn(dbapi_connection)
 
 
-        cached_session_makers[database_config] = scoped_session(sessionmaker(bind=engine))
+        cached_session_makers[database_config] = scoped_session(sessionmaker(bind=engine, future=True))
 
     return cached_session_makers[database_config]
 

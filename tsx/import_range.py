@@ -12,6 +12,7 @@ from shapely.ops import transform
 import fiona
 import time
 import pyproj
+from sqlalchemy import text
 
 log = logging.getLogger(__name__)
 insert_subdivided = False
@@ -74,10 +75,10 @@ def process_shp(session, spno, shp):
 			geometry = transform(transformer.transform, geometry)
 
 			for s in suffix.split("."):
-				taxon_exists = len(session.execute("SELECT 1 FROM taxon WHERE id = :id", { 'id': prefix + s }).fetchall()) > 0
+				taxon_exists = len(session.execute(text("SELECT 1 FROM taxon WHERE id = :id"), { 'id': prefix + s }).fetchall()) > 0
 				if taxon_exists:
-					session.execute("""INSERT INTO taxon_range (taxon_id, range_id, breeding_range_id, geometry) VALUES
-						(:taxon_id, :range_id, :breeding_range_id, ST_GeomFromWKB(_BINARY :geom_wkb))""", {
+					session.execute(text("""INSERT INTO taxon_range (taxon_id, range_id, breeding_range_id, geometry) VALUES
+						(:taxon_id, :range_id, :breeding_range_id, ST_GeomFromWKB(_BINARY :geom_wkb))"""), {
 							'taxon_id': prefix + s,
 							'range_id': props['RNGE'] or None,
 							'breeding_range_id': props['BRRNGE'] or None,
@@ -89,8 +90,8 @@ def process_shp(session, spno, shp):
 						for geom in subdivide_geometry(geometry.buffer(0)):
 							geom = to_multipolygon(geom)
 							if not geom.is_empty:
-								session.execute("""INSERT INTO taxon_range_subdiv (taxon_id, range_id, breeding_range_id, geometry) VALUES
-									(:taxon_id, :range_id, :breeding_range_id, ST_GeomFromWKB(_BINARY :geom_wkb))""", {
+								session.execute(text("""INSERT INTO taxon_range_subdiv (taxon_id, range_id, breeding_range_id, geometry) VALUES
+									(:taxon_id, :range_id, :breeding_range_id, ST_GeomFromWKB(_BINARY :geom_wkb))"""), {
 										'taxon_id': prefix + s,
 										'range_id': props['RNGE'] or None,
 										'breeding_range_id': props['BRRNGE'] or None,

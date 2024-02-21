@@ -13,6 +13,7 @@ from tqdm import tqdm
 import logging
 import shapely.wkb
 import binascii
+from sqlalchemy import text
 
 from tsx.db import get_session
 from tsx.processing.alpha_hull import make_alpha_hull
@@ -39,10 +40,10 @@ def process_database(species = None, commit = False):
 
     if commit:
         if species == None:
-            session.execute("DELETE FROM taxon_source_alpha_hull")
+            session.execute(text("DELETE FROM taxon_source_alpha_hull"))
         else:
-            session.execute("""DELETE FROM taxon_source_alpha_hull
-                WHERE taxon_id IN (SELECT id FROM taxon WHERE spno IN (%s))""" % sql_list_placeholder('species', species),
+            session.execute(text("""DELETE FROM taxon_source_alpha_hull
+                WHERE taxon_id IN (SELECT id FROM taxon WHERE spno IN (%s))""" % sql_list_placeholder('species', species)),
                 sql_list_argument('species', species))
         session.commit()
 
@@ -122,15 +123,15 @@ def process(taxon_id, coastal_shape, data_type, commit):
                     empty = intersected_alpha.is_empty
 
             if empty:
-                session.execute("""INSERT INTO taxon_source_alpha_hull (source_id, taxon_id, data_type, core_range_area_in_m2, alpha_hull_area_in_m2)
-                    VALUES (:source_id, :taxon_id, :data_type, 0, 0)""", {
+                session.execute(text("""INSERT INTO taxon_source_alpha_hull (source_id, taxon_id, data_type, core_range_area_in_m2, alpha_hull_area_in_m2)
+                    VALUES (:source_id, :taxon_id, :data_type, 0, 0)"""), {
                         'source_id': source_id,
                         'taxon_id': taxon_id,
                         'data_type': data_type
                     })
             else:
-                session.execute("""INSERT INTO taxon_source_alpha_hull (source_id, taxon_id, data_type, geometry, core_range_area_in_m2, alpha_hull_area_in_m2)
-                    VALUES (:source_id, :taxon_id, :data_type, ST_GeomFromWKB(_BINARY :geom_wkb), :core_range_area, :alpha_hull_area)""", {
+                session.execute(text("""INSERT INTO taxon_source_alpha_hull (source_id, taxon_id, data_type, geometry, core_range_area_in_m2, alpha_hull_area_in_m2)
+                    VALUES (:source_id, :taxon_id, :data_type, ST_GeomFromWKB(_BINARY :geom_wkb), :core_range_area, :alpha_hull_area)"""), {
                         'source_id': source_id,
                         'taxon_id': taxon_id,
                         'data_type': data_type,
@@ -153,7 +154,7 @@ def reproject(geom, transformer):
 
 
 def get_core_range_geometry(session, taxon_id):
-    rows = session.execute("""SELECT HEX(ST_AsBinary(geometry)) FROM taxon_range WHERE taxon_id = :taxon_id AND range_id = 1""",
+    rows = session.execute(text("""SELECT HEX(ST_AsBinary(geometry)) FROM taxon_range WHERE taxon_id = :taxon_id AND range_id = 1"""),
         { 'taxon_id': taxon_id }).fetchall()
     geom = GeometryCollection([shapely.wkb.loads(binascii.unhexlify(row[0])) for row in rows])
     return to_multipolygon(geom)
@@ -162,13 +163,13 @@ def get_taxa(session, data_type, species):
     table = "t1_sighting" if data_type == 1 else "t2_ultrataxon_sighting"
 
     if species == None:
-        taxa = session.execute("""SELECT DISTINCT taxon_id FROM {table}""".format(table = table)).fetchall()
+        taxa = session.execute(text("""SELECT DISTINCT taxon_id FROM {table}""".format(table = table))).fetchall()
     else:
         sql = """SELECT DISTINCT taxon_id FROM {table}, taxon WHERE taxon.id = taxon_id AND spno IN ({species})""".format(
             table = table,
             species = sql_list_placeholder('species', species)
         )
-        taxa = session.execute(sql, sql_list_argument('species', species)).fetchall()
+        taxa = session.execute(text(sql), sql_list_argument('species', species)).fetchall()
 
     return [taxon_id for (taxon_id,) in taxa]
 
@@ -185,7 +186,7 @@ def get_source_ids(session, data_type, taxon_id):
         AND t2_sighting.id = t2_ultrataxon_sighting.sighting_id
         AND t2_ultrataxon_sighting.taxon_id = :taxon_id"""
 
-    return [source_id for (source_id,) in session.execute(sql, { 'taxon_id': taxon_id }).fetchall()]
+    return [source_id for (source_id,) in session.execute(text(sql), { 'taxon_id': taxon_id }).fetchall()]
 
 def get_raw_points(session, data_type, taxon_id, source_id):
     if data_type == 1:
@@ -202,6 +203,6 @@ def get_raw_points(session, data_type, taxon_id, source_id):
         AND source_id = :source_id
         AND t2_ultrataxon_sighting.taxon_id = :taxon_id"""
 
-    xys = session.execute(sql, { 'taxon_id': taxon_id, 'source_id': source_id }).fetchall()
+    xys = session.execute(text(sql), { 'taxon_id': taxon_id, 'source_id': source_id }).fetchall()
 
     return [Point(x, y) for x, y in xys]
