@@ -290,7 +290,7 @@ def get_intensity():
 
 		# Faster alternative that flattens all years
 		if fast_mode:
-			result = session.bind.execute(text("""SELECT
+			result = session.execute(text("""SELECT
 			ANY_VALUE(ROUND(ST_Y(centroid_coords), 5)) as lat,
 			ANY_VALUE(ROUND(ST_X(centroid_coords), 5)) as lon,
 			SUM(survey_count) as survey_count
@@ -306,9 +306,8 @@ def get_intensity():
 			return json_result
 
 		with log_time("Query database"):
-			# Note 'session.bind' is necessary to run query with positional parameters
 			# STRAIGHT_JOIN is necessary to stop MySQL from choosing a very slow query plan
-			result = session.bind.execute(text("""SELECT
+			result = session.execute(text("""SELECT
 							time_series_id,
 							start_date_y as Year,
 							ANY_VALUE(ST_Y(centroid_coords)) as Latitude,
@@ -564,7 +563,7 @@ def build_filter_string():
 #SQL version of build_filter_string so that we can filter data directly in the database, which is much faster in certain scenarios
 def build_filter_sql(taxon_only=False):
 	expressions = []
-	values = []
+	values = {}
 
 	# Special logic for threatened *bird* index
 	dataset = get_dataset_name()
@@ -573,63 +572,67 @@ def build_filter_sql(taxon_only=False):
 
 	#spno
 	if 'spno' in request.args:
-		expressions.append("taxon.spno = %s")
-		values.append(request.args.get('spno', type=int))
+		expressions.append("taxon.spno = :spno")
+		values['spno'] = request.args.get('spno', type=int)
 
 	# Taxonomic group
 	if 'tgroup' in request.args:
-		expressions.append("taxon.taxonomic_group = %s")
-		values.append(request.args.get('tgroup', type=str))
+		expressions.append("taxon.taxonomic_group = :tgroup")
+		values['tgroup'] = request.args.get('tgroup', type=str)
 
 	# Functional group
 	if 'group' in request.args:
-		expressions.append("taxon.id IN (SELECT taxon_id FROM taxon_group WHERE group_name = %s)")
-		values.append(request.args.get('group', type=str))
+		expressions.append("taxon.id IN (SELECT taxon_id FROM taxon_group WHERE group_name = :group)")
+		values['group'] =  request.args.get('group', type=str)
 
 	# functional subgroup
 	if 'subgroup' in request.args:
-		expressions.append("taxon.id IN (SELECT taxon_id FROM taxon_group WHERE subgroup_name = %s)")
-		values.append(request.args.get('subgroup', type=str))
+		expressions.append("taxon.id IN (SELECT taxon_id FROM taxon_group WHERE subgroup_name = :subgroup)")
+		values['subgroup'] = request.args.get('subgroup', type=str)
 
 	# status/statusauth
 	if 'status' in request.args and 'statusauth' in request.args: #IUCN, EPBC, Max
 		status_authority = request.args.get('statusauth', type=str).lower()
 		statuses = request.args.get('status', type=str).split('+')
 		if status_authority in ["uicn", "epbc", "aust", "max"] and len(statuses) > 0:
-			expressions.append("taxon.%s_status_id IN (SELECT id FROM taxon_status WHERE description IN (%s))" % (status_authority, in_clause_placeholders(statuses)))
-			values.extend(statuses)
+			param_names = ["statusauth%s" % i for i in range(len(statuses))]
+			placeholders = ", ".join(":%s" % p for p in param_names)
+			expressions.append("taxon.%s_status_id IN (SELECT id FROM taxon_status WHERE description IN (%s))" % (status_authority, placeholders))
+			values.update(dict(zip(param_names, statuses)))
 
 	# national priority
 	if 'priority' in request.args:
-		expressions.append("taxon.national_priority = %s")
-		values.append(request.args.get('priority', type=int))
+		expressions.append("taxon.national_priority = :priority")
+		values['priority'] = request.args.get('priority', type=int)
 
 	if not taxon_only:
 		# data type
 		if 'datatype' in request.args:
-			expressions.append("data_type = %s")
-			values.append(request.args.get('datatype', type=int))
+			expressions.append("data_type = :datatype")
+			values['datatype'] = request.args.get('datatype', type=int)
 
 		#state
 		if 'state' in request.args:
 			states = request.args.get('state', type=str).split('+')
-			expressions.append("region.state IN (%s)" % in_clause_placeholders(states))
-			values.extend(states)
+			param_names = [":state%s" % i for i in range(len(states))]
+			placeholders = ", ".join(":%s" % p for p in param_names)
+			expressions.append("region.state IN (%s)" % placeholders)
+			values.update(dict(zip(param_names, states)))
 
 		#searchtypedesc
 		if 'searchtype' in request.args:
-			expressions.append("search_type_id = %s")
-			values.append(request.args.get('searchtype', type=int))
+			expressions.append("search_type_id = :searchtype")
+			values['searchtype'] = request.args.get('searchtype', type=int)
 
 		#subibra
 		if 'subibra' in request.args:
-			expressions.append("region.name = %s")
-			values.append(request.args.get('subibra', type=str))
+			expressions.append("region.name = :subibra")
+			values['subibra'] = request.args.get('subibra', type=str)
 
 		#sourceid
 		if 'sourceid' in request.args:
-			expressions.append("source_id = %s")
-			values.append(request.args.get('sourceid', type=int))
+			expressions.append("source_id = :sourceid")
+			values['sourceid'] = request.args.get('sourceid', type=int)
 
 		# management
 		if 'management' in request.args:
@@ -655,17 +658,16 @@ def build_filter_sql(taxon_only=False):
 				elif management == "No management":
 					expressions.append("site_id NOT IN (SELECT t1_site.id FROM t1_site, intensive_management WHERE intensive_management.id = intensive_management_id AND grouping != 'No known management')")
 			else:
-				expressions.append("site_id IN (SELECT t1_site.id FROM t1_site, management WHERE management.id = t1_site.management_id AND management.description = %s)")
-				values.append(management)
-
+				expressions.append("site_id IN (SELECT t1_site.id FROM t1_site, management WHERE management.id = t1_site.management_id AND management.description = :management)")
+				values['management'] = management
 
 	if len(expressions):
-		return (" AND ".join(expressions), tuple(values))
+		return (" AND ".join(expressions), values)
 	else:
-		return ("TRUE", ())
+		return ("TRUE", {})
 
-def in_clause_placeholders(items):
-	return ", ".join(["%s"] * len(items))
+def in_clause_placeholders(prefix, n):
+	return ", ".join(":%s%s" % (prefix, i) for i in range(1, n + 1))
 
 @bp.route('/lpi-data/stats', methods = ['GET'])
 def stats():
@@ -796,7 +798,7 @@ def get_stats(filtered_data):
 	sql_where_expressions, sql_values = build_filter_sql(taxon_only=True)
 
 	session = get_db_session()
-	result = session.bind.execute(text("""SELECT
+	result = session.execute(text("""SELECT
 			id AS 'TaxonID',
 			common_name,
 			scientific_name,
