@@ -38,6 +38,76 @@ let solidFill = 'rgba(230,230,230,0.5)'
 let stripeFill = createDiagonalPattern('grey', 1, 4)
 
 export function plotTrend(data, dom) {
+  let plotData = generateTrendPlotData(data)
+
+  let minYear = plotData.labels[0]
+
+  let plot = new Chart(dom.getContext('2d'), {
+    type: 'line',
+    data: plotData,
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      maintainAspectRatio: true,
+      scales: {
+        yAxis: {
+          display: true,
+          position: 'left',
+          grid: {
+            display: true
+          },
+          ticks: {
+            callback: function(label, index, labels) {
+              // Show appropriate number of decimal places
+              let delta = (labels.length > 1) ? Math.abs(labels[1].value - labels[0].value) : 0
+              let decimalPlaces = (delta > 0) ? Math.min(5, Math.max(1, -Math.floor(Math.log10(delta)))) : 1
+              return (+label).toFixed(decimalPlaces)
+            }
+          },
+          title: {
+            display: true,
+            text: minYear ? 'Index (' + minYear + ' = 1)' : ''
+          }
+        },
+        xAxis: {
+          title: {
+            display: true,
+            text: 'Year'
+          }
+        }
+      }
+    }
+  })
+
+  return plot
+}
+
+function createDiagonalPattern(color = 'black', width = 2, gap = 8) {
+  let size = width + gap
+
+  let shape = document.createElement('canvas')
+  shape.width = size
+  shape.height = size
+  let c = shape.getContext('2d')
+
+  c.strokeWidth = width
+  c.strokeStyle = color
+  for(let x = 0; x < 3; x++) {
+    let x0 = (x - 1) * size
+    c.beginPath()
+    c.moveTo(x0, 0)
+    c.lineTo(x0 + size, size)
+    c.stroke()
+  }
+  // create the pattern from the shape
+  return c.createPattern(shape, 'repeat')
+}
+
+export function generateTrendPlotData(data) {
   let series = data.split('\n')
       .slice(1) // Ignore first line
       .filter(line => line.trim().length > 0 && !/NA/.test(line)) // Ignore empty or NA lines
@@ -54,8 +124,6 @@ export function plotTrend(data, dom) {
   let dashedIndex = index.map((x, i) => isSingleSpecies[i] ? x : undefined)
 
   let allSingleSpecies = isSingleSpecies.every(x => x)
-
-  let minYear = labels[0]
 
   let plotData = {
     labels: labels,
@@ -100,65 +168,5 @@ export function plotTrend(data, dom) {
     }]
   }
 
-  let plot = new Chart(dom.getContext('2d'), {
-    type: 'line',
-    data: plotData,
-    options: {
-      responsive: true,
-      plugins: {
-        legend: {
-          display: false
-        }
-      },
-      maintainAspectRatio: true,
-      scales: {
-        yAxis: {
-          display: true,
-          position: 'left',
-          grid: {
-            display: true
-          },
-          ticks: {
-            callback: function(label, index, labels) {
-              // Show appropriate number of decimal places
-              let delta = (labels.length > 1) ? Math.abs(labels[1].value - labels[0].value) : 0
-              let decimalPlaces = (delta > 0) ? Math.min(5, Math.max(1, -Math.floor(Math.log10(delta)))) : 1
-              return (+label).toFixed(decimalPlaces)
-            }
-          },
-          title: {
-            display: true,
-            text: 'Index (' + minYear + ' = 1)'
-          }
-        },
-        xAxis: {
-          title: {
-            display: true,
-            text: 'Year'
-          }
-        }
-      }
-    }
-  })
-}
-
-function createDiagonalPattern(color = 'black', width = 2, gap = 8) {
-  let size = width + gap
-
-  let shape = document.createElement('canvas')
-  shape.width = size
-  shape.height = size
-  let c = shape.getContext('2d')
-
-  c.strokeWidth = width
-  c.strokeStyle = color
-  for(let x = 0; x < 3; x++) {
-    let x0 = (x - 1) * size
-    c.beginPath()
-    c.moveTo(x0, 0)
-    c.lineTo(x0 + size, size)
-    c.stroke()
-  }
-  // create the pattern from the shape
-  return c.createPattern(shape, 'repeat')
+  return plotData
 }

@@ -230,6 +230,7 @@ import 'leaflet-easybutton/src/easy-button.js'
 import { min, max, pluck, uniq, parseParams, encodeParams, deepEquals, saveTextFile } from '../util.js'
 import { Tippy } from 'vue-tippy'
 import Field from './Field.vue'
+import { generateTrendPlotData, plotTrend } from '../plotTrend.js'
 
 const dataset = 'test'
 
@@ -426,66 +427,8 @@ export default {
       }
     },
     createMainIndexPlot() {
-      var data = {
-        labels: [],
-        datasets: [{
-          label: 'TSX',
-          borderColor: '#36699e',
-          backgroundColor: 'black',
-          fill: false,
-          pointRadius: 0,
-          lineTension: 0,
-          data: []
-        }, {
-          label: 'Confidence Interval (low)',
-          backgroundColor: 'rgba(230,230,230,0.5)',
-          fill: false,
-          pointRadius: 0,
-          lineTension: 0,
-          borderColor: '#0000',
-          borderWidth: 1,
-          data: []
-        }, {
-          label: 'Confidence Interval (high)',
-          // backgroundColor: '#eee',
-          backgroundColor: 'rgba(230,230,230,0.5)',
-          fill: 1, // Fill between this dataset and dataset[1], i.e. between low & hi CI
-          pointRadius: 0,
-          lineTension: 0,
-          borderColor: '#0000',
-          borderWidth: 0,
-          data: []
-        }]
-      }
-
-      this.mainIndexPlot = new Chart(this.$refs.lpiplot.getContext('2d'), {
-        type: 'line',
-        data: data,
-        options: {
-          responsive: true,
-          plugins: {
-            legend: {
-              display: false
-            }
-          },
-          maintainAspectRatio: false,
-          scales: {
-            yAxis: {
-              display: true,
-              position: 'left',
-              grid: {
-                display: true
-              },
-              // ticks: {
-                // callback: function(label, index, labels) {
-                //   // Force labels to always show one decimal place
-                //   return (+label).toFixed(1)
-                // }
-              // }
-            }
-          }
-        }
-      })
+      this.mainIndexPlot = plotTrend("", this.$refs.lpiplot)
+      this.mainIndexPlot.options.maintainAspectRatio = false
     },
     updateMainIndexPlot(params) {
       let plotData = this.mainIndexPlot.data
@@ -497,17 +440,16 @@ export default {
       var token = this.updateMainIndexPlot.token = {}
       var stale = () => this.updateMainIndexPlot.token != token
 
-      return api.trend(params).then((data) => {
+      return api.trend({ format: 'raw', ...params }).then((data) => {
         if(stale()) {
           return
         }
         if(data) {
           this.trendData = data
 
-          plotData.labels = data.year
-          plotData.datasets[0].data = data.value
-          plotData.datasets[1].data = data.low
-          plotData.datasets[2].data = data.high
+          Object.assign(plotData, generateTrendPlotData(data))
+          let minYear = plotData.labels[0]
+          this.mainIndexPlot.options.scales.yAxis.title.text = 'Index (' + minYear + ' = 1)'
 
           // update lpi plot
           this.noLPI = false
