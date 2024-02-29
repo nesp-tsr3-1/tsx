@@ -37,6 +37,8 @@
 </template>
 
 <script>
+import * as api from '../api.js'
+
 export default {
   data() {
     return {
