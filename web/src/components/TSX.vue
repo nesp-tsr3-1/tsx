@@ -233,6 +233,7 @@ import Field from './Field.vue'
 import { generateTrendPlotData, plotTrend } from '../plotTrend.js'
 
 const dataset = 'test'
+const enableIndividualTrends = false
 
 export default {
   name: 'TSX',
@@ -401,6 +402,12 @@ export default {
 
       this.loadingData = true
       api.visualisationParameters(params).then(result => {
+        if(!enableIndividualTrends) {
+          // Hide individual trends
+          let typeField = result.fields.find(x=>x.name=='type')
+          typeField.options = typeField.options.filter(x => x.value != 'individual')
+        }
+
         this.fields = result.fields
         this.fieldValues = this.latestFieldValuesFromServer()
         this.dataParams = result.data_params
