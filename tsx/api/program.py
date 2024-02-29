@@ -1,13 +1,11 @@
 from flask import Blueprint, jsonify, request, session
-from tsx.api.util import db_session, get_user
+from tsx.api.util import db_session, get_user, jsonify_rows
 from tsx.api.permissions import permitted
 from tsx.db import MonitoringProgram, User
 from tsx.api.validation import *
+from sqlalchemy import text
 
 bp = Blueprint('program', __name__)
-
-def jsonify_rows(rows):
-	return jsonify([dict(row) for row in rows])
 
 program_fields = [
 	Field(name='description', title='Program name', validators=[validate_required, validate_max_chars(255)]),
@@ -58,8 +56,7 @@ def delete_monitoring_program(program_id = None):
 	if not permitted(user, 'delete', 'program', program_id):
 		return "Not authorized", 401
 
-	
-	db_session.execute("""DELETE FROM monitoring_program WHERE id = :program_id""", { 'program_id': program_id })
+	db_session.execute(text("""DELETE FROM monitoring_program WHERE id = :program_id"""), { 'program_id': program_id })
 	db_session.commit()
 
 	return "OK", 200
@@ -74,7 +71,7 @@ def remove_source_from_monitoring_program(program_id = None, source_id = None):
 	if not permitted(user, 'update', 'source', program_id):
 		return "Not authorized", 401
 
-	db_session.execute("""UPDATE source SET monitoring_program_id = NULL WHERE id = :source_id AND monitoring_program_id = :program_id""",
+	db_session.execute(text("""UPDATE source SET monitoring_program_id = NULL WHERE id = :source_id AND monitoring_program_id = :program_id"""),
 		{ 'program_id': program_id, 'source_id': source_id })
 	db_session.commit()
 
@@ -90,7 +87,7 @@ def remove_manager_from_monitoring_program(program_id = None, user_id = None):
 	if not permitted(user, 'mangage_managers', 'program', program_id):
 		return "Not authorized", 401
 
-	db_session.execute("""DELETE FROM user_program_manager WHERE user_id = :user_id AND monitoring_program_id = :program_id""",
+	db_session.execute(text("""DELETE FROM user_program_manager WHERE user_id = :user_id AND monitoring_program_id = :program_id"""),
 		{ 'program_id': program_id, 'user_id': user_id })
 	db_session.commit()
 
@@ -120,7 +117,7 @@ def add_manager_to_monitoring_program(program_id = None):
 		db_session.add(manager)
 		db_session.flush()
 
-	db_session.execute("""REPLACE INTO user_program_manager (user_id, monitoring_program_id) VALUES (:user_id, :program_id)""",
+	db_session.execute(text("""REPLACE INTO user_program_manager (user_id, monitoring_program_id) VALUES (:user_id, :program_id)"""),
 		{ 'user_id': manager.id, 'program_id': program_id })
 	db_session.commit()
 
@@ -155,7 +152,7 @@ def create_or_update_program(program_id=None):
 	db_session.flush()
 
 	if action == 'create':
-		db_session.execute("""INSERT INTO user_program_manager (user_id, monitoring_program_id) VALUES (:user_id, :program_id)""",
+		db_session.execute(text("""INSERT INTO user_program_manager (user_id, monitoring_program_id) VALUES (:user_id, :program_id)"""),
 				{ 'program_id': program.id, 'user_id': user.id })
 
 

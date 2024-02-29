@@ -13,6 +13,7 @@ import io
 import tempfile
 from zipfile import ZipFile, ZIP_DEFLATED
 import json
+from sqlalchemy import text
 
 bp = Blueprint('subset', __name__)
 
@@ -90,8 +91,8 @@ def subset_stats():
         where_clause = " AND ".join(where_conditions) if where_conditions else "TRUE",
         having_clause = "HAVING " + " AND ".join(having_conditions) if having_conditions else "")
 
-    result = db_session.execute(sql, params).fetchone()
-    return jsonify(dict(result))
+    result = db_session.execute(text(sql), params).fetchone()
+    return jsonify(dict(result._mapping))
 
 @bp.route('/subset/intensity_map', methods = ['GET'])
 def subset_intensity_map():
@@ -127,7 +128,7 @@ def subset_intensity_map():
         where_clause = " AND ".join(where_conditions) if where_conditions else "TRUE",
         having_clause = "HAVING " + " AND ".join(having_conditions) if having_conditions else "")
 
-    result = db_session.execute(sql, params).fetchall()
+    result = db_session.execute(text(sql), params).fetchall()
     return jsonify_rows(result)
 
 @bp.route('/subset/sites', methods = ['GET'])
@@ -159,7 +160,7 @@ def subset_sites():
     """.format(where_clause=" AND ".join(where_conditions) or "TRUE",
         order_by_clause=", ".join(order_by_expressions))
 
-    result = db_session.execute(sql, params).fetchall()
+    result = db_session.execute(text(sql), params).fetchall()
     return jsonify_rows(result)
 
 @bp.route('/subset/species', methods = ['GET'])
@@ -202,7 +203,7 @@ def subset_species():
     """.format(where_clause=" AND ".join(where_conditions) or "TRUE",
         order_by_clause=", ".join(order_by_expressions))
 
-    result = db_session.execute(sql, params).fetchall()
+    result = db_session.execute(text(sql), params).fetchall()
     return jsonify_rows(result)
 
 def subset_sql_params(state_via_region=False):
@@ -346,7 +347,7 @@ def query_subset_raw_data_sql_and_params():
 
 def query_subset_raw_data():
     sql, params = query_subset_raw_data_sql_and_params()
-    return db_session.execute(sql, params)
+    return db_session.execute(text(sql), params)
 
 
 def params_permitted():
@@ -456,7 +457,7 @@ def query_subset_time_series():
         SELECT DISTINCT start_date_y
         FROM t""" % raw_data_sql
 
-    years = set(row[0] for row in db_session.execute(sql, params).fetchall())
+    years = set(row[0] for row in db_session.execute(text(sql), params).fetchall())
     min_year = min(years)
     max_year = max(years)
 
@@ -546,7 +547,7 @@ def query_subset_time_series():
             surveys_centroid_lon
         """ % (raw_data_sql, coordinates_sql, year_fields_sql)
 
-    return db_session.execute(sql, params)
+    return db_session.execute(text(sql), params)
 
 
 def trend_work_dir(trend_id):

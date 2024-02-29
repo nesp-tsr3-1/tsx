@@ -1,6 +1,6 @@
 from flask import request, make_response, g, jsonify, Blueprint, session
 from tsx.db import get_session, User
-from tsx.api.util import get_user, get_roles, db_session
+from tsx.api.util import get_user, get_roles, db_session, jsonify_rows
 from sqlalchemy import exc
 import os
 import json
@@ -11,6 +11,7 @@ from textwrap import dedent
 from tsx.api.validation import *
 from tsx.api.mail import send_email
 from tsx.config import config
+from sqlalchemy import text
 
 bp = Blueprint('user', __name__)
 
@@ -56,8 +57,8 @@ def create_user():
 		# User already exists
 		pass
 
-	db_session.execute("""INSERT INTO user_role (user_id, role_id)
-		VALUES (:user_id, (SELECT id FROM role WHERE description = 'Custodian'))""",
+	db_session.execute(text("""INSERT INTO user_role (user_id, role_id)
+		VALUES (:user_id, (SELECT id FROM role WHERE description = 'Custodian'))"""),
 		{'user_id': user.id})
 
 	db_session.commit()
@@ -177,10 +178,10 @@ def update_user_role(user_id):
 	except KeyError:
 		return "Missing role", 400
 
-	db_session.execute("DELETE FROM user_role WHERE user_id = :user_id", { 'user_id': user_id })
+	db_session.execute(text("DELETE FROM user_role WHERE user_id = :user_id"), { 'user_id': user_id })
 	print(new_role)
 	print(user_id)
-	db_session.execute("INSERT INTO user_role (user_id, role_id) SELECT :user_id, (SELECT id FROM role WHERE description = :role)", { 'user_id': user_id, 'role': new_role })
+	db_session.execute(text("INSERT INTO user_role (user_id, role_id) SELECT :user_id, (SELECT id FROM role WHERE description = :role)"), { 'user_id': user_id, 'role': new_role })
 	db_session.commit()
 
 	return "OK", 200
@@ -205,9 +206,9 @@ def users():
 	LEFT JOIN role ON user_role.role_id = role.id
 	GROUP BY user.id"""
 
-	rows = db_session.execute(sql)
+	rows = db_session.execute(text(sql))
 
-	return jsonify([dict(row) for row in rows])
+	return jsonify_rows(rows)
 
 def user_to_json(user):
 	roles = get_roles(user)

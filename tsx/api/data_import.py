@@ -17,6 +17,7 @@ from tsx.api.permissions import permitted
 from queue import Queue
 import subprocess
 from tsx.api.util import log
+from sqlalchemy import text
 
 bp = Blueprint('data_import', __name__)
 
@@ -26,13 +27,13 @@ running_imports = {} # Holds information about running imports
 lock = Lock() # Used to sync data between import thread and main thread
 
 def update_import_statuses_after_restart():
-	db_session.execute("""UPDATE data_import
+	db_session.execute(text("""UPDATE data_import
 		SET status_id = (SELECT id FROM data_import_status WHERE code = 'checked_error')
-		WHERE status_id = (SELECT id FROM data_import_status WHERE code = 'checking')""")
+		WHERE status_id = (SELECT id FROM data_import_status WHERE code = 'checking')"""))
 
-	db_session.execute("""UPDATE data_import
+	db_session.execute(text("""UPDATE data_import
 		SET status_id = (SELECT id FROM data_import_status WHERE code = 'import_error')
-		WHERE status_id = (SELECT id FROM data_import_status WHERE code = 'importing')""")
+		WHERE status_id = (SELECT id FROM data_import_status WHERE code = 'importing')"""))
 
 	db_session.commit()
 
@@ -45,14 +46,14 @@ def get_sources():
 	if not permitted(user, 'list', 'source'):
 		return "Not authorized", 401
 
-	db_session.execute("SET time_zone = '+00:00'")
+	db_session.execute(text("SET time_zone = '+00:00'"))
 
 	program_id = request.args.get('program_id')
 
 	print(user.id)
 
 	rows = db_session.execute(
-		"""SELECT
+		text("""SELECT
 			source.id,
 			source.description,
 			data_import_status.code AS status,
@@ -75,13 +76,13 @@ def get_sources():
 				)
 			)
 		AND (:program_id IS NULL OR monitoring_program_id = :program_id)
-		""",
+		"""),
 		{ 'user_id': user.id, 'program_id': program_id })
 
 	return jsonify_rows(rows)
 
 def jsonify_rows(rows):
-	return jsonify([dict(row) for row in rows])
+	return jsonify([dict(row._mapping) for row in rows])
 
 @bp.route('/data_sources', methods = ['POST'])
 def create_source():
@@ -122,9 +123,9 @@ def delete_source(source_id=None):
 	if not permitted(user, 'delete', 'source', source_id):
 		return "Not authorized", 401
 
-	db_session.execute("""DELETE FROM user_source WHERE source_id = :source_id""", { 'source_id': source_id })
-	db_session.execute("""DELETE FROM data_import WHERE source_id = :source_id""", { 'source_id': source_id })
-	db_session.execute("""DELETE FROM source WHERE id = :source_id""", { 'source_id': source_id })
+	db_session.execute(text("""DELETE FROM user_source WHERE source_id = :source_id"""), { 'source_id': source_id })
+	db_session.execute(text("""DELETE FROM data_import WHERE source_id = :source_id"""), { 'source_id': source_id })
+	db_session.execute(text("""DELETE FROM source WHERE id = :source_id"""), { 'source_id': source_id })
 	remove_orphaned_monitoring_programs()
 	db_session.commit()
 
@@ -142,9 +143,9 @@ def get_source_imports(source_id=None):
 	if source == None:
 		return "Not found", 404
 
-	db_session.execute("SET time_zone = '+00:00'")
+	db_session.execute(text("SET time_zone = '+00:00'"))
 
-	rows = db_session.execute("""SELECT
+	rows = db_session.execute(text("""SELECT
 		data_import.id,
 		data_import.filename,
 		data_import.data_type,
@@ -154,7 +155,7 @@ def get_source_imports(source_id=None):
 		FROM data_import
 		LEFT JOIN data_import_status ON data_import_status.id = data_import.status_id
 		WHERE data_import.source_id = :source_id
-	""", { 'source_id': source_id })
+	"""), { 'source_id': source_id })
 
 	return jsonify_rows(rows)
 
@@ -172,9 +173,9 @@ def get_source_processing_notes(source_id=None):
 	if source == None:
 		return "Not found", 404
 
-	db_session.execute("SET time_zone = '+00:00'")
+	db_session.execute(text("SET time_zone = '+00:00'"))
 
-	rows = db_session.execute("""SELECT
+	rows = db_session.execute(text("""SELECT
 		notes.id,
 		user.first_name,
 		user.last_name,
@@ -186,7 +187,7 @@ def get_source_processing_notes(source_id=None):
 		FROM data_processing_notes notes
 		JOIN user ON notes.user_id = user.id
 		WHERE notes.source_id = :source_id
-	""", { 'source_id': source_id, 'user_id': user.id })
+	"""), { 'source_id': source_id, 'user_id': user.id })
 
 	return jsonify_rows(rows)
 
@@ -260,7 +261,7 @@ def get_source_custodians(source_id=None):
 	if source == None:
 		return "Not found", 404
 
-	rows = db_session.execute("""SELECT
+	rows = db_session.execute(text("""SELECT
 		user.first_name,
 		user.last_name,
 		user.email,
@@ -268,7 +269,7 @@ def get_source_custodians(source_id=None):
 		FROM user_source
 		JOIN user ON user_source.user_id = user.id
 		WHERE user_source.source_id = :source_id
-	""", { 'source_id': source_id })
+	"""), { 'source_id': source_id })
 
 	return jsonify_rows(rows)
 
@@ -299,14 +300,14 @@ def create_source_custodian(source_id=None):
 			error_message = 'No user found with the email address "%s". (Note: custodians must first create an account before they can be added)' % email
 			return jsonify({ 'error': error_message }), 400
 
-	rows = db_session.execute("""SELECT 1
+	rows = db_session.execute(text("""SELECT 1
 		FROM user_source
 		WHERE user_id = :user_id
 		AND source_id = :source_id
-	""", { 'source_id': source_id, 'user_id': custodian.id })
+	"""), { 'source_id': source_id, 'user_id': custodian.id })
 
 	if len(list(rows)) == 0:
-		db_session.execute("""INSERT INTO user_source (user_id, source_id) VALUES (:user_id, :source_id)""",
+		db_session.execute(text("""INSERT INTO user_source (user_id, source_id) VALUES (:user_id, :source_id)"""),
 			{ 'source_id': source_id, 'user_id': custodian.id })
 		db_session.commit()
 
@@ -319,9 +320,9 @@ def delete_source_custodian(source_id=None, user_id=None):
 	if not permitted(user, 'manage_custodians', 'source', source_id):
 		return "Not authorized", 401
 
-	db_session.execute("""DELETE FROM user_source
+	db_session.execute(text("""DELETE FROM user_source
 		WHERE user_id = :user_id
-		AND source_id = :source_id""", { 'source_id': source_id, 'user_id': user_id })
+		AND source_id = :source_id"""), { 'source_id': source_id, 'user_id': user_id })
 	db_session.commit()
 
 	return "OK", 200
@@ -357,7 +358,7 @@ def create_or_update_source(source_id=None):
 	db_session.flush()
 
 	if action == 'create':
-		db_session.execute("""INSERT INTO user_source (user_id, source_id) VALUES (:user_id, :source_id)""",
+		db_session.execute(text("""INSERT INTO user_source (user_id, source_id) VALUES (:user_id, :source_id)"""),
 				{ 'source_id': source.id, 'user_id': user.id })
 
 	else:
@@ -385,18 +386,18 @@ def get_monitoring_program_id(description):
 	if not description:
 		return None
 
-	for (program_id,) in db_session.execute("""SELECT id FROM monitoring_program WHERE description = :description""", { "description": description}):
+	for (program_id,) in db_session.execute(text("""SELECT id FROM monitoring_program WHERE description = :description"""), { "description": description}):
 		return program_id
 
-	return db_session.execute("""
+	return db_session.execute(text("""
 		INSERT INTO monitoring_program (description)
-		VALUES (:description)""",
+		VALUES (:description)"""),
 		{ "description": description}).lastrowid
 
 
 
 def source_to_json(source):
-	(has_t1_data,) = db_session.execute("""SELECT EXISTS (SELECT 1 FROM t1_survey WHERE source_id = :source_id)""", {"source_id": source.id}).fetchone()
+	(has_t1_data,) = db_session.execute(text("""SELECT EXISTS (SELECT 1 FROM t1_survey WHERE source_id = :source_id)"""), {"source_id": source.id}).fetchone()
 	json = {
 		'id': source.id,
 		'has_t1_data': has_t1_data
@@ -469,7 +470,7 @@ def post_import():
 	return jsonify(data_import_json(load_import(import_id)))
 
 
-status_ids = { code: status_id for status_id, code in db_session.execute("SELECT id, code FROM data_import_status").fetchall()}
+status_ids = { code: status_id for status_id, code in db_session.execute(text("SELECT id, code FROM data_import_status")).fetchall()}
 status_codes = {v: k for k, v in status_ids.items()}
 
 def process_import_async(import_id, status):
@@ -581,8 +582,8 @@ def update_import(import_id=None):
 	return jsonify(data_import_json(data_import))
 
 def remove_orphaned_monitoring_programs():
-	db_session.execute("""DELETE FROM user_program_manager WHERE monitoring_program_id NOT IN (SELECT monitoring_program_id FROM source WHERE monitoring_program_id IS NOT NULL)""")
-	db_session.execute("""DELETE FROM monitoring_program WHERE id NOT IN (SELECT monitoring_program_id FROM source WHERE monitoring_program_id IS NOT NULL)""")
+	db_session.execute(text("""DELETE FROM user_program_manager WHERE monitoring_program_id NOT IN (SELECT monitoring_program_id FROM source WHERE monitoring_program_id IS NOT NULL)"""))
+	db_session.execute(text("""DELETE FROM monitoring_program WHERE id NOT IN (SELECT monitoring_program_id FROM source WHERE monitoring_program_id IS NOT NULL)"""))
 
 @bp.route('/imports/<int:import_id>/approve', methods = ['POST'])
 def approve_import(import_id=None):
@@ -600,7 +601,7 @@ def approve_import(import_id=None):
 	if not permitted(user, 'approve', 'import', import_id):
 		return 'Not authorized', 401
 
-	db_session.execute("UPDATE data_import SET status_id = :status_id WHERE id = :import_id", {
+	db_session.execute(text("UPDATE data_import SET status_id = :status_id WHERE id = :import_id"), {
 		'status_id': status_ids['approved'],
 		'import_id': import_id
 	})
@@ -659,7 +660,7 @@ processing_info = {}
 
 @bp.route('/data_sources/<int:source_id>/processed_data', methods = ['GET'])
 def get_processed_data(source_id=None):
-	(import_id,) = db_session.execute("SELECT MAX(id) FROM data_import WHERE source_id = :source_id", { 'source_id': source_id }).fetchone()
+	(import_id,) = db_session.execute(text("SELECT MAX(id) FROM data_import WHERE source_id = :source_id"), { 'source_id': source_id }).fetchone()
 
 	if import_id == None:
 		return "Not found", 404
@@ -690,7 +691,7 @@ def get_processed_data(source_id=None):
 
 @bp.route('/data_sources/<int:source_id>/processed_data/<item_id>', methods = ['GET'])
 def get_processed_data_item(source_id=None, item_id=None):
-	(import_id,) = db_session.execute("SELECT MAX(id) FROM data_import WHERE source_id = :source_id", { 'source_id': source_id }).fetchone()
+	(import_id,) = db_session.execute(text("SELECT MAX(id) FROM data_import WHERE source_id = :source_id"), { 'source_id': source_id }).fetchone()
 
 	if import_id == None:
 		return "Not found", 404
@@ -736,5 +737,5 @@ def process_worker():
 			del processing_info[import_id]
 
 def process_unprocessed():
-	for (source_id,import_id) in db_session.execute("SELECT source_id, max(id) FROM data_import WHERE source_id IS NOT NULL GROUP BY source_id"):
+	for (source_id,import_id) in db_session.execute(text("SELECT source_id, max(id) FROM data_import WHERE source_id IS NOT NULL GROUP BY source_id")):
 		process_data(source_id, import_id)

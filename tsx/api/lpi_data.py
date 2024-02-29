@@ -14,6 +14,7 @@ import numpy as np
 import tempfile
 import re
 from zipfile import ZipFile, ZIP_DEFLATED
+from sqlalchemy import text
 
 bp = Blueprint('lpi_data', __name__)
 
@@ -289,7 +290,7 @@ def get_intensity():
 
 		# Faster alternative that flattens all years
 		if fast_mode:
-			result = session.bind.execute("""SELECT
+			result = session.bind.execute(text("""SELECT
 			ANY_VALUE(ROUND(ST_Y(centroid_coords), 5)) as lat,
 			ANY_VALUE(ROUND(ST_X(centroid_coords), 5)) as lon,
 			SUM(survey_count) as survey_count
@@ -298,7 +299,7 @@ def get_intensity():
 			STRAIGHT_JOIN taxon ON taxon.id = aggregated_by_year.taxon_id
 			WHERE include_in_analysis
 			AND %s
-			GROUP BY lat, lon""" % sql_where_expressions, sql_values)
+			GROUP BY lat, lon""" % sql_where_expressions), sql_values)
 
 			json_result = json.dumps([[float(lon), float(lat), [[1, int(count)]]] for lat, lon, count in result.fetchall()])
 			session.close()
@@ -307,7 +308,7 @@ def get_intensity():
 		with log_time("Query database"):
 			# Note 'session.bind' is necessary to run query with positional parameters
 			# STRAIGHT_JOIN is necessary to stop MySQL from choosing a very slow query plan
-			result = session.bind.execute("""SELECT
+			result = session.bind.execute(text("""SELECT
 							time_series_id,
 							start_date_y as Year,
 							ANY_VALUE(ST_Y(centroid_coords)) as Latitude,
@@ -318,7 +319,7 @@ def get_intensity():
 							STRAIGHT_JOIN taxon ON taxon.id = aggregated_by_year.taxon_id
 							WHERE include_in_analysis
 							AND %s
-							GROUP BY time_series_id, start_date_y""" % sql_where_expressions, sql_values)
+							GROUP BY time_series_id, start_date_y""" % sql_where_expressions), sql_values)
 
 		with log_time("Create dataframe"):
 			values = pd.DataFrame.from_records(data = result.fetchall(), columns = result.keys())
@@ -531,7 +532,7 @@ def build_filter_string():
 		# find in database
 		session = get_db_session()
 		_search_type_desc = session.execute(
-			"""SELECT * FROM search_type WHERE id = :searchtypeid""",
+			text("""SELECT * FROM search_type WHERE id = :searchtypeid"""),
 			{'searchtypeid': _search_type}).fetchone()['description']
 		filters.append("SearchTypeDesc=='%s'" % (_search_type_desc))
 		session.close()
@@ -795,7 +796,7 @@ def get_stats(filtered_data):
 	sql_where_expressions, sql_values = build_filter_sql(taxon_only=True)
 
 	session = get_db_session()
-	result = session.bind.execute("""SELECT
+	result = session.bind.execute(text("""SELECT
 			id AS 'TaxonID',
 			common_name,
 			scientific_name,
@@ -809,7 +810,7 @@ def get_stats(filtered_data):
 		FROM taxon
 		WHERE COALESCE(taxon.max_status_id, 0) NOT IN (0,1,7)
 		AND %s
-	""" % sql_where_expressions, sql_values)
+	""" % sql_where_expressions), sql_values)
 	session.close()
 
 	all_taxa = pd.DataFrame.from_records(data = result.fetchall(), index = 'TaxonID', columns = result.keys())

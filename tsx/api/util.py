@@ -7,6 +7,7 @@ from tsx.db import User
 from sqlalchemy import orm
 from werkzeug.local import LocalProxy
 import logging
+from sqlalchemy import text
 
 log = LocalProxy(lambda: current_app.logger)
 
@@ -47,11 +48,11 @@ def get_user():
 	return db_session.query(User).get(user_id)
 
 def get_roles(user):
-	query = db_session.execute("""SELECT role.description
+	query = db_session.execute(text("""SELECT role.description
 		FROM role
 		JOIN user_role ON role.id = user_role.role_id
 		WHERE user_role.user_id = :user_id
-	""", {
+	"""), {
 		'user_id': user.id
 	})
 
@@ -71,4 +72,4 @@ def setup_db(app):
 
 # Useful for converting a DB query result into a JSON response
 def jsonify_rows(rows):
-	return jsonify([dict(row) for row in rows])
+	return jsonify([dict(row._mapping) for row in rows])

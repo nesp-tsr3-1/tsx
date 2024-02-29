@@ -1,12 +1,10 @@
 from flask import Blueprint, jsonify, request, session
-from tsx.api.util import db_session, get_user
+from tsx.api.util import db_session, get_user, jsonify_rows
 
 from tsx.api.permissions import permitted
+from sqlalchemy import text
 
 bp = Blueprint('program_manager', __name__)
-
-def jsonify_rows(rows):
-	return jsonify([dict(row) for row in rows])
 
 @bp.route('/programs/<int:program_id>/managers', methods = ['GET'])
 def get_program_managers(program_id = None):
@@ -18,11 +16,11 @@ def get_program_managers(program_id = None):
 	if program_id == None:
 		return "Not found", 404
 
-	rows = db_session.execute("""
+	rows = db_session.execute(text("""
 		SELECT user.id, email, first_name, last_name
 		FROM user, user_program_manager
 		WHERE user.id = user_id
-		AND monitoring_program_id = :program_id""", { "program_id": program_id })
+		AND monitoring_program_id = :program_id"""), { "program_id": program_id })
 
 	return jsonify_rows(rows)
 
@@ -37,11 +35,11 @@ def get_programs(user_id = None):
 	if user_id == None:
 		return "Not found", 404
 
-	rows = db_session.execute("""
+	rows = db_session.execute(text("""
 		SELECT monitoring_program.id, description
 		FROM monitoring_program, user_program_manager
 		WHERE monitoring_program.id = monitoring_program_id
-		AND user_id = :user_id""", { "user_id": user_id })
+		AND user_id = :user_id"""), { "user_id": user_id })
 
 	return jsonify_rows(rows)
 
@@ -57,10 +55,10 @@ def update_programs(user_id = None):
 
 	body = request.json
 
-	db_session.execute("""DELETE FROM user_program_manager WHERE user_id = :user_id""", { "user_id": user_id })
+	db_session.execute(text("""DELETE FROM user_program_manager WHERE user_id = :user_id"""), { "user_id": user_id })
 	for program_id in body:
 		db_session.execute(
-			"""INSERT INTO user_program_manager (user_id, monitoring_program_id) VALUES (:user_id, :program_id)""",
+			text("""INSERT INTO user_program_manager (user_id, monitoring_program_id) VALUES (:user_id, :program_id)"""),
 			{
 				"user_id": user_id,
 				"program_id": program_id

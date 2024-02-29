@@ -7,6 +7,7 @@ import sys
 import argparse
 import re
 import os
+from sqlalchemy import text
 
 log = logging.getLogger(__name__)
 
@@ -57,7 +58,7 @@ def export_lpi_wide(db, lpi_wide_filename):
 def export_taxa(db):
     session = get_session()
 
-    df = pd.read_sql("""SELECT
+    df = pd.read_sql(text("""SELECT
         id AS TaxonID,
         taxonomic_group AS TaxonomicGroup,
         common_name AS CommonName,
@@ -75,7 +76,7 @@ def export_taxa(db):
         (SELECT description FROM taxon_status WHERE taxon_status.id = taxon.state_status_id) AS StatePlantStatus,
         (SELECT description FROM taxon_status WHERE taxon_status.id = taxon.bird_action_plan_status_id) AS BirdActionPlanStatus,
         (SELECT description FROM taxon_status WHERE taxon_status.id = taxon.max_status_id) AS MaxStatus
-        FROM taxon""", session.connection())
+        FROM taxon"""), session.connection())
     df.to_sql('taxon', db, if_exists='replace')
 
 def export_trends(db, trend_dir):

@@ -1,13 +1,14 @@
 from flask import request, make_response, g, jsonify, Blueprint
 from tsx.db import get_session
-from tsx.api.util import db_session
+from tsx.api.util import db_session, jsonify_rows
 import os
 import json
+from sqlalchemy import text
 
 bp = Blueprint('misc', __name__)
 
 def query_to_json(query, params={}):
-	return jsonify([dict(row) for row in db_session.execute(query, params)])
+	return jsonify_rows(db_session.execute(text(query), params))
 
 @bp.route('/region', methods = ['GET'])
 def get_region():

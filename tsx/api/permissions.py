@@ -1,31 +1,31 @@
 from tsx.api.util import db_session, get_roles
 from tsx.db import DataProcessingNotes
-
+from sqlalchemy import text
 
 def is_program_manager_of_source(user_id, source_id):
 	return len(db_session.execute(
-		"""SELECT 1 FROM user_program_manager, source
+		text("""SELECT 1 FROM user_program_manager, source
 		WHERE user_id = :user_id
 		AND source.monitoring_program_id = user_program_manager.monitoring_program_id
-		AND source.id = :source_id""", {
+		AND source.id = :source_id"""), {
 		'source_id': source_id,
 		'user_id': user_id
 		}).fetchall()) > 0
 
 def is_program_manager_of_program(user_id, monitoring_program_id):
 	return len(db_session.execute(
-		"""SELECT 1 FROM user_program_manager
+		text("""SELECT 1 FROM user_program_manager
 		WHERE user_id = :user_id
-		AND monitoring_program_id = :monitoring_program_id""", {
+		AND monitoring_program_id = :monitoring_program_id"""), {
 		'monitoring_program_id': monitoring_program_id,
 		'user_id': user_id
 		}).fetchall()) > 0
 
 def is_custodian_of_source(user_id, source_id):
 	return len(db_session.execute(
-		"""SELECT 1 FROM user_source
+		text("""SELECT 1 FROM user_source
 		WHERE user_id = :user_id
-		AND source_id = :source_id""", {
+		AND source_id = :source_id"""), {
 		'source_id': source_id,
 		'user_id': user_id
 		}).fetchall()) > 0
