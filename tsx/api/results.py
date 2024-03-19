@@ -130,7 +130,7 @@ def get_intensity_data(filtered_data, format='json'):
 	df = df.groupby(['SurveysCentroidLongitude', 'SurveysCentroidLatitude'], as_index=False).agg(np.sum)
 
 	if format == 'json':
-		return [[x[0], x[1], x[2]] for x in df.values]
+		return [[round(x[0], 1), round(x[1], 1), x[2]] for x in df.values]
 	elif format == 'csv':
 		return df.to_csv(index=False)
 	else:
