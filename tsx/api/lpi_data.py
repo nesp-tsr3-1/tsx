@@ -291,8 +291,8 @@ def get_intensity():
 		# Faster alternative that flattens all years
 		if fast_mode:
 			result = session.execute(text("""SELECT
-			ANY_VALUE(ROUND(ST_Y(centroid_coords), 5)) as lat,
-			ANY_VALUE(ROUND(ST_X(centroid_coords), 5)) as lon,
+			ANY_VALUE(ROUND(ST_Y(centroid_coords), 1)) as lat,
+			ANY_VALUE(ROUND(ST_X(centroid_coords), 1)) as lon,
 			SUM(survey_count) as survey_count
 			FROM aggregated_by_year
 			STRAIGHT_JOIN region ON region.id = aggregated_by_year.region_id
