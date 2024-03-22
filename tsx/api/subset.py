@@ -119,8 +119,8 @@ def subset_intensity_map():
         GROUP BY t1_survey.id, t1_sighting.id
         {having_clause})
         SELECT
-            ROUND(ST_X(coords), 2) AS lon,
-            ROUND(ST_Y(coords), 2) AS lat,
+            ROUND(ST_X(coords), 1) AS lon,
+            ROUND(ST_Y(coords), 1) AS lat,
             COUNT(DISTINCT site_id, taxon_id, source_id, unit_id, search_type_id) AS c
         FROM t
         GROUP BY lat, lon
