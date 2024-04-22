@@ -67,7 +67,7 @@ def get_sources():
 			(
 				EXISTS (SELECT 1 FROM user_role WHERE user_id = :user_id AND role_id = 1) OR
 				(
-					EXISTS (SELECT 1 FROM user_role WHERE user_id = :user_id AND role_id = 2) AND
+					EXISTS (SELECT 1 FROM user_role WHERE user_id = :user_id AND role_id IN (2, 3)) AND
 					source.id IN (SELECT source_id FROM user_source WHERE user_id = :user_id)
 				) OR
 				(

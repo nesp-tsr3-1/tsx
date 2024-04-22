@@ -43,7 +43,7 @@ def permitted(user, action, resource_type, resource_id=None):
 			if action in ('create', 'list'):
 				return True
 			if action in ('get', 'update', 'download_data'):
-				return resource_id != None and is_program_manager_of_source(user.id, resource_id)
+				return resource_id != None and (is_program_manager_of_source(user.id, resource_id) or is_custodian_of_source(user.id, resource_id))
 
 		if 'Custodian' in user_roles:
 			if action in ('create', 'list'):
