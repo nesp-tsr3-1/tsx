@@ -41,13 +41,18 @@ def process_database(species = None, commit = False):
 def aggregate_by_month(taxon_id, commit = False):
     session = get_session()
     try:
-        sql = """SELECT source_id, MAX(experimental_design_type_id), MAX(response_variable_type_id), MAX(positional_accuracy_threshold_in_m), COUNT(DISTINCT response_variable_type_id, experimental_design_type_id, COALESCE(positional_accuracy_threshold_in_m, 0)) AS cnt
+        sql = """SELECT
+                    source_id,
+                    experimental_design_type_id,
+                    response_variable_type_id,
+                    MAX(positional_accuracy_threshold_in_m),
+                    1 AS cnt
                 FROM processing_method
                 WHERE taxon_id = :taxon_id
                 AND data_type = 2
-                GROUP BY source_id"""
+                GROUP BY source_id, experimental_design_type_id, response_variable_type_id"""
 
-        for row in session.execute(sql, { 'taxon_id': taxon_id }).fetchall():
+        for row in session.execute(text(sql), { 'taxon_id': taxon_id }).fetchall():
 
             source_id, experimental_design_type_id, response_variable_type_id, positional_accuracy_threshold_in_m, count = row
 
