@@ -203,7 +203,10 @@ def process_sites(session):
 	#  - Store all pseudo absences in memory and then batch insert (too much memory usage)
 	with tempfile.TemporaryFile(mode='r+') as temp:
 		total_rows = 0
-		for result, error in tqdm(run_parallel(get_pseudo_asbences, taxa), total = len(taxa)):
+		# I found that on one particular database, running in parallel was ~20x slower than just running sequentially.
+		# for result, error in tqdm(run_parallel(get_pseudo_asbences, taxa), total = len(taxa)):
+		for taxon_id in tqdm(taxa):
+			result = get_pseudo_asbences(taxon_id)
 			if len(result):
 				total_rows += len(result)
 				temp.writelines(["%s,%s\n" % (survey_id, taxon_id) for survey_id, taxon_id in result])
