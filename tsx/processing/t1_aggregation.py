@@ -235,6 +235,8 @@ def cleanup_region_lookup_table(session):
 def create_region_lookup_table(session):
     log.info("Pre-calculating region for each site")
 
+    session.execute(text("SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED"))
+
     cleanup_region_lookup_table(session)
     session.execute(text("""CREATE TABLE tmp_region_lookup
         ( INDEX (site_id) )
