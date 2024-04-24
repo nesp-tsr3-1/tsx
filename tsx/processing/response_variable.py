@@ -67,11 +67,11 @@ def aggregate_by_month(taxon_id, commit = False):
 
             if response_variable_type_id == 1:
                 aggregate_expression = 'AVG(count)'
-                where_conditions.append("unit_id > 1")
+                where_conditions.append("(unit_id > 1 OR count = 0)")
 
             elif response_variable_type_id == 2:
                 aggregate_expression = 'MAX(count)'
-                where_conditions.append("unit_id > 1")
+                where_conditions.append("(unit_id > 1 OR count = 0)")
 
             elif response_variable_type_id == 3:
                 aggregate_expression = 'AVG(count > 0)'
