@@ -43,8 +43,9 @@ def process_database(species = None, commit = False):
 
 def get_taxon_range_polygons(session, taxon_id):
     return session.execute(text("""SELECT range_id, breeding_range_id, HEX(ST_AsWKB(geometry))
-                        FROM taxon_range
+                        FROM taxon_presence_alpha_hull
                         WHERE taxon_id = :taxon_id
+                        AND range_id = 1
                         """), { 'taxon_id': taxon_id }).fetchall()
 
 def process_taxon(taxon_id, commit):
@@ -97,6 +98,7 @@ def process_taxon(taxon_id, commit):
                     #     session.bulk_save_objects(records)
                     #     records = []
 
+            # Generate ultrataxa from parent species if we are in core range
             if taxon.taxon_level.description == 'ssp':
                 # Get parent taxa (species) sightings
                 q = session.execute(text("""SELECT t2_sighting.id, ST_X(coords), ST_Y(coords)
