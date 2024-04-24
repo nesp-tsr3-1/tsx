@@ -19,6 +19,7 @@ import tsx.processing.alpha_hull
 import tsx.processing.range_ultrataxon
 import tsx.processing.pseudo_absence
 import tsx.processing.t1_aggregation
+import tsx.processing.t2_aggregation
 import tsx.processing.response_variable
 import tsx.processing.export_lpi
 import tsx.processing.spatial_rep
@@ -54,6 +55,7 @@ def main():
     p = subparsers.add_parser('range_ultrataxon')
     p = subparsers.add_parser('pseudo_absence')
     p = subparsers.add_parser('t1_aggregation')
+    p = subparsers.add_parser('t2_aggregation')
     p = subparsers.add_parser('response_variable')
     p = subparsers.add_parser('export_lpi')
 
@@ -93,6 +95,8 @@ def main():
         tsx.processing.pseudo_absence.process_database(commit = args.commit)
     elif args.command == 't1_aggregation':
         tsx.processing.t1_aggregation.process_database(species = species, commit = args.commit)
+    elif args.command == 't2_aggregation':
+        tsx.processing.t2_aggregation.process_database(species = species, commit = args.commit)
     elif args.command == 'response_variable':
         tsx.processing.response_variable.process_database(species = species, commit = args.commit)
     elif args.command == 'export_lpi':
