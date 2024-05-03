@@ -1,13 +1,72 @@
 <template>
-  <ul class='user-nav' v-if="user">
-    <li><router-link :to="{ name: 'SourceHome' }">Datasets</router-link></li>
-    <li v-if="canManageUsers"><router-link :to="{ name: 'UserManage' }">Manage Users</router-link></li>
-    <!-- <li v-if="canManagePrograms"><router-link :to="{ name: 'ProgramManage' }">Manage Programs</router-link></li> -->
-    <li v-if="isProgramManager"><router-link :to="{ name: 'DataSubsetDownloads' }">Downloads</router-link></li>
-    <li><router-link :to="{ name: 'Logout' }">Logout</router-link></li>
-    <!-- <li style="color: #888"><router-link :to="{ name: 'UserEdit' }">{{user.first_name}} {{user.last_name}}</router-link></li> -->
-    <li style="color: #888">{{user.first_name}} {{user.last_name}}</li>
-  </ul>
+  <nav class="navbar" v-if="user">
+    <div class="navbar-brand">
+      <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="userNav" @click="toggleBurger" :class="{ 'is-active': burgerActive }">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </a>
+    </div>
+    <div id="userNav" class="navbar-menu" :class="{ 'is-active': burgerActive }">
+      <div class="navbar-start"></div>
+      <div class="navbar-end">
+        <router-link
+          class="navbar-item"
+          :to="{ name: 'SourceHome' }">Datasets</router-link>
+        <router-link
+          class="navbar-item"
+          v-if="canManageUsers"
+          :to="{ name: 'UserManage' }">Manage Users</router-link>
+        <router-link
+          class="navbar-item"
+          v-if="isProgramManager"
+          :to="{ name: 'DataSubsetDownloads' }">Downloads</router-link>
+
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link is-arrowless">
+            <div class="button is-dark is-rounded">
+              <span class="icon">
+                <i class="far fa-question-circle"></i>
+              </span>
+              <span>Help</span>
+            </div>
+          </a>
+
+          <div class="navbar-dropdown">
+            <div class="navbar-item" style="white-space: initial; width: 18em;">
+              <p>
+                You can access our training
+                manual and step-by-step
+                video guides on how to use
+                the TSX data management
+                interface on our
+                <a href="https://tsx.org.au/tsx-resources" target="_blank">TSX Resources page.</a>
+              </p>
+            </div>
+            <div class="navbar-item" style="white-space: initial; width: 18em;">
+              <p>
+                Can’t find what you’re
+                looking for? You can
+                contact the TSX team
+                directly at
+                <a href="mailto:tsx@tern.org.au">tsx@tern.org.au</a>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <router-link
+              class="navbar-item"
+              :to="{ name: 'Logout' }">Logout</router-link>
+
+
+        <span
+          class="navbar-item"
+          style="color: #888">{{user.first_name}} {{user.last_name}}</span>
+      </div>
+    </div>
+
+  </nav>
 </template>
 
 <script>
@@ -18,7 +77,8 @@ export default {
   data () {
     return {
       status: 'loading',
-      user: null
+      user: null,
+      burgerActive: false
     }
   },
   computed: {
@@ -42,20 +102,21 @@ export default {
     })
   },
   methods: {
+    toggleBurger() {
+      this.burgerActive = !this.burgerActive
+    }
   }
 }
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-  ul.user-nav {
-    text-align: right;
-    margin-bottom: 1em;
+  .navbar-item {
+    color: hsl(217, 71%, 53%);
   }
 
-  ul li {
-    display: inline-block;
-    margin-left: 1em;
+  .navbar-item p {
+    color: #333;
   }
 
   .router-link-active {
