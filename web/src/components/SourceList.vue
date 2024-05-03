@@ -23,6 +23,7 @@
           <tr>
             <th v-on:click="sortBy('description')">Description {{sortIcon('description')}}</th>
             <th v-on:click="sortBy('time_created')">Created {{sortIcon('time_created')}}</th>
+            <th v-on:click="sortBy('last_modified')">Modified {{sortIcon('last_modified')}}</th>
             <th v-if="showStatus" v-on:click="sortBy('status')">Status {{sortIcon('status')}}</th>
             <th v-if="actions">Manage</th>
           </tr>
@@ -31,6 +32,7 @@
           <tr v-for="source in sortedSources" @click="$emit('clickSource', source)">
             <td :title="source.description">{{truncate(source.description, 120)}}</td>
             <td>{{formatDateTime(source.time_created)}}</td>
+            <td>{{formatDateTime(source.last_modified)}}</td>
             <td v-if="showStatus">{{humanizeStatus(source.status)}}</td>
             <td v-if="actions">
               <button
@@ -155,10 +157,11 @@ export default {
   .table {
     table-layout: fixed;
   }
-  .table th:nth-child(2) {
-    width: 12em;
-  }
+  .table th:nth-child(2),
   .table th:nth-child(3) {
+    width: 8em;
+  }
+  .table th:nth-child(4) {
     width: 8em;
   }
   .table.clickable tbody tr {

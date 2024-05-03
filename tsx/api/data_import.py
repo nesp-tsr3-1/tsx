@@ -57,7 +57,8 @@ def get_sources():
 			source.id,
 			source.description,
 			data_import_status.code AS status,
-			source.time_created
+			source.time_created,
+			GREATEST(source.last_modified, COALESCE(data_import.last_modified, source.last_modified)) AS last_modified
 		FROM source
 		LEFT JOIN (SELECT source_id, max(data_import.id) AS data_import_id FROM data_import GROUP BY source_id) AS latest_import
 			ON latest_import.source_id = source.id
