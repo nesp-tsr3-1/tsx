@@ -169,10 +169,11 @@ INSERT INTO management (description, type) VALUES
   ('No management', 'No known management'),
   ('Unknown', 'No known management');
 
-INSERT INTO unit_type (description) VALUES
-  ('Continuous'),
-  ('Percentage'),
-  ('Binary');
+INSERT INTO unit_type (id, description) VALUES
+  (0, 'Unspecified'),
+  (1, 'Continuous'),
+  (2, 'Percentage'),
+  (3, 'Binary');
 
 INSERT INTO source_type (description) VALUES
   ('paper/report'),
