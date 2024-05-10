@@ -276,7 +276,7 @@ def filter_data(df, params):
 	if dataset != None and dataset.startswith('tbx'):
 		df = df[df['TaxonomicGroup'] == 'Birds']
 
-	# Spetial logic for individual species
+	# Special logic for individual species
 	if params.get('type') == 'individual':
 		return df[df['TaxonID'] == params.get('taxon')]
 
@@ -545,6 +545,10 @@ def get_options_cached(name, params):
 	# Make default option first
 	options = sorted(options, key=lambda o: o['label'] not in ['All', 'All sites'])
 
+	Special case - remove 'All' status for EPBC
+	if name == 'Status' and param_dict['StatusAuthority'] == 'EPBC':
+		options = [x for x in options if x['value'] != 'NT_VU_EN_CR']
+
 	return options
 
 def get_parameter_values():
@@ -659,6 +663,11 @@ def get_parameters():
 		ok_reference_years = [opt['value'] for opt in reference_year_options if not opt['disabled']]
 		if reference_year not in ok_reference_years and len(ok_reference_years) > 0:
 			reference_year = ok_reference_years[0]
+
+	if query_type == 'all':
+		# Special case - remove 'All' status for EPBC
+		if param_values['Status'] == 'NT_VU_EN_CR' and param_values['StatusAuthority'] == 'EPBC':
+			param_values['Status'] = 'VU_EN_CR'
 
 	results = {}
 
