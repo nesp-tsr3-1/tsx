@@ -545,7 +545,7 @@ def get_options_cached(name, params):
 	# Make default option first
 	options = sorted(options, key=lambda o: o['label'] not in ['All', 'All sites'])
 
-	Special case - remove 'All' status for EPBC
+	# Special case - remove 'All' status for EPBC
 	if name == 'Status' and param_dict['StatusAuthority'] == 'EPBC':
 		options = [x for x in options if x['value'] != 'NT_VU_EN_CR']
 
