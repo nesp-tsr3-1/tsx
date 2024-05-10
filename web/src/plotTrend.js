@@ -71,7 +71,9 @@ export function plotTrend(data, dom) {
           title: {
             display: true,
             text: minYear ? 'Index (' + minYear + ' = 1)' : ''
-          }
+          },
+          suggestedMax: 1.4,
+          suggestedMin: 0
         },
         xAxis: {
           title: {
