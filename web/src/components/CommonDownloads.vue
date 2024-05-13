@@ -237,6 +237,9 @@
       <button type="button" class="button is-primary" @click="downloadTrend">Download Population Trend (TXT format)</button>
     </p>
   </div>
+  <div v-if="trendStatus == 'empty'" class="block">
+    <p>Insufficient data available to generate a trend</p>
+  </div>
 </template>
 
 <script>
@@ -244,7 +247,7 @@ import * as api from '../api.js'
 import Spinner from '../../node_modules/vue-simple-spinner/src/components/Spinner.vue'
 import Multiselect from '@vueform/multiselect'
 import HeatMap from './HeatMap.vue'
-import { plotTrend } from '../plotTrend.js'
+import { plotTrend, generateTrendPlotData } from '../plotTrend.js'
 import { Tippy } from 'vue-tippy'
 import { readTextFile, extractSpeciesIDsFromCSV, saveTextFile, generateSpeciesCSV } from '../util.js'
 import { markRaw } from 'vue'
@@ -472,9 +475,8 @@ export default {
       }
       api.dataSubsetTrendStatus(id).then(x => {
         if(x.status == 'ready') {
-          this.trendStatus = 'ready'
           this.trendDownloadURL = api.dataSubsetTrendDownloadURL(id)
-          setTimeout(() => this.plotTrend(id, v), 0, id)
+          this.plotTrend(id, v)
         } else if(x.status == 'processing') {
           setTimeout(() => this.checkTrendStatus(id, v), 3000)
         }
@@ -491,8 +493,22 @@ export default {
         if(v != this.changeCounter) {
           return
         }
-        this.showPlot = true
-        plotTrend(data, this.$refs.plot)
+
+        let plotData = generateTrendPlotData(data)
+        let isEmpty = plotData.labels.length < 2
+
+        if(isEmpty) {
+          this.trendStatus = 'empty'
+        } else {
+          this.trendStatus = 'ready'
+          setTimeout(() => {
+            this.showPlot = true
+            plotTrend(data, this.$refs.plot)
+          })
+        }
+      }).catch(e => {
+        console.log(e)
+        this.trendStatus = 'error'
       })
     },
     buildDownloadParams: function() {
@@ -566,8 +582,8 @@ export default {
       api.dataSubsetStats(params).then(stats => {
         if(v === this.changeCounter) {
           this.stats = stats
-          this.trendReferenceYear = this.stats.min_year;
-          this.trendFinalYear = this.stats.max_year;
+          this.trendReferenceYear = this.stats.min_year
+          this.trendFinalYear = this.stats.max_year
         }
       })
       if(this.enableMap) {
