@@ -378,7 +378,10 @@ def stats_html():
 		</head>
 		<body>
 			<p>
-				Time-series length (mean ± SD): {ts_length_mean:.1f} ± {ts_length_stddev:.1f}
+				Number of time series in Index: {num_ts}
+			</p>
+			<p>
+				Time series length (mean ± SD): {ts_length_mean:.1f} ± {ts_length_stddev:.1f}
 			</p>
 			<p>
 				Number of samples (years) per time series (mean ± SD): {ts_years_mean:.1f} ± {ts_years_stddev:.1f}
@@ -483,6 +486,7 @@ def get_stats(filtered_data):
 	return {
 		'num_sources': df['SourceDesc'].nunique(),
 		'num_taxa': df['TaxonID'].nunique(),
+		'num_ts': len(df),
 		'ts_length_mean': df['TimeSeriesLength'].mean(),
 		'ts_length_stddev': df['TimeSeriesLength'].std(),
 		'ts_years_mean': df['TimeSeriesSampleYears'].mean(),
