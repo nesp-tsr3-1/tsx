@@ -63,5 +63,6 @@ def process_database():
 		JOIN time_series_inclusion ON agg.time_series_id = time_series_inclusion.time_series_id
 		SET agg.include_in_analysis = time_series_inclusion.include_in_analysis"""))
 
-	log.info("Done")
+	session.commit()
 
+	log.info("Done")
