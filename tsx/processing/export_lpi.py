@@ -10,6 +10,7 @@ from datetime import date
 import re
 import numpy as np
 import tsx.config
+import sys
 from sqlalchemy import text
 
 log = logging.getLogger(__name__)
@@ -31,14 +32,26 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                 sql_list_argument('species', species)
             ).fetchall()]
 
-    log.info("Generating numeric IDs")
+    log.info("Checking time_series_inclusion is consistent")
 
-    # Create stable IDs for each taxon_id / search_type_id / source_id / unit_id / site_id / data_type combination
-    # session.execute("""CREATE TEMPORARY TABLE aggregated_id
-    #     ( INDEX (taxon_id, search_type_id, source_id, unit_id, site_id, grid_cell_id, data_type) )
-    #     SELECT (@cnt := @cnt + 1) AS id, taxon_id, search_type_id, source_id, unit_id, site_id, grid_cell_id, data_type
-    #     FROM (SELECT DISTINCT taxon_id, search_type_id, source_id, unit_id, site_id, grid_cell_id, data_type FROM aggregated_by_year) t
-    #     CROSS JOIN (SELECT @cnt := 0) AS dummy""")
+    result = list(session.execute(text("""
+        SELECT
+            (
+                SELECT count(*)
+                FROM aggregated_by_year agg
+                LEFT JOIN time_series_inclusion inc
+                ON agg.time_series_id = inc.time_series_id
+                WHERE agg.include_in_analysis = inc.include_in_analysis
+            ) = (
+                SELECT count(*)
+                FROM aggregated_by_year
+            )
+        """)))
+
+    if result != [(1,)]:
+        log.error("time_series_inclusion is not consistent with aggregated_by_year table")
+        log.info("Make sure you have run python -m tsx.process -c filter_time_series before attempting to export")
+        sys.exit(1)
 
     log.info("Calculating region centroids")
 
@@ -50,6 +63,7 @@ def process_database(species = None, monthly = False, filter_output = False, inc
     # Get year range
     min_year = tsx.config.config.getint("processing", "min_year")
     max_analysis_year = tsx.config.config.getint("processing", "max_year")
+    min_tssy = tsx.config.config.getint("processing", "min_time_series_sample_years")
 
     # When enabled, this flag means that all year's data will be included for any time series that passed filtering,
     # even beyond the max_year specified in the config file. However, the TimeSeriesSampleYears and other stats still
@@ -145,6 +159,8 @@ def process_database(species = None, monthly = False, filter_output = False, inc
             'SurveysSpatialAccuracy',
             'SurveyCount',
             'TimeSeriesID',
+            'InclusionCategory',
+            'InclusionCategoryComments',
             'NationalPriorityTaxa',
             'Citation'
         ]
@@ -157,9 +173,9 @@ def process_database(species = None, monthly = False, filter_output = False, inc
 
         if filter_output:
             if include_all_years_data:
-                having_clause = "HAVING MAX(include_in_analysis)"
+                having_clause = "HAVING MAX(agg.include_in_analysis)"
             else:
-                where_conditions += ['include_in_analysis']
+                where_conditions += ['agg.include_in_analysis']
 
         if monthly:
             value_series = "GROUP_CONCAT(CONCAT(start_date_y, '_', LPAD(COALESCE(start_date_m, 0), 2, '0'), '=', value))"
@@ -180,7 +196,7 @@ def process_database(species = None, monthly = False, filter_output = False, inc
         for taxon_id in tqdm(taxa):
             #                    (SELECT CAST(id AS UNSIGNED) FROM aggregated_id agg_id WHERE agg.taxon_id = agg_id.taxon_id AND agg.search_type_id <=> agg_id.search_type_id AND agg.source_id = agg_id.source_id AND agg.unit_id = agg_id.unit_id AND agg.site_id <=> agg_id.site_id AND agg.grid_cell_id <=> agg_id.grid_cell_id AND agg.data_type = agg_id.data_type) AS ID,
             sql = """SELECT
-                    time_series_id AS TimeSeriesID,
+                    agg.time_series_id AS TimeSeriesID,
                     taxon.spno AS SpNo,
                     taxon.id AS TaxonID,
                     taxon.common_name AS CommonName,
@@ -244,6 +260,27 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                     MAX(ST_Y(agg.centroid_coords)) AS SurveysCentroidLatitude,
                     MAX(agg.positional_accuracy_in_m) AS SurveysSpatialAccuracy,
                     SUM(agg.survey_count) AS SurveyCount,
+                    (CASE WHEN time_series_inclusion.include_in_analysis THEN 'Included' ELSE 'Excluded' END) AS InclusionCategory,
+                    TRIM(TRAILING '; ' FROM CONCAT(
+                        IF(time_series_inclusion.sample_years, '',
+                            'Sample years less than {min_tssy}; '),
+                        IF(time_series_inclusion.master_list_include, '',
+                            'Master List as Not In Index; '),
+                        IF(time_series_inclusion.search_type, '',
+                            'Search Type is Incidental'),
+                        IF(time_series_inclusion.taxon_status, '',
+                            'Status not NT/VU/EN/CR; '),
+                        IF(time_series_inclusion.region, '',
+                            'Region is NA; '),
+                        IF(time_series_inclusion.data_agreement, '',
+                            'AgreementSigned is 0; '),
+                        IF(time_series_inclusion.standardisation_of_method_effort, '',
+                            'StandardisationOfMethodEffort is 0 or 1; '),
+                        IF(time_series_inclusion.consistency_of_monitoring, '',
+                            'ConsistencyOfMonitoring is 0 or 1; '),
+                        IF(time_series_inclusion.non_zero, '',
+                            'All values are 0; ')
+                    )) AS InclusionCategoryComments,
                     data_source.citation AS Citation
                     -- CONCAT(
                     --     COALESCE(CONCAT(source.authors, ' '), ''),
@@ -256,6 +293,7 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                 FROM
                     {aggregated_table} agg
                     INNER JOIN taxon ON taxon.id = agg.taxon_id
+                    INNER JOIN time_series_inclusion ON time_series_inclusion.time_series_id = agg.time_series_id
                     LEFT JOIN search_type ON search_type.id = agg.search_type_id
                     INNER JOIN source ON source.id = agg.source_id
                     INNER JOIN unit ON unit.id = agg.unit_id
@@ -296,7 +334,8 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                         where_conditions = " ".join("AND %s" % cond for cond in where_conditions),
                         having_clause = having_clause,
                         current_date_expression = current_date_expression,
-                        current_year_expression = current_year_expression
+                        current_year_expression = current_year_expression,
+                        min_tssy = min_tssy
                     )
 
             result = session.execute(text(sql), {
