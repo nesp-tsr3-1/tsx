@@ -184,13 +184,6 @@ def process_database(species = None, monthly = False, filter_output = False, inc
             value_series = "GROUP_CONCAT(CONCAT(start_date_y, '=', value))"
             aggregated_table = 'aggregated_by_year'
 
-        if database_config and "sqlite:" in database_config:
-            current_date_expression = "DATE('NOW')"
-            current_year_expression = "strftime('%Y', 'now')"
-        else:
-            current_date_expression = "DATE(NOW())"
-            current_year_expression = "YEAR(NOW())"
-
         index = 1
 
         for taxon_id in tqdm(taxa):
@@ -282,14 +275,6 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                             'All values are 0; ')
                     )) AS InclusionCategoryComments,
                     data_source.citation AS Citation
-                    -- CONCAT(
-                    --     COALESCE(CONCAT(source.authors, ' '), ''),
-                    --     '(', {current_year_expression}, '). ',
-                    --     COALESCE(CONCAT(source.description, '. '), ''),
-                    --     COALESCE(CONCAT(source.provider, '. '), ''),
-                    --     'Aggregated for National Environmental Science Program Threatened Species Recovery Hub Project 3.1. Generated on ',
-                    --     {current_date_expression}
-                    -- ) AS Citation
                 FROM
                     {aggregated_table} agg
                     INNER JOIN taxon ON taxon.id = agg.taxon_id
@@ -333,8 +318,6 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                         aggregated_table = aggregated_table,
                         where_conditions = " ".join("AND %s" % cond for cond in where_conditions),
                         having_clause = having_clause,
-                        current_date_expression = current_date_expression,
-                        current_year_expression = current_year_expression,
                         min_tssy = min_tssy
                     )
 
