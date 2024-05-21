@@ -11,7 +11,7 @@ port=8080
 root_url=http://localhost:8080/
 
 [global]
-data_dir=sample-data
+data_dir=data
 
 [processing]
 min_year=1950

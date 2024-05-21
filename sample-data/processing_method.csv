@@ -1,0 +1,33 @@
+taxon_id,common_name,unit_id,unit_description,source_id,source_description,search_type_id,search_type_description,response_variable_type_id,positional_accuracy_threshold_in_m,data_type
+u555c,South-eastern Brown Treecreeper,1,Sample: Occupancy (# presences/# absences),4,Birdata,1,2ha 20 minute search,3,,2
+u555c,South-eastern Brown Treecreeper,1,Sample: Occupancy (# presences/# absences),4,Birdata,2,500m Area search,3,,2
+u555c,South-eastern Brown Treecreeper,1,Sample: Occupancy (# presences/# absences),4,Birdata,3,5km Area search,0,,2
+u555c,South-eastern Brown Treecreeper,1,Sample: Occupancy (# presences/# absences),4,Birdata,6,Incidental search,0,,2
+u555c,South-eastern Brown Treecreeper,1,Sample: Occupancy (# presences/# absences),4,Birdata,7,Fixed route search,3,,2
+u555c,South-eastern Brown Treecreeper,1,Sample: Occupancy (# presences/# absences),4,Birdata,8,Bird list,0,,2
+u555c,South-eastern Brown Treecreeper,1,Sample: Occupancy (# presences/# absences),4,Birdata,40,2ha non-20 minute search,0,,2
+u555c,South-eastern Brown Treecreeper,2,Sample: abundance (counts),4,Birdata,1,2ha 20 minute search,3,,2
+u555c,South-eastern Brown Treecreeper,2,Sample: abundance (counts),4,Birdata,2,500m Area search,3,,2
+u555c,South-eastern Brown Treecreeper,2,Sample: abundance (counts),4,Birdata,3,5km Area search,0,,2
+u555c,South-eastern Brown Treecreeper,2,Sample: abundance (counts),4,Birdata,6,Incidental search,0,,2
+u555c,South-eastern Brown Treecreeper,2,Sample: abundance (counts),4,Birdata,7,Fixed route search,3,,2
+u555c,South-eastern Brown Treecreeper,2,Sample: abundance (counts),4,Birdata,8,Bird list,0,,2
+u555c,South-eastern Brown Treecreeper,2,Sample: abundance (counts),4,Birdata,40,2ha non-20 minute search,0,,2
+u385a,South-eastern Hooded Robin,1,Sample: Occupancy (# presences/# absences),4,Birdata,1,2ha 20 minute search,3,,2
+u385a,South-eastern Hooded Robin,1,Sample: Occupancy (# presences/# absences),4,Birdata,2,500m Area search,3,,2
+u385a,South-eastern Hooded Robin,1,Sample: Occupancy (# presences/# absences),4,Birdata,3,5km Area search,0,,2
+u385a,South-eastern Hooded Robin,1,Sample: Occupancy (# presences/# absences),4,Birdata,6,Incidental search,0,,2
+u385a,South-eastern Hooded Robin,1,Sample: Occupancy (# presences/# absences),4,Birdata,7,Fixed route search,3,,2
+u385a,South-eastern Hooded Robin,1,Sample: Occupancy (# presences/# absences),4,Birdata,8,Bird list,0,,2
+u385a,South-eastern Hooded Robin,1,Sample: Occupancy (# presences/# absences),4,Birdata,40,2ha non-20 minute search,0,,2
+u385a,South-eastern Hooded Robin,2,Sample: abundance (counts),4,Birdata,1,2ha 20 minute search,3,,2
+u385a,South-eastern Hooded Robin,2,Sample: abundance (counts),4,Birdata,2,500m Area search,3,,2
+u385a,South-eastern Hooded Robin,2,Sample: abundance (counts),4,Birdata,3,5km Area search,0,,2
+u385a,South-eastern Hooded Robin,2,Sample: abundance (counts),4,Birdata,6,Incidental search,0,,2
+u385a,South-eastern Hooded Robin,2,Sample: abundance (counts),4,Birdata,7,Fixed route search,0,,2
+u385a,South-eastern Hooded Robin,2,Sample: abundance (counts),4,Birdata,8,Bird list,0,,2
+u385a,South-eastern Hooded Robin,2,Sample: abundance (counts),4,Birdata,40,2ha non-20 minute search,0,,2
+u123,Houtman Abrolhos Lesser Noddy,6,,1,Houtman Abrolhos Lesser Noddy,7,Fixed route search,2,,1
+u123,Houtman Abrolhos Lesser Noddy,7,,1,Houtman Abrolhos Lesser Noddy,7,Fixed route search,2,,1
+u311c,Mainland Ground Parrot,5,,3,Mainland Ground Parrot (NSW),7,Fixed route search,1,,1
+u355a,Southern Rufous Scrub-bird,9,,2,Southern Rufous Scrub-bird (New England),7,Fixed route search,1,,1

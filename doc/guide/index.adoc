@@ -395,8 +395,8 @@ Up to this point we have been working with sample data in order to gain familiar
 
 If you have been working through the guide with the sample data, clear out all data from the database by running these two commands:
 ----
-mysql tsx < data/sql/create.sql
-mysql tsx < data/sql/init.sql
+mysql tsx < db/sql/create.sql
+mysql tsx < db/sql/init.sql
 ----
 
 Now, work again through each step in the <<Running the workflow>> section, this time adapting each command for your particular use case. For every command that involves a file from the `sample-data` directory, you will need to evaluate whether the sample-data is appropriate for your use case, and if not, edit it or supply your own file as necessary. The <<Import File Formats>> section will be useful when working with these files.
