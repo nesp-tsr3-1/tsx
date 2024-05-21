@@ -154,7 +154,7 @@ This flow diagram shows that Type 1 data processing is much simpler than Type 2 
 In the documentation below, all steps that specific to Type 2 data only are clearly marked and can be safely skipped if you only want to process Type 1 data.
 
 
-=== Aggregate by year/month (Type 1 data)
+=== Aggregate Type 1 data by year/month
 
 image::workflow-preprocessing-t1-aggregation.png[Flow diagram - Type 1 data aggregation,400,float="right"]
 
@@ -211,81 +211,43 @@ NOTE: Calling this command may take a few minutes depending on your computer.
 
 This will perform the alpha hull calculations, intersect the result with the range polygons, and places the result into the `taxon_presence_alpha_hull` database table.
 
+=== Aggregate Type 2 data by year/month
 
-=== Attribute range and ultrataxon (Type 2 data only)
+image::workflow-preprocessing-t2-aggregation.png[Flow diagram - aggregate type 2 data,400,float="right"]
 
-image::workflow-preprocessing-range-ultrataxon.png[Flow diagram - attribute range and ultrataxon,400,float="right"]
+Now that alpha hulls have been calculated for each ultrataxon that we are interested in, we can proceed with aggregating the type 2 data.
 
-Type-2 data is typically defined to the species level, however we need to generate pseudo-absences and ultimately aggregate time series that are at the ultrataxon level.
+This step of the workflow makes these assumptions about type 2 data:
 
-This step of processing converts the species level observations to ultrataxon level observations using the range polygons that were imported in the previous step. In hybrid zones, where a species maps to multiple subspecies, we simply duplicate each species record for each potential subspecies.
+* Only occupancy (UnitID=1) and abundance (UnitID=2) units are supported; sightings with any other units are ignored.
+* All sightings with occupancy units (UnitID=1) are presences; i.e. there are no explicit absences with occupancy units. We refer to these as "presence-only" sightings.
+* All surveys are explicity associated with a site in the imported data file.
 
-Since the range polygons required for this step have already been imported in the previous step, the only command that needs to be run for this step is:
+The workflow performs the following processing steps for each ultrataxon of interest:
+
+* A list is made of all sites associated with at least one survey that falls inside the ultrataxon's alpha hull. In other words, a list is made of all sites where the ultrataxon is known to occur.
+* A list is made of all surveys in these sites. Note that each survey either contains a sighting record for the ultrataxon (a presence-only or abundance count) or it does not not (a pseudo-absence). Importantly, if the ultrataxon is a _subspecies_ and a survey contains a sighting of its parent species, that sighting is considered to be sighting of the ultrataxon for the purposes of this workflow step.
+* These surveys are aggregated into monthly time series by grouping together records with the same _year_, _month_, _site_, _search type_ and _source_, calculating the following values for each group:
+** The number of surveys (stem:[n_s])
+** The number of surveys with presence-only sightings of the current ultrataxon (stem:[n_p])
+** The number of surveys with abundance sightings of the ultrataxon (stem:[n_a])
+** The sum of all counts for abundance sightings of the ultrataxon (stem:[s])
+** The maximum count for abundance sightings of the ultrataxon (stem:[m])
+* These values are then used to calculate the following response variables of interest:
+** reporting rate: stem:[(n_p + n_a)/n_s]
+** mean abundance: stem:[s/(n_s - n_p)]
+** max abundance: stem:[m]
+* All though all 3 response variables are calculated, only the response variables specified in the processing methods file are actually kept for further processing.
+* The monthly time series are then further aggregated to yearly time series by taking the average value of the response variable across all months in each year for which data exists.
+
+Note that the mean abundance calculation includes pseudo-absences as zeroes, rather than simply being a mean of counts of sightings with abundance units.
+
+The type 2 aggregation we have just described can be performed by running the following command
 ----
-python -m tsx.process -c range_ultrataxon
-----
-
-This will populate the `t2_ultrataxon_sighting` table with a row (or multiple rows in hybrid zones) for each sighting in the raw data that falls within the species range polygons, identified to the ultrataxon level. The range classification (Core/Vagrant etc.) for each sighting is also stored in this table, but it is not used directly in subsequent processing at this stage.
-
-
-=== Attribute sites and generate pseudo-absences (Type 2 data only)
-
-image::workflow-preprocessing-pseudo-absences.png[Flow diagram - Attribute sites and generate pseudo-absences,400,float="right"]
-
-Now that sightings have been defined to the ultrataxon level, we can generate pseudo-absences for surveys that fall within an ultrataxon alpha hull but do not contain a sighting for that ultrataxon.
-
-There are three “experimental design types” which correspond to different ways of generating pseudo-absences:
-
-. Standardised site: surveys which were not associated with sites in the raw data are assigned to sites where possible based on a set of known site polygons which are defined in the “Type 2 Sites” auxiliary input. Pseudo-absences are generated for surveys at sites that fall within alpha hulls.
-. Standardised grid: surveys are assigned to grid cells, which are also defined in an auxiliary input. Pseudo-absences are generated for surveys within grid cells that intersect with alpha hulls.
-. Unstandardised grid: surveys are processed exactly the same as standardised grid for the purposes of generating pseudo-absences, but are handled differently in the subsequent aggregation step.
-
-The experimental design type that is used for a given taxon/source/method/unit combination is defined in the processing methods file which was previously imported in the step entitled <<Aggregate by year/month (Type 1 data)>>.
-
-To import the sample Type 2 sites (see Appendix for specification), run:
-----
-python -m tsx.import_t2_site sample-data/spatial/t2_site.shp
-----
-
-NOTE: Ignore the warning ‘Failed to auto identify EPSG: 7’ popping up while this processing step is running.
-
-To import the sample grid polygons, run:
-----
-python -m tsx.import_grid sample-data/spatial/10min_mainland.shp
+python -m tsx.process -c t2_aggregation
 ----
 
-NOTE: Ignore the warning ‘Failed to auto identify EPSG: 7’ popping up while this processing step is running.
-
-Now the processing script can be run:
-----
-python -m tsx.process -c pseudo_absence
-----
-
-NOTE: Running this command may take a few minutes which will depend on your computer and how much data you are processing.
-
-This will generate pseudo-absences and put them into `t2_processed_survey` and `t2_processed_sighting` tables along with presence records. At this point, the Type 2 data has been transformed into a form that meets the Type 1 data requirements because taxa are now defined to the ultrataxon level and presences and absences are both included.
-
-=== Calculate response variable & aggregate by year/month (Type 2 data only)
-
-image::workflow-preprocessing-response-variable.png[Flow diagram - Calculate response variable & aggregate,400,float="right"]
-
-The processed Type 2 data is now ready to be aggregated in a similar manner to the Type 1 data aggregation.
-
-The data is aggregated by month and then by year, with the monthly aggregation using an average count, maximum count or reporting rate depending on the response variable type specified in the processing methods auxiliary input file.
-
-The aggregation of Type 2 data is affected by the experimental design type which has been specified for a given taxon/source/method/unit combination:
-
-. Standardised site: Only surveys associated with sites are aggregated and incidental surveys are excluded. Surveys with different search types (methods) are aggregated separately.
-. Standardised grid: Incidental surveys are excluded. Surveys with different search types (methods) are aggregated separately.
-. Unstandardised grid: All survey types are included, and surveys are not aggregated separately based on search type.
-
-To perform the response variable calculation and aggregation, run:
-----
-python -m tsx.process -c response_variable
-----
-
-This will add the aggregated results into the `aggregated_by_month` and `aggregated_by_year` database tables, which also contain the previously aggregated Type 1 data.
-
+This will aggregate the data and put the result into the `aggregated_by_year` and `aggregated_by_month` tables, alongside any existing aggregated type 1 data.
 
 === Calculate spatial representativeness (Type 1 & 2 data)
 

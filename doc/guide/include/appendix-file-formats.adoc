@@ -53,13 +53,6 @@ Sample file: `processing_methods.csv`
 |source_description	|Text, must match description in the `source` database table
 |search_type_id	|Numeric, must match IDs in the `search_type` database table
 |search_type_description	|Text, must match description in the `search_type` database table
-|experimental_design_type_id	a|Numeric
-
-- 0 = Do not process
-- 1 = Standardised site (All type-1 data should use this)
-- 2 = Standardised grid
-- 3 = Unstandardised grid
-
 |response_variable_type_id	a|Numeric
 
 - 0 = Do not process

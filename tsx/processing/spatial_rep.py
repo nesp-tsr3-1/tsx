@@ -160,18 +160,20 @@ def get_core_range_geometry(session, taxon_id):
     return to_multipolygon(geom)
 
 def get_taxa(session, data_type, species):
-    table = "t1_sighting" if data_type == 1 else "t2_ultrataxon_sighting"
-
-    if species == None:
-        taxa = session.execute(text("""SELECT DISTINCT taxon_id FROM {table}""".format(table = table))).fetchall()
+    if data_type == 1:
+        taxa = session.execute(text("""SELECT DISTINCT taxon_id FROM t1_sighting""")).fetchall()
     else:
-        sql = """SELECT DISTINCT taxon_id FROM {table}, taxon WHERE taxon.id = taxon_id AND spno IN ({species})""".format(
-            table = table,
-            species = sql_list_placeholder('species', species)
-        )
-        taxa = session.execute(text(sql), sql_list_argument('species', species)).fetchall()
+        taxa = session.execute(text("""SELECT DISTINCT taxon_id FROM aggregated_by_year WHERE data_type = 2""")).fetchall()
 
-    return [taxon_id for (taxon_id,) in taxa]
+    taxa = [taxon_id for (taxon_id,) in taxa]
+
+    if species:
+        species_taxa = set(taxon_id for (taxon_id,) in session.execute(text(
+            "SELECT DISTINCT id FROM taxon WHERE spno IN ({species})".format(
+                species = sql_list_placeholder('species', species)))))
+        taxa = [taxon_id for taxon_id in taxa if taxon_id in species_taxa]
+
+    return taxa
 
 def get_source_ids(session, data_type, taxon_id):
     if data_type == 1:
@@ -181,10 +183,9 @@ def get_source_ids(session, data_type, taxon_id):
         AND taxon_id = :taxon_id"""
     else:
         sql = """SELECT DISTINCT source_id
-        FROM t2_survey, t2_sighting, t2_ultrataxon_sighting
-        WHERE survey_id = t2_survey.id
-        AND t2_sighting.id = t2_ultrataxon_sighting.sighting_id
-        AND t2_ultrataxon_sighting.taxon_id = :taxon_id"""
+        FROM aggregated_by_year
+        WHERE data_type = 2
+        AND taxon_id = :taxon_id"""
 
     return [source_id for (source_id,) in session.execute(text(sql), { 'taxon_id': taxon_id }).fetchall()]
 
@@ -196,12 +197,12 @@ def get_raw_points(session, data_type, taxon_id, source_id):
         AND source_id = :source_id
         AND taxon_id = :taxon_id"""
     else:
-        sql = """SELECT DISTINCT ST_X(coords), ST_Y(coords)
-        FROM t2_survey, t2_sighting, t2_ultrataxon_sighting
-        WHERE survey_id = t2_survey.id
-        AND sighting_id = t2_sighting.id
-        AND source_id = :source_id
-        AND t2_ultrataxon_sighting.taxon_id = :taxon_id"""
+        sql = """SELECT DISTINCT ST_X(t2_survey.coords), ST_Y(t2_survey.coords)
+        FROM aggregated_by_year agg
+        JOIN t2_survey ON t2_survey.site_id = agg.site_id
+        WHERE agg.data_type = 2
+        AND agg.source_id = :source_id
+        AND agg.taxon_id = :taxon_id"""
 
     xys = session.execute(text(sql), { 'taxon_id': taxon_id, 'source_id': source_id }).fetchall()
 

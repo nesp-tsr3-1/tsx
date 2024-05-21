@@ -129,7 +129,6 @@ def process_database(species = None, monthly = False, filter_output = False, inc
             'Unit',
             'SearchTypeID',
             'SearchTypeDesc',
-            'ExperimentalDesignType',
             'ResponseVariableType',
             'DataType'
         ]
@@ -187,7 +186,7 @@ def process_database(species = None, monthly = False, filter_output = False, inc
         index = 1
 
         for taxon_id in tqdm(taxa):
-            #                    (SELECT CAST(id AS UNSIGNED) FROM aggregated_id agg_id WHERE agg.taxon_id = agg_id.taxon_id AND agg.search_type_id <=> agg_id.search_type_id AND agg.source_id = agg_id.source_id AND agg.unit_id = agg_id.unit_id AND agg.site_id <=> agg_id.site_id AND agg.grid_cell_id <=> agg_id.grid_cell_id AND agg.data_type = agg_id.data_type) AS ID,
+            #                    (SELECT CAST(id AS UNSIGNED) FROM aggregated_id agg_id WHERE agg.taxon_id = agg_id.taxon_id AND agg.search_type_id <=> agg_id.search_type_id AND agg.source_id = agg_id.source_id AND agg.unit_id = agg_id.unit_id AND agg.site_id <=> agg_id.site_id AND agg.data_type = agg_id.data_type) AS ID,
             sql = """SELECT
                     agg.time_series_id AS TimeSeriesID,
                     taxon.spno AS SpNo,
@@ -218,12 +217,12 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                     (SELECT description FROM taxon_status WHERE taxon_status.id = taxon.max_status_id) AS MaxStatus,
                     search_type.id AS SearchTypeID,
                     search_type.description AS SearchTypeDesc,
-                    COALESCE(site_id, grid_cell_id) AS SiteID,
+                    site_id AS SiteID,
                     COALESCE(
                         t1_site.name,
                         t2_site.name,
-                        CONCAT('site_', agg.data_type, '_', site_id),
-                        CONCAT('grid_', grid_cell_id)) AS SiteName,
+                        CONCAT('site_', agg.data_type, '_', site_id)
+                    ) AS SiteName,
                     COALESCE((SELECT type FROM management WHERE t1_site.management_id = management.id), 'No known management') AS Management,
                     COALESCE((SELECT description FROM management WHERE t1_site.management_id = management.id), 'Unknown') AS ManagementCategory,
                     t1_site.management_comments AS ManagementCategoryComments,
@@ -240,7 +239,6 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                     {value_series} AS value_series,
                     COUNT(*) AS value_count,
                     agg.data_type AS DataType,
-                    (SELECT description FROM experimental_design_type WHERE agg.experimental_design_type_id = experimental_design_type.id) AS ExperimentalDesignType,
                     (SELECT description FROM response_variable_type WHERE agg.response_variable_type_id = response_variable_type.id) AS ResponseVariableType,
                     (CASE WHEN taxon.suppress_spatial_representativeness AND alpha.core_range_area_in_m2 THEN NULL ELSE ROUND(alpha.alpha_hull_area_in_m2 / alpha.core_range_area_in_m2, 4) END) AS SpatialRepresentativeness,
                     data_source.absences_recorded AS AbsencesRecorded,
@@ -296,8 +294,6 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                     agg.source_id,
                     agg.search_type_id,
                     agg.site_id,
-                    agg.grid_cell_id,
-                    agg.experimental_design_type_id,
                     agg.response_variable_type_id,
                     agg.region_id,
                     agg.unit_id,
@@ -307,8 +303,6 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                     agg.source_id,
                     agg.search_type_id,
                     agg.site_id,
-                    agg.grid_cell_id,
-                    agg.experimental_design_type_id,
                     agg.response_variable_type_id,
                     agg.region_id,
                     agg.unit_id,

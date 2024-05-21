@@ -43,23 +43,22 @@ def aggregate_by_month(taxon_id, commit = False):
     try:
         sql = """SELECT
                     source_id,
-                    experimental_design_type_id,
                     response_variable_type_id,
                     MAX(positional_accuracy_threshold_in_m),
                     1 AS cnt
                 FROM processing_method
                 WHERE taxon_id = :taxon_id
                 AND data_type = 2
-                GROUP BY source_id, experimental_design_type_id, response_variable_type_id"""
+                GROUP BY source_id, response_variable_type_id"""
 
         for row in session.execute(text(sql), { 'taxon_id': taxon_id }).fetchall():
 
-            source_id, experimental_design_type_id, response_variable_type_id, positional_accuracy_threshold_in_m, count = row
+            source_id, response_variable_type_id, positional_accuracy_threshold_in_m, count = row
 
             if count > 1:
-                log.warning("More than one experimental design type / response variable type / accuracy threshold for taxon %s, source %s" % (taxon_id, source_id))
-                log.warning("Using experimental_design_type_id = %s, response_variable_type_id = %s, positional_accuracy_threshold_in_m = %s" %
-                    (experimental_design_type_id, response_variable_type_id, positional_accuracy_threshold_in_m))
+                log.warning("More than one response variable type / accuracy threshold for taxon %s, source %s" % (taxon_id, source_id))
+                log.warning("Using response_variable_type_id = %s, positional_accuracy_threshold_in_m = %s" %
+                    (response_variable_type_id, positional_accuracy_threshold_in_m))
 
             where_conditions = []
 
@@ -78,19 +77,9 @@ def aggregate_by_month(taxon_id, commit = False):
 
             # Tweak SQL based on experimental design type
 
-            if experimental_design_type_id == 1:
-                fields = 'site_id, search_type_id'
-                where_conditions.append("site_id IS NOT NULL")
-                where_conditions.append("search_type_id != 6") # Exclude Incidental Surveys
-
-            elif experimental_design_type_id == 2:
-                fields = 'grid_cell_id, search_type_id'
-                where_conditions.append("grid_cell_id IS NOT NULL")
-                where_conditions.append("search_type_id != 6") # Exclude Incidental Surveys
-
-            elif experimental_design_type_id == 3:
-                fields = 'grid_cell_id'
-                where_conditions.append("grid_cell_id IS NOT NULL")
+            fields = 'site_id, search_type_id'
+            where_conditions.append("site_id IS NOT NULL")
+            where_conditions.append("search_type_id != 6") # Exclude Incidental Surveys
 
             # Generate SQL for monthly aggregation
 
@@ -100,7 +89,6 @@ def aggregate_by_month(taxon_id, commit = False):
                 source_id,
                 {fields},
                 taxon_id,
-                experimental_design_type_id,
                 response_variable_type_id,
                 value,
                 region_id,
@@ -115,10 +103,9 @@ def aggregate_by_month(taxon_id, commit = False):
                 source_id,
                 {fields},
                 taxon_id,
-                :experimental_design_type_id,
                 :response_variable_type_id,
                 {aggregate_expression},
-                MIN((SELECT MIN(region_id) FROM tmp_region_lookup t WHERE t.site_id <=> survey.site_id AND t.grid_cell_id <=> survey.grid_cell_id)),
+                MIN((SELECT MIN(region_id) FROM tmp_region_lookup t WHERE t.site_id <=> survey.site_id)),
                 MAX((SELECT positional_accuracy_in_m FROM t2_survey WHERE t2_survey.id = raw_survey_id)),
                 :unit_id,
                 2,
@@ -152,7 +139,6 @@ def aggregate_by_month(taxon_id, commit = False):
                 )
 
             session.execute(text(sql), {
-                'experimental_design_type_id': experimental_design_type_id,
                 'response_variable_type_id': response_variable_type_id,
                 'taxon_id': taxon_id,
                 'source_id': source_id,
@@ -181,9 +167,7 @@ def aggregate_by_year(taxon_id, commit = False):
                 source_id,
                 search_type_id,
                 site_id,
-                grid_cell_id,
                 taxon_id,
-                experimental_design_type_id,
                 response_variable_type_id,
                 value,
                 data_type,
@@ -197,9 +181,7 @@ def aggregate_by_year(taxon_id, commit = False):
                 source_id,
                 search_type_id,
                 site_id,
-                grid_cell_id,
                 taxon_id,
-                experimental_design_type_id,
                 response_variable_type_id,
                 AVG(value),
                 data_type,
@@ -216,9 +198,7 @@ def aggregate_by_year(taxon_id, commit = False):
                 source_id,
                 search_type_id,
                 site_id,
-                grid_cell_id,
                 taxon_id,
-                experimental_design_type_id,
                 response_variable_type_id,
                 data_type,
                 region_id,
@@ -239,7 +219,7 @@ def cleanup_region_lookup_table(session):
     session.execute(text("""DROP TABLE IF EXISTS tmp_region_lookup"""))
 
 def create_region_lookup_table(session):
-    log.info("Pre-calculating region for each site/grid")
+    log.info("Pre-calculating region for each site")
 
     cleanup_region_lookup_table(session)
 
@@ -247,21 +227,12 @@ def create_region_lookup_table(session):
     session.execute(text("SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED"))
 
     session.execute(text("""CREATE TABLE tmp_region_lookup
-        ( INDEX (site_id, grid_cell_id) )
+        ( INDEX (site_id) )
         SELECT DISTINCT
-            t2_survey_site.site_id,
-            NULL AS grid_cell_id,
+            t2_survey_site.site_id
             region_subdiv.id AS region_id
         FROM
             t2_survey
             INNER JOIN t2_survey_site ON t2_survey_site.survey_id = t2_survey.id
             STRAIGHT_JOIN region_subdiv USE INDEX (geometry) ON ST_Intersects(coords, geometry)
-        UNION ALL
-        SELECT DISTINCT
-            NULL AS site_id,
-            grid_cell.id AS grid_cell_id,
-            region_subdiv.id AS region_id
-        FROM
-            grid_cell, region_subdiv
-            WHERE ST_Intersects(ST_Centroid(grid_cell.geometry), region_subdiv.geometry)
         """))

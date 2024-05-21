@@ -26,8 +26,6 @@ def main():
 	with open(args.filename) as f:
 		reader = csv.DictReader(f)
 		for row in tqdm(list(reader)):
-			if row['experimental_design_type_id'] in ('0', ''):
-				continue
 			if row['response_variable_type_id'] in ('0', ''):
 				continue
 			if row['positional_accuracy_threshold_in_m'] == '':
@@ -69,7 +67,6 @@ def main():
 					source_id,
 					search_type_id,
 					data_type,
-					experimental_design_type_id,
 					response_variable_type_id,
 					positional_accuracy_threshold_in_m
 				) VALUES (
@@ -78,7 +75,6 @@ def main():
 					:source_id,
 					:search_type_id,
 					:data_type,
-					:experimental_design_type_id,
 					:response_variable_type_id,
 					:positional_accuracy_threshold_in_m
 				)"""), row)

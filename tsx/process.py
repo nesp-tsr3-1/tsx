@@ -16,11 +16,8 @@ import shutil
 from datetime import datetime
 import random
 import tsx.processing.alpha_hull
-import tsx.processing.range_ultrataxon
-import tsx.processing.pseudo_absence
 import tsx.processing.t1_aggregation
 import tsx.processing.t2_aggregation
-import tsx.processing.response_variable
 import tsx.processing.export_lpi
 import tsx.processing.spatial_rep
 import tsx.processing.filter_time_series
@@ -50,7 +47,7 @@ def main():
     p = subparsers.add_parser('alpha_hull')
     p = subparsers.add_parser('export')
 
-    p.add_argument('layers', nargs='+', choices=['alpha', 'ultrataxa', 'pa', 'grid'], help='Layers to export')
+    p.add_argument('layers', nargs='+', choices=['alpha', 'ultrataxa', 'pa'], help='Layers to export')
 
     p = subparsers.add_parser('range_ultrataxon')
     p = subparsers.add_parser('pseudo_absence')
@@ -89,16 +86,10 @@ def main():
         tsx.processing.alpha_hull.process_database(species = species, commit = args.commit)
     elif args.command == 'export':
         export(args.layers, species = species)
-    elif args.command == 'range_ultrataxon':
-        tsx.processing.range_ultrataxon.process_database(species = species, commit = args.commit)
-    elif args.command == 'pseudo_absence':
-        tsx.processing.pseudo_absence.process_database(commit = args.commit)
     elif args.command == 't1_aggregation':
         tsx.processing.t1_aggregation.process_database(species = species, commit = args.commit)
     elif args.command == 't2_aggregation':
         tsx.processing.t2_aggregation.process_database(species = species, commit = args.commit)
-    elif args.command == 'response_variable':
-        tsx.processing.response_variable.process_database(species = species, commit = args.commit)
     elif args.command == 'export_lpi':
         tsx.processing.export_lpi.process_database(species = species, monthly = args.monthly, filter_output = args.filter, include_all_years_data = args.include_all_years_data)
     elif args.command == 'spatial_rep':
@@ -130,22 +121,16 @@ def main():
         log.info("STEP 1 - ALPHA HULLS")
         tsx.processing.alpha_hull.process_database(commit = True)
 
-        log.info("STEP 2 - RANGE AND ULTRATAXON DEFINITION")
-        tsx.processing.range_ultrataxon.process_database(commit = True)
-
-        log.info("STEP 3 - GENERATE PSEUDO ABSENCES")
-        tsx.processing.pseudo_absence.process_database(commit = True)
-
-        log.info("STEP 4 - TYPE 1 DATA AGGREGATION")
+        log.info("STEP 2 - TYPE 1 DATA AGGREGATION")
         tsx.processing.t1_aggregation.process_database(commit = True)
 
-        log.info("STEP 5 - TYPE 2 DATA RESPONSE VARIABLE PROCESSING")
-        tsx.processing.response_variable.process_database(commit = True)
+        log.info("STEP 3 - TYPE 2 DATA AGGREGATION")
+        tsx.processing.t2_aggregation.process_database(commit = True)
 
-        log.info("STEP 6 - CALCULATE SPATIAL REPRESENTATIVENESS")
+        log.info("STEP 4 - CALCULATE SPATIAL REPRESENTATIVENESS")
         tsx.processing.spatial_rep.process_database(commit = True)
 
-        log.info("STEP 7 - FILTER TIME SERIES")
+        log.info("STEP 5 - FILTER TIME SERIES")
         tsx.processing.filter_time_series.process_database()
 
         log.info("PROCESSING COMPLETE")
@@ -221,9 +206,6 @@ def clear_database():
         "SET FOREIGN_KEY_CHECKS = 0;",
         "TRUNCATE taxon_presence_alpha_hull;",
         "TRUNCATE taxon_presence_alpha_hull_subdiv;",
-        "TRUNCATE t2_ultrataxon_sighting;",
-        "TRUNCATE t2_processed_survey;",
-        "TRUNCATE t2_processed_sighting;",
         "TRUNCATE t2_survey_site;",
         "TRUNCATE aggregated_by_year;",
         "TRUNCATE aggregated_by_month;",
@@ -242,9 +224,6 @@ def export(layers, species = None):
     session = get_session()
 
     export_alpha = 'alpha' in layers
-    export_ultrataxa = 'ultrataxa' in layers
-    export_pseudo_absence = 'pa' in layers
-    export_grid = 'grid' in layers
 
     export_dir = tsx.config.data_dir('export')
 
@@ -288,121 +267,6 @@ def export(layers, species = None):
                                 'TAXONID': taxon_id,
                                 'RNGE': range_id,
                                 'BRRNGE': breeding_range_id
-                            }
-                        })
-
-        if export_ultrataxa:
-            filename = os.path.join(export_dir, '%s-ultrataxa.shp' % spno)
-
-            items = session.execute(text("""SELECT ST_X(coords) AS x, ST_Y(coords) AS y, taxon.id, range_id, generated_subspecies, t2_survey_site.site_id, t2_survey.search_type_id
-                FROM t2_ultrataxon_sighting, t2_sighting, taxon, t2_survey
-                LEFT JOIN t2_survey_site ON t2_survey_site.survey_id = t2_survey.id
-                WHERE t2_ultrataxon_sighting.sighting_id = t2_sighting.id
-                AND t2_sighting.survey_id = t2_survey.id
-                AND t2_ultrataxon_sighting.taxon_id = taxon.id
-                AND taxon.spno = :spno
-                """), {
-                    'spno': spno
-                }).fetchall()
-
-            with fiona.open(filename, 'w',
-                    driver='ESRI Shapefile',
-                    crs={'no_defs': True, 'ellps': 'WGS84', 'datum': 'WGS84', 'proj': 'longlat'},
-                    schema={
-                        'geometry': 'Point',
-                        'properties': {
-                            'TaxonID': 'str',
-                            'Rnge': 'int',
-                            'Generated': 'int',
-                            'SearchType': 'int',
-                            'SiteID': 'int'
-                        }
-                    }) as output:
-
-                    for x, y, taxon_id, range_id, generated_subspecies, site_id, search_type_id in items:
-                        geom = Point(x, y)
-
-                        output.write({
-                            'geometry': shapely.geometry.mapping(geom),
-                            'properties': {
-                                'TaxonID': taxon_id,
-                                'Rnge': range_id,
-                                'Generated': generated_subspecies,
-                                'SearchType': search_type_id,
-                                'SiteID': site_id
-                            }
-                        })
-
-        if export_pseudo_absence:
-            filename = os.path.join(export_dir, '%s-pa.shp' % spno)
-
-            items = session.execute(text("""SELECT ST_X(coords) AS x, ST_Y(coords) AS y, taxon.id
-                FROM t2_processed_sighting, t2_processed_survey, t2_survey, taxon
-                WHERE t2_processed_sighting.survey_id = t2_processed_survey.id
-                AND t2_processed_survey.raw_survey_id = t2_survey.id
-                AND t2_processed_sighting.taxon_id = taxon.id
-                AND taxon.spno = :spno
-                AND pseudo_absence
-                AND experimental_design_type_id = 1
-                """), {
-                    'spno': spno
-                }).fetchall()
-
-            with fiona.open(filename, 'w',
-                    driver='ESRI Shapefile',
-                    crs={'no_defs': True, 'ellps': 'WGS84', 'datum': 'WGS84', 'proj': 'longlat'},
-                    schema={
-                        'geometry': 'Point',
-                        'properties': {
-                            'TaxonID': 'str'
-                        }
-                    }) as output:
-
-                    for x, y, taxon_id in items:
-                        geom = Point(x, y)
-
-                        output.write({
-                            'geometry': shapely.geometry.mapping(geom),
-                            'properties': {
-                                'TaxonID': taxon_id
-                            }
-                        })
-
-        if export_grid:
-            filename = os.path.join(export_dir, '%s-grid.shp' % spno)
-
-            items = session.execute(text("""SELECT ST_X(coords) AS x, ST_Y(coords) AS y, grid_cell_id, taxon.id, pseudo_absence
-                FROM t2_processed_sighting, t2_processed_survey, t2_survey, taxon
-                WHERE t2_processed_sighting.survey_id = t2_processed_survey.id
-                AND t2_processed_survey.raw_survey_id = t2_survey.id
-                AND t2_processed_sighting.taxon_id = taxon.id
-                AND taxon.spno = :spno
-                AND experimental_design_type_id = 2
-                """), {
-                    'spno': spno
-                }).fetchall()
-
-            with fiona.open(filename, 'w',
-                    driver='ESRI Shapefile',
-                    crs={'no_defs': True, 'ellps': 'WGS84', 'datum': 'WGS84', 'proj': 'longlat'},
-                    schema={
-                        'geometry': 'Point',
-                        'properties': {
-                            'TaxonID': 'str',
-                            'GridID': 'int',
-                            'Pseudo': 'int'
-                        }
-                    }) as output:
-
-                    for x, y, grid_cell_id, taxon_id, pseudo_absence in items:
-                        geom = Point(x, y)
-
-                        output.write({
-                            'geometry': shapely.geometry.mapping(geom),
-                            'properties': {
-                                'TaxonID': taxon_id,
-                                'GridID': grid_cell_id,
-                                'Pseudo': pseudo_absence
                             }
                         })
 

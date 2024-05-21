@@ -27,7 +27,6 @@ def process_database():
 			data_agreement,
 			standardisation_of_method_effort,
 			consistency_of_monitoring,
-			experimental_design_type,
 			non_zero)
 		SELECT
 			time_series_id,
@@ -42,7 +41,6 @@ def process_database():
 			MAX(COALESCE(data_source.data_agreement_id, -1) NOT IN (0)), # data_agreement
 			MAX(COALESCE(data_source.standardisation_of_method_effort_id, -1) NOT IN (0, 1)), # standardisation_of_method_effort
 			MAX(COALESCE(data_source.consistency_of_monitoring_id, -1) NOT IN (0, 1)), # consistency_of_monitoring
-			MAX(experimental_design_type_id = 1), # experimental_design_type,
 			MAX(IF(agg.start_date_y <= COALESCE(data_source.end_year, :max_year)
 					AND agg.start_date_y >= COALESCE(data_source.start_year, :min_year),
 				value,

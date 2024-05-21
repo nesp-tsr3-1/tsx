@@ -38,7 +38,6 @@ def export_to_sqlite(source_id, path):
         ("unit", None),
         ("taxon_source_alpha_hull", "FALSE"),
         ("intensive_management", None),
-        ("experimental_design_type", None),
         ("response_variable_type", None),
         ("monitoring_program", None)
     ]

@@ -4,19 +4,12 @@
 /*!80000 ALTER TABLE t2_survey MODIFY COLUMN coords POINT NOT NULL SRID 0 */;
 /*!80000 ALTER TABLE taxon_presence_alpha_hull_subdiv MODIFY COLUMN geometry GEOMETRY NOT NULL SRID 0 */;
 /*!80000 ALTER TABLE taxon_range_subdiv MODIFY COLUMN geometry MULTIPOLYGON NOT NULL SRID 0 */;
-/*!80000 ALTER TABLE grid_cell MODIFY COLUMN geometry POLYGON NOT NULL SRID 0 */;
 /*!80000 ALTER TABLE region_subdiv MODIFY COLUMN geometry MULTIPOLYGON NOT NULL SRID 0 */;
 
 CREATE SPATIAL INDEX coords ON t2_survey (coords);
 CREATE SPATIAL INDEX geometry ON taxon_presence_alpha_hull_subdiv (geometry);
 CREATE SPATIAL INDEX geometry ON taxon_range_subdiv (geometry);
-CREATE SPATIAL INDEX geometry ON grid_cell (geometry);
 CREATE SPATIAL INDEX geometry ON region_subdiv (geometry);
-
-INSERT INTO experimental_design_type (id, description) VALUES
-(1, "Standardised site"),
-(2, "Standardised grid"),
-(3, "Unstandardised grid");
 
 INSERT INTO response_variable_type (id, description) VALUES
 (1, "Average count"),

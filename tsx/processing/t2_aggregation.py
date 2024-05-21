@@ -166,7 +166,6 @@ def process_task(taxon_id, commit=False, database_config=None):
             site_id,
             search_type_id,
             taxon_id,
-            experimental_design_type_id,
             response_variable_type_id,
             value,
             data_type,
@@ -183,7 +182,6 @@ def process_task(taxon_id, commit=False, database_config=None):
             site_id,
             search_type_id,
             taxon_id,
-            1,
             response_variable_type.id,
             CASE response_variable_type.id
                 WHEN 1 THEN mean_abundance -- avg count
@@ -205,8 +203,8 @@ def process_task(taxon_id, commit=False, database_config=None):
             num_surveys
         FROM tmp_survey_agg, response_variable_type
         -- Comment out following to ignore processing_method table
-        WHERE (taxon_id, source_id, 2, response_variable_type.id, 1) IN
-        (SELECT taxon_id, source_id, data_type, response_variable_type_id, experimental_design_type_id FROM processing_method)
+        WHERE (taxon_id, source_id, 2, response_variable_type.id) IN
+        (SELECT taxon_id, source_id, data_type, response_variable_type_id FROM processing_method)
 
         HAVING value IS NOT NULL;
 
@@ -216,9 +214,7 @@ def process_task(taxon_id, commit=False, database_config=None):
                 source_id,
                 search_type_id,
                 site_id,
-                grid_cell_id,
                 taxon_id,
-                experimental_design_type_id,
                 response_variable_type_id,
                 value,
                 data_type,
@@ -232,9 +228,7 @@ def process_task(taxon_id, commit=False, database_config=None):
                 source_id,
                 search_type_id,
                 site_id,
-                grid_cell_id,
                 taxon_id,
-                experimental_design_type_id,
                 response_variable_type_id,
                 AVG(value),
                 data_type,
@@ -251,9 +245,7 @@ def process_task(taxon_id, commit=False, database_config=None):
                 source_id,
                 search_type_id,
                 site_id,
-                grid_cell_id,
                 taxon_id,
-                experimental_design_type_id,
                 response_variable_type_id,
                 data_type,
                 region_id,

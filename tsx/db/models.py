@@ -24,20 +24,6 @@ class DataProcessingType(Base):
     description = Column(String(255), nullable=False)
 
 
-class ExperimentalDesignType(Base):
-    __tablename__ = 'experimental_design_type'
-
-    id = Column(Integer, primary_key=True)
-    description = Column(String(255))
-
-
-class GridCell(Base):
-    __tablename__ = 'grid_cell'
-
-    id = Column(Integer, primary_key=True)
-    geometry = Column(NullType, nullable=False)
-
-
 class IntensiveManagement(Base):
     __tablename__ = 'intensive_management'
 
@@ -262,10 +248,8 @@ t_aggregated_by_month = Table(
     Column('start_date_y', SmallInteger, nullable=False),
     Column('start_date_m', SmallInteger),
     Column('site_id', Integer),
-    Column('grid_cell_id', ForeignKey('grid_cell.id'), index=True),
     Column('search_type_id', ForeignKey('search_type.id'), index=True),
     Column('taxon_id', ForeignKey('taxon.id'), nullable=False, index=True),
-    Column('experimental_design_type_id', ForeignKey('experimental_design_type.id'), nullable=False, index=True),
     Column('response_variable_type_id', ForeignKey('response_variable_type.id'), nullable=False, index=True),
     Column('value', Float(asdecimal=True), nullable=False),
     Column('data_type', Integer, nullable=False),
@@ -275,7 +259,7 @@ t_aggregated_by_month = Table(
     Column('positional_accuracy_in_m', Float(asdecimal=True)),
     Column('centroid_coords', NullType, nullable=False),
     Column('survey_count', Integer, nullable=False),
-    Column('time_series_id', String(32), Computed("(concat(`source_id`,_utf8mb4'_',`unit_id`,_utf8mb4'_',coalesce(`search_type_id`,_utf8mb4'0'),_utf8mb4'_',coalesce(`site_id`,concat(_utf8mb4'g',`grid_cell_id`)),_utf8mb4'_',`taxon_id`))", persisted=False))
+    Column('time_series_id', String(32), Computed("(concat(`source_id`,_utf8mb4'_',`unit_id`,_utf8mb4'_',coalesce(`search_type_id`,_utf8mb4'0'),_utf8mb4'_',`site_id`,_utf8mb4'_',`taxon_id`))", persisted=False))
 )
 
 
@@ -283,10 +267,8 @@ t_aggregated_by_year = Table(
     'aggregated_by_year', metadata,
     Column('start_date_y', SmallInteger, nullable=False),
     Column('site_id', Integer),
-    Column('grid_cell_id', ForeignKey('grid_cell.id'), index=True),
     Column('search_type_id', ForeignKey('search_type.id'), index=True),
     Column('taxon_id', ForeignKey('taxon.id'), nullable=False, index=True),
-    Column('experimental_design_type_id', ForeignKey('experimental_design_type.id'), nullable=False, index=True),
     Column('response_variable_type_id', ForeignKey('response_variable_type.id'), nullable=False, index=True),
     Column('value', Float(asdecimal=True), nullable=False),
     Column('data_type', Integer, nullable=False),
@@ -296,7 +278,7 @@ t_aggregated_by_year = Table(
     Column('positional_accuracy_in_m', Float(asdecimal=True)),
     Column('centroid_coords', NullType, nullable=False),
     Column('survey_count', Integer, nullable=False),
-    Column('time_series_id', String(32), Computed("(concat(`source_id`,_utf8mb4'_',`unit_id`,_utf8mb4'_',coalesce(`search_type_id`,_utf8mb4'0'),_utf8mb4'_',coalesce(`site_id`,concat(_utf8mb4'g',`grid_cell_id`)),_utf8mb4'_',`taxon_id`))", persisted=False)),
+    Column('time_series_id', String(32), Computed("(concat(`source_id`,_utf8mb4'_',`unit_id`,_utf8mb4'_',coalesce(`search_type_id`,_utf8mb4'0'),_utf8mb4'_',`site_id`,_utf8mb4'_',`taxon_id`))", persisted=False)),
     Column('include_in_analysis', TINYINT(1), nullable=False, server_default=text("'0'"))
 )
 
@@ -370,7 +352,6 @@ t_processing_method = Table(
     Column('search_type_id', ForeignKey('search_type.id'), index=True),
     Column('data_type', Integer, nullable=False),
     Column('response_variable_type_id', Integer, nullable=False),
-    Column('experimental_design_type_id', Integer, nullable=False),
     Column('positional_accuracy_threshold_in_m', Float(asdecimal=True)),
     Index('uniq', 'taxon_id', 'unit_id', 'source_id', 'search_type_id', 'data_type', unique=True)
 )
@@ -473,7 +454,6 @@ class T2Site(Base):
     data_import_id = Column(ForeignKey('data_import.id', ondelete='CASCADE'), index=True)
     name = Column(String(255))
     search_type_id = Column(ForeignKey('search_type.id'), nullable=False, index=True)
-    geometry = Column(NullType)
 
     data_import = relationship('DataImport')
     search_type = relationship('SearchType')
@@ -574,14 +554,11 @@ class T2ProcessedSurvey(Base):
     id = Column(Integer, primary_key=True)
     raw_survey_id = Column(ForeignKey('t2_survey.id', ondelete='CASCADE'), nullable=False, index=True)
     site_id = Column(ForeignKey('t2_site.id', ondelete='CASCADE'), index=True)
-    grid_cell_id = Column(ForeignKey('grid_cell.id'), index=True)
     search_type_id = Column(Integer, nullable=False)
     start_date_y = Column(SmallInteger, nullable=False)
     start_date_m = Column(SmallInteger)
     source_id = Column(ForeignKey('source.id', ondelete='CASCADE'), nullable=False, index=True)
-    experimental_design_type_id = Column(Integer)
 
-    grid_cell = relationship('GridCell')
     raw_survey = relationship('T2Survey')
     site = relationship('T2Site')
     source = relationship('Source')

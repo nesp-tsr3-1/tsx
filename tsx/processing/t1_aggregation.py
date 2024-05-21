@@ -49,32 +49,28 @@ def aggregate_monthly(taxon_id, simple_mode = False, commit = False, database_co
                 AND t1_sighting.survey_id = t1_survey.id
                 AND taxon_id = :taxon_id"""
         else:
-            sql = """SELECT source_id, unit_id, search_type_id, experimental_design_type_id, response_variable_type_id
+            sql = """SELECT source_id, unit_id, search_type_id, response_variable_type_id
                 FROM processing_method
                 WHERE data_type = 1
                 AND taxon_id = :taxon_id"""
         rows = session.execute(text(sql), {'taxon_id': taxon_id}).fetchall()
 
-        for source_id, unit_id, search_type_id, experimental_design_type_id, response_variable_type_id in rows:
-
-            if experimental_design_type_id != 1:
-                raise ValueError("Unexpected experimental_design_type_id: %s (only '1' is supported)" % experimental_design_type_id)
-
+        for source_id, unit_id, search_type_id, response_variable_type_id in rows:
             # Tweak SQL based on response variable type
 
             where_conditions = []
 
             if response_variable_type_id == 1:
                 aggregate_expression = 'AVG(count)'
-                where_conditions.append("unit_id > 1")
+                where_conditions.append("unit_id > 1") # TODO: remove hard-coded unit id check
 
             elif response_variable_type_id == 2:
                 aggregate_expression = 'MAX(count)'
-                where_conditions.append("unit_id > 1")
+                where_conditions.append("unit_id > 1") # TODO: remove hard-coded unit id check
 
             elif response_variable_type_id == 3:
                 aggregate_expression = 'AVG(count > 0)'
-                where_conditions.append("unit_id = 1")
+                where_conditions.append("unit_id = 1") # TODO: remove hard-coded unit id check
 
             if simple_mode:
                 region_expression = 'NULL'
@@ -94,7 +90,6 @@ def aggregate_monthly(taxon_id, simple_mode = False, commit = False, database_co
                 site_id,
                 search_type_id,
                 taxon_id,
-                experimental_design_type_id,
                 response_variable_type_id,
                 value,
                 region_id,
@@ -110,7 +105,6 @@ def aggregate_monthly(taxon_id, simple_mode = False, commit = False, database_co
                 site_id,
                 search_type_id,
                 taxon_id,
-                1,
                 :response_variable_type_id,
                 {aggregate_expression},
                 {region_expression},
@@ -173,9 +167,7 @@ def aggregate_yearly(taxon_id, simple_mode = False, commit = False, database_con
                 source_id,
                 search_type_id,
                 site_id,
-                grid_cell_id,
                 taxon_id,
-                experimental_design_type_id,
                 response_variable_type_id,
                 value,
                 data_type,
@@ -189,9 +181,7 @@ def aggregate_yearly(taxon_id, simple_mode = False, commit = False, database_con
                 source_id,
                 search_type_id,
                 site_id,
-                grid_cell_id,
                 taxon_id,
-                experimental_design_type_id,
                 response_variable_type_id,
                 AVG(value),
                 data_type,
@@ -208,9 +198,7 @@ def aggregate_yearly(taxon_id, simple_mode = False, commit = False, database_con
                 source_id,
                 search_type_id,
                 site_id,
-                grid_cell_id,
                 taxon_id,
-                experimental_design_type_id,
                 response_variable_type_id,
                 data_type,
                 region_id,
