@@ -22,7 +22,7 @@ env3/
 .vagrant
 vagrant-env/
 
-tsx.conf
+/tsx.conf
 *.egg-info/
 flask_session/
 
