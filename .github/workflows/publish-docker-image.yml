@@ -31,10 +31,13 @@ jobs:
         id: push
         uses: docker/build-push-action@v5
         with:
+          platforms: linux/amd64,linux/arm64
           file: containers/Dockerfile
           context: .
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v1
