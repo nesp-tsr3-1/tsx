@@ -4,7 +4,7 @@ on: workflow_dispatch
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: tsx-workflow
+  IMAGE_NAME: nesp-tsr3-1/tsx-workflow
 
 jobs:
   build-and-push-image:
@@ -26,12 +26,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-
       - name: Build and push Docker image
         id: push
         uses: docker/build-push-action@v5
@@ -39,8 +33,7 @@ jobs:
           file: containers/Dockerfile
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: nesp-tsr3-1/tsx-workflow:latest
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v1
