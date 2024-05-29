@@ -1,5 +1,7 @@
 name: publish-docker-image
 
+on:
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: tsx-workflow
