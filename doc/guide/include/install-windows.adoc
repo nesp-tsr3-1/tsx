@@ -43,8 +43,8 @@ mysql> quit;
 
 Now run the following commands to populate the database structure and lookup tables.
 ----
-mysql –u root tsx < data\sql\create.sql
-mysql –u root tsx < data\sql\init.sql
+mysql –u root tsx < db\sql\create.sql
+mysql –u root tsx < db\sql\init.sql
 mysql –u root tsx < sample-data\seed.sql
 ----
 

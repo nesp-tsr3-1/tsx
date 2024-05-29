@@ -26,12 +26,6 @@ env/bin/activate
 pip install –r requirements.txt
 ----
 
-To download TSX workflow sample data that is referred to throughout this guide, run the following command:
-
-----
-python setup/download_sample_data.py
-----
-
 This will place the sample data into a directory called `sample-data`.
 
 ==== Database Setup

@@ -149,8 +149,6 @@ The figure below illustrates the individual steps required to process Type 1 and
 
 image::workflow-preprocessing.png[Flow diagram - Data Processing Overview,400]
 
-This flow diagram shows that Type 1 data processing is much simpler than Type 2 data processing. Type 1 data only requires 4 processing steps and 3 auxiliary input files, while Type 2 data requires 7 processing steps and 7 auxiliary input files.
-
 In the documentation below, all steps that specific to Type 2 data only are clearly marked and can be safely skipped if you only want to process Type 1 data.
 
 
