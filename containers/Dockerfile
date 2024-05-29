@@ -9,6 +9,8 @@ apt-get install -y --no-install-recommends libgdal-dev r-base git python3-dev bu
 
 FROM base as prod
 
+LABEL org.opencontainers.image.source https://github.com/nesp-tsr3-1/tsx
+
 WORKDIR /root
 COPY requirements.txt .
 
