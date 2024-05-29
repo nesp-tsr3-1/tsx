@@ -1,0 +1,25 @@
+
+PS1="TSX:\w# "
+
+cat <<EOF
+
+Welcome to the TSX Workflow docker image.
+
+EOF
+
+if ! mysql -sNe "SELECT 1" > /dev/null; then
+	echo
+	echo Unable to connect to mysql. Please ensure mysql is running by opening a separate terminal window and running:
+	echo -e "    \e[1mdocker compose up\e[0m"
+	exit
+fi
+
+
+
+if [ -z "$(mysql -sNe "SHOW TABLES")" ]; then
+	mysql < $HOME/db/sql/create.sql
+	mysql < $HOME/db/sql/init.sql
+	mysql < $HOME/sample-data/seed.sql
+fi
+
+

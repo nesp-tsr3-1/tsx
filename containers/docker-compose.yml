@@ -1,0 +1,42 @@
+version: "3.1"
+services:
+  mysql:
+    image: mysql:8.3.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: tsx
+      MYSQL_USER: tsx
+      MYSQL_PASSWORD: tsx
+    ports:
+      - "6033:3306"
+    volumes:
+      - tsx_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+      interval: 1s
+  phpmyadmin:
+    image: phpmyadmin
+    restart: always
+    ports:
+      - 8033:80
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root
+  workflow_cli:
+    profiles: ["cli"] # prevents this service from starting automatically
+    image: ghcr.io/nesp-tsr3-1/tsx-workflow:latest
+    depends_on:
+      mysql:
+        condition: service_healthy
+    # build: .
+    volumes:
+      - ../data:/root/data
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+volumes:
+  tsx_mysql_data:
