@@ -33,7 +33,7 @@ jobs:
           file: containers/Dockerfile
           context: .
           push: true
-          tags: nesp-tsr3-1/tsx-workflow:latest
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}:latest
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v1
