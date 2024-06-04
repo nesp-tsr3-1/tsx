@@ -2460,15 +2460,15 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.14973746"
-     inkscape:cx="1075.2153"
+     inkscape:cx="1071.8761"
      inkscape:cy="1155.3555"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:window-width="1440"
      inkscape:window-height="801"
-     inkscape:window-x="31"
-     inkscape:window-y="38"
+     inkscape:window-x="520"
+     inkscape:window-y="1478"
      inkscape:window-maximized="0"
      inkscape:showpageshadow="2"
      inkscape:pagecheckerboard="0"
@@ -2490,7 +2490,10 @@
      inkscape:groupmode="layer"
      id="layer1">
     <g
-       id="g22">
+       id="g22"
+       inkscape:export-filename="../images/workflow-preprocessing.png"
+       inkscape:export-xdpi="180"
+       inkscape:export-ydpi="180">
       <g
          inkscape:export-ydpi="180"
          inkscape:export-xdpi="180"
@@ -3124,7 +3127,10 @@
     </g>
     <g
        id="g73"
-       transform="translate(646.74819,46.16226)">
+       transform="translate(646.74819,46.16226)"
+       inkscape:export-filename="../images/workflow-preprocessing-t1-aggregation.png"
+       inkscape:export-xdpi="180"
+       inkscape:export-ydpi="180">
       <rect
          y="196.13193"
          x="178.38173"
@@ -3640,7 +3646,10 @@
     </g>
     <g
        id="g113"
-       transform="translate(1040.4982,46.16226)">
+       transform="translate(1040.4982,46.16226)"
+       inkscape:export-filename="../images/workflow-preprocessing-alpha-hull.png"
+       inkscape:export-xdpi="180"
+       inkscape:export-ydpi="180">
       <rect
          y="196.13193"
          x="178.38173"
@@ -4156,7 +4165,10 @@
     </g>
     <g
        id="g151"
-       transform="translate(1471.7482,46.16226)">
+       transform="translate(1471.7482,46.16226)"
+       inkscape:export-filename="../images/workflow-preprocessing-t2-aggregation.png"
+       inkscape:export-xdpi="180"
+       inkscape:export-ydpi="180">
       <rect
          y="196.13193"
          x="178.38173"
@@ -4672,7 +4684,10 @@
     </g>
     <g
        id="g190"
-       transform="translate(1902.9981,46.16226)">
+       transform="translate(1902.9981,46.16226)"
+       inkscape:export-filename="../images/workflow-preprocessing-spatial-rep.png"
+       inkscape:export-xdpi="180"
+       inkscape:export-ydpi="180">
       <rect
          y="196.13193"
          x="178.38173"
@@ -5188,7 +5203,10 @@
     </g>
     <g
        id="g228"
-       transform="translate(2352.9981,46.16226)">
+       transform="translate(2352.9981,46.16226)"
+       inkscape:export-filename="../images/workflow-preprocessing-filter.png"
+       inkscape:export-xdpi="180"
+       inkscape:export-ydpi="180">
       <rect
          y="196.13193"
          x="178.38173"
@@ -5704,7 +5722,10 @@
     </g>
     <g
        id="g266"
-       transform="translate(2830.5712,-783.20458)">
+       transform="translate(2830.5712,-783.20458)"
+       inkscape:export-filename="../images/workflow-preprocessing-export.png"
+       inkscape:export-xdpi="180"
+       inkscape:export-ydpi="180">
       <rect
          y="1025.4988"
          x="169.55867"

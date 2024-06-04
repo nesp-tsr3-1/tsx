@@ -70,7 +70,7 @@ The TSX workflow can run on Windows, macOS or Linux. 8GB RAM and 4GB available s
 
 == Installation methods
 
-The workflow was primarily designed to run on Linux and macOS, and requires several prerequisite software packages to be installed. Performing the installation directly onto a Windows is possible, but is complicated and not recommended for most users. Instead, we supply a virtual machine image that allows you to run a Linux environment under Windows which is pre-configured to run the TSX workflow.
+The workflow was primarily designed to run on Linux and macOS, and requires several prerequisite software packages to be installed. Performing the installation directly onto a Windows is possible, but is complicated and not recommended for most users. Instead, we supply a virtual machine image that allows you to run a Linux environment under Windows which is pre-configured to run the TSX workflow. It is also possible to run the workflow using Docker.
 
 === Installation using a Virtual Machine (recommended)
 
@@ -85,6 +85,20 @@ include::include/install-linux.adoc[]
 === Installation on Windows (advanced)
 
 include::include/install-windows.adoc[]
+
+=== Installation using Docker (advanced)
+
+These instructions assume Docker is installed (including Docker Compose) and that the reader is familiar with basic Docker usage.
+
+Download and save the following file into a new folder: https://raw.githubusercontent.com/nesp-tsr3-1/tsx/master/containers/docker-compose.yml
+
+Run the following command inside the folder:
+
+----
+docker compose run --rm workflow_cli
+----
+
+After loading and starting the necessary containers, you will be presented with a bash prompt which you can use to follow along with the rest of this guide.
 
 = Running the workflow
 
