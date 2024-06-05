@@ -162,6 +162,10 @@
       </div>
     </div>
 
+    <div class="content">
+      <a class="has-text-white" style="text-decoration: underline;" href="https://tsx.org.au/terms-of-use/" target="_blank">Terms of Use</a>
+    </div>
+
     <!-- warning dialog -->
     <div class="modal is-active" v-show="!hasAcceptedWarning">
       <div class="modal-background"></div>
