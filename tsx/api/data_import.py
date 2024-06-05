@@ -54,11 +54,25 @@ def get_sources():
 
 	rows = db_session.execute(
 		text("""SELECT
-			source.id,
-			source.description,
-			data_import_status.code AS status,
-			source.time_created,
-			GREATEST(source.last_modified, COALESCE(data_import.last_modified, source.last_modified)) AS last_modified
+			JSON_ARRAYAGG(JSON_OBJECT(
+				'id', source.id,
+				'description', source.description,
+				'status', data_import_status.code,
+				'time_created', source.time_created,
+				'last_modified', GREATEST(source.last_modified, COALESCE(data_import.last_modified, source.last_modified)),
+				'custodians', (
+					SELECT JSON_ARRAYAGG(
+						CONCAT(
+							COALESCE(CONCAT(user.first_name, " ", user.last_name, " "), ""),
+							COALESCE(CONCAT("<", user.email, ">"), "")
+						)
+					)
+					FROM user_source, user
+					WHERE user_source.source_id = source.id
+					AND user.id = user_source.user_id
+					AND user.email IS NOT NULL
+				)
+			))
 		FROM source
 		LEFT JOIN (SELECT source_id, max(data_import.id) AS data_import_id FROM data_import GROUP BY source_id) AS latest_import
 			ON latest_import.source_id = source.id
@@ -80,7 +94,8 @@ def get_sources():
 		"""),
 		{ 'user_id': user.id, 'program_id': program_id })
 
-	return jsonify_rows(rows)
+	[(result,)] = rows
+	return Response(result, mimetype='application/json')
 
 def jsonify_rows(rows):
 	return jsonify([dict(row._mapping) for row in rows])
