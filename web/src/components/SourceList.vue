@@ -154,7 +154,8 @@ export default {
       type: Boolean,
       default: true
     }
-  }
+  },
+  emits: ["clickSource"]
 }
 </script>
 
