@@ -46,7 +46,7 @@
               <div class="field">
                 <label class="label">Data citation</label>
                 <p class="textarea">{{citation}}</p>
-                <p class="help">This field is auto-generated based on the above information.</p>
+                <p class="help">This field is auto-generated based on the above information. To adjust the citation, modify the relevant details and select ‘Update Dataset’.</p>
               </div>
               <div class="field">
                 <label class="label">Monitoring program</label>
@@ -115,6 +115,7 @@
 <script>
 import * as api from '../api.js'
 import _ from 'underscore'
+import { generateCitation } from '../util.js'
 
 const sourceProps = ['description', 'details', 'provider', 'authors', 'monitoring_program', 'contact_name', 'contact_institution', 'contact_position', 'contact_email', 'contact_phone']
 
@@ -153,12 +154,7 @@ export default {
       return this.isNew ? 'Create Dataset' : 'Update Dataset'
     },
     citation: function() {
-      let year = new Date().getFullYear();
-      let authors = this.authors.trim().replace(/\.$/, '') || "<Author(s)>";
-      let details = this.details.trim().replace(/\.$/, '') || "<Data Details>"
-      let provider = this.provider.trim().replace(/\.$/, '') || "<Data Provider>"
-
-      return `${authors} (${year}). ${details}. ${provider}. Aggregated for the Australian Threatened Species Index, an output of the NESP Threatened Species Recovery Hub and operated by the Terrestrial Ecosystem Research Network, The University of Queensland.`
+      return generateCitation(this.authors, this.details, this.provider)
     }
   },
   created() {

@@ -17,6 +17,11 @@
           <div class="columns">
             <div class="column">
               <div style="margin-bottom: 1em;">
+                <div style="font-weight: bold;">Data Details</div>
+                {{ source.details || 'N/A' }}
+              </div>
+
+              <div style="margin-bottom: 1em;">
                 <div style="font-weight: bold;">Data Provider</div>
                 {{ source.provider || 'N/A' }}
               </div>
@@ -25,9 +30,6 @@
                 <div style="font-weight: bold;">Authors</div>
                 {{ source.authors || 'N/A' }}
               </div>
-
-              <div v-if="hasMonitoringProgram" style="font-weight: bold;">Monitoring Program</div>
-              <div v-if="hasMonitoringProgram">{{ source.monitoring_program }}</div>
             </div>
             <div class="column">
               <div style="margin-bottom: 1em;">
@@ -43,6 +45,16 @@
                   None
                 </div>
               </div>
+            </div>
+          </div>
+          <div class="columns">
+            <div class="column">
+              <div style="margin-bottom: 1em;">
+                <div style="font-weight: bold;">Data Citation</div>
+                {{ citation || 'N/A' }}
+              </div>
+              <div v-if="hasMonitoringProgram" style="font-weight: bold;">Monitoring Program</div>
+              <div v-if="hasMonitoringProgram">{{ source.monitoring_program }}</div>
             </div>
           </div>
 
@@ -135,6 +147,7 @@
 
 <script>
 import * as api from '../api.js'
+import { generateCitation } from '../util.js'
 import ImportList from './ImportList.vue'
 import ImportData from './ImportData.vue'
 import ProcessingNotes from './ProcessingNotes.vue'
@@ -176,6 +189,9 @@ export default {
     },
     manageCustodiansPermitted() {
       return this.source && this.source.can_manage_custodians
+    },
+    citation() {
+      return this.source && generateCitation(this.source.authors, this.source.details, this.source.provider)
     }
   },
   methods: {

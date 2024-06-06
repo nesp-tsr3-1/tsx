@@ -305,3 +305,12 @@ export function deepEquals(a, b) {
     return false;
   }
 }
+
+export function generateCitation(authors, details, provider) {
+  let year = new Date().getFullYear();
+  authors = authors.trim().replace(/\.$/, '') || "<Author(s)>";
+  details = details.trim().replace(/\.$/, '') || "<Data Details>"
+  provider = provider.trim().replace(/\.$/, '') || "<Data Provider>"
+
+  return `${authors} (${year}). ${details}. ${provider}. Aggregated for the Australian Threatened Species Index, an output of the NESP Threatened Species Recovery Hub and operated by the Terrestrial Ecosystem Research Network, The University of Queensland.`
+}
