@@ -7,7 +7,7 @@
         </div>
       </div>
       <div class="columns">
-        <div class="column is-offset-2 is-4">
+        <div class="column is-offset-2 is-8">
           <h2 class="title is-3">{{ title }}</h2>
           <form>
             <fieldset v-bind:disabled="submitting">
@@ -17,12 +17,22 @@
                   <input class="input" type="text" name="description" v-model="description" autofocus>
                 </div>
                 <p class="help is-danger" v-if="errors.description">{{ errors.description }}</p>
+                <p class="help">Provide a description of the dataset, as per the 'SourceDesc' field in the TSX data import template. The format should be: 'State/Territory-Species/Taxon Group(s)-Institution/Organisation’. Example: "SA-Acacia_araneosa-DEW".</p>
+              </div>
+              <div class="field">
+                <label class="label">Data details</label>
+                <div class="control">
+                  <input class="input" type="text" name="details" v-model="details">
+                </div>
+                <p class="help">Provide further details on the dataset, as per the 'SourceDescDetails' field in the TSX data import template. If relevant, please include information on who compiled the data. Example: "Balcanoona Wattle annual monitoring. Compiled by Jane Doe."</p>
+                <p class="help is-danger" v-if="errors.details">{{ errors.details }}</p>
               </div>
               <div class="field">
                 <label class="label">Data provider</label>
                 <div class="control">
                   <input class="input" type="text" name="provider" v-model="provider">
                 </div>
+                <p class="help">Specify the institution, organisation, or individual who has provided the dataset, as per the 'SourceProvider' field in the TSX data import template. Example: "SA Department of Environment and Water".</p>
                 <p class="help is-danger" v-if="errors.provider">{{ errors.provider }}</p>
               </div>
               <div class="field">
@@ -30,7 +40,13 @@
                 <div class="control">
                   <input class="input" type="text" name="authors" v-model="authors">
                 </div>
+                <p class="help">List the authors of the dataset. Example: "SA Government" or "Doe, J".</p>
                 <p class="help is-danger" v-if="errors.authors">{{ errors.authors }}</p>
+              </div>
+              <div class="field">
+                <label class="label">Data citation</label>
+                <p class="textarea">{{citation}}</p>
+                <p class="help">This field is auto-generated based on the above information.</p>
               </div>
               <div class="field">
                 <label class="label">Monitoring program</label>
@@ -100,7 +116,11 @@
 import * as api from '../api.js'
 import _ from 'underscore'
 
-const sourceProps = ['description', 'provider', 'authors', 'monitoring_program', 'contact_name', 'contact_institution', 'contact_position', 'contact_email', 'contact_phone']
+const sourceProps = ['description', 'details', 'provider', 'authors', 'monitoring_program', 'contact_name', 'contact_institution', 'contact_position', 'contact_email', 'contact_phone']
+
+function withFullStop(str) {
+  return str.trim().replace(/\.?$/, ".")
+}
 
 export default {
   name: 'SourceEdit',
@@ -113,6 +133,7 @@ export default {
       submitting: false,
       errors: {},
       description: '',
+      details: '',
       provider: '',
       authors: '',
       monitoring_program: null,
@@ -130,6 +151,14 @@ export default {
     },
     buttonLabel: function() {
       return this.isNew ? 'Create Dataset' : 'Update Dataset'
+    },
+    citation: function() {
+      let year = new Date().getFullYear();
+      let authors = this.authors.trim().replace(/\.$/, '') || "<Author(s)>";
+      let details = this.details.trim().replace(/\.$/, '') || "<Data Details>"
+      let provider = this.provider.trim().replace(/\.$/, '') || "<Data Provider>"
+
+      return `${authors} (${year}). ${details}. ${provider}. Aggregated for the Australian Threatened Species Index, an output of the NESP Threatened Species Recovery Hub and operated by the Terrestrial Ecosystem Research Network, The University of Queensland.`
     }
   },
   created() {

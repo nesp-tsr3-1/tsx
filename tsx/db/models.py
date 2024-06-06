@@ -182,6 +182,7 @@ class Source(Base):
     source_type_id = Column(ForeignKey('source_type.id'), index=True)
     provider = Column(Text)
     description = Column(Text)
+    details = Column(Text)
     notes = Column(Text)
     authors = Column(Text)
     contact_name = Column(Text)
