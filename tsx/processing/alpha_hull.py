@@ -87,7 +87,7 @@ def alpha_shape(coords, alpha):
         print(coords)
         raise
     alledges=set() #Use a set so lines are not duplicated
-    for ia, ib, ic in tri.vertices:
+    for ia, ib, ic in tri.simplices:
         add_edge(alledges, coords, ia, ib)
         add_edge(alledges, coords, ib, ic)
         add_edge(alledges, coords, ic, ia)
@@ -105,7 +105,7 @@ def alpha_shape(coords, alpha):
     # all edges less than alpha distance
     edges=set()
     edge_points = []
-    for ia, ib, ic in tri.vertices:
+    for ia, ib, ic in tri.simplices:
         pa = coords[ia]
         pb = coords[ib]
         pc = coords[ic]
