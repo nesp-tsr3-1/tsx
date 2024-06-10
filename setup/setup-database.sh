@@ -8,5 +8,5 @@ sudo mysql <<EOF
 EOF
 
 # Initialize database
-sudo mysql tsx < data/sql/create.sql
-sudo mysql tsx < data/sql/init.sql
+sudo mysql tsx < db/sql/create.sql
+sudo mysql tsx < db/sql/init.sql
