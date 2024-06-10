@@ -269,7 +269,7 @@ export function species(args) {
 }
 
 export function speciesForIDs(ids) {
-  return post('/species', { ids: ids })
+  return get('/species', { q: 'ids', ids: ids.join(',') })
 }
 
 export function source() {

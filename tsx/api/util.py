@@ -1,13 +1,18 @@
 import json, csv
 import csv
 from io import StringIO
-from flask import make_response, g, jsonify, _app_ctx_stack, session, current_app, jsonify
+from flask import make_response, g, jsonify, session, current_app, jsonify, request
 from tsx.db.connect import Session
 from tsx.db import User
 from sqlalchemy import orm
 from werkzeug.local import LocalProxy
 import logging
 from sqlalchemy import text
+
+try:
+	from greenlet import getcurrent as _get_ident  # type: ignore
+except ImportError:
+	from threading import get_ident as _get_ident  # type: ignore
 
 log = LocalProxy(lambda: current_app.logger)
 
@@ -38,7 +43,7 @@ def csv_response(rows, filename="export.csv"):
 #    OR
 #
 #    db_session.execute(sql)
-db_session = orm.scoped_session(Session, scopefunc=_app_ctx_stack.__ident_func__)
+db_session = orm.scoped_session(Session, scopefunc= _get_ident)
 
 def get_user():
 	try:
@@ -73,3 +78,9 @@ def setup_db(app):
 # Useful for converting a DB query result into a JSON response
 def jsonify_rows(rows):
 	return jsonify([dict(row._mapping) for row in rows])
+
+def get_request_args_or_body():
+	if request.content_type == 'application/json':
+		return request.get_json()
+	else:
+		return request.args

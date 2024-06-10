@@ -1,4 +1,5 @@
-from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash, json
+from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash
+from json import JSONEncoder
 import tsx.api.lpi_data
 from tsx.api.util import setup_db
 import tsx.config
@@ -45,7 +46,7 @@ app.register_blueprint(tsx.api.subset.bp)
 app.register_blueprint(tsx.api.program.bp)
 app.register_blueprint(tsx.api.results.bp)
 
-class DateTimeEncoder(json.JSONEncoder):
+class DateTimeEncoder(JSONEncoder):
 	def default(self, obj):
 		if isinstance(obj, datetime.datetime):
 			return obj.isoformat() + 'Z'

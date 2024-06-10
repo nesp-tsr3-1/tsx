@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request, send_file, session, Response
 import csv
 from uuid import uuid4
-from tsx.api.util import db_session, get_user, get_roles, jsonify_rows
+from tsx.api.util import db_session, get_user, get_roles, jsonify_rows, get_request_args_or_body
 from tsx.api.permissions import permitted
 from tsx.config import data_dir
 import os
@@ -211,7 +211,7 @@ def subset_sql_params(state_via_region=False):
     having_conditions = []
     params = {}
 
-    args = request.get_json() or request.args
+    args = get_request_args_or_body()
 
     print(args)
 
@@ -354,7 +354,7 @@ def params_permitted():
     if permitted(get_user(), '*', '*'):
         return True
 
-    args = request.get_json() or request.args
+    args = get_request_args_or_body()
 
     # Params must either be scoped to a source or a program that the user has access to download
     if 'source_id' in args:
@@ -626,7 +626,7 @@ def subset_generate_trend():
     save_csv(result, os.path.join(path, "lpi.csv"))
 
     # Save extra trend parameters e.g. reference/final year
-    args = request.get_json() or request.args
+    args = get_request_args_or_body()
     trend_params = {}
     for p in ['reference_year', 'final_year']:
         if p in args:
@@ -657,6 +657,6 @@ def subset_get_trend_status(trend_id):
 def subset_get_trend(trend_id):
     path = os.path.join(trend_work_dir(trend_id), "trend.txt")
     if os.path.exists(path):
-        return send_file(path, mimetype = 'text/plain', cache_timeout = 5, as_attachment=True, attachment_filename='trend.txt')
+        return send_file(path, mimetype='text/plain', max_age=5, as_attachment=True, download_name='trend.txt')
     else:
         return "Not found", 404

@@ -655,7 +655,7 @@ def get_import(import_id=None):
 
 @bp.route('/imports/<int:import_id>/log', methods = ['GET'])
 def get_import_log(import_id=None):
-	return send_file(os.path.join(import_path(import_id), 'import.log'), mimetype = 'text/plain', cache_timeout = 5)
+	return send_file(os.path.join(import_path(import_id), 'import.log'), mimetype='text/plain', max_age=5)
 
 def import_path(id):
 	return os.path.join(imports_path, "%04d" % int(id))

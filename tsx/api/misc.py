@@ -23,10 +23,8 @@ def get_search_type():
 def get_species():
 	q = request.args.get('q', type=str)
 
-	body = request.json
-
-	if body and body['ids']:
-		ids = body['ids']
+	if q == 'ids':
+		ids = request.args.get('ids', type=str).split(',')
 		param_names = ['id%s' % i for i in range(len(ids))]
 		params = dict(zip(param_names, ids))
 		param_placeholders = ", ".join(':' + name for name in param_names)
