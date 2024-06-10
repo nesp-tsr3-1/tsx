@@ -201,6 +201,10 @@ export function dataSubsetSpecies(params) {
   return get('/subset/species', params)
 }
 
+export function dataSubsetConsistencyPlot(params) {
+  return get('/subset/monitoring_consistency', params)
+}
+
 export function dataSubsetGenerateTrend(params) {
   return post('/subset/trend', params)
 }

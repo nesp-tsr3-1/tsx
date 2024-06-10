@@ -382,6 +382,31 @@ def subset_time_series():
     extra_entries = [(filename, os.path.join(extra_dir, filename), 'file') for filename in os.listdir(extra_dir)]
     return zip_response([('time_series.csv', csv_string(result), 'str')] + extra_entries, 'time_series.zip')
 
+@bp.route('/subset/monitoring_consistency', methods = ['GET'])
+def monitoring_consistency_plot():
+    """Produces data for generating dot plots in the following format
+    [
+        [[year,count],[year,count] .. ],
+        ...
+    ]
+    Where count = 0 or 1
+    """
+    result = query_subset_time_series(random_sample_size=50)
+
+    result_data = []
+
+    numeric_keys = [(index, int(key)) for index, key in enumerate(result.keys()) if key.isdigit()]
+
+    for row in result.fetchall():
+        row_data = []
+        for index, key in numeric_keys:
+            value = row[index]
+            if value != None:
+                row_data.append([key, 1])
+        result_data.append(row_data)
+
+    return jsonify(result_data), 200
+
 
 def stream_and_delete(filename):
     with open(filename, 'rb') as f:
@@ -414,7 +439,7 @@ def zip_response(entries, download_file_name):
         }
     )
 
-def query_subset_time_series():
+def query_subset_time_series(random_sample_size=None):
     where_conditions, having_conditions, params = subset_sql_params()
 
     if ('source_id' in params) and permitted(get_user(), 'import_data', 'source', params['source_id']):
@@ -469,6 +494,11 @@ def query_subset_time_series():
 
     year_fields_sql = ",\n".join(
         year_field_sql(year, year in years) for year in range(min_year, max_year + 1))
+
+    if random_sample_size == None:
+        random_sample_sql = ''
+    else:
+        random_sample_sql = 'ORDER BY MD5(TimeSeriesID) LIMIT %s' % int(random_sample_size)
 
     sql = """WITH t AS (%s),
         t2 AS (SELECT
@@ -545,7 +575,8 @@ def query_subset_time_series():
             t2.region_id,
             surveys_centroid_lat,
             surveys_centroid_lon
-        """ % (raw_data_sql, coordinates_sql, year_fields_sql)
+        %s
+        """ % (raw_data_sql, coordinates_sql, year_fields_sql, random_sample_sql)
 
     return db_session.execute(text(sql), params)
 

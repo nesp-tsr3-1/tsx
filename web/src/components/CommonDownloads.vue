@@ -240,6 +240,25 @@
   <div v-if="trendStatus == 'empty'" class="block">
     <p>Insufficient data available to generate a trend</p>
   </div>
+
+  <hr>
+  <div class="block">
+    <button type="button" class="button is-primary"
+      @click="generateConsistencyPlot"
+      :disabled="!enableDownload && consistencyPlotStatus != 'processing'">Generate Monitoring Consistency Plot</button>
+  </div>
+  <div v-if="consistencyPlotStatus == 'processing'">
+    <spinner size='small'></spinner>
+  </div>
+  <div v-if="consistencyPlotStatus == 'ready'" class="content">
+    <p style="font-style: italic;">
+      The below dot plot shows the distribution of surveys at unique sites. Each row represents a time series in the dataset or data subset where a species/subspecies was monitored with a consistent method and unit of measurement at a single site over time. The maximum number of time-series included in this plot is 50.
+    </p>
+    <canvas ref="consistencyPlot" style="height: 25em; max-height: 25em;"></canvas>
+  </div>
+  <div v-if="consistencyPlotStatus == 'error'" class="content">
+    <p>An error occurred while generating the monitoring consistency plot.</p>
+  </div>
 </template>
 
 <script>
@@ -248,6 +267,7 @@ import Spinner from '../../node_modules/vue-simple-spinner/src/components/Spinne
 import Multiselect from '@vueform/multiselect'
 import HeatMap from './HeatMap.vue'
 import { plotTrend, generateTrendPlotData } from '../plotTrend.js'
+import { plotConsistency } from '../plotConsistency.js'
 import { Tippy } from 'vue-tippy'
 import { readTextFile, extractSpeciesIDsFromCSV, saveTextFile, generateSpeciesCSV } from '../util.js'
 import { markRaw } from 'vue'
@@ -295,7 +315,8 @@ export default {
       heatmapLoading: false,
       heatmapData: [],
       trendReferenceYear: null,
-      trendFinalYear: null
+      trendFinalYear: null,
+      consistencyPlotStatus: 'idle'
     }
   },
   computed: {
@@ -509,6 +530,19 @@ export default {
       }).catch(e => {
         console.log(e)
         this.trendStatus = 'error'
+      })
+    },
+    generateConsistencyPlot: function() {
+      let params = this.buildDownloadParams()
+      this.consistencyPlotStatus = 'processing'
+      api.dataSubsetConsistencyPlot(params).then(data => {
+        this.consistencyPlotStatus = 'ready'
+        setTimeout(() => {
+          plotConsistency(data, this.$refs.consistencyPlot)
+        })
+      }).catch(e => {
+        conmsole.log(e)
+        this.consistencyPlotStatus = 'error'
       })
     },
     buildDownloadParams: function() {
