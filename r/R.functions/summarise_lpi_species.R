@@ -1,6 +1,8 @@
 summarise_lpi_species <- function(infile) {
   require(data.table)
-  require(tidyverse)
+  require(dplyr)
+  require(plyr)
+
   # Bit of a hack to avoid NOTE during R CMD check
   # Sets the variables used in ggplot2::aes to NULL
   summarise <- Binomial <- year <- ID <- species <- pop <- duration <- nspecies <- minyear <- maxyear <- NULL
