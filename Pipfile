@@ -1,0 +1,29 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+fiona = "*"
+flask = "*"
+flask-cors = "*"
+flask-headers = "*"
+flask-session = "*"
+mysql-connector-python = "*"
+numpy = "*"
+openpyxl = "*"
+pandas = "*"
+pyproj = "*"
+scipy = "*"
+rpy2 = "*"
+shapely = "*"
+sqlalchemy = "*"
+tqdm = "*"
+sqlacodegen = "*"
+passlib = "*"
+argon2-cffi = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.9"

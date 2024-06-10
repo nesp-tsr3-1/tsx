@@ -29,7 +29,8 @@ add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran
 
 apt-get update
 
-apt-get install -y mysql-server python3 python-is-python3 python3-pip virtualenv r-base git samba libxslt1-dev
+apt-get install -y mysql-server python3 python-is-python3 python3-pip r-base git samba libxslt1-dev
+pip install pipenv
 
 # Set MySQL default character encoding to utf8
 sudo tee -a /etc/mysql/mysql.conf.d/encoding-utf8.cnf > /dev/null <<EOF

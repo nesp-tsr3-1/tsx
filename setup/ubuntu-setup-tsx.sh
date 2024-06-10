@@ -22,9 +22,8 @@ EOF
 
 # Setup environment
 sudo -u tsx bash <<EOF
-virtualenv -p python3 env
-source env/bin/activate
-pip install -r requirements.txt
+
+pipenv sync
 pip install jupyter jupyterlab
 echo 'IRkernel::installspec()' | R --no-save
 EOF
