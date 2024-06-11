@@ -19,7 +19,7 @@ rpy2 = "*"
 shapely = "*"
 sqlalchemy = "*"
 tqdm = "*"
-sqlacodegen = "*"
+sqlacodegen = "==3.0.0rc5"
 passlib = "*"
 argon2-cffi = "*"
 
