@@ -58,8 +58,10 @@ def get_sources():
 				'id', source.id,
 				'description', source.description,
 				'status', data_import_status.code,
-				'time_created', source.time_created,
-				'last_modified', GREATEST(source.last_modified, COALESCE(data_import.last_modified, source.last_modified)),
+				'time_created', DATE_FORMAT(source.time_created, "%Y-%m-%d %H:%i:%sZ"),
+				'last_modified', DATE_FORMAT(
+					GREATEST(source.last_modified, COALESCE(data_import.last_modified, source.last_modified)),
+					"%Y-%m-%d %H:%i:%sZ"),
 				'custodians', (
 					SELECT JSON_ARRAYAGG(
 						CONCAT(
