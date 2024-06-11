@@ -128,12 +128,3 @@ Deployment
 	npm run build
 	sudo cp -r dist/ /var/www/tsx/
 	sudo chown -R www-data:www-data /var/www/tsx
-
-
-Documentation
-=============
-
-Documentation can be generated using::
-
-	cd doc
-	make html
