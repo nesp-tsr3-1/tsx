@@ -29,7 +29,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="source in sortedSources" @click="$emit('clickSource', source)">
+          <tr v-for="source in sortedSources" @click="$emit('clickSource', source, $event)">
             <td :title="source.description">
               <template v-for="[nonMatch, match] in source.descriptionParts">
                 <span style="white-space: pre-wrap;">{{nonMatch}}</span>

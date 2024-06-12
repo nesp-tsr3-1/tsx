@@ -318,3 +318,17 @@ export function generateCitation(authors, details, provider) {
 
   return `${authors} (${year}). ${details}. ${provider}. Aggregated for the Australian Threatened Species Index, an output of the NESP Threatened Species Recovery Hub and operated by the Terrestrial Ecosystem Research Network, The University of Queensland.`
 }
+
+export function handleLinkClick(evt, url, router) {
+    let openInNewTab =
+      (evt.metaKey && /Mac/.test(navigator.platform)) ||
+      (evt.ctrlKey && !/Mac/.test(navigator.platform)) ||
+      evt.button == 1
+
+    if(openInNewTab) {
+      let routeData = router.resolve(url)
+      window.open(routeData.href, '_blank')
+    } else {
+      router.push(url)
+    }
+}

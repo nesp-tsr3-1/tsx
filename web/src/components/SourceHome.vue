@@ -19,7 +19,7 @@
           <div v-if="state === 'loaded'">
             <router-link to="/datasets/edit/new" tag="button" class="button is-primary">Create New Dataset</router-link>
             <hr>
-            <source-list @click-source='(source) => $router.push("/datasets/" + source.id)'></source-list>
+            <source-list @click-source='handleSourceClick'></source-list>
           </div>
         </div>
       </div>
@@ -31,6 +31,7 @@
 <script>
 import * as api from '../api.js'
 import SourceList from './SourceList.vue'
+import { handleLinkClick } from '../util.js'
 
 export default {
   name: 'SourceHome',
@@ -67,6 +68,12 @@ export default {
       } else {
         return 'noAccess'
       }
+    }
+  },
+  methods: {
+    handleSourceClick(source, evt) {
+      let url = "/datasets/" + source.id
+      handleLinkClick(evt, url, this.$router)
     }
   }
 }
