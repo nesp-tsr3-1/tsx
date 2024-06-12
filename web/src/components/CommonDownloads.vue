@@ -180,6 +180,31 @@
       @click="downloadTimeSeries"
       :disabled="!enableDownload">Download Time Series (CSV format)</button>
   </div>
+
+
+  <div class="block">
+    <button type="button" class="button is-primary"
+      @click="generateConsistencyPlot"
+      :disabled="!enableDownload && consistencyPlotStatus != 'processing'">Generate Monitoring Consistency Plot</button>
+  </div>
+  <div v-if="consistencyPlotStatus == 'processing'">
+    <spinner size='small'></spinner>
+  </div>
+  <div v-if="consistencyPlotStatus == 'ready'" class="content">
+    <p style="font-style: italic;">
+      The below dot plot shows the distribution of surveys at unique sites. Each row represents a time series in the dataset or data subset where a species/subspecies was monitored with a consistent method and unit of measurement at a single site over time. The maximum number of time-series included in this plot is 50.
+    </p>
+    <canvas ref="consistencyPlot" style="height: 25em; max-height: 25em;"></canvas>
+    <p>
+      <button type="button" class="button is-primary" @click="downloadConsistency">Download Monitoring Consistency Plot (CSV format)</button>
+    </p>
+  </div>
+  <div v-if="consistencyPlotStatus == 'error'" class="content">
+    <p>An error occurred while generating the monitoring consistency plot.</p>
+  </div>
+
+  <hr>
+
   <div class="block">
     <h4 class="title is-6">Population Trend</h4>
     <div class="sideborder block">
@@ -239,25 +264,6 @@
   </div>
   <div v-if="trendStatus == 'empty'" class="block">
     <p>Insufficient data available to generate a trend</p>
-  </div>
-
-  <hr>
-  <div class="block">
-    <button type="button" class="button is-primary"
-      @click="generateConsistencyPlot"
-      :disabled="!enableDownload && consistencyPlotStatus != 'processing'">Generate Monitoring Consistency Plot</button>
-  </div>
-  <div v-if="consistencyPlotStatus == 'processing'">
-    <spinner size='small'></spinner>
-  </div>
-  <div v-if="consistencyPlotStatus == 'ready'" class="content">
-    <p style="font-style: italic;">
-      The below dot plot shows the distribution of surveys at unique sites. Each row represents a time series in the dataset or data subset where a species/subspecies was monitored with a consistent method and unit of measurement at a single site over time. The maximum number of time-series included in this plot is 50.
-    </p>
-    <canvas ref="consistencyPlot" style="height: 25em; max-height: 25em;"></canvas>
-  </div>
-  <div v-if="consistencyPlotStatus == 'error'" class="content">
-    <p>An error occurred while generating the monitoring consistency plot.</p>
   </div>
 </template>
 
@@ -532,11 +538,12 @@ export default {
         this.trendStatus = 'error'
       })
     },
-    generateConsistencyPlot: function() {
+    generateConsistencyPlot() {
       let params = this.buildDownloadParams()
       this.consistencyPlotStatus = 'processing'
       api.dataSubsetConsistencyPlot(params).then(data => {
         this.consistencyPlotStatus = 'ready'
+        this.consistencyPlotData = data
         setTimeout(() => {
           plotConsistency(data, this.$refs.consistencyPlot)
         })
@@ -544,6 +551,28 @@ export default {
         conmsole.log(e)
         this.consistencyPlotStatus = 'error'
       })
+    },
+    downloadConsistency() {
+      let data = this.consistencyPlotData
+      let years = this.availableYears.map(y => y.toString())
+
+      let header = ['Time Series', ...years]
+      let columnMap = Object.fromEntries(header.map((col, index) => [col, index]))
+      let rows = data.map((ts, index) => {
+          let row = Array(header.length).fill('')
+          row[0] = index + 1
+          for(let [year, value] of ts) {
+            row[columnMap[year.toString()]] = value
+          }
+          return row
+        })
+
+      let csv = [header, ...rows].map(row => row.join(',')).join('\n')
+
+      saveTextFile(csv, 'text/csv', 'monitoring-consistency.csv')
+
+
+      console.log(data)
     },
     buildDownloadParams: function() {
       var params = {}
