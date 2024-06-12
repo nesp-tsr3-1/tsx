@@ -59,6 +59,7 @@
                     </select>
                   </div>
                 </div>
+                <p class="help">If relevant, assign your dataset to a larger national or jurisdictional monitoring program such as the Saving our Species (SoS) monitoring program in NSW or the Australian Government’s NRM Natural Heritage Trust and Saving Native Species programs.</p>
               </div>
               <div class="field"  v-if="monitoring_program === '__new__'">
                 <div class="control">
