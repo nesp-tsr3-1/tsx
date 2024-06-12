@@ -14,26 +14,26 @@
             <router-link :to="{ name: 'SourceEdit', params: { id: sourceId }}" tag="button" class="button is-small">Edit</router-link>
           </h4>
 
-          <div class="columns">
-            <div class="column">
-              <div style="margin-bottom: 1em;">
-                <div style="font-weight: bold;">Data Details</div>
+          <div class="columns is-multiline dataset-details">
+            <div class="column is-half">
+              <div>
+                <h4>Data Details</h4>
                 {{ source.details || 'N/A' }}
               </div>
 
-              <div style="margin-bottom: 1em;">
-                <div style="font-weight: bold;">Data Provider</div>
+              <div>
+                <h4>Data Provider</h4>
                 {{ source.provider || 'N/A' }}
               </div>
 
-              <div style="margin-bottom: 1em;">
-                <div style="font-weight: bold;">Authors</div>
+              <div>
+                <h4>Authors</h4>
                 {{ source.authors || 'N/A' }}
               </div>
             </div>
-            <div class="column">
-              <div style="margin-bottom: 1em;">
-                <div style="font-weight: bold;">Contact Information</div>
+            <div class="column is-half">
+              <div>
+                <h4>Contact Information</h4>
                 <div v-if="hasContactInfo">
                   {{ source.contact_name }}<br>
                   {{ source.contact_institution }}<br>
@@ -46,15 +46,15 @@
                 </div>
               </div>
             </div>
-          </div>
-          <div class="columns">
-            <div class="column">
-              <div style="margin-bottom: 1em;">
-                <div style="font-weight: bold;">Data Citation</div>
+            <div class="column is-full">
+              <div>
+                <h4>Data Citation</h4>
                 {{ citation || 'N/A' }}
               </div>
-              <div v-if="hasMonitoringProgram" style="font-weight: bold;">Monitoring Program</div>
-              <div v-if="hasMonitoringProgram">{{ source.monitoring_program }}</div>
+              <div v-if="hasMonitoringProgram">
+                <h4>Monitoring Program</h4>
+                {{ source.monitoring_program }}
+              </div>
             </div>
           </div>
 
@@ -226,4 +226,16 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+.dataset-details {
+  margin-top: 1.5em;
+}
+.dataset-details > .column {
+  margin-top: -1.5em;
+}
+.dataset-details h4 {
+  font-weight: bold;
+}
+.dataset-details > .column > div {
+  margin-bottom: 1em;
+}
 </style>
