@@ -81,7 +81,8 @@ export default {
       },
       searchText: '',
       debouncedSearchText: '',
-      showModified: false
+      showModified: false,
+      navigationsSinceBackButtonPressed: 2
     }
   },
   created() {
@@ -90,6 +91,16 @@ export default {
       if(user.roles.includes('Administrator')) {
         this.showModified = true
       }
+    })
+
+    // Work-around for detecting back button so we can preserve search/scroll state (see activated hook)
+    // TODO: make this a global solution if it works well
+    // e.g. util.installBackButtonDetection(this.$router) in app startup, then $router.lastNavigationWasBack elsewhere
+    this.$router.options.history.listen((to, from, info) => {
+      this.navigationsSinceBackButtonPressed = 0
+    })
+    this.$router.beforeEach((to, from) => {
+      this.navigationsSinceBackButtonPressed++
     })
   },
   methods: {
@@ -208,7 +219,18 @@ export default {
       default: true
     }
   },
-  emits: ["clickSource"]
+  emits: ["clickSource"],
+  activated() {
+    // We use KeepAlive to preserve state when returning to the datasets page via the back button,
+    // but unfortunately this also preserves state even when navigating to the datasets page via
+    // the navigation bar.
+    // The work-around below resets the page state if we are *not* arriving at this page via the back button
+    let lastNavigationWasBack = (this.navigationsSinceBackButtonPressed == 1)
+    if(!lastNavigationWasBack) {
+      this.debouncedSearchText = this.searchText = ''
+      this.refresh()
+    }
+  }
 }
 </script>
 
