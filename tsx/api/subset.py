@@ -530,7 +530,7 @@ def query_subset_time_series(random_sample_size=None):
         SELECT
             SUBSTR(TRIM('_' FROM REGEXP_REPLACE(taxon.scientific_name, '[^a-zA-Z]', '_')), 1, 40) AS Binomial,
             ROW_NUMBER() OVER () AS ID,
-            CONCAT(t2.source_id, '_', t2.unit_id, '_', COALESCE(t2.search_type_id, '0'), '_', t2.site_id, '_', t2.taxon_id) AS TimeSeriesID,
+            MIN(CONCAT(t2.source_id, '_', t2.unit_id, '_', COALESCE(t2.search_type_id, '0'), '_', t2.site_id, '_', t2.taxon_id)) AS TimeSeriesID,
             source.id AS SourceID,
             source.description AS SourceDesc,
             (SELECT description FROM data_processing_type WHERE id = source.data_processing_type_id) AS DataProcessingType,
