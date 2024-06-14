@@ -232,7 +232,7 @@ def suppress_aggregated_data(df):
 	df = df.copy()
 
 	years = [col for col in df.columns if col.isdigit()]
-	df[years] = df[years].multiply(df['SuppressAggregatedData'].apply(lambda x: np.nan if x== 1 else 1), axis="index")
+	df[years] = df[years].multiply(df['SuppressAggregatedData'].apply(lambda x: np.nan if (x == '1' or x == 1) else 1), axis="index")
 
 	return df
 
