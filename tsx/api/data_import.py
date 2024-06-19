@@ -417,8 +417,8 @@ data_import_notification_body = Template(dedent("""
 
 
 def source_url(source_id):
-	root_url = config.get("api", "root_url").rstrip("/")
-	return "%s/data/datasets/%s" % (root_url, source_id)
+	root_url = config.get("api", "data_root_url").rstrip("/")
+	return "%s/datasets/%s" % (root_url, source_id)
 
 def update_source_from_json(source, json):
 	def clean(value):
