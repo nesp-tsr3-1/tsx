@@ -127,7 +127,7 @@ def get_intensity():
 def get_intensity_data(filtered_data, format='json'):
 	df = filtered_data
 	df = df[['SurveysCentroidLongitude', 'SurveysCentroidLatitude', 'SurveyCount']]
-	df = df.groupby(['SurveysCentroidLongitude', 'SurveysCentroidLatitude'], as_index=False).agg(np.sum)
+	df = df.groupby(['SurveysCentroidLongitude', 'SurveysCentroidLatitude'], as_index=False).agg('sum')
 
 	if format == 'json':
 		return [[round(x[0], 1), round(x[1], 1), x[2]] for x in df.values]
@@ -199,7 +199,7 @@ def get_summary_data(filtered_data, format='json', query_type='all'):
 	# Get year columns
 	years = [col for col in df.columns if col.isdigit()]
 	# Select year columns and fill any gaps in timeseries
-	year_df = (df[years].fillna(method='bfill', axis=1) + df[years].fillna(method='ffill', axis=1)).notna()
+	year_df = (df[years].bfill(axis=1) + df[years].ffill(axis=1)).notna()
 	# Discard years with no data
 	year_df = year_df.loc[:, year_df.any()]
 
