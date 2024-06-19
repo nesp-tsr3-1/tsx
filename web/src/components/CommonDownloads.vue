@@ -385,6 +385,7 @@ export default {
         this.updateStats()
         this.trendStatus = 'idle'
         this.showPlot = false
+        this.consistencyPlotStatus = 'idle'
       },
       deep: true
     }
@@ -541,14 +542,21 @@ export default {
     generateConsistencyPlot() {
       let params = this.buildDownloadParams()
       this.consistencyPlotStatus = 'processing'
+      let v = this.changeCounter
       api.dataSubsetConsistencyPlot(params).then(data => {
+        if(v != this.changeCounter) {
+          return
+        }
         this.consistencyPlotStatus = 'ready'
         this.consistencyPlotData = data
         setTimeout(() => {
           plotConsistency(data, this.$refs.consistencyPlot)
         })
       }).catch(e => {
-        conmsole.log(e)
+        if(v != this.changeCounter) {
+          return
+        }
+        console.log(e)
         this.consistencyPlotStatus = 'error'
       })
     },
