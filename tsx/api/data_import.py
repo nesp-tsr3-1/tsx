@@ -18,6 +18,10 @@ from queue import Queue
 import subprocess
 from tsx.api.util import log
 from sqlalchemy import text
+from string import Template
+from textwrap import dedent
+from tsx.api.mail import send_admin_notification
+from tsx.config import config
 
 bp = Blueprint('data_import', __name__)
 
@@ -49,8 +53,6 @@ def get_sources():
 	db_session.execute(text("SET time_zone = '+00:00'"))
 
 	program_id = request.args.get('program_id')
-
-	print(user.id)
 
 	rows = db_session.execute(
 		text("""SELECT
@@ -384,8 +386,39 @@ def create_or_update_source(source_id=None):
 
 	db_session.commit()
 
+	if action == 'create':
+		send_admin_notification('New dataset created', new_source_notification_body.substitute(
+			source_name=source.description,
+			source_url=source_url(source.id),
+			first_name=user.first_name,
+			last_name=user.last_name,
+			email=user.email
+		))
+
 	return jsonify(source_to_json(source)), 200 if source_id else 201
 
+new_source_notification_body = Template(dedent("""
+	A new dataset was created on the TSX data interface.
+
+	Dataset name: $source_name
+	Dataset URL: $source_url
+
+	Created by: $first_name $last_name <$email>
+"""))
+
+data_import_notification_body = Template(dedent("""
+	A new data file was imported using the TSX data interface.
+
+	Dataset name: $source_name
+	Dataset URL: $source_url
+
+	Imported by: $first_name $last_name <$email>
+"""))
+
+
+def source_url(source_id):
+	root_url = config.get("api", "root_url").rstrip("/")
+	return "%s/data/datasets/%s" % (root_url, source_id)
 
 def update_source_from_json(source, json):
 	def clean(value):
@@ -528,6 +561,16 @@ def process_import_async(import_id, status):
 		info.error_count = result['errors']
 		info.warning_count = result['warnings']
 		db_session.commit()
+
+		if new_status in ('imported', 'approved'):
+			source = info.source
+			send_admin_notification('New data uploaded', data_import_notification_body.substitute(
+				source_name=source.description,
+				source_url=source_url(source.id),
+				first_name=user.first_name,
+				last_name=user.last_name,
+				email=user.email
+			))
 
 	def progress_callback(processed_rows, total_rows):
 		with lock:

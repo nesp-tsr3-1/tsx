@@ -9,7 +9,7 @@ import secrets
 from string import Template
 from textwrap import dedent
 from tsx.api.validation import *
-from tsx.api.mail import send_email
+from tsx.api.mail import send_email, send_admin_notification
 from tsx.config import config
 from sqlalchemy import text
 
@@ -69,6 +69,12 @@ def create_user():
 	except Exception as e:
 		print('Error sending email to %s' % user.email)
 		print('Error: %s' % e)
+
+	send_admin_notification('New account created', new_account_notification_body.substitute(
+		first_name=user.first_name,
+		last_name=user.last_name,
+		email=user.email
+	))
 
 	return "OK", 204 # Success
 
@@ -249,6 +255,14 @@ reset_email_no_account_body = Template(dedent("""
 	If you wish to create a new account, visit $root_url#/signup
 
 	If you did not request a password reset, please disregard this email.
+"""))
+
+new_account_notification_body = Template(dedent("""
+	A new user account was created on the TSX data interface.
+
+	Email: $email
+	First name: $first_name
+	Last name: $last_name
 """))
 
 @bp.route('/reset_password', methods = ['POST'])
