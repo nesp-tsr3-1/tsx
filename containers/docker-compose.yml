@@ -1,3 +1,9 @@
+# To run tests:
+# podman compose -f containers/docker-compose.yml run --build --rm test
+
+# To run workflow_cli
+# podman compose -f containers/docker-compose.yml run --rm workflow_cli
+
 version: "3.1"
 services:
   mysql:
@@ -38,5 +44,14 @@ services:
       - ../data:/root/data
     stdin_open: true # docker run -i
     tty: true        # docker run -t
+  test:
+    profiles: ["test"]
+    build:
+      context: ..
+      dockerfile: containers/Dockerfile
+      target: test
+    depends_on:
+      mysql:
+        condition: service_healthy
 volumes:
   tsx_mysql_data:

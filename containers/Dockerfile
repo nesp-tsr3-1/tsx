@@ -7,10 +7,6 @@ RUN useradd --create-home --shell /bin/bash tsx_user
 RUN apt-get update && \
 apt-get install -y --no-install-recommends libgdal-dev r-base git python3-dev build-essential libharfbuzz-dev libfribidi-dev  libfontconfig1-dev libgit2-dev libssl-dev  default-mysql-client libbz2-dev
 
-FROM base as prod
-
-LABEL org.opencontainers.image.source https://github.com/nesp-tsr3-1/tsx
-
 WORKDIR /root
 COPY Pipfile Pipfile.lock .
 
@@ -30,6 +26,12 @@ pak::pkg_install("tidyr")
 pak::pkg_install("docopt")
 EOF
 
+#----- Prod (workflow CLI) -----
+
+FROM base AS prod
+
+LABEL org.opencontainers.image.source https://github.com/nesp-tsr3-1/tsx
+
 COPY sample-data/ sample-data/
 COPY tsx/ tsx/
 COPY db/ db/
@@ -39,3 +41,11 @@ COPY containers/bashrc .bashrc
 COPY containers/my.cnf .my.cnf
 
 CMD ["bash"]
+
+#----- Test -----
+
+FROM prod as test
+COPY tsx.conf.test tsx.conf.test
+
+COPY tests/ tests/
+CMD ["python", "-m", "pytest", "tests"]
