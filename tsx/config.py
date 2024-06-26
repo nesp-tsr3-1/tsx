@@ -18,8 +18,18 @@ import configparser
 import os
 import errno
 
-config = configparser.SafeConfigParser()
-config.read(["tsx.conf", os.environ.get("TSX_CONFIG", ""), "/opt/tsx/conf/tsx.conf"])
+config = None
+
+def reload():
+	global config
+	config = configparser.ConfigParser()
+
+	if os.environ.get("TSX_CONFIG"):
+		config.read(os.environ.get("TSX_CONFIG"))
+	else:
+		config.read(["tsx.conf", "/opt/tsx/conf/tsx.conf"])
+
+reload()
 
 def get(section, option, default = None):
 	"""
