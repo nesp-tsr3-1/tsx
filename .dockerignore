@@ -1,2 +1,14 @@
-tmp/
-data/
+# Exclude everything first so we can just choose what to include
+*
+
+!/tsx
+!/tests
+!/sample-data
+!/r
+!/jupyter
+!/doc
+!/db
+!/containers
+!/Pipfile
+!/Pipfile.lock
+!/tsx.conf.*
