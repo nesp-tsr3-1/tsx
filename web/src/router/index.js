@@ -12,6 +12,9 @@ import SignUp from '../components/SignUp.vue'
 import ResetPassword from '../components/ResetPassword.vue'
 import DataSubsetDownloads from '../components/DataSubsetDownloads.vue'
 import UserEdit from '../components/UserEdit.vue'
+import CustodianFeedbackHome from '../components/CustodianFeedbackHome.vue'
+import CustodianFeedbackDataset from '../components/CustodianFeedbackDataset.vue'
+import CustodianFeedbackForm from '../components/CustodianFeedbackForm.vue'
 import * as api from '../api'
 
 const router = createRouter({
@@ -86,6 +89,21 @@ const router = createRouter({
       path: '/manage_account',
       name: 'UserEdit',
       component: UserEdit
+    },
+    {
+      path: '/custodian_feedback',
+      name: 'CustodianFeedbackHome',
+      component: CustodianFeedbackHome
+    },
+    {
+      path: '/custodian_feedback/:id',
+      name: 'CustodianFeedbackDataset',
+      component: CustodianFeedbackDataset
+    },
+    {
+      path: '/custodian_feedback/form/:id',
+      name: 'CustodianFeedbackForm',
+      component: CustodianFeedbackForm
     },
     {
       path: '/',

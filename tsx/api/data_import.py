@@ -147,6 +147,7 @@ def delete_source(source_id=None):
 	db_session.execute(text("""DELETE FROM data_import WHERE source_id = :source_id"""), { 'source_id': source_id })
 	db_session.execute(text("""DELETE FROM source WHERE id = :source_id"""), { 'source_id': source_id })
 	remove_orphaned_monitoring_programs()
+	db_session.execute(text("CALL update_custodian_feedback()"))
 	db_session.commit()
 
 	return "OK", 200
@@ -572,6 +573,10 @@ def process_import_async(import_id, status):
 				email=user.email
 			))
 
+		if new_status == 'approved':
+			db_session.execute(text("CALL update_custodian_feedback()"))
+			db_session.commit()
+
 	def progress_callback(processed_rows, total_rows):
 		with lock:
 			running_imports[import_id]['total_rows'] = total_rows
@@ -667,6 +672,7 @@ def approve_import(import_id=None):
 		'status_id': status_ids['approved'],
 		'import_id': import_id
 	})
+	db_session.execute(text("CALL update_custodian_feedback()"))
 	db_session.commit()
 
 	data_import.status_id = status_ids['approved']

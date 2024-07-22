@@ -17,6 +17,7 @@ import tsx.api.program_manager
 import tsx.api.subset
 import tsx.api.program
 import tsx.api.results
+import tsx.api.custodian_feedback
 
 import datetime
 
@@ -45,6 +46,7 @@ app.register_blueprint(tsx.api.program_manager.bp)
 app.register_blueprint(tsx.api.subset.bp)
 app.register_blueprint(tsx.api.program.bp)
 app.register_blueprint(tsx.api.results.bp)
+app.register_blueprint(tsx.api.custodian_feedback.bp)
 
 class DateTimeEncoder(JSONEncoder):
 	def default(self, obj):

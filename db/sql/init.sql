@@ -176,3 +176,15 @@ INSERT INTO data_processing_type (description) VALUES
   ('None (data are raw data)'),
   ('Data are standardised by effort'),
   ('Data are extracted from model outputs');
+
+INSERT INTO feedback_type (id, code, description) VALUES
+  (1, 'integrated', 'Integrated'),
+  (2, 'admin', 'Admin'),
+  (3, 'spreadsheet', 'Spreadsheet');
+
+INSERT INTO feedback_status (id, code, description) VALUES
+  (1, 'incomplete', 'Incomplete'),
+  (2, 'draft', 'Draft Saved'),
+  (3, 'complete', 'Complete'),
+  (4, 'archived', 'Archived'),
+  (5, 'dataset_deleted', 'Dataset Deleted');

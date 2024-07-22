@@ -292,6 +292,22 @@ export function taxonomicGroups() {
   return get('/taxonomic_group')
 }
 
+export function taxonDatasets() {
+  return get('/custodian_feedback/taxon_datasets')
+}
+
+export function taxonDataset(id) {
+  return get('/custodian_feedback/taxon_datasets/' + id)
+}
+
+export function custodianFeedbackForm(id) {
+  return get('/custodian_feedback/forms/' + id)
+}
+
+export function updateCustodianForm(id, data) {
+  return put('/custodian_feedback/forms/' + id, data)
+}
+
 export function upload(file, progressCallback) {
   // Flask seems to need files to be uploaded as multipart/form-data for some reason..
   var data = new FormData()

@@ -1,8 +1,16 @@
 # Basic field validation framework
-from collections import namedtuple
+from collections.abc import Collection, Callable
+from dataclasses import dataclass
 import re
 
-Field = namedtuple("Field", "name title validators")
+# Field = namedtuple("Field", "name title validators")
+
+@dataclass
+class Field:
+	name: str
+	title: str
+	validators: Collection[Callable]
+	type: str = 'any'
 
 email_regex = r'^[^@\s]+@[^@\s]+\.[^@\s]+$'
 
@@ -28,6 +36,11 @@ def validate_min_chars(length):
 		if value_present(value) and len(value) < length:
 			return "Must contain at least %s characters" % length
 	return _validate_min_chars
+
+def validate_one_of(*items):
+	def _validate_one_of(value, field):
+		if value_present(value) and value not in items:
+			return "Must be one of: %s" % ", ".join(items)
 
 def validate_fields(fields, body):
 	errors = {}
