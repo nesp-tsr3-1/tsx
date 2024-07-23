@@ -173,6 +173,41 @@
               </div>
             </div>
 
+            <!---- Data summary and processing ---->
+
+            <div class="content">
+              <h3>Data summary and processing</h3>
+            </div>
+
+            <div class="columns">
+              <div class="column is-half">
+                <div v-if="consistencyPlotAvailable" class="content">
+                      <canvas ref="consistencyPlot" style="height: 25em; max-height: 25em;"></canvas>
+                      <hr>
+                      <p style="font-style: italic;">
+                        The above dot plot shows the distribution of surveys at unique sites. Each row represents a time series in the dataset or data subset where a species/subspecies was monitored with a consistent method and unit of measurement at a single site over time. The maximum number of time-series included in this plot is 50.
+                      </p>
+                </div>
+                <div v-else class="content">
+                  Consistency plot unavailable
+                </div>
+              </div>
+              <div class="column is-half">
+                <div v-if="intensityMapData" class="content">
+                  <div style="width: 100%; max-width: 640px; height: 25em; display: block; background: #eee;">
+                    <HeatMap :heatmap-data="intensityMapData"></HeatMap>
+                  </div>
+                  <hr>
+                  <p style="font-style: italic;">
+                    The above map shows the location of your monitoring sites.
+                  </p>
+                </div>
+                <div v-else class="content">
+                  Map unavailable
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
@@ -185,9 +220,14 @@
 import * as api from '../api.js'
 import { handleLinkClick, formatDateTime } from '../util.js'
 import { generateCitation } from '../util.js'
+import { plotConsistency } from '../plotConsistency.js'
+import HeatMap from './HeatMap.vue'
 
 export default {
   name: 'CustodianFeedbackForm',
+  components: {
+    HeatMap
+  },
   data () {
     return {
       currentUser: null,
@@ -244,13 +284,29 @@ export default {
     canSubmit() {
       // TODO
       return false
+    },
+    consistencyPlotAvailable() {
+      return !!this.form?.stats?.monitoring_consistency
+    },
+    intensityMapData() {
+      return this.form?.stats?.intensity_map
+    }
+  },
+  watch: {
+    consistencyPlotAvailable(isAvailable) {
+      let data = this.form?.stats?.monitoring_consistency
+      if(isAvailable && data) {
+        setTimeout(() => {
+          plotConsistency(data, this.$refs.consistencyPlot)
+        })
+      }
     }
   },
   methods: {
     refresh() {
       api.custodianFeedbackForm(this.formId).then((form) => {
         this.form = form
-        this.formData = { ... form.answers }
+        this.formData = { ... form.answers } // TODO: use a better name than 'formData'
         this.status = 'loaded'
       }).catch((error) => {
         console.log(error)

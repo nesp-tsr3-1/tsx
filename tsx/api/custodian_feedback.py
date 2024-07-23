@@ -4,6 +4,8 @@ from tsx.api.util import db_session, get_user, get_roles
 from tsx.api.validation import *
 from tsx.api.permissions import permitted
 from sqlalchemy import text
+from tsx.api import subset
+import json
 
 bp = Blueprint('custodian_feedback', __name__)
 
@@ -204,7 +206,8 @@ def form(form_id):
 				'code', feedback_status.code,
 				'description', feedback_status.description
 			),
-			'answers', JSON_OBJECT(%s)
+			'answers', JSON_OBJECT(%s),
+			'stats', dataset_stats.stats_json
 		)
 		FROM custodian_feedback
 		JOIN source ON custodian_feedback.source_id = source.id
@@ -212,6 +215,7 @@ def form(form_id):
 		JOIN feedback_status ON feedback_status.id = custodian_feedback.feedback_status_id
 		JOIN feedback_type ON feedback_type.id = custodian_feedback.feedback_type_id
 		LEFT JOIN custodian_feedback_answers ON custodian_feedback_answers.custodian_feedback_id = custodian_feedback.id
+		LEFT JOIN dataset_stats ON dataset_stats.source_id = source.id AND dataset_stats.taxon_id = taxon.id AND dataset_stats.data_import_id = custodian_feedback.data_import_id
 		WHERE custodian_feedback.id = :form_id
 	""" % answer_select_json_sql), {
 		'form_id': form_id
@@ -266,26 +270,49 @@ def update_form(form_id):
 
 	return "OK", 200
 
-def update_dataset_stats_any():
-	# Find a dataset that needs updating
-	rows = db_session.execute(text("""
-		SELECT DISTINCT t1_survey.source_id, t1_sighting.taxon_id, t1_survey.data_import_id
-		FROM t1_survey, t1_sighting
-		WHERE t1_sighting.survey_id = t1_survey.id
-		AND data_import_id IS NOT NULL
-		AND (t1_survey.source_id, t1_sighting.taxon_id, t1_survey.data_import_id) NOT IN (select source_id, taxon_id, data_import_id FROM dataset_stats)
-		LIMIT 1;
-		"""))
+# TODO: Trigger updating of dataset stats automatically as required
+@bp.route('/custodian_feedback/update_dataset_stats', methods = ['GET'])
+def update_dataset_stats_all():
+	user = get_user()
 
-	rows = list(rows)
+	if not permitted(user, 'generate', 'dataset_stats'):
+		return "Not authorized", 401
 
-	if rows:
-		[source_id, taxon_id, data_import_id] = rows
-		update_dataset_stats(source_id, taxon_id, data_import_id)
-		return True
-	else:
-		return False
+	while True:
+		# Find a dataset that needs updating
+		rows = db_session.execute(text("""
+			SELECT DISTINCT t1_survey.source_id, t1_sighting.taxon_id, t1_survey.data_import_id
+			FROM t1_survey, t1_sighting
+			WHERE t1_sighting.survey_id = t1_survey.id
+			AND data_import_id IS NOT NULL
+			AND (t1_survey.source_id, t1_sighting.taxon_id, t1_survey.data_import_id) NOT IN (select source_id, taxon_id, data_import_id FROM dataset_stats)
+			LIMIT 1;
+			"""))
+
+		rows = list(rows)
+
+		if rows:
+			[(source_id, taxon_id, data_import_id)] = rows
+			update_dataset_stats(source_id, taxon_id, data_import_id)
+		else:
+			return 'OK', 200
 
 
 def update_dataset_stats(source_id, taxon_id, data_import_id):
-	pass
+	subset_params = {
+		'source_id': source_id,
+		'taxon_id': taxon_id
+	}
+	# Generate monitoring consistency plot
+	stats = {
+		'monitoring_consistency': subset.monitoring_consistency_plot_json(subset_params),
+		'intensity_map': subset.subset_intensity_map_json(subset_params),
+		'trend': subset.subset_generate_trend_sync(subset_params)
+	}
+	db_insert('dataset_stats', {
+		'source_id': source_id,
+		'taxon_id': taxon_id,
+		'data_import_id': data_import_id,
+		'stats_json': json.dumps(stats)
+	})
+	db_session.commit()

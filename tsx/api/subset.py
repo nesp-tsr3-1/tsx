@@ -96,7 +96,10 @@ def subset_stats():
 
 @bp.route('/subset/intensity_map', methods = ['GET'])
 def subset_intensity_map():
-    where_conditions, having_conditions, params = subset_sql_params()
+    return jsonify(subset_intensity_map_json()), 200
+
+def subset_intensity_map_json(subset_params=None):
+    where_conditions, having_conditions, params = subset_sql_params(subset_params)
 
     sql = """WITH t AS (SELECT
             t1_survey.id AS survey_id,
@@ -129,7 +132,7 @@ def subset_intensity_map():
         having_clause = "HAVING " + " AND ".join(having_conditions) if having_conditions else "")
 
     result = db_session.execute(text(sql), params).fetchall()
-    return jsonify_rows(result)
+    return [dict(row._mapping) for row in result]
 
 @bp.route('/subset/sites', methods = ['GET'])
 def subset_sites():
@@ -206,14 +209,12 @@ def subset_species():
     result = db_session.execute(text(sql), params).fetchall()
     return jsonify_rows(result)
 
-def subset_sql_params(state_via_region=False):
+def subset_sql_params(subset_params=None, state_via_region=False):
     where_conditions = []
     having_conditions = []
     params = {}
 
-    args = get_request_args_or_body()
-
-    print(args)
+    args = subset_params or get_request_args_or_body()
 
     if 'state' in args:
         if state_via_region:
@@ -382,8 +383,12 @@ def subset_time_series():
     extra_entries = [(filename, os.path.join(extra_dir, filename), 'file') for filename in os.listdir(extra_dir)]
     return zip_response([('time_series.csv', csv_string(result), 'str')] + extra_entries, 'time_series.zip')
 
+
 @bp.route('/subset/monitoring_consistency', methods = ['GET'])
 def monitoring_consistency_plot():
+    return jsonify(monitoring_consistency_plot_json()), 200
+
+def monitoring_consistency_plot_json(subset_params=None):
     """Produces data for generating dot plots in the following format
     [
         [[year,count],[year,count] .. ],
@@ -391,7 +396,7 @@ def monitoring_consistency_plot():
     ]
     Where count = 0 or 1
     """
-    result = query_subset_time_series(random_sample_size=50)
+    result = query_subset_time_series(subset_params, random_sample_size=50)
 
     result_data = []
 
@@ -405,7 +410,7 @@ def monitoring_consistency_plot():
                 row_data.append([key, 1])
         result_data.append(row_data)
 
-    return jsonify(result_data), 200
+    return result_data
 
 
 def stream_and_delete(filename):
@@ -439,8 +444,8 @@ def zip_response(entries, download_file_name):
         }
     )
 
-def query_subset_time_series(random_sample_size=None):
-    where_conditions, having_conditions, params = subset_sql_params()
+def query_subset_time_series(subset_params=None, random_sample_size=None):
+    where_conditions, having_conditions, params = subset_sql_params(subset_params)
 
     if ('source_id' in params) and permitted(get_user(), 'import_data', 'source', params['source_id']):
         coordinates_sql = """
@@ -607,13 +612,19 @@ def process_trend(trend_id):
             pass
 
         subprocess.run(["Rscript", os.path.join(path, "lpi.R")] + script_params)
-        shutil.copy(os.path.join(path, "data_infile_Results.txt"), os.path.join(path, "trend.txt"))
+        results_path = os.path.join(path, "data_infile_Results.txt")
+        if os.path.exists(results_path):
+            shutil.copy(results_path, os.path.join(path, "trend.txt"))
     finally:
         with lock:
             processing_trend_ids.remove(trend_id)
 
 @bp.route('/subset/trend', methods = ['POST'])
 def subset_generate_trend():
+    trend_id, _ = subset_generate_trend_async()
+    return jsonify({"id": trend_id}), 201
+
+def subset_generate_trend_async(subset_params=None):
     trend_id = str(uuid4())
 
     path = trend_work_dir(trend_id)
@@ -622,7 +633,7 @@ def subset_generate_trend():
     with open(os.path.join(path, "lpi.R"), "wb") as f:
         f.write(importlib.resources.read_binary("tsx.resources", "lpi.R"))
 
-    result = query_subset_time_series()
+    result = query_subset_time_series(subset_params)
     save_csv(result, os.path.join(path, "lpi.csv"))
 
     # Save extra trend parameters e.g. reference/final year
@@ -635,10 +646,20 @@ def subset_generate_trend():
     with open(os.path.join(path, "params.json"), "w") as f:
         json.dump(trend_params, f)
 
-    t = Thread(target = process_trend, args = (trend_id,))
-    t.start()
+    thread = Thread(target = process_trend, args = (trend_id,))
+    thread.start()
 
-    return jsonify({"id": trend_id}), 201
+    return trend_id, thread
+
+def subset_generate_trend_sync(subset_params):
+    trend_id, thread = subset_generate_trend_async(subset_params)
+    thread.join()
+    path = os.path.join(trend_work_dir(trend_id), "trend.txt")
+    if os.path.exists(path):
+        with open(path, 'r') as file:
+            return file.read()
+    else:
+        return None
 
 @bp.route('/subset/trend/<trend_id>/status')
 def subset_get_trend_status(trend_id):
