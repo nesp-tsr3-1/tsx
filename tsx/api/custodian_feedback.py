@@ -6,6 +6,8 @@ from tsx.api.permissions import permitted
 from sqlalchemy import text
 from tsx.api import subset
 import json
+import pandas as pd
+import math
 
 bp = Blueprint('custodian_feedback', __name__)
 
@@ -298,16 +300,137 @@ def update_dataset_stats_all():
 			return 'OK', 200
 
 
+def processing_summary(source_id, taxon_id):
+	result = db_session.execute(text("""
+		SELECT DISTINCT
+			search_type.description AS search_type,
+			unit.description AS unit,
+			unit_type.description AS unit_type
+		FROM
+			t1_survey
+			JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id
+			JOIN t1_site ON t1_survey.site_id = t1_site.id
+			JOIN search_type ON t1_site.search_type_id = search_type.id
+			JOIN unit ON t1_sighting.unit_id = unit.id
+			LEFT JOIN unit_type ON unit.unit_type_id = unit_type.id
+		WHERE
+			t1_survey.source_id = :source_id
+			AND t1_sighting.taxon_id = :taxon_id
+		"""), {
+		'source_id': source_id,
+		'taxon_id': taxon_id
+	})
+
+	return [dict(row._mapping) for row in result]
+
+def site_management_summary(source_id, taxon_id):
+	result = db_session.execute(text("""
+		SELECT
+			management.description AS management_category,
+			t1_site.management_comments,
+			COUNT(DISTINCT t1_site.id) AS site_count
+		FROM
+			t1_survey
+			JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id
+			JOIN t1_site ON t1_survey.site_id = t1_site.id
+			JOIN management ON t1_site.management_id = management.id
+		WHERE
+			t1_survey.source_id = :source_id
+			AND t1_sighting.taxon_id = :taxon_id
+		GROUP BY
+			management_category, management_comments
+		"""), {
+		'source_id': source_id,
+		'taxon_id': taxon_id
+	})
+
+	return [dict(row._mapping) for row in result]
+
+def raw_data_stats(source_id, taxon_id):
+	result = db_session.execute(text("""
+		SELECT JSON_OBJECT(
+			'min_year', MIN(t1_survey.start_date_y),
+			'max_year', MAX(t1_survey.start_date_y),
+			'survey_count', COUNT(DISTINCT t1_survey.id),
+			'min_count', MIN(t1_sighting.`count`),
+			'max_count', MAX(t1_sighting.`count`),
+			'zero_counts', SUM(t1_sighting.`count` = 0)
+		) AS json
+		FROM
+			t1_survey
+			JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id
+		WHERE
+			t1_survey.source_id = :source_id
+			AND t1_sighting.taxon_id = :taxon_id
+		"""), {
+		'source_id': source_id,
+		'taxon_id': taxon_id
+	})
+
+	[(json_result,)] = result
+
+	return json.loads(json_result)
+
+def time_series_stats(lpi_path):
+	df = pd.read_csv(lpi_path)
+
+	year_cols = [col for col in df.columns if col.isdigit()]
+	gaps = (
+		# Un-pivot to ID,year,value
+		df.melt(id_vars=['ID'], value_vars=year_cols, var_name='year')
+			# Remove years without values
+			.loc[lambda df: df.value.notna()]
+			.drop(columns=['value'])
+			# Calculate consecutive differences between years
+			.sort_values(by=['ID', 'year'])
+			.assign(year=lambda df:pd.to_numeric(df.year))
+			.assign(year_diff = lambda df:df.year.diff() - 1)
+			# Only retain gaps of 1 year or more
+			.loc[lambda df: (df.ID.diff() == 0) & (df.year_diff > 0)]
+	)
+	evenness = gaps[['ID', 'year_diff']].groupby('ID').var().year_diff
+
+	return {
+		'time_series_count': len(df),
+		'time_series_length_mean': float(df.TimeSeriesLength.mean()),
+		'time_series_length_std': float(df.TimeSeriesLength.std()),
+		'time_series_sample_years_mean': float(df.TimeSeriesSampleYears.mean()),
+		'time_series_sample_years_std': float(df.TimeSeriesSampleYears.std()),
+		'time_series_completeness_mean': float(df.TimeSeriesCompleteness.mean() * 100),
+		'time_series_completeness_std': float(df.TimeSeriesCompleteness.std() * 100),
+		'time_series_sampling_evenness_mean': replace_nan(float(evenness.mean()), 0),
+		'time_series_sampling_evenness_std': replace_nan(float(evenness.std()), 0)
+	}
+
+def replace_nan(x, default):
+	if math.isnan(x):
+		return default
+	else:
+		return x
+
 def update_dataset_stats(source_id, taxon_id, data_import_id):
 	subset_params = {
 		'source_id': source_id,
 		'taxon_id': taxon_id
 	}
+
+	trend_path, lpi_path = subset.subset_generate_trend_sync(subset_params)
+
+	try:
+		with open(trend_path, 'r') as file:
+			trend_data = file.read()
+	except:
+		trend_data = None
+
 	# Generate monitoring consistency plot
 	stats = {
 		'monitoring_consistency': subset.monitoring_consistency_plot_json(subset_params),
 		'intensity_map': subset.subset_intensity_map_json(subset_params),
-		'trend': subset.subset_generate_trend_sync(subset_params)
+		'time_series_stats': time_series_stats(lpi_path),
+		'raw_data_stats': raw_data_stats(source_id, taxon_id),
+		'trend': trend_data,
+		'processing_summary': processing_summary(source_id, taxon_id),
+		'site_management_summary': site_management_summary(source_id, taxon_id)
 	}
 	db_insert('dataset_stats', {
 		'source_id': source_id,

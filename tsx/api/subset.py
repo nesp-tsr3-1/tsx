@@ -651,15 +651,13 @@ def subset_generate_trend_async(subset_params=None):
 
     return trend_id, thread
 
+# Returns path to generated trend and time series
 def subset_generate_trend_sync(subset_params):
     trend_id, thread = subset_generate_trend_async(subset_params)
     thread.join()
-    path = os.path.join(trend_work_dir(trend_id), "trend.txt")
-    if os.path.exists(path):
-        with open(path, 'r') as file:
-            return file.read()
-    else:
-        return None
+    work_dir = trend_work_dir(trend_id)
+
+    return os.path.join(work_dir, "trend.txt"), os.path.join(work_dir, "lpi.csv")
 
 @bp.route('/subset/trend/<trend_id>/status')
 def subset_get_trend_status(trend_id):
