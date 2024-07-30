@@ -392,19 +392,20 @@ def time_series_stats(lpi_path):
 
 	return {
 		'time_series_count': len(df),
-		'time_series_length_mean': float(df.TimeSeriesLength.mean()),
-		'time_series_length_std': float(df.TimeSeriesLength.std()),
-		'time_series_sample_years_mean': float(df.TimeSeriesSampleYears.mean()),
-		'time_series_sample_years_std': float(df.TimeSeriesSampleYears.std()),
-		'time_series_completeness_mean': float(df.TimeSeriesCompleteness.mean() * 100),
-		'time_series_completeness_std': float(df.TimeSeriesCompleteness.std() * 100),
-		'time_series_sampling_evenness_mean': replace_nan(float(evenness.mean()), 0),
-		'time_series_sampling_evenness_std': replace_nan(float(evenness.std()), 0)
+		'time_series_length_mean': safe_float(df.TimeSeriesLength.mean()),
+		'time_series_length_std': safe_float(df.TimeSeriesLength.std()),
+		'time_series_sample_years_mean': safe_float(df.TimeSeriesSampleYears.mean()),
+		'time_series_sample_years_std': safe_float(df.TimeSeriesSampleYears.std()),
+		'time_series_completeness_mean': safe_float(df.TimeSeriesCompleteness.mean() * 100),
+		'time_series_completeness_std': safe_float(df.TimeSeriesCompleteness.std() * 100),
+		'time_series_sampling_evenness_mean': safe_float(evenness.mean()),
+		'time_series_sampling_evenness_std': safe_float(evenness.std())
 	}
 
-def replace_nan(x, default):
+def safe_float(x):
+	x = float(x)
 	if math.isnan(x):
-		return default
+		return 0
 	else:
 		return x
 
