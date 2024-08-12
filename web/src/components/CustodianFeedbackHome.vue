@@ -18,6 +18,12 @@
           </div>
 
           <div v-if="status === 'loaded'">
+
+            <div v-if="taxonDatasets.length > 0" class="columns">
+              <p class="column title is-6">Showing {{filteredTaxonDatasets.length}} / {{taxonDatasets.length}} taxon datasets</p>
+              <input class="column input" type="text" placeholder="Search taxon datasets" v-model="searchText">
+            </div>
+
             <table class='table is-fullwidth is-striped is-hoverable clickable' v-if="filteredTaxonDatasets.length > 0">
               <thead>
                 <tr>
@@ -32,8 +38,18 @@
                 <tr v-for="taxonDataset in filteredTaxonDatasets" @click="handleDatasetClick(taxonDataset, $event)">
                   <td>
                     <span class='tag'>{{taxonDataset.id}}</span>
-                    <p>{{taxonDataset.source.description}}</p>
-                    <p>{{taxonDataset.taxon.scientific_name}}</p>
+                    <p>
+                      <template v-for="[nonMatch, match] in taxonDataset.descriptionParts">
+                        <span style="white-space: pre-wrap;">{{nonMatch}}</span>
+                        <b style="white-space: pre-wrap;">{{match}}</b>
+                      </template>
+                    </p>
+                    <p>
+                      <template v-for="[nonMatch, match] in taxonDataset.taxonParts">
+                        <span style="white-space: pre-wrap;">{{nonMatch}}</span>
+                        <b style="white-space: pre-wrap;">{{match}}</b>
+                      </template>
+                    </p>
                   </td>
                   <td>{{formatDateTime(taxonDataset.time_created)}}</td>
                   <td>{{formatDateTime(taxonDataset.last_modified)}}</td>
@@ -52,7 +68,7 @@
 
 <script>
 import * as api from '../api.js'
-import { handleLinkClick, formatDateTime } from '../util.js'
+import { handleLinkClick, formatDateTime, debounce, searchStringToRegex, matchParts } from '../util.js'
 
 export default {
   name: 'CustodianFeedbackHome',
@@ -60,7 +76,9 @@ export default {
     return {
       currentUser: null,
       status: 'loading',
-      taxonDatasets: []
+      taxonDatasets: [],
+      searchText: '',
+      debouncedSearchText: ''
     }
   },
   created() {
@@ -79,8 +97,37 @@ export default {
   },
   computed: {
     filteredTaxonDatasets() {
-      return this.taxonDatasets.filter(() => true)
+      let search = this.debouncedSearchText
+      console.log(search)
+      if(search) {
+        let searchRegex = searchStringToRegex(search)
+
+        function filterDataset(ds) {
+          return ds.source.description.match(searchRegex) ||
+            ds.taxon.scientific_name.match(searchRegex)
+        }
+
+        let matchingDatasets = this.taxonDatasets.filter(filterDataset)
+        for(let dataset of matchingDatasets) {
+          dataset.descriptionParts = matchParts(dataset.source.description, searchRegex)
+          dataset.taxonParts = matchParts(dataset.taxon.scientific_name, searchRegex)
+        }
+
+        return matchingDatasets
+      } else {
+        for(let dataset of this.taxonDatasets) {
+          dataset.descriptionParts = [[dataset.source.description, ""]]
+          dataset.taxonParts = [[dataset.taxon.scientific_name, ""]]
+        }
+        return this.taxonDatasets
+      }
     }
+  },
+  watch: {
+    searchText: debounce(function(searchText) {
+      console.log(searchText)
+      this.debouncedSearchText = searchText
+    }, 500)
   },
   methods: {
     refresh() {

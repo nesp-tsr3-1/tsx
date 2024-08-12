@@ -63,7 +63,7 @@
 
 <script>
 import * as api from '../api.js'
-import { humanizeStatus, formatDateTime, debounce } from '../util.js'
+import { humanizeStatus, formatDateTime, debounce, searchStringToRegex, matchParts } from '../util.js'
 
 function normalize(x) {
   return x.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
@@ -153,28 +153,11 @@ export default {
       let search = this.debouncedSearchText
 
       if(search) {
-        //https://stackoverflow.com/a/3561711/165783
-        let searchRegex = new RegExp(search.replace(/[/\-\\^$*+?.()|[\]{}]/g, '\\$&'), "gi")
+        let searchRegex = searchStringToRegex(search)
 
         function filterSource(s) {
           return s.description.match(searchRegex) || (s.custodians && s.custodians.some(c => c.match(searchRegex)))
         }
-
-        function matchParts(str, regex) {
-          var i = 0
-          var result = []
-          for(let match of str.matchAll(regex)) {
-            let j = match.index + match[0].length
-            result.push([
-              str.substring(i, match.index),
-              str.substring(match.index, j)
-            ])
-            i = j
-          }
-          result.push([str.substr(i, str.length), ""])
-          return result
-        }
-
 
         let matchingSources = this.sources.filter(filterSource)
         for(let source of matchingSources) {

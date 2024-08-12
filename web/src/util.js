@@ -333,6 +333,7 @@ export function handleLinkClick(evt, url, router) {
     }
 }
 
+// Unlike debounce(), fn is called immediately at first
 export function throttle(fn, delay) {
   let state = 0
   function throttleWrapper() {
@@ -351,4 +352,29 @@ export function throttle(fn, delay) {
     }
   }
   return throttleWrapper
+}
+
+export function searchStringToRegex(search) {
+  //https://stackoverflow.com/a/3561711/165783
+  return new RegExp(search.replace(/[/\-\\^$*+?.()|[\]{}]/g, '\\$&'), "gi")
+}
+
+
+// Converts a string to an array of string pairs, where each pair
+// consists of a non-matching part followed by a matching part.
+// E.g. matchParts("Tomato Mate", /mat/gi) =>
+// [['to', 'mat'], ['o ', 'Mat'], ['e', '']]
+export function matchParts(str, regex) {
+  var i = 0
+  var result = []
+  for(let match of str.matchAll(regex)) {
+    let j = match.index + match[0].length
+    result.push([
+      str.substring(i, match.index),
+      str.substring(match.index, j)
+    ])
+    i = j
+  }
+  result.push([str.substr(i, str.length), ""])
+  return result
 }
