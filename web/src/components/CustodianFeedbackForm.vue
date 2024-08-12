@@ -1,17 +1,33 @@
 <template>
   <div class="section">
-    <div class="container feedback-home">
+    <div class="feedback-home">
       <div class="columns">
-<!-- <aside class="menu" v-if="status == 'loaded'">
-    <ul class="menu-list">
-      <li><a>Data citation and monitoring aims</a></li>
-      <li><a>Data summary and processing</a></li>
-      <li><a>Statistics and trend estimate</a></li>
-      <li><a>Data suitability</a></li>
-      <li><a>Funding, logistics and governance (optional)</a></li>
-    </ul>
-  </aside> -->
-        <div class="column is-10 is-offset-1">
+        <div class="column is-2" style="border-right: 0.5px solid #eee;">
+          <div class="sticky-top" style="padding-top: 1.5em;">
+            <p class="menu-label">Contents</p>
+            <ul class="menu-list" ref="sideMenu">
+              <li><a href="#citation_section">Data citation and monitoring aims</a></li>
+              <li><a href="#summary_section">Data summary and processing</a></li>
+              <li><a href="#statistics_section">Statistics and trend estimate</a></li>
+              <li><a href="#suitability_section">Data suitability</a></li>
+              <li><a href="#funding_section">Monitoring program funding, logistics and governance (optional)</a></li>
+            </ul>
+            <hr>
+            <div class="buttons">
+              <button class="button is-primary" :disabled="!canSaveDraft" @click="saveAndClose">{{saveButtonLabel}}</button>
+              <button class="button is-primary" :disabled="!canSubmit" @click="submitAndClose">Submit</button>
+            </div>
+            <p class="help is-danger" v-if="saveStatus == 'error'">Failed to save form</p>
+            <div class="notification content">
+              <h4>TODO</h4>
+              <ul>
+                <li>Trend plot editing</li>
+                <li>Ability to load previous answers</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="column is-8">
           <user-nav></user-nav>
           <div v-if="status == 'loading'">
             <p>
@@ -35,79 +51,13 @@
                   <span class="tag is-large">{{form.dataset_id}}</span>
                 </p>
               </div>
-              <div class="column is-narrow">
-                <div class="buttons">
-                  <button class="button is-primary" :disabled="!canSaveDraft" @click="saveAndClose">{{saveButtonLabel}}</button>
-                  <button class="button is-primary" :disabled="!canSubmit">Submit</button>
-                </div>
-                <p class="help is-danger" v-if="saveStatus == 'error'">Failed to save form</p>
-              </div>
             </div>
 
             <hr>
 
-            <!---- Conditions and consent ---->
-
-            <div v-if="notAdmin">
-              <div class="content">
-                <h3>Conditions and consent</h3>
-                <p>
-                  These feedback forms are based on the species monitoring data generously donated by you or your organisation as a data custodian for the development of Australia's Threatened Species Index. The index will allow for integrated reporting at national, state and regional levels, and track changes in threatened species populations. The goal of this feedback process is to inform decisions about which datasets will be included in the overall multi-species index. If custodians deem datasets to be unrepresentative of true species trends, these may be excluded from final analyses.
-                </p>
-                <p>
-                  Within your individual datasets (see the ‘Datasets’ tab) you can access a clean version of your processed data in a (1) raw (confidential) and (2) aggregated format (to be made open to the public unless embargoed). For your aggregated data, please note that site names will be masked and spatial information on site locations will be denatured to the IBRA subregion centroids before making the data available to the public. We use the 'Living Planet Index' method to calculate trends (Collen et. 2009) and follow their requirements on data when we assess suitability of data for trends.
-                </p>
-                <p>
-                  The information we collect from you using these forms is part of an elicitation process for the project “A threatened species index for Australia: Development and interpretation of integrated reporting on trends in Australia's threatened species”. We would like to inform you of the following:
-                </p>
-                <ul>
-                  <li>
-                    Data collected will be anonymous and you will not be identified by name in any publication arising from this work without your consent.
-                  </li>
-                  <li>
-                    All participation in this process is voluntary. If at any time you do not feel comfortable providing information, you have the right to withdraw any or all of your input to the project.
-                  </li>
-                  <li>
-                    Data collected from this study will be used to inform the Threatened Species Index at national and various regional scales.
-                  </li>
-                  <li>
-                    Project outputs will include a web tool and a publicly available aggregated dataset that enables the public to interrogate trends in Australia’s threatened species over space and time.
-                  </li>
-                </ul>
-                <p>
-                  This study adheres to the Guidelines of the ethical review process of The University of Queensland and the National Statement on Ethical Conduct in Human Research. Whilst you are free to discuss your participation in this study with project staff (Project Coordinator Tayla Lawrie: <a href='mailto:t.lawrie@uq.edu.au'>t.lawrie@uq.edu.au</a> or <b>0476 378 354</b>), if you would like to speak to an officer of the University not involved in the study, you may contact the Ethics Coordinator on 07 3443 1656.
-                </p>
-                <p>
-                  Your involvement in this elicitation process constitutes your consent for the Threatened Species Index team to use the information collected in research, subject to the information provided above.
-                </p>
-                <p>
-                  <b>References</b><br>
-                  Collen, B., J. Loh, S. Whitmee, L. McRae, R. Amin, and J. E. Baillie. 2009. Monitoring change in vertebrate abundance: the living planet index. Conserv Biol 23:317-327.
-                </p>
-                <p>
-                  <b>I have read and understand the conditions of the expert elicitation study for the project, “A threatened species index for Australia: Development and interpretation of integrated reporting on trends in Australia's threatened species” and provide my consent.</b>
-                </p>
-              </div>
-              <div class="indent">
-                <div class="field">
-                  <label class="checkbox required">
-                    <input type="checkbox" v-model="formData.consent_given" />
-                    I agree
-                  </label>
-                </div>
-                <div class="field">
-                  <label class="label required">Please enter your name.</label>
-                  <div class="control">
-                    <input class="input" type="text" placeholder="" v-model="formData.consent_name">
-                  </div>
-                </div>
-              </div>
-              <hr>
-            </div>
-
             <!---- Data citation and monitoring aims ---->
 
-            <div class="content">
+            <div class="content" id="citation_section">
               <h3>Data citation and monitoring aims</h3>
               <p>
                 <b>Data citation</b><br>
@@ -120,14 +70,13 @@
               <label class="label required" v-if="isAdmin">Does the custodian agree with the suggested citation? If no, what changes have they suggested to correctly cite their data?</label>
               <div class="control indent">
                 <div class="radio-list">
-                  <label class="radio">
-                    <input type="radio" name="citation_ok" v-model="formData.citation_ok" value="yes" /> Yes
-                  </label>
-                  <label class="radio">
-                    <input type="radio" name="citation_ok" v-model="formData.citation_ok" value="no" /> No
+                  <label class="radio" v-for="option in options.yes_no">
+                    <input type="radio" name="citation_ok" v-model="formData.citation_ok" :value="option.id" /> {{option.description}}
                   </label>
                 </div>
+                <p class="help is-danger" v-if="fieldErrors.citation_ok">{{fieldErrors.citation_ok}}</p>
                 <input class="input" type="text" placeholder="Suggested citation" v-if="formData.citation_ok == 'no'" v-model="formData.citation_suggestion">
+                <p class="help is-danger" v-if="fieldErrors.citation_suggestion">{{fieldErrors.citation_suggestion}}</p>
               </div>
             </div>
 
@@ -136,17 +85,13 @@
               <label class="label required" v-if="isAdmin">Is the monitoring program explicitly designed to detect population trends over time? If no or unsure, what are the aims of their monitoring?</label>
               <div class="control indent">
                 <div class="radio-list">
-                  <label class="radio">
-                    <input type="radio" name="designed_for_trends" v-model="formData.designed_for_trends" value="yes" /> Yes
-                  </label>
-                  <label class="radio">
-                    <input type="radio" name="designed_for_trends" v-model="formData.designed_for_trends" value="no" /> No
-                  </label>
-                  <label class="radio">
-                    <input type="radio" name="designed_for_trends" v-model="formData.designed_for_trends" value="unsure" /> Unsure
+                  <label class="radio" v-for="option in options.yes_no_unsure">
+                    <input type="radio" name="designed_for_trends" v-model="formData.designed_for_trends" :value="option.id" /> {{option.description}}
                   </label>
                 </div>
+                <p class="help is-danger" v-if="fieldErrors.designed_for_trends">{{fieldErrors.designed_for_trends}}</p>
                 <input class="input" type="text" placeholder="Enter your answer" v-model="formData.designed_for_trends_comments" v-if="formData.designed_for_trends === 'no' || formData.designed_for_trends === 'unsure'">
+                <p class="help is-danger" v-if="fieldErrors.designed_for_trends_comments">{{fieldErrors.designed_for_trends_comments}}</p>
               </div>
             </div>
 
@@ -155,13 +100,11 @@
               <label class="label required" v-if="isAdmin">Does the custodian analyse their own data for trends?</label>
               <div class="control indent">
                 <div class="radio-list">
-                  <label class="radio">
-                    <input type="radio" name="analysed_for_trends" v-model="formData.analysed_for_trends" value="yes" /> Yes
-                  </label>
-                  <label class="radio">
-                    <input type="radio" name="analysed_for_trends" v-model="formData.analysed_for_trends" value="no" /> No
+                  <label class="radio" v-for="option in options.yes_no">
+                    <input type="radio" name="analysed_for_trends" v-model="formData.analysed_for_trends" :value="option.id" /> {{option.description}}
                   </label>
                 </div>
+                <p class="help is-danger" v-if="fieldErrors.analysed_for_trends">{{fieldErrors.analysed_for_trends}}</p>
               </div>
             </div>
 
@@ -170,12 +113,13 @@
               <label class="label required" v-if="isAdmin">What has the custodian estimated to be the percentage (%) of the species’ population that existed in Australia at the start of the monitoring (assuming this was 100% in 1750)?</label>
               <div class="control indent">
                 <input class="input" type="text" placeholder="Enter your answer" v-model="formData.estimated_population_baseline_percentage">
+                <p class="help is-danger" v-if="fieldErrors.estimated_population_baseline_percentage">{{fieldErrors.estimated_population_baseline_percentage}}</p>
               </div>
             </div>
 
             <!---- Data summary and processing ---->
 
-            <div class="content">
+            <div class="content" id="summary_section">
               <h3>Data summary and processing</h3>
             </div>
 
@@ -256,14 +200,13 @@
               <label class="label required" v-if="isAdmin">Does the custodian agree with the data summary? If no, what specifically do they disagree with?</label>
               <div class="control indent">
                 <div class="radio-list">
-                  <label class="radio">
-                    <input type="radio" name="summary_ok" v-model="formData.summary_ok" value="yes" /> Yes
-                  </label>
-                  <label class="radio">
-                    <input type="radio" name="summary_ok" v-model="formData.summary_ok" value="no" /> No
+                  <label class="radio" v-for="option in options.yes_no">
+                    <input type="radio" name="summary_ok" v-model="formData.summary_ok" :value="option.id" /> {{option.description}}
                   </label>
                 </div>
+                <p class="help is-danger" v-if="fieldErrors.summary_ok">{{fieldErrors.summary_ok}}</p>
                 <input class="input" type="text" placeholder="Enter your answer" v-if="formData.summary_ok == 'no'" v-model="formData.summary_comments">
+                <p class="help is-danger" v-if="fieldErrors.summary_comments">{{fieldErrors.summary_comments}}</p>
               </div>
             </div>
 
@@ -272,20 +215,19 @@
               <label class="label required" v-if="isAdmin">Does the custodian agree with how the data were processed? If no, what alternative method of aggregation have they suggested?</label>
               <div class="control indent">
                 <div class="radio-list">
-                  <label class="radio">
-                    <input type="radio" name="processing_ok" v-model="formData.processing_ok" value="yes" /> Yes
-                  </label>
-                  <label class="radio">
-                    <input type="radio" name="processing_ok" v-model="formData.processing_ok" value="no" /> No
+                  <label class="radio" v-for="option in options.yes_no">
+                    <input type="radio" name="processing_ok" v-model="formData.processing_ok" :value="option.id" /> {{option.description}}
                   </label>
                 </div>
+                <p class="help is-danger" v-if="fieldErrors.processing_ok">{{fieldErrors.processing_ok}}</p>
                 <input class="input" type="text" placeholder="Enter your answer" v-if="formData.processing_ok == 'no'" v-model="formData.processing_comments">
+                <p class="help is-danger" v-if="fieldErrors.processing_comments">{{fieldErrors.processing_comments}}</p>
               </div>
             </div>
 
              <!---- Statistics and Trend Estimate ---->
 
-            <div class="content">
+            <div class="content" id="statistics_section">
               <h3>Statistics and trend estimate</h3>
             </div>
 
@@ -357,14 +299,14 @@
               <label class="label required" v-if="isAdmin">Does the custodian agree with the data statistics (raw and aggregated)? If no, what specifically do they disagree with?</label>
               <div class="control indent">
                 <div class="radio-list">
-                  <label class="radio">
-                    <input type="radio" name="statistics_ok" v-model="formData.statistics_ok" value="yes" /> Yes
-                  </label>
-                  <label class="radio">
-                    <input type="radio" name="statistics_ok" v-model="formData.statistics_ok" value="no" /> No
+                  <label class="radio" v-for="option in options.yes_no">
+                    <input type="radio" name="statistics_ok" v-model="formData.statistics_ok" :value="option.id" /> {{option.description}}
                   </label>
                 </div>
+                <p class="help is-danger" v-if="fieldErrors.statistics_ok">{{fieldErrors.statistics_ok}}</p>
                 <input class="input" type="text" placeholder="Enter your answer" v-if="formData.statistics_ok == 'no'" v-model="formData.statistics_comments">
+                <p class="help is-danger" v-if="fieldErrors.statistics_comments">{{fieldErrors.statistics_comments}}</p>
+
               </div>
             </div>
 
@@ -383,17 +325,13 @@
               <label class="label required" v-if="isAdmin">Does the custodian agree with the trend? If no or unsure, what specifically do they disagree with?</label>
               <div class="control indent">
                 <div class="radio-list">
-                  <label class="radio">
-                    <input type="radio" name="trend_ok" v-model="formData.trend_ok" value="yes" /> Yes
-                  </label>
-                  <label class="radio">
-                    <input type="radio" name="trend_ok" v-model="formData.trend_ok" value="no" /> No
-                  </label>
-                  <label class="radio">
-                    <input type="radio" name="trend_ok" v-model="formData.trend_ok" value="unsure" /> Unsure
+                  <label class="radio" v-for="option in options.yes_no_unsure">
+                    <input type="radio" name="trend_ok" v-model="formData.trend_ok" :value="option.id" /> {{option.description}}
                   </label>
                 </div>
+                <p class="help is-danger" v-if="fieldErrors.trend_ok">{{fieldErrors.trend_ok}}</p>
                 <input class="input" type="text" placeholder="Enter your answer" v-if="formData.trend_ok == 'no' || formData.trend_ok == 'unsure'" v-model="formData.trend_comments">
+                <p class="help is-danger" v-if="fieldErrors.trend_comments">{{fieldErrors.trend_comments}}</p>
               </div>
             </div>
 
@@ -402,6 +340,7 @@
               <label class="label required" v-if="isAdmin">What reference year has the custodian suggested for their trend?</label>
               <div class="control indent">
                 <input class="input" type="text" placeholder="Enter your answer" v-model="formData.trend_ref_year">
+                <p class="help is-danger" v-if="fieldErrors.trend_ref_year">{{fieldErrors.trend_ref_year}}</p>
               </div>
             </div>
 
@@ -410,12 +349,13 @@
               <label class="label required" v-if="isAdmin">What end year has the custodian suggested for their trend?</label>
               <div class="control indent">
                 <input class="input" type="text" placeholder="Enter your answer" v-model="formData.trend_end_year">
+                <p class="help is-danger" v-if="fieldErrors.trend_end_year">{{fieldErrors.trend_end_year}}</p>
               </div>
             </div>
 
             <!---- Data suitability ---->
 
-            <div class="content">
+            <div class="content" id="suitability_section">
               <h3>Data suitability</h3>
             </div>
 
@@ -433,16 +373,17 @@
                 </thead>
                 <tbody>
                   <tr>
-                    <td :rowspan="options.standardisationOfMethodEffort.length + 1">
+                    <td :rowspan="options.standardisation_of_method_effort.length + 1">
                       <div class="field numbered">
                         <label class="label required">Standardisation of method effort</label>
+                        <p class="help is-danger" v-if="fieldErrors.standardisation_of_method_effort">{{fieldErrors.standardisation_of_method_effort}}</p>
                       </div>
                     </td>
-                    <td :rowspan="options.standardisationOfMethodEffort.length + 1">
+                    <td :rowspan="options.standardisation_of_method_effort.length + 1">
                       This data suitability indicator rates the degree of standardisation of monitoring method/effort and is assessed to the data source level by enquiring with the data custodian and examining data.
                     </td>
                   </tr>
-                  <tr v-for="option in options.standardisationOfMethodEffort"
+                  <tr v-for="option in options.standardisation_of_method_effort"
                     @click="() => { formData.standardisation_of_method_effort = option.id}">
                     <td><input type='radio' name='standardisation_of_method_effort' :value="option.id" v-model="formData.standardisation_of_method_effort"></td>
                     <td>{{option.id}}</td>
@@ -450,16 +391,17 @@
                   </tr>
 
                   <tr>
-                    <td :rowspan="options.objectiveOfMonitoring.length + 1">
+                    <td :rowspan="options.objective_of_monitoring.length + 1">
                       <div class="field numbered">
                         <label class="label required">Objective of monitoring</label>
+                        <p class="help is-danger" v-if="fieldErrors.objective_of_monitoring">{{fieldErrors.objective_of_monitoring}}</p>
                       </div>
                     </td>
-                    <td :rowspan="options.objectiveOfMonitoring.length + 1">
+                    <td :rowspan="options.objective_of_monitoring.length + 1">
                       This field indicates the objective of the monitoring.
                     </td>
                   </tr>
-                  <tr v-for="option in options.objectiveOfMonitoring"
+                  <tr v-for="option in options.objective_of_monitoring"
                     @click="() => { formData.objective_of_monitoring = option.id}">
                     <td><input type='radio' name='objective_of_monitoring' :value="option.id" v-model="formData.objective_of_monitoring"></td>
                     <td>{{option.id}}</td>
@@ -467,16 +409,17 @@
                   </tr>
 
                   <tr>
-                    <td :rowspan="options.consistencyOfMonitoring.length + 1">
+                    <td :rowspan="options.consistency_of_monitoring.length + 1">
                       <div class="field numbered">
                         <label class="label required">Consistency of monitoring</label>
+                        <p class="help is-danger" v-if="fieldErrors.consistency_of_monitoring">{{fieldErrors.consistency_of_monitoring}}</p>
                       </div>
                     </td>
-                    <td :rowspan="options.consistencyOfMonitoring.length + 1">
+                    <td :rowspan="options.consistency_of_monitoring.length + 1">
                       This data suitability indicator rates the degree of consistency by which the same sites were repeatedly monitored over time.
                     </td>
                   </tr>
-                  <tr v-for="option in options.consistencyOfMonitoring"
+                  <tr v-for="option in options.consistency_of_monitoring"
                     @click="() => { formData.consistency_of_monitoring = option.id}">
                     <td><input type='radio' name='consistency_of_monitoring' :value="option.id" v-model="formData.consistency_of_monitoring"></td>
                     <td>{{option.id}}</td>
@@ -484,16 +427,17 @@
                   </tr>
 
                   <tr>
-                    <td :rowspan="options.monitoringFrequencyAndTiming.length + 1">
+                    <td :rowspan="options.monitoring_frequency_and_timing.length + 1">
                       <div class="field numbered">
                         <label class="label required">Monitoring frequency and timing</label>
+                        <p class="help is-danger" v-if="fieldErrors.monitoring_frequency_and_timing">{{fieldErrors.monitoring_frequency_and_timing}}</p>
                       </div>
                     </td>
-                    <td :rowspan="options.monitoringFrequencyAndTiming.length + 1">
+                    <td :rowspan="options.monitoring_frequency_and_timing.length + 1">
                       This data suitability indicator rates whether the taxon was monitored with an appropriate frequency and during an appropriate season/timing.
                     </td>
                   </tr>
-                  <tr v-for="option in options.monitoringFrequencyAndTiming"
+                  <tr v-for="option in options.monitoring_frequency_and_timing"
                     @click="() => { formData.monitoring_frequency_and_timing = option.id}">
                     <td><input type='radio' name='monitoring_frequency_and_timing' :value="option.id" v-model="formData.monitoring_frequency_and_timing"></td>
                     <td>{{option.id}}</td>
@@ -501,16 +445,17 @@
                   </tr>
 
                   <tr>
-                    <td :rowspan="options.absencesRecorded.length + 1">
+                    <td :rowspan="options.absences_recorded.length + 1">
                       <div class="field numbered">
                         <label class="label required">Were absences recorded systematically?</label>
+                        <p class="help is-danger" v-if="fieldErrors.absences_recorded">{{fieldErrors.absences_recorded}}</p>
                       </div>
                     </td>
-                    <td :rowspan="options.absencesRecorded.length + 1">
+                    <td :rowspan="options.absences_recorded.length + 1">
                       Absences are non-detections of taxa i.e. where 0 counts of a species are recorded.
                     </td>
                   </tr>
-                  <tr v-for="option in options.absencesRecorded"
+                  <tr v-for="option in options.absences_recorded"
                     @click="() => { formData.absences_recorded = option.id}">
                     <td><input type='radio' name='absences_recorded' :value="option.id" v-model="formData.absences_recorded"></td>
                     <td colspan="2">{{option.description}}</td>
@@ -527,6 +472,250 @@
               </div>
             </div>
 
+            <!-- Monitoring program funding, logistics and governance -->
+
+            <div class="content" id="funding_section">
+              <h3>Monitoring program funding, logistics and governance</h3>
+            </div>
+
+            <p class="content">
+              Questions 17 to 32 below are optional. We hope you are interested in providing some further information about your monitoring program.
+            </p>
+
+            <div class="field numbered">
+              <label class="label">Please indicate if you would prefer to provide this information via a phone or video call with our project team:</label>
+              <div class="control indent">
+                <div class="radio-list">
+                  <label class="radio" v-for="option in options.monitoring_program_information_provided">
+                    <input type="radio" name="monitoring_program_information_provided" v-model="formData.monitoring_program_information_provided" :value="option.id" /> {{option.description}}
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <hr>
+
+            <div class="notification is-info is-light" v-if="disableMonitoringProgramFields">
+              <strong>To fill out the following fields, first answer question 16 above.</strong>
+            </div>
+
+            <fieldset :disabled="disableMonitoringProgramFields">
+              <div class="field numbered">
+                <label class="label">Effort: How much time on average per year was spent on project labour, i.e. data collection in the field? </label>
+                <div class="control indent">
+                  <div class="subfield">
+                    <label>a. Days/year paid labour:</label> <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_labour_paid_days_per_year">
+                  </div>
+                  <div class="subfield">
+                    <label>b. Days/year volunteered time:</label> <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_labour_volunteer_days_per_year">
+                  </div>
+                </div>
+              </div>
+
+              <div class="field numbered">
+                <label class="label">Effort: How much time on average per year was spent on project overheads, e.g. data collation and dataset maintenance? </label>
+                <div class="control indent">
+                  <div class="subfield">
+                    <label>a. Days/year paid labour:</label> <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_overheads_paid_days_per_year">
+                  </div>
+                  <div class="subfield">
+                    <label>b. Days/year volunteered time:</label> <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_overheads_volunteer_days_per_year">
+                  </div>
+                </div>
+              </div>
+
+              <div class="field numbered">
+                <label class="label">Effort: Approximately how many people were involved in the last bout of monitoring (including both field and office work)</label>
+                <div class="control indent">
+                  <div class="subfield">
+                    <label>a. Paid staff:</label> <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_paid_staff_count">
+                  </div>
+                  <div class="subfield">
+                    <label>b. Volunteers:</label> <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_volunteer_count">
+                  </div>
+                </div>
+              </div>
+
+              <div class="field numbered">
+                <label class="label">Funding: How much do you think in AUD$ a single survey costs (not counting in-kind support)?</label>
+                <div class="control indent">
+                  <input class="input" type="text" placeholder="Enter your answer" v-model="formData.funding_cost_per_survey_aud">
+                </div>
+              </div>
+
+              <div class="field numbered">
+                <label class="label">Funding: Can you estimate in AUD$ the total investment in the dataset to date (again not counting in-kind support)?</label>
+                <div class="control indent">
+                  <input class="input" type="text" placeholder="Enter your answer" v-model="formData.funding_total_investment_aud">
+                </div>
+              </div>
+
+              <div class="field numbered">
+                <label class="label">Funding: Who has been paying for the monitoring? (e.g. government grants, research funds, private donations etc. – list multiple funding sources if they have been needed over the years)</label>
+                <div class="control indent">
+                  <div class="subfield">
+                    <label>a. Government grants:</label>
+                    <div class="horizontal-radio-list">
+                      <label><input class="radio" type="radio" name="funding_source_government_grants" v-model="formData.funding_source_government_grants" value="yes"> Yes</label>
+                      <label><input class="radio" type="radio" name="funding_source_government_grants" v-model="formData.funding_source_government_grants" value="no"> No</label>
+                    </div>
+                  </div>
+                  <div class="subfield">
+                    <label>b. Research funds:</label>
+                    <div class="horizontal-radio-list">
+                      <label><input class="radio" type="radio" name="funding_source_research_funds" v-model="formData.funding_source_research_funds" value="yes"> Yes</label>
+                      <label><input class="radio" type="radio" name="funding_source_research_funds" v-model="formData.funding_source_research_funds" value="no"> No</label>
+                    </div>
+                  </div>
+                  <div class="subfield">
+                    <label>c. Private donations:</label>
+                    <div class="horizontal-radio-list">
+                      <label><input class="radio" type="radio" name="funding_source_private_donations" v-model="formData.funding_source_private_donations" value="yes"> Yes</label>
+                      <label><input class="radio" type="radio" name="funding_source_private_donations" v-model="formData.funding_source_private_donations" value="no"> No</label>
+                    </div>
+                  </div>
+                  <div class="subfield">
+                    <label>d. Other:</label>
+                    <input class="input" type="text" placeholder="Enter your answer" v-model="formData.funding_source_other">
+                  </div>
+                  <div class="subfield">
+                    <label>e. Can you estimate the total number of funding sources so far?:</label>
+                    <input class="input" type="text" placeholder="Enter your answer" v-model="formData.funding_source_count">
+                  </div>
+                </div>
+              </div>
+
+              <div class="field numbered">
+                <label class="label">Leadership: Who has been providing the drive to keep the monitoring going after the baseline was established?</label>
+                <div class="control indent">
+                  <input class="input" type="text" placeholder="Enter your answer" v-model="formData.leadership">
+                </div>
+              </div>
+
+              <div class="field numbered">
+                <label class="label">Impact: Are data being used to directly inform management of the threatened species or measure the effectiveness of management actions? </label>
+                <div class="control indent">
+                  <div class="subfield">
+                    <label>a.</label>
+                    <div class="horizontal-radio-list">
+                      <label><input class="radio" type="radio" name="impact_used_for_management" v-model="formData.impact_used_for_management" value="yes"> Yes</label>
+                      <label><input class="radio" type="radio" name="impact_used_for_management" v-model="formData.impact_used_for_management" value="no"> No</label>
+                    </div>
+                  </div>
+                  <div class="subfield">
+                    <label>b. Please expand:</label>
+                    <input class="input" type="text" placeholder="Enter your answer" v-model="formData.impact_used_for_management_comments">
+                  </div>
+                </div>
+              </div>
+
+              <div class="field numbered">
+                <label class="label">Impact: Is your organisation responsible for managing this species in the monitored area?</label>
+                <div class="control indent">
+                  <input class="input" type="text" placeholder="Enter your answer" v-model="formData.impact_organisation_responsible">
+                </div>
+              </div>
+
+              <div class="field numbered">
+                <label class="label">Impact: Can you describe any management that has changed because of the monitoring?</label>
+                <div class="control indent">
+                  <input class="input" type="text" placeholder="Enter your answer" v-model="formData.impact_management_changes">
+                </div>
+              </div>
+
+              <div class="field numbered">
+                <label class="label">Data availability: Is your monitoring data readily available to the public (e.g. through reports, or on website). If not, can the public access it?</label>
+                <div class="control indent">
+                  <input class="input" type="text" placeholder="Enter your answer" v-model="formData.data_availability">
+                </div>
+              </div>
+
+              <div class="field numbered">
+                <label class="label">Succession: Do you have commitments to extend the monitoring into the future? </label>
+                <div class="control indent">
+                  <div class="subfield">
+                    <label>a.</label>
+                    <div class="horizontal-radio-list">
+                      <label><input class="radio" type="radio" name="succession_commitment" value="yes" v-model="formData.succession_commitment"> Yes</label>
+                      <label><input class="radio" type="radio" name="succession_commitment" value="no" v-model="formData.succession_commitment"> No</label>
+                    </div>
+                  </div>
+                  <div class="subfield">
+                    <label>b. Please expand:</label>
+                    <input class="input" type="text" placeholder="Enter your answer" v-model="formData.succession_commitment_comments">
+                  </div>
+                </div>
+              </div>
+
+              <div class="field numbered">
+                <label class="label">Succession: Have you developed a plan for continual monitoring when the current organisers/you need to stop?</label>
+                <div class="control indent">
+                  <div class="subfield">
+                    <label>a.</label>
+                    <div class="horizontal-radio-list">
+                      <label><input class="radio" type="radio" name="succession_plan" value="yes" v-model="formData.succession_plan"> Yes</label>
+                      <label><input class="radio" type="radio" name="succession_plan" value="no" v-model="formData.succession_plan"> No</label>
+                    </div>
+                  </div>
+                  <div class="subfield">
+                    <label>b. Please expand:</label>
+                    <input class="input" type="text" placeholder="Enter your answer" v-model="formData.succession_plan_comments">
+                  </div>
+                </div>
+              </div>
+
+              <div class="field numbered">
+                <label class="label">Design: Was there thought about the statistical power of the monitoring when it was started (i.e. the probability that change could be detected?)</label>
+                <div class="control indent">
+                  <div class="subfield">
+                    <label>a.</label>
+                    <div class="horizontal-radio-list">
+                      <label><input class="radio" type="radio" name="design_statistical_power" value="yes" v-model="formData.design_statistical_power"> Yes</label>
+                      <label><input class="radio" type="radio" name="design_statistical_power" value="no" v-model="formData.design_statistical_power"> No</label>
+                    </div>
+                  </div>
+                  <div class="subfield">
+                    <label>b. Please expand:</label>
+                    <input class="input" type="text" placeholder="Enter your answer" v-model="formData.design_statistical_power_comments">
+                  </div>
+                </div>
+              </div>
+
+              <div class="field numbered">
+                <label class="label">Design: Is anything other than the numbers of threatened species being monitored at the same time that could explain changes in abundance (e.g. prevalence of a threat, fire, breeding success, etc?)</label>
+                <div class="control indent">
+                  <div class="subfield">
+                    <label>a.</label>
+                    <div class="horizontal-radio-list">
+                      <label><input class="radio" type="radio" name="design_other_factors" value="yes" v-model="formData.design_other_factors"> Yes</label>
+                      <label><input class="radio" type="radio" name="design_other_factors" value="no" v-model="formData.design_other_factors"> No</label>
+                    </div>
+                  </div>
+                  <div class="subfield">
+                    <label>b. Please expand:</label>
+                    <input class="input" type="text" placeholder="Enter your answer" v-model="formData.design_other_factors_comments">
+                  </div>
+                </div>
+              </div>
+
+              <div class="field numbered">
+                <label class="label">Co-benefits: Is the monitoring program for this species also collecting trend information on other threatened species?</label>
+                <div class="control indent">
+                  <div class="subfield">
+                    <label>a.</label>
+                    <div class="horizontal-radio-list">
+                      <label><input class="radio" type="radio" name="co_benefits_other_species" value="yes" v-model="formData.co_benefits_other_species"> Yes</label>
+                      <label><input class="radio" type="radio" name="co_benefits_other_species" value="no" v-model="formData.co_benefits_other_species"> No</label>
+                    </div>
+                  </div>
+                  <div class="subfield">
+                    <label>b. Please expand:</label>
+                    <input class="input" type="text" placeholder="Enter your answer" v-model="formData.co_benefits_other_species_comments">
+                  </div>
+                </div>
+              </div>
+            </fieldset>
+
           </div>
         </div>
       </div>
@@ -537,108 +726,11 @@
 
 <script>
 import * as api from '../api.js'
-import { handleLinkClick, formatDateTime } from '../util.js'
+import { handleLinkClick, formatDateTime, throttle } from '../util.js'
 import { generateCitation } from '../util.js'
 import { plotConsistency } from '../plotConsistency.js'
 import { plotTrend, generateTrendPlotData } from '../plotTrend.js'
 import HeatMap from './HeatMap.vue'
-
-let options = {
-  standardisationOfMethodEffort: [
-    {
-      id: 6,
-      description: "Pre-defined sites/plots surveyed repeatedly through time using a single standardised method and effort across the whole monitoring program"
-    },
-    {
-      id: 5,
-      description: "Pre-defined sites/plots surveyed repeatedly through time with methods and effort standardised within site units, but not across program - i.e. different sites surveyed have different survey effort/methods"
-    },
-    {
-      id: 4,
-      description: "Pre-defined sites/plots surveyed repeatedly through time with varying methods and effort"
-    },
-    {
-      id: 3,
-      description: "Data collection using standardised methods and effort but surveys not site-based (i.e. surveys spatially ad-hoc). Post-hoc site grouping possible - e.g. a lot of fixed area/time searches conducted within a region but not at pre-defined sites"
-    },
-    {
-      id: 2,
-      description: "Data collection using standardised methods and effort but surveys not site-based (i.e. surveys spatially ad-hoc). Post-hoc site grouping not possible"
-    },
-    {
-      id: 1,
-      description: "Unstandardised methods/effort, surveys not site-based"
-    }
-  ],
-  objectiveOfMonitoring: [
-    {
-      id: 4,
-      description: "Monitoring for targeted conservation management"
-    },
-    {
-      id: 3,
-      description: "Monitoring for general conservation management – ‘surveillance’ monitoring"
-    },
-    {
-      id: 2,
-      description: "Baseline monitoring"
-    },
-    {
-      id: 1,
-      description: "Monitoring for community engagement"
-    },
-    {
-      id: 'NA',
-      description: "Not defined"
-    }
-  ],
-  consistencyOfMonitoring: [
-    {
-      id: 4,
-      description: "Balanced; all (or virtually all) sites surveyed in each year sampled (no, or virtually no, site turnover)"
-    },
-    {
-      id: 3,
-      description: "Imbalanced (low turnover); sites surveyed consistently through time as established, but new sites are added to program with time."
-    },
-    {
-      id: 2,
-      description: "Imbalanced (high turnover); new sites are surveyed with time, but monitoring of older sites is often not always maintained."
-    },
-    {
-      id: 1,
-      description: "Highly Imbalanced (very high turnover); different sites surveyed in different sampling periods. Sites are generally not surveyed consistently through time (highly biased)"
-    }
-  ],
-  monitoringFrequencyAndTiming: [
-    {
-      id: 3,
-      description: "Monitoring frequency and timing appropriate for taxon"
-    },
-    {
-      id: 2,
-      description: "Monitoring frequency or timing inappropriate for taxon for majority of data."
-    },
-    {
-      id: 1,
-      description: "Monitoring ad-hoc; no pattern to surveys for majority of data (incidental)"
-    }
-  ],
-  absencesRecorded: [
-    {
-      id: "yes",
-      description: "Yes"
-    },
-    {
-      id: "no",
-      description: "No"
-    },
-    {
-      id: "partially",
-      description: "Partially (for some of the survey period)"
-    }
-  ]
-}
 
 export default {
   name: 'CustodianFeedbackForm',
@@ -655,11 +747,17 @@ export default {
       formData: {
 
       },
-      options
+      fieldErrors: {},
+      options: null,
+      formDefinition: null
     }
   },
   created() {
-    this.refresh()
+    api.custodianFeedbackFormDefinition().then(formDefinition => {
+      this.formDefinition
+      this.options = formDefinition.options
+      this.refresh()
+    })
     api.isLoggedIn().then(isLoggedIn => {
       if(!isLoggedIn) {
         this.$router.replace({ path: '/login', query: { after_login: this.$route.path } })
@@ -671,6 +769,16 @@ export default {
     }).catch(error => {
       this.error = error
     })
+  },
+  mounted() {
+    this.disposables = []
+    this.setupSideMenu()
+
+  },
+  unmounted() {
+    for(let f of this.disposables) {
+      f()
+    }
   },
   computed: {
     showConsent() {
@@ -687,21 +795,20 @@ export default {
       return this.form.feedback_type.code !== 'admin'
     },
     formJSON() {
-      return JSON.stringify(this.formData, null, 4);
+      return JSON.stringify(this.formData, null, 4)
     },
     saveButtonLabel() {
       if(this.saveStatus == 'saving') {
         return 'Saving…'
       } else {
-        return 'Save Draft'
+        return 'Save Draft and Close'
       }
     },
     canSaveDraft() {
       return this.saveStatus != 'saving'
     },
     canSubmit() {
-      // TODO
-      return false
+      return this.saveStatus != 'saving'
     },
     consistencyPlotAvailable() {
       return !!this.form?.stats?.monitoring_consistency
@@ -711,6 +818,10 @@ export default {
     },
     trendPlotAvailable() {
       return !!this.form?.stats?.trend
+    },
+    disableMonitoringProgramFields() {
+      let x = this.formData.monitoring_program_information_provided
+      return !(x == "provided" || x == "provided_copy")
     }
   },
   watch: {
@@ -719,7 +830,7 @@ export default {
       if(isAvailable && data) {
         setTimeout(() => {
           plotConsistency(data, this.$refs.consistencyPlot)
-        })
+        }, 1000)
       }
     },
     trendPlotAvailable(isAvailable) {
@@ -738,7 +849,7 @@ export default {
         this.formData = { ... form.answers } // TODO: use a better name than 'formData'
         this.status = 'loaded'
       }).catch((error) => {
-        console.log(error)
+        console.log(error.json)
         this.status = 'error'
       })
     },
@@ -746,14 +857,22 @@ export default {
     formatDecimal(x) {
       return x.toLocaleString(undefined, { maximumFractionDigits: 2 })
     },
-    save(close) {
+    save(close, submit) {
       let json = { ... this.formData }
+      if(submit) {
+        json.action = 'submit'
+      }
       this.saveStatus = 'saving'
       setTimeout(() => {
         api.updateCustodianForm(this.formId, json).then(() => {
           this.saveStatus = 'saved'
         }).catch((error) => {
-          console.log(error)
+          if(error.json) {
+            this.fieldErrors = error.json
+            setTimeout(() => {
+              document.querySelector(".field .help.is-danger")?.closest(".field")?.scrollIntoView()
+            })
+          }
           this.saveStatus = 'error'
         }).then(() => {
           if(this.saveStatus == 'saved' && close) {
@@ -764,6 +883,42 @@ export default {
     },
     saveAndClose() {
       this.save(true)
+    },
+    submitAndClose() {
+      this.save(true, true)
+    },
+    setupSideMenu() {
+      // TODO: Clean up on unmount
+      let menuDom = this.$refs.sideMenu
+
+      function updateMenu() {
+        let sections = Array.from(menuDom.querySelectorAll("a"))
+          .map(a => ({
+            link: a,
+            target: document.querySelector(a.getAttribute("href"))
+          }))
+          .filter(s => s.target)
+
+        let currentSection = sections[0]
+
+        // Current section should be the have the highest negative top value
+        for(let section of sections.slice(1)) {
+          if(section.target.getBoundingClientRect().top > window.innerHeight / 2) {
+            break
+          }
+          currentSection = section
+        }
+
+        console.log(currentSection)
+
+        for(let section of sections) {
+          section.link.classList.toggle('current', section === currentSection)
+        }
+      }
+
+      let handler = throttle(updateMenu, 250)
+      document.addEventListener("scroll", handler)
+      this.disposables.push(() => document.removeEventListener("scroll", handler))
     }
   }
 }
@@ -784,6 +939,11 @@ export default {
     color: red;
   }
 
+  .sticky-top {
+    position: sticky;
+    top: 0;
+  }
+
   aside.menu {
     position: sticky;
     display: inline-block;
@@ -796,10 +956,18 @@ export default {
     padding: 30px;
   }
 
+  .menu-list a.current {
+    font-weight: bold;
+  }
+
   .radio-list label.radio {
     display: block;
     margin-left: 0;
     margin-bottom: 0.5em;
+  }
+
+  .horizontal-radio-list label {
+    margin-right: 1em;
   }
 
   .field {
@@ -824,5 +992,22 @@ export default {
   /* Grey background for table headers */
   table.table thead tr {
      background: #eee;
+  }
+
+  div.subfield {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 0.5em;
+  }
+
+  div.subfield > *:first-child {
+    flex-grow: 1;
+    flex-shrink: 0;
+    flex-basis: 0;
+  }
+  div.subfield > *:nth-child(2) {
+    flex-grow: 3;
+    flex-shrink: 1;
+    flex-basis: 0;
   }
 </style>

@@ -308,6 +308,18 @@ export function updateCustodianForm(id, data) {
   return put('/custodian_feedback/forms/' + id, data)
 }
 
+export function custodianFeedbackFormDefinition() {
+  return get('/custodian_feedback/form_definition')
+}
+
+export function custodianFeedbackConsent() {
+  return get('/custodian_feedback/consent')
+}
+
+export function updateCustodianFeedbackConsent(data) {
+  return put('/custodian_feedback/consent', data)
+}
+
 export function upload(file, progressCallback) {
   // Flask seems to need files to be uploaded as multipart/form-data for some reason..
   var data = new FormData()

@@ -1,6 +1,7 @@
 from flask import Blueprint
 from flask import Blueprint, jsonify, request, send_file, session, Response
-from tsx.api.util import db_session, get_user, get_roles
+from tsx.api.util import db_session, get_user, get_roles, jsonify_rows
+from tsx.util import Bunch
 from tsx.api.validation import *
 from tsx.api.permissions import permitted
 from sqlalchemy import text
@@ -8,6 +9,7 @@ from tsx.api import subset
 import json
 import pandas as pd
 import math
+import dataclasses
 
 bp = Blueprint('custodian_feedback', __name__)
 
@@ -134,40 +136,311 @@ def taxon_dataset(data_id):
 val_yn = validate_one_of('yes', 'no')
 val_ynu = validate_one_of('yes', 'no', 'unsure')
 
+
+field_options = {
+  "standardisation_of_method_effort": [
+	{
+	  "id": 6,
+	  "description": "Pre-defined sites/plots surveyed repeatedly through time using a single standardised method and effort across the whole monitoring program"
+	},
+	{
+	  "id": 5,
+	  "description": "Pre-defined sites/plots surveyed repeatedly through time with methods and effort standardised within site units, but not across program - i.e. different sites surveyed have different survey effort/methods"
+	},
+	{
+	  "id": 4,
+	  "description": "Pre-defined sites/plots surveyed repeatedly through time with varying methods and effort"
+	},
+	{
+	  "id": 3,
+	  "description": "Data collection using standardised methods and effort but surveys not site-based (i.e. surveys spatially ad-hoc). Post-hoc site grouping possible - e.g. a lot of fixed area/time searches conducted within a region but not at pre-defined sites"
+	},
+	{
+	  "id": 2,
+	  "description": "Data collection using standardised methods and effort but surveys not site-based (i.e. surveys spatially ad-hoc). Post-hoc site grouping not possible"
+	},
+	{
+	  "id": 1,
+	  "description": "Unstandardised methods/effort, surveys not site-based"
+	}
+  ],
+  "objective_of_monitoring": [
+	{
+	  "id": 4,
+	  "description": "Monitoring for targeted conservation management"
+	},
+	{
+	  "id": 3,
+	  "description": "Monitoring for general conservation management – ‘surveillance’ monitoring"
+	},
+	{
+	  "id": 2,
+	  "description": "Baseline monitoring"
+	},
+	{
+	  "id": 1,
+	  "description": "Monitoring for community engagement"
+	},
+	{
+	  "id": "NA",
+	  "description": "Not defined"
+	}
+  ],
+  "consistency_of_monitoring": [
+	{
+	  "id": 4,
+	  "description": "Balanced; all (or virtually all) sites surveyed in each year sampled (no, or virtually no, site turnover)"
+	},
+	{
+	  "id": 3,
+	  "description": "Imbalanced (low turnover); sites surveyed consistently through time as established, but new sites are added to program with time."
+	},
+	{
+	  "id": 2,
+	  "description": "Imbalanced (high turnover); new sites are surveyed with time, but monitoring of older sites is often not always maintained."
+	},
+	{
+	  "id": 1,
+	  "description": "Highly Imbalanced (very high turnover); different sites surveyed in different sampling periods. Sites are generally not surveyed consistently through time (highly biased)"
+	}
+  ],
+  "monitoring_frequency_and_timing": [
+	{
+	  "id": 3,
+	  "description": "Monitoring frequency and timing appropriate for taxon"
+	},
+	{
+	  "id": 2,
+	  "description": "Monitoring frequency or timing inappropriate for taxon for majority of data."
+	},
+	{
+	  "id": 1,
+	  "description": "Monitoring ad-hoc; no pattern to surveys for majority of data (incidental)"
+	}
+  ],
+  "absences_recorded": [
+	{
+	  "id": "yes",
+	  "description": "Yes"
+	},
+	{
+	  "id": "no",
+	  "description": "No"
+	},
+	{
+	  "id": "partially",
+	  "description": "Partially (for some of the survey period)"
+	}
+  ],
+  "monitoring_program_information_provided": [
+	{
+		"id": "provided",
+		"description": "I have provided answers to questions 17 to 32"
+	},
+	{
+		"id": "provided_copy",
+		"description": "I have already provided answers to questions 17 to 32 in a separate feedback form. Please copy them across."
+	},
+	{
+		"id": "please_contact",
+		"description": "I prefer to be contacted by phone or video call to answer questions 17 to 32"
+	},
+	{
+		"id": "not_provided",
+		"description": "I will not be providing answers to questions 17 to 32"
+	}
+  ],
+  "yes_no": [
+	{
+		"id": "yes",
+		"description": "Yes"
+	},
+	{
+		"id": "no",
+		"description": "No"
+	}
+  ],
+  "yes_no_unsure": [
+	{
+		"id": "yes",
+		"description": "Yes"
+	},
+	{
+		"id": "no",
+		"description": "No"
+	},
+	{
+		"id": "unsure",
+		"description": "Unsure"
+	}
+  ]
+}
+
+def val_required_integrated_only(value, field, context):
+	if context.submitting and context.feedback_type == 'integrated':
+		return validate_required(value, field, context)
+
+
 form_fields = [
 	Field(
-		name='consent_given',
-		title='Consent given',
-		type='boolean',
-		validators=[]),
-	Field(
-		name='consent_name',
-		title='Name',
-		validators=[]),
-	Field(
 		name='citation_ok',
-		title='Citation OK',
-		validators=[val_yn]),
+		validators=[val_required_integrated_only, val_yn]),
+	Field(
+		name='citation_suggestion',
+		validators=[]),
 	Field(
 		name='designed_for_trends',
-		title='Designed for trends',
-		validators=[val_ynu]),
+		validators=[val_required_integrated_only, val_ynu]),
 	Field(
-		name='designed_for_trends_comments',
-		title='Designed for trends comments',
-		validators=[]),
+		name='designed_for_trends_comments'),
 	Field(name='analysed_for_trends',
-		title='Designed for trends',
-		validators=[val_yn]),
+		validators=[val_required_integrated_only, val_yn]),
 	Field(
-		name='analysed_for_trends_comments',
-		title='Designed for trends comments',
-		validators=[]),
+		name='analysed_for_trends_comments'),
 	Field(
 		name='estimated_population_baseline_percentage',
-		title='TODO',
-		validators=[])
+		type='int',
+		validators=[val_required_integrated_only, validate_integer(0,100)]),
+	Field(
+		name='summary_ok',
+		validators=[val_required_integrated_only, val_yn]),
+	Field(
+		name='summary_comments'),
+	Field(
+		name='processing_ok',
+		validators=[val_required_integrated_only, val_yn]),
+	Field(
+		name='processing_comments'),
+	Field(
+		name='statistics_ok',
+		validators=[val_required_integrated_only, val_yn]),
+	Field(
+		name='statistics_comments'),
+	Field(
+		name='trend_ok',
+		validators=[val_required_integrated_only, val_ynu]),
+	Field(
+		name='trend_comments'),
+	Field(
+		name='trend_ref_year',
+		type='int',
+		validators=[val_required_integrated_only, validate_integer(1800,2100)]),
+	Field(
+		name='trend_end_year',
+		type='int',
+		validators=[val_required_integrated_only, validate_integer(1800,2100)]),
+	Field(
+		name='standardisation_of_method_effort',
+		validators=[val_required_integrated_only]),
+	Field(
+		name='objective_of_monitoring',
+		validators=[val_required_integrated_only]),
+	Field(
+		name='consistency_of_monitoring',
+		validators=[val_required_integrated_only]),
+	Field(
+		name='monitoring_frequency_and_timing',
+		validators=[val_required_integrated_only]),
+	Field(
+		name='absences_recorded',
+		validators=[val_required_integrated_only]),
+	Field(
+		name='data_suitability_comments'),
+
+	Field(
+		name='monitoring_program_information_provided'),
+	Field(
+		name='effort_labour_paid_days_per_year',
+		type='int'),
+	Field(
+		name='effort_labour_volunteer_days_per_year',
+		type='int'),
+	Field(
+		name='effort_overheads_paid_days_per_year',
+		type='int'),
+	Field(
+		name='effort_overheads_volunteer_days_per_year',
+		type='int'),
+	Field(
+		name='effort_paid_staff_count',
+		type='int'),
+	Field(
+		name='effort_volunteer_count',
+		type='int'),
+	Field(
+		name='funding_cost_per_survey_aud',
+		type='decimal'),
+	Field(
+		name='funding_total_investment_aud',
+		type='decimal'),
+	Field(
+		name='funding_source_government_grants',
+		validators=[val_yn]),
+	Field(
+		name='funding_source_research_funds',
+		validators=[val_yn]),
+	Field(
+		name='funding_source_private_donations',
+		validators=[val_yn]),
+	Field(
+		name='funding_source_other'),
+	Field(
+		name='funding_source_count',
+		type='int'),
+	Field(
+		name='leadership'),
+	Field(
+		name='impact_used_for_management',
+		validators=[val_yn]),
+	Field(
+		name='impact_used_for_management_comments'),
+	Field(
+		name='impact_organisation_responsible'),
+	Field(
+		name='impact_management_changes'),
+	Field(
+		name='data_availability'),
+	Field(
+		name='succession_commitment',
+		validators=[val_yn]),
+	Field(
+		name='succession_commitment_comments'),
+	Field(
+		name='succession_plan',
+		validators=[val_yn]),
+	Field(
+		name='succession_plan_comments'),
+	Field(
+		name='design_statistical_power',
+		validators=[val_yn]),
+	Field(
+		name='design_statistical_power_comments'),
+	Field(
+		name='design_other_factors',
+		validators=[val_yn]),
+	Field(
+		name='design_other_factors_comments'),
+	Field(
+		name='co_benefits_other_species',
+		validators=[val_yn]),
+	Field(
+		name='co_benefits_other_species_comments')
 ]
+
+def field_json(field):
+	return {
+		"name": field.name,
+		"title": field.title,
+		"type": field.type
+	}
+
+@bp.route('/custodian_feedback/form_definition', methods = ['GET'])
+def form_definition():
+	json = {
+		"options": field_options,
+		"fields": [field_json(field) for field in form_fields]
+	}
+	return jsonify(json)
 
 def sql_select_clause(identifier, type):
 	if type == 'boolean':
@@ -243,6 +516,48 @@ def db_insert(table, row_dict):
 
 	db_session.execute(text(sql), row_dict)
 
+def parse_field(raw_value, field):
+	if raw_value is None:
+		return None
+	if field.type == 'any':
+		return raw_value
+	elif field.type == 'str':
+		return str(raw_value)
+	elif field.type == 'int':
+		try:
+			return int(raw_value)
+		except ValueError:
+			return None
+	elif field.type == 'options':
+		return raw_value
+	else:
+		print("Unknown field type: %s" % field)
+		return raw_value
+
+def parse_fields(raw_json, fields):
+	result = {}
+
+	for field in fields:
+		if field.name in raw_json:
+			result[field.name] = parse_field(raw_json[field.name], field)
+
+	return result
+
+def feedback_type_code(form_id):
+	rows = db_session.execute(text("""
+		SELECT feedback_type.code
+		FROM custodian_feedback, feedback_type
+		WHERE custodian_feedback.feedback_type_id = feedback_type.id
+		AND custodian_feedback.id = :form_id
+	"""), {
+		'form_id': form_id
+	}).fetchall()
+
+	if len(rows):
+		[(code,)] = rows
+		return code
+	else:
+		return None
 
 @bp.route('/custodian_feedback/forms/<form_id>', methods = ['PUT'])
 def update_form(form_id):
@@ -251,22 +566,35 @@ def update_form(form_id):
 	if not permitted(user, 'update', 'custodian_feedback_form', form_id):
 		return "Not authorized", 401
 
+	context = Bunch()
+	context.submitting = (request.json.get('action') == 'submit')
+	context.feedback_type = feedback_type_code(form_id)
+
+	errors = validate_fields(form_fields, request.json, context)
+	if len(errors):
+		return jsonify(errors), 400
+
+	field_data = parse_fields(request.json, form_fields)
+
 	db_session.execute(text("""
 		DELETE FROM custodian_feedback_answers WHERE custodian_feedback_id = :form_id
 		"""), { 'form_id': form_id })
 
-
 	db_insert('custodian_feedback_answers', {
 		'custodian_feedback_id': form_id,
-		**request.json
+		**field_data
 	})
+
+	if context.submitting:
+		new_status_code = 'complete'
+	else:
+		new_status_code = 'draft'
 
 	db_session.execute(text("""
 		UPDATE custodian_feedback
-		SET feedback_status_id = (SELECT id FROM feedback_status WHERE code = 'draft')
+		SET feedback_status_id = (SELECT id FROM feedback_status WHERE code = :new_status_code)
 		WHERE id = :form_id
-		AND  feedback_status_id = (SELECT id FROM feedback_status WHERE code = 'incomplete')
-	"""), { 'form_id': form_id })
+	"""), { 'form_id': form_id, 'new_status_code': new_status_code })
 
 	db_session.commit()
 
@@ -440,3 +768,53 @@ def update_dataset_stats(source_id, taxon_id, data_import_id):
 		'stats_json': json.dumps(stats)
 	})
 	db_session.commit()
+
+
+@bp.route('/custodian_feedback/consent', methods = ['GET'])
+def get_consent():
+	user = get_user()
+
+	if not user:
+		return "Not authorized", 401
+
+	result = db_session.execute(text("""
+		SELECT consent_given, consent_name
+		FROM custodian_feedback_consent
+		WHERE user_id = :user_id
+	"""), {
+		'user_id': user.id
+	}).fetchall()
+
+	if len(result):
+		result = dict(result[0]._mapping)
+		result['consent_given'] = bool(result['consent_given'])
+		return jsonify(result)
+	else:
+		return jsonify({})
+
+@bp.route('/custodian_feedback/consent', methods = ['PUT'])
+def update_consent():
+	user = get_user()
+
+	if not user:
+		return "Not authorized", 401
+
+	consent_given = request.json['consent_given']
+	consent_name = request.json['consent_name']
+
+	db_session.execute(text("""
+		DELETE FROM custodian_feedback_consent WHERE user_id = :user_id
+		"""), {
+		'user_id': user.id
+	})
+	db_session.execute(text("""
+		INSERT INTO custodian_feedback_consent (user_id, consent_given, consent_name)
+		VALUES (:user_id, :consent_given, :consent_name)
+		"""), {
+		'user_id': user.id,
+		'consent_given': consent_given,
+		'consent_name': consent_name
+	})
+	db_session.commit()
+
+	return "OK", 200

@@ -2,7 +2,7 @@
   <div class="section">
     <div class="container feedback-home">
       <div class="columns">
-        <div class="column is-8 is-offset-2">
+        <div class="column is-12 is-offset-0">
           <user-nav></user-nav>
           <h2 class="title">Custodian Feedback Forms</h2>
 

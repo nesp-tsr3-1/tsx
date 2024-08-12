@@ -253,3 +253,8 @@ def run_parallel(target, tasks, n_workers = default_num_workers, use_processes =
     # Wait for workers to terminate
     for w in workers:
         w.join()
+
+# https://code.activestate.com/recipes/52308-the-simple-but-handy-collector-of-a-bunch-of-named
+class Bunch:
+    def __init__(self, **kwds):
+        self.__dict__.update(kwds)

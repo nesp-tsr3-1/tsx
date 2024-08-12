@@ -332,3 +332,23 @@ export function handleLinkClick(evt, url, router) {
       router.push(url)
     }
 }
+
+export function throttle(fn, delay) {
+  let state = 0
+  function throttleWrapper() {
+    if(state == 0) {
+      fn.apply(this, [...arguments])
+      state = 1
+      setTimeout(() => {
+        let oldState = state
+        state = 0
+        if(oldState == 2) {
+          throttleWrapper.apply(this, [...arguments])
+        }
+      }, delay)
+    } else {
+      state = 2
+    }
+  }
+  return throttleWrapper
+}
