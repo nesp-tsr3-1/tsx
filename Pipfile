@@ -24,6 +24,8 @@ passlib = "*"
 argon2-cffi = "*"
 watchdog = "*"
 pytest = "*"
+fpdf2 = "*"
+matplotlib = "*"
 
 [dev-packages]
 

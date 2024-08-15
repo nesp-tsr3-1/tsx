@@ -59,7 +59,7 @@
                   <td>{{form.feedback_status.description}}</td>
                   <td>{{form.feedback_type.description}}</td>
                   <td>
-                    <div class='button is-small' @click="downloadForm(form)">Download (pdf)</div>
+                    <a class="button is-small" download v-if="downloadURL(form)" :href="downloadURL(form)">Download (pdf)</a>
                   </td>
                 </tr>
               </tbody>
@@ -228,6 +228,9 @@ export default {
     promptConsent() {
       this.showConsentPromptIfNecessary = true
       document.getElementById("consent_section")?.scrollIntoView(true)
+    },
+    downloadURL(form) {
+      return api.custodianFeedbackFormPDFURL(form.id)
     }
   }
 }
