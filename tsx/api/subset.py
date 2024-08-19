@@ -449,12 +449,12 @@ def query_subset_time_series(subset_params=None, random_sample_size=None):
 
     if ('source_id' in params) and permitted(get_user(), 'import_data', 'source', params['source_id']):
         coordinates_sql = """
-            t2.surveys_centroid_lat AS SurveysCentroidLatitude,
-            t2.surveys_centroid_lon AS SurveysCentroidLongitude"""
+            AVG(t2.surveys_centroid_lat) AS SurveysCentroidLatitude,
+            AVG(t2.surveys_centroid_lon) AS SurveysCentroidLongitude"""
     else:
         coordinates_sql = """
-            ROUND(ST_Y(region.centroid), 7) AS RegionCentroidLatitude,
-            ROUND(ST_X(region.centroid), 7) AS RegionCentroidLongitude"""
+            ROUND(AVG(ST_Y(region.centroid)), 7) AS RegionCentroidLatitude,
+            ROUND(AVG(ST_X(region.centroid)), 7) AS RegionCentroidLongitude"""
 
     raw_data_sql = """
         SELECT
@@ -577,9 +577,7 @@ def query_subset_time_series(subset_params=None, random_sample_size=None):
             t2.source_id,
             t2.unit_id,
             t2.search_type_id,
-            t2.region_id,
-            surveys_centroid_lat,
-            surveys_centroid_lon
+            t2.region_id
         %s
         """ % (raw_data_sql, coordinates_sql, year_fields_sql, random_sample_sql)
 
