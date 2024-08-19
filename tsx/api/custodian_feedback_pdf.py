@@ -1,6 +1,6 @@
 from fpdf import FPDF
 from fpdf.fonts import FontFace
-from tsx.api.custodian_feedback_shared import get_form_json_raw, field_options
+from tsx.api.custodian_feedback_shared import get_form_json_raw, field_options, form_fields
 import json
 from datetime import datetime
 import matplotlib.pyplot as plt
@@ -66,47 +66,47 @@ class PDF(FPDF):
 		self.set_text_color("#000000")
 		self.write(text=text, h=5)
 
-	def numbered_question(self, number, text):
-		self.set_margins(15, 10)
-		self.set_font(font_name, size=10, style="B")
-		number_text = "%s." % str(number)
-		self.write(text=number_text, h=5)
-		self.set_x(22)
-		self.set_margins(22, 10)
-		self.write(text=text, h=5)
-		self.ln(h=5)
-
 	def reset_margin(self):
 		self.set_margins(15, 10)
 
-	def multiple_choice_options(self, options, selected_option=None):
-		self.set_fill_color(tsx_green)
-		self.set_draw_color("#000000")
-		for option in options:
-			self.set_y(self.get_y() + 1)
-			if option['id'] == selected_option:
-				style = "DF"
-			else:
-				style = "D"
-			self.circle(x=self.get_x()+1, y=self.get_y()+0.5, r=3.5, style=style)
-			self.set_x(self.get_x() + 6)
-			self.body(option['description'])
-			self.ln()
-		self.ln()
+def multiple_choice_options(pdf, options, selected_option=None):
+	pdf.set_fill_color(tsx_green)
+	pdf.set_draw_color("#000000")
+	for option in options:
+		pdf.set_y(pdf.get_y() + 1)
+		if option['id'] == selected_option:
+			style = "DF"
+		else:
+			style = "D"
+		pdf.circle(x=pdf.get_x()+1, y=pdf.get_y()+0.5, r=3.5, style=style)
+		pdf.set_x(pdf.get_x() + 6)
+		pdf.body(option['description'])
+		pdf.ln()
+	pdf.ln()
 
-	def text_in_box(self, text):
-		with self.local_context():
-			self.set_fill_color("#EEEEEE")
-			self.set_font(font_name, size=10)
-			self.multi_cell(
-				w=self.epw,
-				h=5,
-				text=text,
-				align='L',
-				fill=True,
-				border=1,
-				new_x="LMARGIN",
-				padding=2)
+def text_in_box(pdf, text):
+	with pdf.local_context():
+		pdf.set_fill_color("#EEEEEE")
+		pdf.set_font(font_name, size=10)
+		pdf.multi_cell(
+			w=pdf.epw,
+			h=5,
+			text=text,
+			align='L',
+			fill=True,
+			border=1,
+			new_x="LMARGIN",
+			padding=2)
+
+def numbered_question(pdf, number, text):
+	pdf.set_margins(15, 10)
+	pdf.set_font(font_name, size=10, style="B")
+	number_text = "%s." % str(number)
+	pdf.write(text=number_text, h=5)
+	pdf.set_x(22)
+	pdf.set_margins(22, 10)
+	pdf.write(text=text, h=5)
+	pdf.ln(h=5)
 
 def citation(form):
 	def fix(s):
@@ -122,6 +122,13 @@ def citation(form):
 
 	return "%s (%s). %s. %s. Aggregated for the Australian Threatened Species Index, an output of the NESP Threatened Species Recovery Hub and operated by the Terrestrial Ecosystem Research Network, The University of Queensland." % (
 		authors, year, details, provider)
+
+def avoid_break(pdf):
+	with pdf.offset_rendering() as dummy:
+		yield dummy
+	if dummy.page_break_triggered:
+		pdf.add_page()
+	yield pdf
 
 def generate_pdf(form_id):
 	form = json.loads(get_form_json_raw(form_id))
@@ -141,22 +148,22 @@ def generate_pdf(form_id):
 	pdf.body(citation(form))
 	pdf.ln()
 	pdf.ln()
-	pdf.numbered_question(1, "Do you agree with the above suggested citation for your data? If no, please indicate how to correctly cite your data.")
-	pdf.multiple_choice_options(field_options['yes_no'], form['answers'].get('citation_ok'))
+	numbered_question(pdf, 1, "Do you agree with the above suggested citation for your data? If no, please indicate how to correctly cite your data.")
+	multiple_choice_options(pdf, field_options['yes_no'], form['answers'].get('citation_ok'))
 
 	if form['answers'].get('citation_ok') == 'no':
-		pdf.text_in_box(form['answers'].get('citation_suggestion', ''))
+		text_in_box(pdf, form['answers'].get('citation_suggestion', ''))
 		pdf.ln()
 
-	pdf.numbered_question(2, "Has your monitoring program been explicitly designed to detect population trends over time? If no / unsure, please indicate the aims of your monitoring.")
-	pdf.multiple_choice_options(field_options['yes_no_unsure'], form['answers'].get('designed_for_trends'))
+	numbered_question(pdf, 2, "Has your monitoring program been explicitly designed to detect population trends over time? If no / unsure, please indicate the aims of your monitoring.")
+	multiple_choice_options(pdf, field_options['yes_no_unsure'], form['answers'].get('designed_for_trends'))
 
-	pdf.numbered_question(3, "Do you analyse your own data for trends?")
-	pdf.multiple_choice_options(field_options['yes_no'], form['answers'].get('analysed_for_trends'))
+	numbered_question(pdf, 3, "Do you analyse your own data for trends?")
+	multiple_choice_options(pdf, field_options['yes_no'], form['answers'].get('analysed_for_trends'))
 
-	pdf.numbered_question(4, "Can you estimate what percentage (%) of your species' population existed in Australia at the start of your monitoring (assuming this was 100% in 1750)? This information is to help understand population baselines and determine whether the majority of a species' decline may have occurred prior to monitoring.")
+	numbered_question(pdf, 4, "Can you estimate what percentage (%) of your species' population existed in Australia at the start of your monitoring (assuming this was 100% in 1750)? This information is to help understand population baselines and determine whether the majority of a species' decline may have occurred prior to monitoring.")
 	pdf.ln()
-	pdf.text_in_box(str(form['answers'].get('estimated_population_baseline_percentage', '')))
+	text_in_box(pdf, str(form['answers'].get('estimated_population_baseline_percentage', '')))
 	pdf.ln()
 
 	pdf.add_page()
@@ -216,6 +223,7 @@ def generate_pdf(form_id):
 
 	pdf.set_fill_color(white)
 	headings_style = FontFace(emphasis="BOLD", fill_color='#EEEEEE')
+	bold_style = FontFace(emphasis="BOLD")
 	pdf.set_font(font_name, size=8)
 	with pdf.table(
 		line_height=4,
@@ -262,17 +270,21 @@ def generate_pdf(form_id):
 	pdf.ln()
 	pdf.ln()
 
-	pdf.numbered_question(5, "Are the above values representative of your datasets?")
-	pdf.multiple_choice_options(field_options['yes_no'], form['answers'].get('summary_ok'))
+	numbered_question(pdf, 5, "Are the above values representative of your datasets?")
+	multiple_choice_options(pdf, field_options['yes_no'], form['answers'].get('summary_ok'))
 	if form['answers'].get('summary_ok') == 'no':
-		pdf.text_in_box(str(form['answers'].get('summary_comments', '')))
+		text_in_box(pdf, str(form['answers'].get('summary_comments', '')))
 		pdf.ln()
 
-	pdf.numbered_question(6, "Do you agree with how your data were handled? If no, please suggest an alternative method of aggregation.")
-	pdf.multiple_choice_options(field_options['yes_no'], form['answers'].get('processing_ok'))
-	if form['answers'].get('processing_ok') == 'no':
-		pdf.text_in_box(str(form['answers'].get('processing_comments', '')))
-		pdf.ln()
+
+	# Proof of concept of code to avoid page-breaks within a section
+	# (pdf.unbreakable() doesn't work with get_y())
+	for doc in avoid_break(pdf):
+		numbered_question(doc, 6, "Do you agree with how your data were handled? If no, please suggest an alternative method of aggregation.")
+		multiple_choice_options(doc, field_options['yes_no'], form['answers'].get('processing_ok'))
+		if form['answers'].get('processing_ok') == 'no':
+			text_in_box(doc, str(form['answers'].get('processing_comments', '')))
+			doc.ln()
 
 	# ------- Statistics and trend estimate --------
 
@@ -340,10 +352,10 @@ def generate_pdf(form_id):
 	pdf.ln()
 	pdf.ln()
 
-	pdf.numbered_question(7, "Do the above statistics appear representative of your dataset?")
-	pdf.multiple_choice_options(field_options['yes_no'], form['answers'].get('statistics_ok'))
+	numbered_question(pdf, 7, "Do the above statistics appear representative of your dataset?")
+	multiple_choice_options(pdf, field_options['yes_no'], form['answers'].get('statistics_ok'))
 	if form['answers'].get('statistics_ok') == 'no':
-		pdf.text_in_box(str(form['answers'].get('statistics_comments', '')))
+		text_in_box(pdf, str(form['answers'].get('statistics_comments', '')))
 		pdf.ln()
 
 	pdf.ln()
@@ -362,41 +374,207 @@ def generate_pdf(form_id):
 	pdf.ln()
 	pdf.ln()
 
-	pdf.numbered_question(8, "Do you agree with the trend estimate? If no or unsure, please elaborate (include detail on trends for specific sites where relevant).")
-	pdf.multiple_choice_options(field_options['yes_no_unsure'], form['answers'].get('trend_ok'))
+	numbered_question(pdf, 8, "Do you agree with the trend estimate? If no or unsure, please elaborate (include detail on trends for specific sites where relevant).")
+	multiple_choice_options(pdf, field_options['yes_no_unsure'], form['answers'].get('trend_ok'))
 	if form['answers'].get('trend_ok') == 'no' or form['answers'].get('trend_ok') == 'unsure':
-		pdf.text_in_box(str(form['answers'].get('trend_comments', '')))
+		text_in_box(pdf, str(form['answers'].get('trend_comments', '')))
 		pdf.ln()
 
-	pdf.numbered_question(9, "Looking at the trend for your data, what should be the reference year at which the index should start?")
+	numbered_question(pdf, 9, "Looking at the trend for your data, what should be the reference year at which the index should start?")
 	pdf.ln()
-	pdf.text_in_box(str(form['answers'].get('trend_ref_year', '')))
+	text_in_box(pdf, str(form['answers'].get('trend_ref_year', '')))
 	pdf.ln()
 
-	pdf.numbered_question(10, "Looking at the trend for your data, what should be the year at which the index should end?")
+	numbered_question(pdf, 10, "Looking at the trend for your data, what should be the year at which the index should end?")
 	pdf.ln()
-	pdf.text_in_box(str(form['answers'].get('trend_end_year', '')))
+	text_in_box(pdf, str(form['answers'].get('trend_end_year', '')))
 	pdf.ln()
 
 	pdf.add_page()
 
+	# ------------ Data Suitability ------------
 	pdf.ln()
 	pdf.h2("Data Suitablility")
-	pdf.body("TODO")
+
+
+	pdf.set_fill_color(white)
+	pdf.set_font(font_name, size=8)
+
+	with pdf.table(
+		line_height=4,
+		padding=2,
+		text_align="LEFT",
+		headings_style=headings_style,
+		col_widths=(3, 3, 1, 1, 4)
+		) as table:
+		headings = table.row()
+		headings.cell('Suitablility criteria')
+		headings.cell('Description')
+		headings.cell('Your assessment', colspan=3)
+
+		form_fields_by_name = { f.name: f for f in form_fields }
+		selected_style = FontFace(fill_color=tsx_green)
+
+		for number, field_name, title, description in [
+			(11, 'standardisation_of_method_effort', 'Standardisation of method effort', 'This data suitability indicator rates the degree of standardisation of monitoring method/effort and is assessed to the data source level by enquiring with the data custodian and examining data.'),
+			(12, 'objective_of_monitoring', 'Objective of monitoring', 'This field indicates the objective of the monitoring.'),
+			(13, 'consistency_of_monitoring', 'Consistency of monitoring', 'This data suitability indicator rates the degree of consistency by which the same sites were repeatedly monitored over time.'),
+			(14, 'monitoring_frequency_and_timing', 'Monitoring frequency and timing', 'This data suitability indicator rates whether the taxon was monitored with an appropriate frequency and during an appropriate season/timing.'),
+			(15, 'absences_recorded', 'Were absences recorded systematically?', 'Absences are non-detections of taxa i.e. where 0 counts of a species are recorded.')]:
+
+			field = form_fields_by_name[field_name]
+			options = field_options[field_name]
+
+			for index, option in enumerate(options):
+				row = table.row()
+				if index == 0:
+					row.cell("%d. %s" % (number, title), rowspan = len(options), v_align='T', style=bold_style)
+					row.cell(description, rowspan = len(options), v_align='T')
+
+				selected = str(option['id']) == form['answers'].get(field_name)
+				if selected:
+					row.cell("", style=selected_style)
+				else:
+					row.cell("")
+
+				# row.cell("%s" % selected)
+				row.cell(str(option['id']))
+				row.cell(str(option['description']).encode('ascii', 'ignore').decode('ascii'))
+
+	pdf.ln()
+
+	pdf.set_font(font_name, size=10, style="B")
+	pdf.write(text="Please add any additional comments on data suitability and the criteria below.")
+	pdf.ln()
+	pdf.ln()
+	text_in_box(pdf, str(form['answers'].get('data_suitability_comments', '')))
 	pdf.ln()
 
 	pdf.ln()
 	pdf.h2("Monitoring program funding, logistics and governance")
-	pdf.body("TODO")
 	pdf.ln()
 
+	numbered_question(pdf, 16, "Please indicate if you would prefer to provide this information via a phone or video call with our project team:")
+	multiple_choice_options(pdf, field_options['monitoring_program_information_provided'], form['answers'].get('monitoring_program_information_provided'))
+
+
+	if(form['answers'].get('monitoring_program_information_provided') in ['provided', 'provided_copy']):
+		numbered_question(pdf, 17, "Effort: How much time on average per year was spent on project labour, i.e. data collection in the field?")
+		answer_table(pdf, form, [
+			('a. Days/year paid labour:', 'effort_labour_paid_days_per_year'),
+			('b. Days/year volunteered time:', 'effort_labour_volunteer_days_per_year')])
+
+		numbered_question(pdf, 18, "Effort: How much time on average per year was spent on project overheads, e.g. data collation and dataset maintenance?")
+		answer_table(pdf, form, [
+			('a. Days/year paid labour:', 'effort_overheads_paid_days_per_year'),
+			('b. Days/year volunteered time:', 'effort_overheads_volunteer_days_per_year')])
+
+		numbered_question(pdf, 19, "Effort: Approximately how many people were involved in the last bout of monitoring (including both field and office work)")
+		answer_table(pdf, form, [
+			('a. Paid staff:', 'effort_paid_staff_count'),
+			('b. Volunteers:', 'effort_volunteer_count')])
+
+		numbered_question(pdf, 20, "Funding: How much do you think in AUD$ a single survey costs (not counting in-kind support)?")
+		text_in_box(pdf, format_currency(form['answers'].get('funding_cost_per_survey_aud')))
+		pdf.ln()
+
+		numbered_question(pdf, 21, "Funding: Can you estimate in AUD$ the total investment in the dataset to date (again not counting in-kind support)?")
+		text_in_box(pdf, format_currency(form['answers'].get('funding_total_investment_aud')))
+		pdf.ln()
+
+		numbered_question(pdf, 22, "Funding: Who has been paying for the monitoring? (e.g. government grants, research funds, private donations etc. - list multiple funding sources if they have been needed over the years)")
+		answer_table(pdf, form, [
+			('a. Government grants:', 'funding_source_government_grants'),
+			('b. Research funds:', 'funding_source_research_funds'),
+			('c. Private donations:', 'funding_source_private_donations'),
+			('d. Other:', 'funding_source_other'),
+			('e. Can you estimate the total number of funding sources so far?:', 'funding_source_count')])
+
+		pdf.add_page()
+
+		numbered_question(pdf, 23, "Leadership: Who has been providing the drive to keep the monitoring going after the baseline was established?")
+		text_in_box(pdf, get_answer(form, 'leadership'))
+		pdf.ln()
+
+		numbered_question(pdf, 24, "Impact: Are data being used to directly inform management of the threatened species or measure the effectiveness of management actions?")
+		answer_table(pdf, form, [
+			('a.', 'impact_used_for_management'),
+			('b. Please expand:', 'impact_used_for_management_comments')])
+
+		numbered_question(pdf, 25, "Impact: Is your organisation responsible for managing this species in the monitored area?")
+		text_in_box(pdf, get_answer(form, 'impact_organisation_responsible'))
+		pdf.ln()
+
+		numbered_question(pdf, 26, "Impact: Can you describe any management that has changed because of the monitoring?")
+		text_in_box(pdf, get_answer(form, 'impact_management_changes'))
+		pdf.ln()
+
+		numbered_question(pdf, 27, "Data availability: Is your monitoring data readily available to the public (e.g. through reports, or on website). If not, can the public access it?")
+		text_in_box(pdf, get_answer(form, 'data_availability'))
+		pdf.ln()
+
+		numbered_question(pdf, 28, "Succession: Do you have commitments to extend the monitoring into the future?")
+		answer_table(pdf, form, [
+			('a.', 'succession_commitment'),
+			('b. Please expand:', 'succession_commitment_comments')])
+
+		numbered_question(pdf, 29, "Succession: Have you developed a plan for continual monitoring when the current organisers/you need to stop?")
+		answer_table(pdf, form, [
+			('a.', 'succession_plan'),
+			('b. Please expand:', 'succession_plan_comments')])
+
+		numbered_question(pdf, 30, "Design: Was there thought about the statistical power of the monitoring when it was started (i.e. the probability that change could be detected?)")
+		answer_table(pdf, form, [
+			('a.', 'design_statistical_power'),
+			('b. Please expand:', 'design_statistical_power_comments')])
+
+		pdf.add_page()
+
+		numbered_question(pdf, 31, "Design: Is anything other than the numbers of threatened species being monitored at the same time that could explain changes in abundance (e.g. prevalence of a threat, fire, breeding success, etc?)")
+		answer_table(pdf, form, [
+			('a.', 'design_other_factors'),
+			('b. Please expand:', 'design_other_factors_comments')])
+
+		numbered_question(pdf, 32, "Co-benefits: Is the monitoring program for this species also collecting trend information on other threatened species?")
+		answer_table(pdf, form, [
+			('a.', 'co_benefits_other_species'),
+			('b. Please expand:', 'co_benefits_other_species_comments')])
+
+
 	return bytes(pdf.output())
+
+def answer_table(pdf, form, rows):
+	pdf.set_fill_color(white) # this not always working, presumably a bug if pypdf
+	pdf.set_font(font_name, size=8)
+
+	with pdf.table(
+		line_height=4,
+		padding=2,
+		text_align="LEFT",
+		col_widths=(4,8),
+		first_row_as_headings=False
+		) as table:
+		for title, field in rows:
+			row = table.row()
+			row.cell(title)
+			row.cell(get_answer(form, field))
+
+	pdf.ln()
+	pdf.ln()
+
+def get_answer(form, field):
+	return str(form['answers'].get(field, '') or '')
 
 def format_int(x):
 	return f'{x:,}'
 
 def format_decimal(x):
 	return f'{x:,.2f}'
+
+def format_currency(x):
+	if x is None:
+		return ''
+	return "$" + f'{x:,.02f}'
 
 def consistency_plot_svg(data):
 	xys = [(year, i + 1) for i, series in enumerate(data) for year, count in series]
