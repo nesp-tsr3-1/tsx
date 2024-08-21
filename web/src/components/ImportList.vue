@@ -69,7 +69,7 @@ export default {
       importsPromise.then((imports) => {
         imports.forEach(i => { i.isApproving = false })
         this.imports = imports
-          .sort((a, b) => a.time_created.localeCompare(b.time_created))
+          .sort((a, b) => b.time_created.localeCompare(a.time_created))
         this.status = 'loaded'
       }).catch((error) => {
         console.log(error)
