@@ -100,7 +100,7 @@ field_options = {
 	  "description": "Partially (for some of the survey period)"
 	}
   ],
-  "monitoring_program_information_provided": [
+  "cost_data_provided": [
 	{
 		"id": "provided",
 		"description": "I have provided answers to questions 17 to 32"
@@ -151,50 +151,51 @@ def val_required_integrated_only(value, field, context):
 
 form_fields = [
 	Field(
-		name='citation_ok',
+		name='citation_agree',
 		validators=[val_required_integrated_only, val_yn]),
 	Field(
-		name='citation_suggestion',
+		name='citation_agree_comments',
 		validators=[]),
 	Field(
-		name='designed_for_trends',
+		name='monitoring_for_trend',
 		validators=[val_required_integrated_only, val_ynu]),
 	Field(
-		name='designed_for_trends_comments'),
-	Field(name='analysed_for_trends',
+		name='monitoring_for_trend_comments'),
+	Field(
+		name='analyse_own_trends',
 		validators=[val_required_integrated_only, val_yn]),
 	Field(
-		name='analysed_for_trends_comments'),
+		name='analyse_own_trends_comments'),
 	Field(
-		name='estimated_population_baseline_percentage',
+		name='pop_1750',
 		type='int',
 		validators=[val_required_integrated_only, validate_integer(0,100)]),
 	Field(
-		name='summary_ok',
+		name='data_summary_agree',
 		validators=[val_required_integrated_only, val_yn]),
 	Field(
-		name='summary_comments'),
+		name='data_summary_agree_comments'),
 	Field(
-		name='processing_ok',
+		name='processing_agree',
 		validators=[val_required_integrated_only, val_yn]),
 	Field(
-		name='processing_comments'),
+		name='processing_agree_comments'),
 	Field(
-		name='statistics_ok',
+		name='statistics_agree',
 		validators=[val_required_integrated_only, val_yn]),
 	Field(
-		name='statistics_comments'),
+		name='statistics_agree_comments'),
 	Field(
-		name='trend_ok',
+		name='trend_agree',
 		validators=[val_required_integrated_only, val_ynu]),
 	Field(
-		name='trend_comments'),
+		name='trend_agree_comments'),
 	Field(
-		name='trend_ref_year',
+		name='start_year',
 		type='int',
 		validators=[val_required_integrated_only, validate_integer(1800,2100)]),
 	Field(
-		name='trend_end_year',
+		name='end_year',
 		type='int',
 		validators=[val_required_integrated_only, validate_integer(1800,2100)]),
 	Field(
@@ -216,7 +217,7 @@ form_fields = [
 		name='data_suitability_comments'),
 
 	Field(
-		name='monitoring_program_information_provided'),
+		name='cost_data_provided'),
 	Field(
 		name='effort_labour_paid_days_per_year',
 		type='int'),

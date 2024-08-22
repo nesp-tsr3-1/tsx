@@ -149,21 +149,21 @@ def generate_pdf(form_id):
 	pdf.ln()
 	pdf.ln()
 	numbered_question(pdf, 1, "Do you agree with the above suggested citation for your data? If no, please indicate how to correctly cite your data.")
-	multiple_choice_options(pdf, field_options['yes_no'], form['answers'].get('citation_ok'))
+	multiple_choice_options(pdf, field_options['yes_no'], form['answers'].get('citation_agree'))
 
-	if form['answers'].get('citation_ok') == 'no':
-		text_in_box(pdf, form['answers'].get('citation_suggestion', ''))
+	if form['answers'].get('citation_agree') == 'no':
+		text_in_box(pdf, form['answers'].get('citation_agree_comments', ''))
 		pdf.ln()
 
 	numbered_question(pdf, 2, "Has your monitoring program been explicitly designed to detect population trends over time? If no / unsure, please indicate the aims of your monitoring.")
-	multiple_choice_options(pdf, field_options['yes_no_unsure'], form['answers'].get('designed_for_trends'))
+	multiple_choice_options(pdf, field_options['yes_no_unsure'], form['answers'].get('monitoring_for_trend'))
 
 	numbered_question(pdf, 3, "Do you analyse your own data for trends?")
-	multiple_choice_options(pdf, field_options['yes_no'], form['answers'].get('analysed_for_trends'))
+	multiple_choice_options(pdf, field_options['yes_no'], form['answers'].get('analyse_own_trends'))
 
 	numbered_question(pdf, 4, "Can you estimate what percentage (%) of your species' population existed in Australia at the start of your monitoring (assuming this was 100% in 1750)? This information is to help understand population baselines and determine whether the majority of a species' decline may have occurred prior to monitoring.")
 	pdf.ln()
-	text_in_box(pdf, str(form['answers'].get('estimated_population_baseline_percentage', '')))
+	text_in_box(pdf, str(form['answers'].get('pop_1750', '')))
 	pdf.ln()
 
 	pdf.add_page()
@@ -271,9 +271,9 @@ def generate_pdf(form_id):
 	pdf.ln()
 
 	numbered_question(pdf, 5, "Are the above values representative of your datasets?")
-	multiple_choice_options(pdf, field_options['yes_no'], form['answers'].get('summary_ok'))
-	if form['answers'].get('summary_ok') == 'no':
-		text_in_box(pdf, str(form['answers'].get('summary_comments', '')))
+	multiple_choice_options(pdf, field_options['yes_no'], form['answers'].get('data_summary_agree'))
+	if form['answers'].get('data_summary_agree') == 'no':
+		text_in_box(pdf, str(form['answers'].get('data_summary_agree_comments', '')))
 		pdf.ln()
 
 
@@ -281,9 +281,9 @@ def generate_pdf(form_id):
 	# (pdf.unbreakable() doesn't work with get_y())
 	for doc in avoid_break(pdf):
 		numbered_question(doc, 6, "Do you agree with how your data were handled? If no, please suggest an alternative method of aggregation.")
-		multiple_choice_options(doc, field_options['yes_no'], form['answers'].get('processing_ok'))
-		if form['answers'].get('processing_ok') == 'no':
-			text_in_box(doc, str(form['answers'].get('processing_comments', '')))
+		multiple_choice_options(doc, field_options['yes_no'], form['answers'].get('processing_agree'))
+		if form['answers'].get('processing_agree') == 'no':
+			text_in_box(doc, str(form['answers'].get('processing_agree_comments', '')))
 			doc.ln()
 
 	# ------- Statistics and trend estimate --------
@@ -353,9 +353,9 @@ def generate_pdf(form_id):
 	pdf.ln()
 
 	numbered_question(pdf, 7, "Do the above statistics appear representative of your dataset?")
-	multiple_choice_options(pdf, field_options['yes_no'], form['answers'].get('statistics_ok'))
-	if form['answers'].get('statistics_ok') == 'no':
-		text_in_box(pdf, str(form['answers'].get('statistics_comments', '')))
+	multiple_choice_options(pdf, field_options['yes_no'], form['answers'].get('statistics_agree'))
+	if form['answers'].get('statistics_agree') == 'no':
+		text_in_box(pdf, str(form['answers'].get('statistics_agree_comments', '')))
 		pdf.ln()
 
 	pdf.ln()
@@ -375,19 +375,19 @@ def generate_pdf(form_id):
 	pdf.ln()
 
 	numbered_question(pdf, 8, "Do you agree with the trend estimate? If no or unsure, please elaborate (include detail on trends for specific sites where relevant).")
-	multiple_choice_options(pdf, field_options['yes_no_unsure'], form['answers'].get('trend_ok'))
-	if form['answers'].get('trend_ok') == 'no' or form['answers'].get('trend_ok') == 'unsure':
-		text_in_box(pdf, str(form['answers'].get('trend_comments', '')))
+	multiple_choice_options(pdf, field_options['yes_no_unsure'], form['answers'].get('trend_agree'))
+	if form['answers'].get('trend_agree') == 'no' or form['answers'].get('trend_agree') == 'unsure':
+		text_in_box(pdf, str(form['answers'].get('trend_agree_comments', '')))
 		pdf.ln()
 
 	numbered_question(pdf, 9, "Looking at the trend for your data, what should be the reference year at which the index should start?")
 	pdf.ln()
-	text_in_box(pdf, str(form['answers'].get('trend_ref_year', '')))
+	text_in_box(pdf, str(form['answers'].get('start_year', '')))
 	pdf.ln()
 
 	numbered_question(pdf, 10, "Looking at the trend for your data, what should be the year at which the index should end?")
 	pdf.ln()
-	text_in_box(pdf, str(form['answers'].get('trend_end_year', '')))
+	text_in_box(pdf, str(form['answers'].get('end_year', '')))
 	pdf.ln()
 
 	pdf.add_page()
@@ -455,10 +455,10 @@ def generate_pdf(form_id):
 	pdf.ln()
 
 	numbered_question(pdf, 16, "Please indicate if you would prefer to provide this information via a phone or video call with our project team:")
-	multiple_choice_options(pdf, field_options['monitoring_program_information_provided'], form['answers'].get('monitoring_program_information_provided'))
+	multiple_choice_options(pdf, field_options['cost_data_provided'], form['answers'].get('cost_data_provided'))
 
 
-	if(form['answers'].get('monitoring_program_information_provided') in ['provided', 'provided_copy']):
+	if(form['answers'].get('cost_data_provided') in ['provided', 'provided_copy']):
 		numbered_question(pdf, 17, "Effort: How much time on average per year was spent on project labour, i.e. data collection in the field?")
 		answer_table(pdf, form, [
 			('a. Days/year paid labour:', 'effort_labour_paid_days_per_year'),
@@ -725,3 +725,9 @@ tsx_logo_svg = b"""<?xml version="1.0" encoding="utf-8"?>
 <line stroke-width="2" stroke-miterlimit="10" class="st1" x1="289.38" y1="23.35" x2="289.38" y2="114.08"/>
 </svg>
 """
+
+# For testing purposes
+if __name__ == '__main__':
+	pdf = generate_pdf(1024)
+	with open('test.pdf', 'wb') as f:
+		f.write(pdf)

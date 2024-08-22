@@ -71,12 +71,12 @@
               <div class="control indent">
                 <div class="radio-list">
                   <label class="radio" v-for="option in options.yes_no">
-                    <input type="radio" name="citation_ok" v-model="formData.citation_ok" :value="option.id" /> {{option.description}}
+                    <input type="radio" name="citation_agree" v-model="formData.citation_agree" :value="option.id" /> {{option.description}}
                   </label>
                 </div>
-                <p class="help is-danger" v-if="fieldErrors.citation_ok">{{fieldErrors.citation_ok}}</p>
-                <input class="input" type="text" placeholder="Suggested citation" v-if="formData.citation_ok == 'no'" v-model="formData.citation_suggestion">
-                <p class="help is-danger" v-if="fieldErrors.citation_suggestion">{{fieldErrors.citation_suggestion}}</p>
+                <p class="help is-danger" v-if="fieldErrors.citation_agree">{{fieldErrors.citation_agree}}</p>
+                <input class="input" type="text" placeholder="Suggested citation" v-if="formData.citation_agree == 'no'" v-model="formData.citation_agree_comments">
+                <p class="help is-danger" v-if="fieldErrors.citation_agree_comments">{{fieldErrors.citation_agree_comments}}</p>
               </div>
             </div>
 
@@ -86,12 +86,12 @@
               <div class="control indent">
                 <div class="radio-list">
                   <label class="radio" v-for="option in options.yes_no_unsure">
-                    <input type="radio" name="designed_for_trends" v-model="formData.designed_for_trends" :value="option.id" /> {{option.description}}
+                    <input type="radio" name="monitoring_for_trend" v-model="formData.monitoring_for_trend" :value="option.id" /> {{option.description}}
                   </label>
                 </div>
-                <p class="help is-danger" v-if="fieldErrors.designed_for_trends">{{fieldErrors.designed_for_trends}}</p>
-                <input class="input" type="text" placeholder="Enter your answer" v-model="formData.designed_for_trends_comments" v-if="formData.designed_for_trends === 'no' || formData.designed_for_trends === 'unsure'">
-                <p class="help is-danger" v-if="fieldErrors.designed_for_trends_comments">{{fieldErrors.designed_for_trends_comments}}</p>
+                <p class="help is-danger" v-if="fieldErrors.monitoring_for_trend">{{fieldErrors.monitoring_for_trend}}</p>
+                <input class="input" type="text" placeholder="Enter your answer" v-model="formData.monitoring_for_trend_comments" v-if="formData.monitoring_for_trend === 'no' || formData.monitoring_for_trend === 'unsure'">
+                <p class="help is-danger" v-if="fieldErrors.monitoring_for_trend_comments">{{fieldErrors.monitoring_for_trend_comments}}</p>
               </div>
             </div>
 
@@ -101,10 +101,10 @@
               <div class="control indent">
                 <div class="radio-list">
                   <label class="radio" v-for="option in options.yes_no">
-                    <input type="radio" name="analysed_for_trends" v-model="formData.analysed_for_trends" :value="option.id" /> {{option.description}}
+                    <input type="radio" name="analyse_own_trends" v-model="formData.analyse_own_trends" :value="option.id" /> {{option.description}}
                   </label>
                 </div>
-                <p class="help is-danger" v-if="fieldErrors.analysed_for_trends">{{fieldErrors.analysed_for_trends}}</p>
+                <p class="help is-danger" v-if="fieldErrors.analyse_own_trends">{{fieldErrors.analyse_own_trends}}</p>
               </div>
             </div>
 
@@ -112,8 +112,8 @@
               <label class="label required" v-if="notAdmin">Can you estimate what percentage (%) of your species’ population existed in Australia at the start of your monitoring (assuming this was 100% in 1750)? <strong>This information is to help understand population baselines and determine whether the majority of a species' decline may have occurred prior to monitoring.</strong></label>
               <label class="label required" v-if="isAdmin">What has the custodian estimated to be the percentage (%) of the species’ population that existed in Australia at the start of the monitoring (assuming this was 100% in 1750)?</label>
               <div class="control indent">
-                <input class="input" type="text" placeholder="Enter your answer" v-model="formData.estimated_population_baseline_percentage">
-                <p class="help is-danger" v-if="fieldErrors.estimated_population_baseline_percentage">{{fieldErrors.estimated_population_baseline_percentage}}</p>
+                <input class="input" type="text" placeholder="Enter your answer" v-model="formData.pop_1750">
+                <p class="help is-danger" v-if="fieldErrors.pop_1750">{{fieldErrors.pop_1750}}</p>
               </div>
             </div>
 
@@ -201,12 +201,12 @@
               <div class="control indent">
                 <div class="radio-list">
                   <label class="radio" v-for="option in options.yes_no">
-                    <input type="radio" name="summary_ok" v-model="formData.summary_ok" :value="option.id" /> {{option.description}}
+                    <input type="radio" name="data_summary_agree" v-model="formData.data_summary_agree" :value="option.id" /> {{option.description}}
                   </label>
                 </div>
-                <p class="help is-danger" v-if="fieldErrors.summary_ok">{{fieldErrors.summary_ok}}</p>
-                <input class="input" type="text" placeholder="Enter your answer" v-if="formData.summary_ok == 'no'" v-model="formData.summary_comments">
-                <p class="help is-danger" v-if="fieldErrors.summary_comments">{{fieldErrors.summary_comments}}</p>
+                <p class="help is-danger" v-if="fieldErrors.data_summary_agree">{{fieldErrors.data_summary_agree}}</p>
+                <input class="input" type="text" placeholder="Enter your answer" v-if="formData.data_summary_agree == 'no'" v-model="formData.data_summary_agree_comments">
+                <p class="help is-danger" v-if="fieldErrors.data_summary_agree_comments">{{fieldErrors.data_summary_agree_comments}}</p>
               </div>
             </div>
 
@@ -216,12 +216,12 @@
               <div class="control indent">
                 <div class="radio-list">
                   <label class="radio" v-for="option in options.yes_no">
-                    <input type="radio" name="processing_ok" v-model="formData.processing_ok" :value="option.id" /> {{option.description}}
+                    <input type="radio" name="processing_agree" v-model="formData.processing_agree" :value="option.id" /> {{option.description}}
                   </label>
                 </div>
-                <p class="help is-danger" v-if="fieldErrors.processing_ok">{{fieldErrors.processing_ok}}</p>
-                <input class="input" type="text" placeholder="Enter your answer" v-if="formData.processing_ok == 'no'" v-model="formData.processing_comments">
-                <p class="help is-danger" v-if="fieldErrors.processing_comments">{{fieldErrors.processing_comments}}</p>
+                <p class="help is-danger" v-if="fieldErrors.processing_agree">{{fieldErrors.processing_agree}}</p>
+                <input class="input" type="text" placeholder="Enter your answer" v-if="formData.processing_agree == 'no'" v-model="formData.processing_agree_comments">
+                <p class="help is-danger" v-if="fieldErrors.processing_agree_comments">{{fieldErrors.processing_agree_comments}}</p>
               </div>
             </div>
 
@@ -300,12 +300,12 @@
               <div class="control indent">
                 <div class="radio-list">
                   <label class="radio" v-for="option in options.yes_no">
-                    <input type="radio" name="statistics_ok" v-model="formData.statistics_ok" :value="option.id" /> {{option.description}}
+                    <input type="radio" name="statistics_agree" v-model="formData.statistics_agree" :value="option.id" /> {{option.description}}
                   </label>
                 </div>
-                <p class="help is-danger" v-if="fieldErrors.statistics_ok">{{fieldErrors.statistics_ok}}</p>
-                <input class="input" type="text" placeholder="Enter your answer" v-if="formData.statistics_ok == 'no'" v-model="formData.statistics_comments">
-                <p class="help is-danger" v-if="fieldErrors.statistics_comments">{{fieldErrors.statistics_comments}}</p>
+                <p class="help is-danger" v-if="fieldErrors.statistics_agree">{{fieldErrors.statistics_agree}}</p>
+                <input class="input" type="text" placeholder="Enter your answer" v-if="formData.statistics_agree == 'no'" v-model="formData.statistics_agree_comments">
+                <p class="help is-danger" v-if="fieldErrors.statistics_agree_comments">{{fieldErrors.statistics_agree_comments}}</p>
 
               </div>
             </div>
@@ -326,12 +326,12 @@
               <div class="control indent">
                 <div class="radio-list">
                   <label class="radio" v-for="option in options.yes_no_unsure">
-                    <input type="radio" name="trend_ok" v-model="formData.trend_ok" :value="option.id" /> {{option.description}}
+                    <input type="radio" name="trend_agree" v-model="formData.trend_agree" :value="option.id" /> {{option.description}}
                   </label>
                 </div>
-                <p class="help is-danger" v-if="fieldErrors.trend_ok">{{fieldErrors.trend_ok}}</p>
-                <input class="input" type="text" placeholder="Enter your answer" v-if="formData.trend_ok == 'no' || formData.trend_ok == 'unsure'" v-model="formData.trend_comments">
-                <p class="help is-danger" v-if="fieldErrors.trend_comments">{{fieldErrors.trend_comments}}</p>
+                <p class="help is-danger" v-if="fieldErrors.trend_agree">{{fieldErrors.trend_agree}}</p>
+                <input class="input" type="text" placeholder="Enter your answer" v-if="formData.trend_agree == 'no' || formData.trend_agree == 'unsure'" v-model="formData.trend_agree_comments">
+                <p class="help is-danger" v-if="fieldErrors.trend_agree_comments">{{fieldErrors.trend_agree_comments}}</p>
               </div>
             </div>
 
@@ -339,8 +339,8 @@
               <label class="label required" v-if="notAdmin">Looking at the trend for your data, what should be the reference year at which the index should start?</label>
               <label class="label required" v-if="isAdmin">What reference year has the custodian suggested for their trend?</label>
               <div class="control indent">
-                <input class="input" type="text" placeholder="Enter your answer" v-model="formData.trend_ref_year">
-                <p class="help is-danger" v-if="fieldErrors.trend_ref_year">{{fieldErrors.trend_ref_year}}</p>
+                <input class="input" type="text" placeholder="Enter your answer" v-model="formData.start_year">
+                <p class="help is-danger" v-if="fieldErrors.start_year">{{fieldErrors.start_year}}</p>
               </div>
             </div>
 
@@ -348,8 +348,8 @@
               <label class="label required" v-if="notAdmin">Looking at the trend for your data, what should be the year at which the index should end?</label>
               <label class="label required" v-if="isAdmin">What end year has the custodian suggested for their trend?</label>
               <div class="control indent">
-                <input class="input" type="text" placeholder="Enter your answer" v-model="formData.trend_end_year">
-                <p class="help is-danger" v-if="fieldErrors.trend_end_year">{{fieldErrors.trend_end_year}}</p>
+                <input class="input" type="text" placeholder="Enter your answer" v-model="formData.end_year">
+                <p class="help is-danger" v-if="fieldErrors.end_year">{{fieldErrors.end_year}}</p>
               </div>
             </div>
 
@@ -486,8 +486,8 @@
               <label class="label">Please indicate if you would prefer to provide this information via a phone or video call with our project team:</label>
               <div class="control indent">
                 <div class="radio-list">
-                  <label class="radio" v-for="option in options.monitoring_program_information_provided">
-                    <input type="radio" name="monitoring_program_information_provided" v-model="formData.monitoring_program_information_provided" :value="option.id" /> {{option.description}}
+                  <label class="radio" v-for="option in options.cost_data_provided">
+                    <input type="radio" name="cost_data_provided" v-model="formData.cost_data_provided" :value="option.id" /> {{option.description}}
                   </label>
                 </div>
               </div>
@@ -820,7 +820,7 @@ export default {
       return !!this.form?.stats?.trend
     },
     disableMonitoringProgramFields() {
-      let x = this.formData.monitoring_program_information_provided
+      let x = this.formData.cost_data_provided
       return !(x == "provided" || x == "provided_copy")
     }
   },
