@@ -176,7 +176,7 @@ def get_source_imports(source_id=None):
 		FROM data_import
 		LEFT JOIN data_import_status ON data_import_status.id = data_import.status_id
 		WHERE data_import.source_id = :source_id
-		ORDER BY data_import.time_created
+		ORDER BY data_import.time_created DESC
 	"""), { 'source_id': source_id })
 
 	return jsonify_rows(rows)

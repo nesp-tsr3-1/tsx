@@ -68,8 +68,8 @@ export default {
       var importsPromise = this.sourceId ? api.dataSourceImports(this.sourceId) : api.dataImports()
       importsPromise.then((imports) => {
         imports.forEach(i => { i.isApproving = false })
-        this.imports = imports
-          .sort((a, b) => b.time_created.localeCompare(a.time_created))
+        // this.imports = imports
+        //   .sort((a, b) => b.time_created.localeCompare(a.time_created))
         this.status = 'loaded'
       }).catch((error) => {
         console.log(error)
