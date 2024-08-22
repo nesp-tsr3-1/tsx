@@ -1,11 +1,11 @@
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash
-from json import JSONEncoder
 import tsx.api.lpi_data
 from tsx.api.util import setup_db
 import tsx.config
 import uuid
 from flask_cors import CORS
 from flask_session import Session
+from flask.json.provider import DefaultJSONProvider
 import os.path
 
 import tsx.api.upload
@@ -48,7 +48,7 @@ app.register_blueprint(tsx.api.program.bp)
 app.register_blueprint(tsx.api.results.bp)
 app.register_blueprint(tsx.api.custodian_feedback.bp)
 
-class DateTimeEncoder(JSONEncoder):
+class CustomJSONProvider(DefaultJSONProvider):
 	def default(self, obj):
 		if isinstance(obj, datetime.datetime):
 			return obj.isoformat() + 'Z'
@@ -57,9 +57,9 @@ class DateTimeEncoder(JSONEncoder):
 		elif isinstance(obj, datetime.timedelta):
 			return (datetime.datetime.min + obj).time().isoformat()
 
-		return super(DateTimeEncoder, self).default(obj)
+		return super().default(obj)
 
-app.json_encoder = DateTimeEncoder
+app.json = CustomJSONProvider(app)
 
 # @app.before_first_request
 # def app_init():
