@@ -55,6 +55,39 @@
 
             <hr>
 
+            <!---- Admin Type ---->
+            <div class="content" v-if="isAdmin">
+              <div class="field">
+                <label class="label">In what format was the following survey data collected?</label>
+                <div class="control">
+                  <div class="radio-list">
+                    <label class="radio" v-for="option in options.admin_type">
+                      <input type="radio" name="admin_type" v-model="formData.admin_type" :value="option.id" disabled /> {{option.description}}
+                    </label>
+                  </div>
+                </div>
+                <button class="button block is-small" v-if="formData.admin_type == 'informal'" @click="() => showAdminTypeDialog = true">Switch to formal</button>
+                <div class="notification">For formal surveys, please add any “informal” comments to the relevant field(s) in this form. Please include your initials and the date when doing so</div>
+                <div class="modal" :class="{ 'is-active': showAdminTypeDialog }">
+                  <div class="modal-background"></div>
+                  <div class="modal-card">
+                    <header class="modal-card-head">
+                      <p class="modal-card-title">Switch to formal survey</p>
+                    </header>
+                    <section class="modal-card-body">
+                      <p class="content">Switching to a formal survey cannot be undone.</p>
+                      <p>Are you sure you wish to continue?</p>
+                    </section>
+                    <footer class="modal-card-foot" style="justify-content: right;">
+                      <button class="button is-primary" @click="switchToFormal">Switch</button>
+                      <button class="button" @click="() => showAdminTypeDialog = false">Cancel</button>
+                    </footer>
+                  </div>
+                </div>
+              </div>
+              <hr>
+            </div>
+
             <!---- Data citation and monitoring aims ---->
 
             <div class="content" id="citation_section">
@@ -75,7 +108,7 @@
                   </label>
                 </div>
                 <p class="help is-danger" v-if="fieldErrors.citation_agree">{{fieldErrors.citation_agree}}</p>
-                <input class="input" type="text" placeholder="Suggested citation" v-if="formData.citation_agree == 'no'" v-model="formData.citation_agree_comments">
+                <input class="input" type="text" placeholder="Suggested citation" v-if="showField('citation_agree_comments')" v-model="formData.citation_agree_comments">
                 <p class="help is-danger" v-if="fieldErrors.citation_agree_comments">{{fieldErrors.citation_agree_comments}}</p>
               </div>
             </div>
@@ -90,7 +123,7 @@
                   </label>
                 </div>
                 <p class="help is-danger" v-if="fieldErrors.monitoring_for_trend">{{fieldErrors.monitoring_for_trend}}</p>
-                <input class="input" type="text" placeholder="Enter your answer" v-model="formData.monitoring_for_trend_comments" v-if="formData.monitoring_for_trend === 'no' || formData.monitoring_for_trend === 'unsure'">
+                <input class="input" type="text" placeholder="Enter your answer" v-model="formData.monitoring_for_trend_comments" v-if="showField('monitoring_for_trend_comments')">
                 <p class="help is-danger" v-if="fieldErrors.monitoring_for_trend_comments">{{fieldErrors.monitoring_for_trend_comments}}</p>
               </div>
             </div>
@@ -105,6 +138,8 @@
                   </label>
                 </div>
                 <p class="help is-danger" v-if="fieldErrors.analyse_own_trends">{{fieldErrors.analyse_own_trends}}</p>
+                <input class="input" type="text" placeholder="Enter your answer" v-model="formData.analyse_own_trends_comments" v-if="showField('analyse_own_trends_comments')">
+                <p class="help is-danger" v-if="fieldErrors.analyse_own_trends_comments">{{fieldErrors.analyse_own_trends_comments}}</p>
               </div>
             </div>
 
@@ -112,8 +147,10 @@
               <label class="label required" v-if="notAdmin">Can you estimate what percentage (%) of your species’ population existed in Australia at the start of your monitoring (assuming this was 100% in 1750)? <strong>This information is to help understand population baselines and determine whether the majority of a species' decline may have occurred prior to monitoring.</strong></label>
               <label class="label required" v-if="isAdmin">What has the custodian estimated to be the percentage (%) of the species’ population that existed in Australia at the start of the monitoring (assuming this was 100% in 1750)?</label>
               <div class="control indent">
-                <input class="input" type="text" placeholder="Enter your answer" v-model="formData.pop_1750">
+                <input class="input" type="text" placeholder="Enter a percentage or 'Unsure'" v-model="formData.pop_1750">
                 <p class="help is-danger" v-if="fieldErrors.pop_1750">{{fieldErrors.pop_1750}}</p>
+                <input class="input" style="margin-top: 1em" type="text" placeholder="Additional comments" v-model="formData.pop_1750_comments" v-if="showField('pop_1750_comments')">
+                <p class="help is-danger" v-if="fieldErrors.pop_1750_comments">{{fieldErrors.pop_1750_comments}}</p>
               </div>
             </div>
 
@@ -205,7 +242,7 @@
                   </label>
                 </div>
                 <p class="help is-danger" v-if="fieldErrors.data_summary_agree">{{fieldErrors.data_summary_agree}}</p>
-                <input class="input" type="text" placeholder="Enter your answer" v-if="formData.data_summary_agree == 'no'" v-model="formData.data_summary_agree_comments">
+                <input class="input" type="text" placeholder="Enter your answer" v-if="showField('data_summary_agree_comments')" v-model="formData.data_summary_agree_comments">
                 <p class="help is-danger" v-if="fieldErrors.data_summary_agree_comments">{{fieldErrors.data_summary_agree_comments}}</p>
               </div>
             </div>
@@ -215,12 +252,12 @@
               <label class="label required" v-if="isAdmin">Does the custodian agree with how the data were processed? If no, what alternative method of aggregation have they suggested?</label>
               <div class="control indent">
                 <div class="radio-list">
-                  <label class="radio" v-for="option in options.yes_no">
+                  <label class="radio" v-for="option in options.yes_no_unsure">
                     <input type="radio" name="processing_agree" v-model="formData.processing_agree" :value="option.id" /> {{option.description}}
                   </label>
                 </div>
                 <p class="help is-danger" v-if="fieldErrors.processing_agree">{{fieldErrors.processing_agree}}</p>
-                <input class="input" type="text" placeholder="Enter your answer" v-if="formData.processing_agree == 'no'" v-model="formData.processing_agree_comments">
+                <input class="input" type="text" placeholder="Enter your answer" v-if="showField('processing_agree_comments')" v-model="formData.processing_agree_comments">
                 <p class="help is-danger" v-if="fieldErrors.processing_agree_comments">{{fieldErrors.processing_agree_comments}}</p>
               </div>
             </div>
@@ -299,12 +336,12 @@
               <label class="label required" v-if="isAdmin">Does the custodian agree with the data statistics (raw and aggregated)? If no, what specifically do they disagree with?</label>
               <div class="control indent">
                 <div class="radio-list">
-                  <label class="radio" v-for="option in options.yes_no">
+                  <label class="radio" v-for="option in options.yes_no_unsure">
                     <input type="radio" name="statistics_agree" v-model="formData.statistics_agree" :value="option.id" /> {{option.description}}
                   </label>
                 </div>
                 <p class="help is-danger" v-if="fieldErrors.statistics_agree">{{fieldErrors.statistics_agree}}</p>
-                <input class="input" type="text" placeholder="Enter your answer" v-if="formData.statistics_agree == 'no'" v-model="formData.statistics_agree_comments">
+                <input class="input" type="text" placeholder="Enter your answer" v-if="showField('statistics_agree_comments')" v-model="formData.statistics_agree_comments">
                 <p class="help is-danger" v-if="fieldErrors.statistics_agree_comments">{{fieldErrors.statistics_agree_comments}}</p>
 
               </div>
@@ -330,7 +367,7 @@
                   </label>
                 </div>
                 <p class="help is-danger" v-if="fieldErrors.trend_agree">{{fieldErrors.trend_agree}}</p>
-                <input class="input" type="text" placeholder="Enter your answer" v-if="formData.trend_agree == 'no' || formData.trend_agree == 'unsure'" v-model="formData.trend_agree_comments">
+                <input class="input" type="text" placeholder="Enter your answer" v-if="showField('trend_agree_comments')" v-model="formData.trend_agree_comments">
                 <p class="help is-danger" v-if="fieldErrors.trend_agree_comments">{{fieldErrors.trend_agree_comments}}</p>
               </div>
             </div>
@@ -341,6 +378,8 @@
               <div class="control indent">
                 <input class="input" type="text" placeholder="Enter your answer" v-model="formData.start_year">
                 <p class="help is-danger" v-if="fieldErrors.start_year">{{fieldErrors.start_year}}</p>
+                <input class="input" style="margin-top:1em;" type="text" placeholder="Additional comments" v-if="showField('start_year_comments')" v-model="formData.start_year_comments">
+                <p class="help is-danger" v-if="fieldErrors.start_year_comments">{{fieldErrors.start_year_comments}}</p>
               </div>
             </div>
 
@@ -350,6 +389,8 @@
               <div class="control indent">
                 <input class="input" type="text" placeholder="Enter your answer" v-model="formData.end_year">
                 <p class="help is-danger" v-if="fieldErrors.end_year">{{fieldErrors.end_year}}</p>
+                <input class="input" style="margin-top:1em;" type="text" placeholder="Additional comments" v-if="showField('end_year_comments')" v-model="formData.end_year_comments">
+                <p class="help is-danger" v-if="fieldErrors.end_year_comments">{{fieldErrors.end_year_comments}}</p>
               </div>
             </div>
 
@@ -478,244 +519,293 @@
               <h3>Monitoring program funding, logistics and governance</h3>
             </div>
 
-            <p class="content">
-              Questions 17 to 32 below are optional. We hope you are interested in providing some further information about your monitoring program.
-            </p>
 
-            <div class="field numbered">
-              <label class="label">Please indicate if you would prefer to provide this information via a phone or video call with our project team:</label>
-              <div class="control indent">
-                <div class="radio-list">
-                  <label class="radio" v-for="option in options.cost_data_provided">
-                    <input type="radio" name="cost_data_provided" v-model="formData.cost_data_provided" :value="option.id" /> {{option.description}}
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <hr>
-
-            <div class="notification is-info is-light" v-if="disableMonitoringProgramFields">
-              <strong>To fill out the following fields, first answer question 16 above.</strong>
-            </div>
-
-            <fieldset :disabled="disableMonitoringProgramFields">
+            <template v-if="isAdmin">
               <div class="field numbered">
-                <label class="label">Effort: How much time on average per year was spent on project labour, i.e. data collection in the field? </label>
+                <label class="label required">Has the custodian answered the optional questions about funding, logistics and governance?</label>
                 <div class="control indent">
-                  <div class="subfield">
-                    <label>a. Days/year paid labour:</label> <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_labour_paid_days_per_year">
+                  <div class="radio-list">
+                    <label class="radio" v-for="option in options.yes_no">
+                      <input type="radio" name="cost_data_provided" v-model="formData.cost_data_provided" :value="option.id" /> {{option.description}}
+                    </label>
                   </div>
-                  <div class="subfield">
-                    <label>b. Days/year volunteered time:</label> <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_labour_volunteer_days_per_year">
-                  </div>
+                  <p class="help is-danger" v-if="fieldErrors.cost_data_provided">{{fieldErrors.cost_data_provided}}</p>
                 </div>
               </div>
 
               <div class="field numbered">
-                <label class="label">Effort: How much time on average per year was spent on project overheads, e.g. data collation and dataset maintenance? </label>
+                <label class="label required">Where the custodian has provided funding data, what value have they estimated as the total investment in the dataset to date (not counting in-kind support)?</label>
                 <div class="control indent">
-                  <div class="subfield">
-                    <label>a. Days/year paid labour:</label> <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_overheads_paid_days_per_year">
-                  </div>
-                  <div class="subfield">
-                    <label>b. Days/year volunteered time:</label> <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_overheads_volunteer_days_per_year">
-                  </div>
+                  <input class="input" type="text" placeholder="Enter value or type 'unsure'" v-model="formData.estimated_cost_dataset">
+                  <p class="help is-danger" v-if="fieldErrors.estimated_cost_dataset">{{fieldErrors.estimated_cost_dataset}}</p>
                 </div>
               </div>
 
               <div class="field numbered">
-                <label class="label">Effort: Approximately how many people were involved in the last bout of monitoring (including both field and office work)</label>
+                <label class="label">Please add any additional comments from the custodian about the monitoring program below.</label>
                 <div class="control indent">
-                  <div class="subfield">
-                    <label>a. Paid staff:</label> <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_paid_staff_count">
+                  <input class="input" type="text" placeholder="Enter your answer" v-model="formData.cost_data_provided_comments">
+                  <p class="help is-danger" v-if="fieldErrors.cost_data_provided_comments">{{fieldErrors.cost_data_provided_comments}}</p>
+                </div>
+              </div>
+
+              <div class="field">
+                <label class="label">Please add any additional comments from the custodian below.</label>
+                <div class="control">
+                  <textarea class="textarea" type="text" placeholder="Enter your answer" v-model="formData.custodian_comments"></textarea>
+                  <p class="help is-danger" v-if="fieldErrors.custodian_comments">{{fieldErrors.custodian_comments}}</p>
+                </div>
+              </div>
+
+              <div class="field">
+                <label class="label">INTERNAL ONLY: Please add any additional comments on the dataset below. Include your initials and date where possible.</label>
+                <div class="control">
+                  <textarea class="textarea" type="text" placeholder="Enter your answer" v-model="formData.internal_comments"></textarea>
+                  <p class="help is-danger" v-if="fieldErrors.internal_comments">{{fieldErrors.internal_comments}}</p>
+                </div>
+              </div>
+            </template>
+
+            <template v-if="notAdmin">
+
+              <p class="content">
+                Questions 17 to 32 below are optional. We hope you are interested in providing some further information about your monitoring program.
+              </p>
+
+              <div class="field numbered">
+                <label class="label">Please indicate if you would prefer to provide this information via a phone or video call with our project team:</label>
+                <div class="control indent">
+                  <div class="radio-list">
+                    <label class="radio" v-for="option in options.monitoring_program_information_provided">
+                      <input type="radio" name="monitoring_program_information_provided" v-model="formData.monitoring_program_information_provided" :value="option.id" /> {{option.description}}
+                    </label>
                   </div>
-                  <div class="subfield">
-                    <label>b. Volunteers:</label> <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_volunteer_count">
-                  </div>
                 </div>
               </div>
 
-              <div class="field numbered">
-                <label class="label">Funding: How much do you think in AUD$ a single survey costs (not counting in-kind support)?</label>
-                <div class="control indent">
-                  <input class="input" type="text" placeholder="Enter your answer" v-model="formData.funding_cost_per_survey_aud">
-                </div>
+              <hr>
+
+              <div class="notification is-info is-light" v-if="disableMonitoringProgramFields">
+                <strong>To fill out the following fields, first answer question 16 above.</strong>
               </div>
 
-              <div class="field numbered">
-                <label class="label">Funding: Can you estimate in AUD$ the total investment in the dataset to date (again not counting in-kind support)?</label>
-                <div class="control indent">
-                  <input class="input" type="text" placeholder="Enter your answer" v-model="formData.funding_total_investment_aud">
-                </div>
-              </div>
-
-              <div class="field numbered">
-                <label class="label">Funding: Who has been paying for the monitoring? (e.g. government grants, research funds, private donations etc. – list multiple funding sources if they have been needed over the years)</label>
-                <div class="control indent">
-                  <div class="subfield">
-                    <label>a. Government grants:</label>
-                    <div class="horizontal-radio-list">
-                      <label><input class="radio" type="radio" name="funding_source_government_grants" v-model="formData.funding_source_government_grants" value="yes"> Yes</label>
-                      <label><input class="radio" type="radio" name="funding_source_government_grants" v-model="formData.funding_source_government_grants" value="no"> No</label>
+              <fieldset :disabled="disableMonitoringProgramFields">
+                <div class="field numbered">
+                  <label class="label">Effort: How much time on average per year was spent on project labour, i.e. data collection in the field? </label>
+                  <div class="control indent">
+                    <div class="subfield">
+                      <label>a. Days/year paid labour:</label> <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_labour_paid_days_per_year">
+                    </div>
+                    <div class="subfield">
+                      <label>b. Days/year volunteered time:</label> <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_labour_volunteer_days_per_year">
                     </div>
                   </div>
-                  <div class="subfield">
-                    <label>b. Research funds:</label>
-                    <div class="horizontal-radio-list">
-                      <label><input class="radio" type="radio" name="funding_source_research_funds" v-model="formData.funding_source_research_funds" value="yes"> Yes</label>
-                      <label><input class="radio" type="radio" name="funding_source_research_funds" v-model="formData.funding_source_research_funds" value="no"> No</label>
+                </div>
+
+                <div class="field numbered">
+                  <label class="label">Effort: How much time on average per year was spent on project overheads, e.g. data collation and dataset maintenance? </label>
+                  <div class="control indent">
+                    <div class="subfield">
+                      <label>a. Days/year paid labour:</label> <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_overheads_paid_days_per_year">
+                    </div>
+                    <div class="subfield">
+                      <label>b. Days/year volunteered time:</label> <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_overheads_volunteer_days_per_year">
                     </div>
                   </div>
-                  <div class="subfield">
-                    <label>c. Private donations:</label>
-                    <div class="horizontal-radio-list">
-                      <label><input class="radio" type="radio" name="funding_source_private_donations" v-model="formData.funding_source_private_donations" value="yes"> Yes</label>
-                      <label><input class="radio" type="radio" name="funding_source_private_donations" v-model="formData.funding_source_private_donations" value="no"> No</label>
+                </div>
+
+                <div class="field numbered">
+                  <label class="label">Effort: Approximately how many people were involved in the last bout of monitoring (including both field and office work)</label>
+                  <div class="control indent">
+                    <div class="subfield">
+                      <label>a. Paid staff:</label> <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_paid_staff_count">
+                    </div>
+                    <div class="subfield">
+                      <label>b. Volunteers:</label> <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_volunteer_count">
                     </div>
                   </div>
-                  <div class="subfield">
-                    <label>d. Other:</label>
-                    <input class="input" type="text" placeholder="Enter your answer" v-model="formData.funding_source_other">
-                  </div>
-                  <div class="subfield">
-                    <label>e. Can you estimate the total number of funding sources so far?:</label>
-                    <input class="input" type="text" placeholder="Enter your answer" v-model="formData.funding_source_count">
+                </div>
+
+                <div class="field numbered">
+                  <label class="label">Funding: How much do you think in AUD$ a single survey costs (not counting in-kind support)?</label>
+                  <div class="control indent">
+                    <input class="input" type="text" placeholder="Enter your answer" v-model="formData.funding_cost_per_survey_aud">
                   </div>
                 </div>
-              </div>
 
-              <div class="field numbered">
-                <label class="label">Leadership: Who has been providing the drive to keep the monitoring going after the baseline was established?</label>
-                <div class="control indent">
-                  <input class="input" type="text" placeholder="Enter your answer" v-model="formData.leadership">
+                <div class="field numbered">
+                  <label class="label">Funding: Can you estimate in AUD$ the total investment in the dataset to date (again not counting in-kind support)?</label>
+                  <div class="control indent">
+                    <input class="input" type="text" placeholder="Enter your answer" v-model="formData.funding_total_investment_aud">
+                  </div>
                 </div>
-              </div>
 
-              <div class="field numbered">
-                <label class="label">Impact: Are data being used to directly inform management of the threatened species or measure the effectiveness of management actions? </label>
-                <div class="control indent">
-                  <div class="subfield">
-                    <label>a.</label>
-                    <div class="horizontal-radio-list">
-                      <label><input class="radio" type="radio" name="impact_used_for_management" v-model="formData.impact_used_for_management" value="yes"> Yes</label>
-                      <label><input class="radio" type="radio" name="impact_used_for_management" v-model="formData.impact_used_for_management" value="no"> No</label>
+                <div class="field numbered">
+                  <label class="label">Funding: Who has been paying for the monitoring? (e.g. government grants, research funds, private donations etc. – list multiple funding sources if they have been needed over the years)</label>
+                  <div class="control indent">
+                    <div class="subfield">
+                      <label>a. Government grants:</label>
+                      <div class="horizontal-radio-list">
+                        <label><input class="radio" type="radio" name="funding_source_government_grants" v-model="formData.funding_source_government_grants" value="yes"> Yes</label>
+                        <label><input class="radio" type="radio" name="funding_source_government_grants" v-model="formData.funding_source_government_grants" value="no"> No</label>
+                      </div>
+                    </div>
+                    <div class="subfield">
+                      <label>b. Research funds:</label>
+                      <div class="horizontal-radio-list">
+                        <label><input class="radio" type="radio" name="funding_source_research_funds" v-model="formData.funding_source_research_funds" value="yes"> Yes</label>
+                        <label><input class="radio" type="radio" name="funding_source_research_funds" v-model="formData.funding_source_research_funds" value="no"> No</label>
+                      </div>
+                    </div>
+                    <div class="subfield">
+                      <label>c. Private donations:</label>
+                      <div class="horizontal-radio-list">
+                        <label><input class="radio" type="radio" name="funding_source_private_donations" v-model="formData.funding_source_private_donations" value="yes"> Yes</label>
+                        <label><input class="radio" type="radio" name="funding_source_private_donations" v-model="formData.funding_source_private_donations" value="no"> No</label>
+                      </div>
+                    </div>
+                    <div class="subfield">
+                      <label>d. Other:</label>
+                      <input class="input" type="text" placeholder="Enter your answer" v-model="formData.funding_source_other">
+                    </div>
+                    <div class="subfield">
+                      <label>e. Can you estimate the total number of funding sources so far?:</label>
+                      <input class="input" type="text" placeholder="Enter your answer" v-model="formData.funding_source_count">
                     </div>
                   </div>
-                  <div class="subfield">
-                    <label>b. Please expand:</label>
-                    <input class="input" type="text" placeholder="Enter your answer" v-model="formData.impact_used_for_management_comments">
+                </div>
+
+                <div class="field numbered">
+                  <label class="label">Leadership: Who has been providing the drive to keep the monitoring going after the baseline was established?</label>
+                  <div class="control indent">
+                    <input class="input" type="text" placeholder="Enter your answer" v-model="formData.leadership">
                   </div>
                 </div>
-              </div>
 
-              <div class="field numbered">
-                <label class="label">Impact: Is your organisation responsible for managing this species in the monitored area?</label>
-                <div class="control indent">
-                  <input class="input" type="text" placeholder="Enter your answer" v-model="formData.impact_organisation_responsible">
-                </div>
-              </div>
-
-              <div class="field numbered">
-                <label class="label">Impact: Can you describe any management that has changed because of the monitoring?</label>
-                <div class="control indent">
-                  <input class="input" type="text" placeholder="Enter your answer" v-model="formData.impact_management_changes">
-                </div>
-              </div>
-
-              <div class="field numbered">
-                <label class="label">Data availability: Is your monitoring data readily available to the public (e.g. through reports, or on website). If not, can the public access it?</label>
-                <div class="control indent">
-                  <input class="input" type="text" placeholder="Enter your answer" v-model="formData.data_availability">
-                </div>
-              </div>
-
-              <div class="field numbered">
-                <label class="label">Succession: Do you have commitments to extend the monitoring into the future? </label>
-                <div class="control indent">
-                  <div class="subfield">
-                    <label>a.</label>
-                    <div class="horizontal-radio-list">
-                      <label><input class="radio" type="radio" name="succession_commitment" value="yes" v-model="formData.succession_commitment"> Yes</label>
-                      <label><input class="radio" type="radio" name="succession_commitment" value="no" v-model="formData.succession_commitment"> No</label>
+                <div class="field numbered">
+                  <label class="label">Impact: Are data being used to directly inform management of the threatened species or measure the effectiveness of management actions? </label>
+                  <div class="control indent">
+                    <div class="subfield">
+                      <label>a.</label>
+                      <div class="horizontal-radio-list">
+                        <label><input class="radio" type="radio" name="impact_used_for_management" v-model="formData.impact_used_for_management" value="yes"> Yes</label>
+                        <label><input class="radio" type="radio" name="impact_used_for_management" v-model="formData.impact_used_for_management" value="no"> No</label>
+                      </div>
+                    </div>
+                    <div class="subfield">
+                      <label>b. Please expand:</label>
+                      <input class="input" type="text" placeholder="Enter your answer" v-model="formData.impact_used_for_management_comments">
                     </div>
                   </div>
-                  <div class="subfield">
-                    <label>b. Please expand:</label>
-                    <input class="input" type="text" placeholder="Enter your answer" v-model="formData.succession_commitment_comments">
+                </div>
+
+                <div class="field numbered">
+                  <label class="label">Impact: Is your organisation responsible for managing this species in the monitored area?</label>
+                  <div class="control indent">
+                    <input class="input" type="text" placeholder="Enter your answer" v-model="formData.impact_organisation_responsible">
                   </div>
                 </div>
-              </div>
 
-              <div class="field numbered">
-                <label class="label">Succession: Have you developed a plan for continual monitoring when the current organisers/you need to stop?</label>
-                <div class="control indent">
-                  <div class="subfield">
-                    <label>a.</label>
-                    <div class="horizontal-radio-list">
-                      <label><input class="radio" type="radio" name="succession_plan" value="yes" v-model="formData.succession_plan"> Yes</label>
-                      <label><input class="radio" type="radio" name="succession_plan" value="no" v-model="formData.succession_plan"> No</label>
+                <div class="field numbered">
+                  <label class="label">Impact: Can you describe any management that has changed because of the monitoring?</label>
+                  <div class="control indent">
+                    <input class="input" type="text" placeholder="Enter your answer" v-model="formData.impact_management_changes">
+                  </div>
+                </div>
+
+                <div class="field numbered">
+                  <label class="label">Data availability: Is your monitoring data readily available to the public (e.g. through reports, or on website). If not, can the public access it?</label>
+                  <div class="control indent">
+                    <input class="input" type="text" placeholder="Enter your answer" v-model="formData.data_availability">
+                  </div>
+                </div>
+
+                <div class="field numbered">
+                  <label class="label">Succession: Do you have commitments to extend the monitoring into the future? </label>
+                  <div class="control indent">
+                    <div class="subfield">
+                      <label>a.</label>
+                      <div class="horizontal-radio-list">
+                        <label><input class="radio" type="radio" name="succession_commitment" value="yes" v-model="formData.succession_commitment"> Yes</label>
+                        <label><input class="radio" type="radio" name="succession_commitment" value="no" v-model="formData.succession_commitment"> No</label>
+                      </div>
+                    </div>
+                    <div class="subfield">
+                      <label>b. Please expand:</label>
+                      <input class="input" type="text" placeholder="Enter your answer" v-model="formData.succession_commitment_comments">
                     </div>
                   </div>
-                  <div class="subfield">
-                    <label>b. Please expand:</label>
-                    <input class="input" type="text" placeholder="Enter your answer" v-model="formData.succession_plan_comments">
-                  </div>
                 </div>
-              </div>
 
-              <div class="field numbered">
-                <label class="label">Design: Was there thought about the statistical power of the monitoring when it was started (i.e. the probability that change could be detected?)</label>
-                <div class="control indent">
-                  <div class="subfield">
-                    <label>a.</label>
-                    <div class="horizontal-radio-list">
-                      <label><input class="radio" type="radio" name="design_statistical_power" value="yes" v-model="formData.design_statistical_power"> Yes</label>
-                      <label><input class="radio" type="radio" name="design_statistical_power" value="no" v-model="formData.design_statistical_power"> No</label>
+                <div class="field numbered">
+                  <label class="label">Succession: Have you developed a plan for continual monitoring when the current organisers/you need to stop?</label>
+                  <div class="control indent">
+                    <div class="subfield">
+                      <label>a.</label>
+                      <div class="horizontal-radio-list">
+                        <label><input class="radio" type="radio" name="succession_plan" value="yes" v-model="formData.succession_plan"> Yes</label>
+                        <label><input class="radio" type="radio" name="succession_plan" value="no" v-model="formData.succession_plan"> No</label>
+                      </div>
+                    </div>
+                    <div class="subfield">
+                      <label>b. Please expand:</label>
+                      <input class="input" type="text" placeholder="Enter your answer" v-model="formData.succession_plan_comments">
                     </div>
                   </div>
-                  <div class="subfield">
-                    <label>b. Please expand:</label>
-                    <input class="input" type="text" placeholder="Enter your answer" v-model="formData.design_statistical_power_comments">
-                  </div>
                 </div>
-              </div>
 
-              <div class="field numbered">
-                <label class="label">Design: Is anything other than the numbers of threatened species being monitored at the same time that could explain changes in abundance (e.g. prevalence of a threat, fire, breeding success, etc?)</label>
-                <div class="control indent">
-                  <div class="subfield">
-                    <label>a.</label>
-                    <div class="horizontal-radio-list">
-                      <label><input class="radio" type="radio" name="design_other_factors" value="yes" v-model="formData.design_other_factors"> Yes</label>
-                      <label><input class="radio" type="radio" name="design_other_factors" value="no" v-model="formData.design_other_factors"> No</label>
+                <div class="field numbered">
+                  <label class="label">Design: Was there thought about the statistical power of the monitoring when it was started (i.e. the probability that change could be detected?)</label>
+                  <div class="control indent">
+                    <div class="subfield">
+                      <label>a.</label>
+                      <div class="horizontal-radio-list">
+                        <label><input class="radio" type="radio" name="design_statistical_power" value="yes" v-model="formData.design_statistical_power"> Yes</label>
+                        <label><input class="radio" type="radio" name="design_statistical_power" value="no" v-model="formData.design_statistical_power"> No</label>
+                      </div>
+                    </div>
+                    <div class="subfield">
+                      <label>b. Please expand:</label>
+                      <input class="input" type="text" placeholder="Enter your answer" v-model="formData.design_statistical_power_comments">
                     </div>
                   </div>
-                  <div class="subfield">
-                    <label>b. Please expand:</label>
-                    <input class="input" type="text" placeholder="Enter your answer" v-model="formData.design_other_factors_comments">
-                  </div>
                 </div>
-              </div>
 
-              <div class="field numbered">
-                <label class="label">Co-benefits: Is the monitoring program for this species also collecting trend information on other threatened species?</label>
-                <div class="control indent">
-                  <div class="subfield">
-                    <label>a.</label>
-                    <div class="horizontal-radio-list">
-                      <label><input class="radio" type="radio" name="co_benefits_other_species" value="yes" v-model="formData.co_benefits_other_species"> Yes</label>
-                      <label><input class="radio" type="radio" name="co_benefits_other_species" value="no" v-model="formData.co_benefits_other_species"> No</label>
+                <div class="field numbered">
+                  <label class="label">Design: Is anything other than the numbers of threatened species being monitored at the same time that could explain changes in abundance (e.g. prevalence of a threat, fire, breeding success, etc?)</label>
+                  <div class="control indent">
+                    <div class="subfield">
+                      <label>a.</label>
+                      <div class="horizontal-radio-list">
+                        <label><input class="radio" type="radio" name="design_other_factors" value="yes" v-model="formData.design_other_factors"> Yes</label>
+                        <label><input class="radio" type="radio" name="design_other_factors" value="no" v-model="formData.design_other_factors"> No</label>
+                      </div>
+                    </div>
+                    <div class="subfield">
+                      <label>b. Please expand:</label>
+                      <input class="input" type="text" placeholder="Enter your answer" v-model="formData.design_other_factors_comments">
                     </div>
                   </div>
-                  <div class="subfield">
-                    <label>b. Please expand:</label>
-                    <input class="input" type="text" placeholder="Enter your answer" v-model="formData.co_benefits_other_species_comments">
+                </div>
+
+                <div class="field numbered">
+                  <label class="label">Co-benefits: Is the monitoring program for this species also collecting trend information on other threatened species?</label>
+                  <div class="control indent">
+                    <div class="subfield">
+                      <label>a.</label>
+                      <div class="horizontal-radio-list">
+                        <label><input class="radio" type="radio" name="co_benefits_other_species" value="yes" v-model="formData.co_benefits_other_species"> Yes</label>
+                        <label><input class="radio" type="radio" name="co_benefits_other_species" value="no" v-model="formData.co_benefits_other_species"> No</label>
+                      </div>
+                    </div>
+                    <div class="subfield">
+                      <label>b. Please expand:</label>
+                      <input class="input" type="text" placeholder="Enter your answer" v-model="formData.co_benefits_other_species_comments">
+                    </div>
                   </div>
                 </div>
-              </div>
-            </fieldset>
-
+              </fieldset>
+            </template>
           </div>
         </div>
       </div>
@@ -749,7 +839,8 @@ export default {
       },
       fieldErrors: {},
       options: null,
-      formDefinition: null
+      formDefinition: null,
+      showAdminTypeDialog: false
     }
   },
   created() {
@@ -819,6 +910,9 @@ export default {
     trendPlotAvailable() {
       return !!this.form?.stats?.trend
     },
+    showMonitoringProgramFields() {
+      return this.notAdmin
+    },
     disableMonitoringProgramFields() {
       let x = this.formData.cost_data_provided
       return !(x == "provided" || x == "provided_copy")
@@ -846,7 +940,11 @@ export default {
     refresh() {
       api.custodianFeedbackForm(this.formId).then((form) => {
         this.form = form
-        this.formData = { ... form.answers } // TODO: use a better name than 'formData'
+
+        this.formData = {
+          ... form.answers,
+          admin_type: form.answers.admin_type || 'informal'
+        }
         this.status = 'loaded'
       }).catch((error) => {
         console.log(error.json)
@@ -919,6 +1017,17 @@ export default {
       let handler = throttle(updateMenu, 250)
       document.addEventListener("scroll", handler)
       this.disposables.push(() => document.removeEventListener("scroll", handler))
+    },
+    showField(fieldName) {
+      if(fieldName.endsWith("_comments")) {
+        let parentFieldName = fieldName.replace(/_comments$/, '')
+        let parentFieldValue = this.formData[parentFieldName] ?? ''
+        return this.isAdmin || ['no', 'unsure'].includes(parentFieldValue.toLowerCase())
+      }
+    },
+    switchToFormal() {
+      this.formData.admin_type = 'formal'
+      this.showAdminTypeDialog = false
     }
   }
 }

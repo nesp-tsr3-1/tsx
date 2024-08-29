@@ -455,10 +455,10 @@ def generate_pdf(form_id):
 	pdf.ln()
 
 	numbered_question(pdf, 16, "Please indicate if you would prefer to provide this information via a phone or video call with our project team:")
-	multiple_choice_options(pdf, field_options['cost_data_provided'], form['answers'].get('cost_data_provided'))
+	multiple_choice_options(pdf, field_options['monitoring_program_information_provided'], form['answers'].get('monitoring_program_information_provided'))
 
 
-	if(form['answers'].get('cost_data_provided') in ['provided', 'provided_copy']):
+	if(form['answers'].get('monitoring_program_information_provided') in ['provided', 'provided_copy']):
 		numbered_question(pdf, 17, "Effort: How much time on average per year was spent on project labour, i.e. data collection in the field?")
 		answer_table(pdf, form, [
 			('a. Days/year paid labour:', 'effort_labour_paid_days_per_year'),
