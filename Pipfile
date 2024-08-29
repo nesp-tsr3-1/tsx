@@ -26,6 +26,7 @@ watchdog = "*"
 pytest = "*"
 fpdf2 = "*"
 matplotlib = "*"
+flask-executor = "*"
 
 [dev-packages]
 

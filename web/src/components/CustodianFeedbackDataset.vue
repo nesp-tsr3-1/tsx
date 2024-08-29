@@ -59,7 +59,7 @@
                   <td>{{form.feedback_status.description}}</td>
                   <td>{{form.feedback_type.description}}</td>
                   <td>
-                    <a class="button is-small" download v-if="downloadURL(form)" :href="downloadURL(form)">Download (pdf)</a>
+                    <a class="button is-small" download v-if="downloadURL(form)" :href="downloadURL(form)">{{downloadLabel(form)}}</a>
                   </td>
                 </tr>
               </tbody>
@@ -230,7 +230,20 @@ export default {
       document.getElementById("consent_section")?.scrollIntoView(true)
     },
     downloadURL(form) {
-      return api.custodianFeedbackFormPDFURL(form.id)
+      if(form.feedback_type.code == 'integrated') {
+        return api.custodianFeedbackFormPDFURL(form.id)
+      } else if(form.feedback_type.code == 'spreadsheet') {
+        return api.custodianFeedbackFormDownloadURL(form.id)
+      }
+    },
+    downloadLabel(form) {
+      if(form.feedback_type.code == 'admin') {
+        return 'Download (CSV)'
+      } else if(form.feedback_type.code == 'integrated') {
+        return 'Download (PDF)'
+      } else if(form.feedback_type.code == 'spreadsheet') {
+        return 'Download (XLSX)'
+      }
     }
   }
 }

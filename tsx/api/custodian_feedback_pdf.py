@@ -5,6 +5,10 @@ import json
 from datetime import datetime
 import matplotlib.pyplot as plt
 from io import StringIO
+import os
+from tsx.api.util import db_session
+from sqlalchemy import text
+from tsx.config import data_dir
 
 # These lines are necessary to stop MatplotLib from trying to initialize
 # GUI backend and crashing due to not being on the main thread:
@@ -725,6 +729,41 @@ tsx_logo_svg = b"""<?xml version="1.0" encoding="utf-8"?>
 <line stroke-width="2" stroke-miterlimit="10" class="st1" x1="289.38" y1="23.35" x2="289.38" y2="114.08"/>
 </svg>
 """
+
+
+# This should be called after forms have had their status changed to 'archived', which
+# occurs when the update_custodian_feedback() procedure is called.
+# It finds all forms that are archived but do not yet have a 'file_name' attribute.
+# For each of these it generates a PDF file and updates the 'file_name' attribute to
+# point to the newly created PDF file.
+def generate_archive_pdfs(source_id):
+	rows = db_session.execute(text("""
+		SELECT id FROM custodian_feedback
+		WHERE source_id = :source_id
+		AND feedback_status_id = (SELECT id FROM feedback_status WHERE code = 'archived')
+		AND feedback_type_id = (SELECT id FROM feedback_type WHERE code = 'integrated')
+		AND file_name IS NULL
+		"""), { 'source_id': source_id })
+
+	for (form_id,) in rows:
+		generate_archive_pdf(form_id)
+
+def generate_archive_pdf(form_id):
+	form = json.loads(get_form_json_raw(form_id))
+	print(form)
+	file_name = 'TSX Custodian Feedback %s %s.pdf' % (form['dataset_id'], form['id'])
+	path = os.path.join(data_dir("custodian-feedback"), file_name)
+
+	with open(path, mode='wb') as file:
+		file.write(generate_pdf(form_id))
+
+	db_session.execute(text("""
+		UPDATE custodian_feedback
+		SET file_name = :file_name
+		WHERE id = :form_id
+		"""), { 'file_name': file_name, 'form_id': form_id })
+	db_session.commit()
+
 
 # For testing purposes
 if __name__ == '__main__':

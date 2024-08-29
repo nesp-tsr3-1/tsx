@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request, send_file, session, Response
 from tsx.util import next_path, local_iso_datetime
-from tsx.api.util import db_session, get_user, get_roles
+from tsx.api.util import db_session, get_user, get_roles, get_executor
 from tsx.api.upload import get_upload_path, get_upload_name
 from tsx.importer import Importer
 from tsx.config import data_dir
@@ -22,6 +22,8 @@ from string import Template
 from textwrap import dedent
 from tsx.api.mail import send_admin_notification
 from tsx.config import config
+from tsx.api.custodian_feedback_shared import update_all_dataset_stats
+from tsx.api.custodian_feedback_pdf import generate_archive_pdfs
 
 bp = Blueprint('data_import', __name__)
 
@@ -548,9 +550,6 @@ def process_import_async(import_id, status):
 	def result_callback(result):
 		is_admin = running_imports[import_id]['is_admin']
 
-		with lock:
-			del running_imports[import_id]
-
 		success = result['errors'] == 0
 
 		if status == 'checking':
@@ -563,6 +562,9 @@ def process_import_async(import_id, status):
 		info.error_count = result['errors']
 		info.warning_count = result['warnings']
 		db_session.commit()
+
+		with lock:
+			del running_imports[import_id]
 
 		if new_status in ('imported', 'approved'):
 			source = info.source
@@ -577,6 +579,8 @@ def process_import_async(import_id, status):
 		if new_status == 'approved':
 			db_session.execute(text("CALL update_custodian_feedback()"))
 			db_session.commit()
+			update_all_dataset_stats()
+			generate_archive_pdfs(info.source_id)
 
 	def progress_callback(processed_rows, total_rows):
 		with lock:
@@ -585,8 +589,9 @@ def process_import_async(import_id, status):
 
 	try:
 		# Start import process
-		t = Thread(target = process_import, args = (file_path, working_path, data_type, status == 'importing', progress_callback, result_callback, info.source_id, import_id))
-		t.start()
+		# t = Thread(target = process_import, args = (file_path, working_path, data_type, status == 'importing', progress_callback, result_callback, info.source_id, import_id))
+		# t.start()
+		get_executor().submit(process_import, file_path, working_path, data_type, status == 'importing', progress_callback, result_callback, info.source_id, import_id)
 	except:
 		traceback.print_exc()
 		result_callback({
@@ -675,6 +680,8 @@ def approve_import(import_id=None):
 	})
 	db_session.execute(text("CALL update_custodian_feedback()"))
 	db_session.commit()
+	get_executor().submit(update_all_dataset_stats)
+	get_executor().submit(generate_archive_pdfs, data_import.source_id)
 
 	data_import.status_id = status_ids['approved']
 

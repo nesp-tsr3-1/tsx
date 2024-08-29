@@ -1,13 +1,14 @@
 import json, csv
 import csv
 from io import StringIO
-from flask import make_response, g, jsonify, session, current_app, jsonify, request
+from flask import make_response, g, session, current_app, jsonify, request
 from tsx.db.connect import Session
 from tsx.db import User
 from sqlalchemy import orm
 from werkzeug.local import LocalProxy
 import logging
 from sqlalchemy import text
+from flask_executor import Executor
 
 try:
 	from greenlet import getcurrent as _get_ident  # type: ignore
@@ -15,6 +16,13 @@ except ImportError:
 	from threading import get_ident as _get_ident  # type: ignore
 
 log = LocalProxy(lambda: current_app.logger)
+
+executor = None
+def get_executor():
+	global executor
+	if executor == None:
+		executor = Executor(current_app)
+	return executor
 
 def csv_response(rows, filename="export.csv"):
 	"""Generate CSV response from a list of row values"""
@@ -44,6 +52,20 @@ def csv_response(rows, filename="export.csv"):
 #
 #    db_session.execute(sql)
 db_session = orm.scoped_session(Session, scopefunc= _get_ident)
+
+# Simple interface to insert a row into a table based on a python dict
+def db_insert(table, row_dict):
+	keys, values = zip(*row_dict.items())
+
+	for key in [*keys, table]:
+		if not key.isidentifier():
+			raise ValueError("%s is not a supported identifier" % key)
+
+	cols = ", ".join("`%s`" % key for key in keys)
+	placeholders = ", ".join(":%s" % key for key in keys)
+	sql = "INSERT INTO `%s` (%s) VALUES (%s)" % (table, cols, placeholders)
+
+	db_session.execute(text(sql), row_dict)
 
 def get_user():
 	try:

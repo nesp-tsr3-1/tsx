@@ -1,17 +1,14 @@
-from flask import Blueprint
 from flask import Blueprint, jsonify, request, send_file, session, Response
-from tsx.api.util import db_session, get_user, get_roles, jsonify_rows
+from tsx.api.util import db_session, get_user, get_roles, jsonify_rows, db_insert
 from tsx.util import Bunch
 from tsx.api.validation import *
 from tsx.api.permissions import permitted
 from sqlalchemy import text
-from tsx.api import subset
 import json
-import pandas as pd
-import math
-import dataclasses
-from tsx.api.custodian_feedback_pdf import generate_pdf
+from tsx.api.custodian_feedback_pdf import generate_pdf, generate_archive_pdfs
 from tsx.api.custodian_feedback_shared import *
+from tsx.config import data_dir
+import os
 
 bp = Blueprint('custodian_feedback', __name__)
 
@@ -180,18 +177,25 @@ def form_pdf(form_id):
 			"Content-Disposition": "attachment; filename=TSX_Custodian_Feedback_%s.pdf" % form_id
 		})
 
-def db_insert(table, row_dict):
-	keys, values = zip(*row_dict.items())
+@bp.route('/custodian_feedback/forms/<form_id>/download', methods = ['GET'])
+def form_download(form_id):
+	user = get_user()
 
-	for key in [*keys, table]:
-		if not key.isidentifier():
-			raise ValueError("%s is not a supported identifier" % key)
+	if not permitted(user, 'view', 'custodian_feedback_form', form_id):
+		return "Not authorized", 401
 
-	cols = ", ".join("`%s`" % key for key in keys)
-	placeholders = ", ".join(":%s" % key for key in keys)
-	sql = "INSERT INTO `%s` (%s) VALUES (%s)" % (table, cols, placeholders)
+	file_name = download_file_name(form_id)
 
-	db_session.execute(text(sql), row_dict)
+	path = os.path.join(data_dir("custodian-feedback"), file_name)
+
+	if os.path.exists(path):
+		return send_file(path,
+			mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+			max_age=5,
+			as_attachment=True,
+			download_name=file_name)
+	else:
+		return "Not found", 404
 
 def parse_field(raw_value, field):
 	if raw_value is None:
@@ -233,6 +237,21 @@ def feedback_type_code(form_id):
 	if len(rows):
 		[(code,)] = rows
 		return code
+	else:
+		return None
+
+def download_file_name(form_id):
+	rows = db_session.execute(text("""
+		SELECT custodian_feedback.file_name
+		FROM custodian_feedback
+		WHERE custodian_feedback.id = :form_id
+	"""), {
+		'form_id': form_id
+	}).fetchall()
+
+	if len(rows):
+		[(file_name,)] = rows
+		return file_name
 	else:
 		return None
 
@@ -279,172 +298,15 @@ def update_form(form_id):
 
 # TODO: Trigger updating of dataset stats automatically as required
 @bp.route('/custodian_feedback/update_dataset_stats', methods = ['GET'])
-def update_dataset_stats_all():
+def update_dataset_stats_manual():
 	user = get_user()
 
 	if not permitted(user, 'generate', 'dataset_stats'):
 		return "Not authorized", 401
 
-	while True:
-		# Find a dataset that needs updating
-		rows = db_session.execute(text("""
-			SELECT DISTINCT t1_survey.source_id, t1_sighting.taxon_id, t1_survey.data_import_id
-			FROM t1_survey, t1_sighting
-			WHERE t1_sighting.survey_id = t1_survey.id
-			AND data_import_id IS NOT NULL
-			AND (t1_survey.source_id, t1_sighting.taxon_id, t1_survey.data_import_id) NOT IN (select source_id, taxon_id, data_import_id FROM dataset_stats)
-			LIMIT 1;
-			"""))
+	update_count = update_all_dataset_stats()
 
-		rows = list(rows)
-
-		if rows:
-			[(source_id, taxon_id, data_import_id)] = rows
-			update_dataset_stats(source_id, taxon_id, data_import_id)
-		else:
-			return 'OK', 200
-
-
-def processing_summary(source_id, taxon_id):
-	result = db_session.execute(text("""
-		SELECT DISTINCT
-			search_type.description AS search_type,
-			unit.description AS unit,
-			unit_type.description AS unit_type
-		FROM
-			t1_survey
-			JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id
-			JOIN t1_site ON t1_survey.site_id = t1_site.id
-			JOIN search_type ON t1_site.search_type_id = search_type.id
-			JOIN unit ON t1_sighting.unit_id = unit.id
-			LEFT JOIN unit_type ON unit.unit_type_id = unit_type.id
-		WHERE
-			t1_survey.source_id = :source_id
-			AND t1_sighting.taxon_id = :taxon_id
-		"""), {
-		'source_id': source_id,
-		'taxon_id': taxon_id
-	})
-
-	return [dict(row._mapping) for row in result]
-
-def site_management_summary(source_id, taxon_id):
-	result = db_session.execute(text("""
-		SELECT
-			management.description AS management_category,
-			t1_site.management_comments,
-			COUNT(DISTINCT t1_site.id) AS site_count
-		FROM
-			t1_survey
-			JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id
-			JOIN t1_site ON t1_survey.site_id = t1_site.id
-			JOIN management ON t1_site.management_id = management.id
-		WHERE
-			t1_survey.source_id = :source_id
-			AND t1_sighting.taxon_id = :taxon_id
-		GROUP BY
-			management_category, management_comments
-		"""), {
-		'source_id': source_id,
-		'taxon_id': taxon_id
-	})
-
-	return [dict(row._mapping) for row in result]
-
-def raw_data_stats(source_id, taxon_id):
-	result = db_session.execute(text("""
-		SELECT JSON_OBJECT(
-			'min_year', MIN(t1_survey.start_date_y),
-			'max_year', MAX(t1_survey.start_date_y),
-			'survey_count', COUNT(DISTINCT t1_survey.id),
-			'min_count', MIN(t1_sighting.`count`),
-			'max_count', MAX(t1_sighting.`count`),
-			'zero_counts', SUM(t1_sighting.`count` = 0)
-		) AS json
-		FROM
-			t1_survey
-			JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id
-		WHERE
-			t1_survey.source_id = :source_id
-			AND t1_sighting.taxon_id = :taxon_id
-		"""), {
-		'source_id': source_id,
-		'taxon_id': taxon_id
-	})
-
-	[(json_result,)] = result
-
-	return json.loads(json_result)
-
-def time_series_stats(lpi_path):
-	df = pd.read_csv(lpi_path)
-
-	year_cols = [col for col in df.columns if col.isdigit()]
-	gaps = (
-		# Un-pivot to ID,year,value
-		df.melt(id_vars=['ID'], value_vars=year_cols, var_name='year')
-			# Remove years without values
-			.loc[lambda df: df.value.notna()]
-			.drop(columns=['value'])
-			# Calculate consecutive differences between years
-			.sort_values(by=['ID', 'year'])
-			.assign(year=lambda df:pd.to_numeric(df.year))
-			.assign(year_diff = lambda df:df.year.diff() - 1)
-			# Only retain gaps of 1 year or more
-			.loc[lambda df: (df.ID.diff() == 0) & (df.year_diff > 0)]
-	)
-	evenness = gaps[['ID', 'year_diff']].groupby('ID').var().year_diff
-
-	return {
-		'time_series_count': len(df),
-		'time_series_length_mean': safe_float(df.TimeSeriesLength.mean()),
-		'time_series_length_std': safe_float(df.TimeSeriesLength.std()),
-		'time_series_sample_years_mean': safe_float(df.TimeSeriesSampleYears.mean()),
-		'time_series_sample_years_std': safe_float(df.TimeSeriesSampleYears.std()),
-		'time_series_completeness_mean': safe_float(df.TimeSeriesCompleteness.mean() * 100),
-		'time_series_completeness_std': safe_float(df.TimeSeriesCompleteness.std() * 100),
-		'time_series_sampling_evenness_mean': safe_float(evenness.mean()),
-		'time_series_sampling_evenness_std': safe_float(evenness.std())
-	}
-
-def safe_float(x):
-	x = float(x)
-	if math.isnan(x):
-		return 0
-	else:
-		return x
-
-def update_dataset_stats(source_id, taxon_id, data_import_id):
-	subset_params = {
-		'source_id': source_id,
-		'taxon_id': taxon_id
-	}
-
-	trend_path, lpi_path = subset.subset_generate_trend_sync(subset_params)
-
-	try:
-		with open(trend_path, 'r') as file:
-			trend_data = file.read()
-	except:
-		trend_data = None
-
-	# Generate monitoring consistency plot
-	stats = {
-		'monitoring_consistency': subset.monitoring_consistency_plot_json(subset_params),
-		'intensity_map': subset.subset_intensity_map_json(subset_params),
-		'time_series_stats': time_series_stats(lpi_path),
-		'raw_data_stats': raw_data_stats(source_id, taxon_id),
-		'trend': trend_data,
-		'processing_summary': processing_summary(source_id, taxon_id),
-		'site_management_summary': site_management_summary(source_id, taxon_id)
-	}
-	db_insert('dataset_stats', {
-		'source_id': source_id,
-		'taxon_id': taxon_id,
-		'data_import_id': data_import_id,
-		'stats_json': json.dumps(stats)
-	})
-	db_session.commit()
+	return 'Updated %s dataset stats' % update_count, 200
 
 
 @bp.route('/custodian_feedback/consent', methods = ['GET'])

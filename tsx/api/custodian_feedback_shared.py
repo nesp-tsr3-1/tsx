@@ -1,6 +1,13 @@
-from tsx.api.util import db_session
+from tsx.api.util import db_session, db_insert
 from tsx.api.validation import *
 from sqlalchemy import text
+from tsx.api import subset
+import json
+import pandas as pd
+import math
+import logging
+
+log = logging.getLogger(__name__)
 
 val_yn = validate_one_of('yes', 'no')
 val_ynu = validate_one_of('yes', 'no', 'unsure')
@@ -100,7 +107,7 @@ field_options = {
 	  "description": "Partially (for some of the survey period)"
 	}
   ],
-  "cost_data_provided": [
+  "monitoring_program_information_provided": [
 	{
 		"id": "provided",
 		"description": "I have provided answers to questions 17 to 32"
@@ -141,63 +148,87 @@ field_options = {
 		"id": "unsure",
 		"description": "Unsure"
 	}
+  ],
+  "admin_type": [
+  {
+    "id": "formal",
+    "description" : "Formal"
+  },
+  {
+    "id": "informal",
+    "description": "Informal"
+  }
   ]
 }
+
+def val_required_for_submit(value, field, context):
+	if context.submitting:
+		return validate_required(value, field, context)
 
 def val_required_integrated_only(value, field, context):
 	if context.submitting and context.feedback_type == 'integrated':
 		return validate_required(value, field, context)
 
+def validate_integer_or_unsure(min_value=None, max_value=None):
+	integer_validator = validate_integer(min_value=min_value, max_value=max_value)
+	def _validate_integer_or_unsure(value, field, context):
+		if type(value) == str and value.strip().strip('"\'').lower() == "unsure":
+				return None
+		result = integer_validator(value, field, context)
+		if result:
+			return result + ', or "Unsure"'
+	return _validate_integer_or_unsure
 
 form_fields = [
 	Field(
+		name='admin_type'),
+	Field(
 		name='citation_agree',
-		validators=[val_required_integrated_only, val_yn]),
+		validators=[val_required_for_submit, val_yn]),
 	Field(
 		name='citation_agree_comments',
 		validators=[]),
 	Field(
 		name='monitoring_for_trend',
-		validators=[val_required_integrated_only, val_ynu]),
+		validators=[val_required_for_submit, val_ynu]),
 	Field(
 		name='monitoring_for_trend_comments'),
 	Field(
 		name='analyse_own_trends',
-		validators=[val_required_integrated_only, val_yn]),
+		validators=[val_required_for_submit, val_yn]),
 	Field(
 		name='analyse_own_trends_comments'),
 	Field(
 		name='pop_1750',
-		type='int',
-		validators=[val_required_integrated_only, validate_integer(0,100)]),
+		validators=[val_required_for_submit, validate_integer_or_unsure(0,100)]),
 	Field(
 		name='data_summary_agree',
-		validators=[val_required_integrated_only, val_yn]),
+		validators=[val_required_for_submit, val_yn]),
 	Field(
 		name='data_summary_agree_comments'),
 	Field(
 		name='processing_agree',
-		validators=[val_required_integrated_only, val_yn]),
+		validators=[val_required_for_submit, val_ynu]),
 	Field(
 		name='processing_agree_comments'),
 	Field(
 		name='statistics_agree',
-		validators=[val_required_integrated_only, val_yn]),
+		validators=[val_required_for_submit, val_ynu]),
 	Field(
 		name='statistics_agree_comments'),
 	Field(
 		name='trend_agree',
-		validators=[val_required_integrated_only, val_ynu]),
+		validators=[val_required_for_submit, val_ynu]),
 	Field(
 		name='trend_agree_comments'),
 	Field(
 		name='start_year',
 		type='int',
-		validators=[val_required_integrated_only, validate_integer(1800,2100)]),
+		validators=[val_required_for_submit, validate_integer_or_unsure(1800,2100)]),
 	Field(
 		name='end_year',
 		type='int',
-		validators=[val_required_integrated_only, validate_integer(1800,2100)]),
+		validators=[val_required_for_submit, validate_integer_or_unsure(1800,2100)]),
 	Field(
 		name='standardisation_of_method_effort',
 		validators=[val_required_integrated_only]),
@@ -216,8 +247,23 @@ form_fields = [
 	Field(
 		name='data_suitability_comments'),
 
+
 	Field(
-		name='cost_data_provided'),
+		name='cost_data_provided',
+		validators=[val_yn]),
+	Field(
+		name='estimated_cost_dataset',
+		validators=[validate_integer_or_unsure()]),
+	Field(
+		name='cost_data_provided_comments'),
+	Field(
+		name='custodian_comments'),
+	Field(
+		name='internal_comments'),
+
+
+	Field(
+		name='monitoring_program_information_provided'),
 	Field(
 		name='effort_labour_paid_days_per_year',
 		type='int'),
@@ -351,3 +397,175 @@ def get_form_json_raw(form_id):
 
 	[(result,)] = rows
 	return result
+
+
+# ---- Dataset stats logic -----
+
+def update_all_dataset_stats():
+	count = 0
+	while True:
+		# Find a dataset that needs updating
+		rows = db_session.execute(text("""
+			SELECT DISTINCT t1_survey.source_id, t1_sighting.taxon_id, t1_survey.data_import_id
+			FROM t1_survey, t1_sighting
+			WHERE t1_sighting.survey_id = t1_survey.id
+			AND data_import_id IS NOT NULL
+			AND (t1_survey.source_id, t1_sighting.taxon_id, t1_survey.data_import_id) NOT IN (select source_id, taxon_id, data_import_id FROM dataset_stats)
+			LIMIT 1;
+			"""))
+
+		rows = list(rows)
+
+		if rows:
+			[(source_id, taxon_id, data_import_id)] = rows
+			update_dataset_stats(source_id, taxon_id, data_import_id)
+			count = count + 1
+		else:
+			break
+
+	return count
+
+
+
+def processing_summary(source_id, taxon_id):
+	result = db_session.execute(text("""
+		SELECT DISTINCT
+			search_type.description AS search_type,
+			unit.description AS unit,
+			unit_type.description AS unit_type
+		FROM
+			t1_survey
+			JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id
+			JOIN t1_site ON t1_survey.site_id = t1_site.id
+			JOIN search_type ON t1_site.search_type_id = search_type.id
+			JOIN unit ON t1_sighting.unit_id = unit.id
+			LEFT JOIN unit_type ON unit.unit_type_id = unit_type.id
+		WHERE
+			t1_survey.source_id = :source_id
+			AND t1_sighting.taxon_id = :taxon_id
+		"""), {
+		'source_id': source_id,
+		'taxon_id': taxon_id
+	})
+
+	return [dict(row._mapping) for row in result]
+
+def site_management_summary(source_id, taxon_id):
+	result = db_session.execute(text("""
+		SELECT
+			management.description AS management_category,
+			t1_site.management_comments,
+			COUNT(DISTINCT t1_site.id) AS site_count
+		FROM
+			t1_survey
+			JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id
+			JOIN t1_site ON t1_survey.site_id = t1_site.id
+			JOIN management ON t1_site.management_id = management.id
+		WHERE
+			t1_survey.source_id = :source_id
+			AND t1_sighting.taxon_id = :taxon_id
+		GROUP BY
+			management_category, management_comments
+		"""), {
+		'source_id': source_id,
+		'taxon_id': taxon_id
+	})
+
+	return [dict(row._mapping) for row in result]
+
+def raw_data_stats(source_id, taxon_id):
+	result = db_session.execute(text("""
+		SELECT JSON_OBJECT(
+			'min_year', MIN(t1_survey.start_date_y),
+			'max_year', MAX(t1_survey.start_date_y),
+			'survey_count', COUNT(DISTINCT t1_survey.id),
+			'min_count', MIN(t1_sighting.`count`),
+			'max_count', MAX(t1_sighting.`count`),
+			'zero_counts', SUM(t1_sighting.`count` = 0)
+		) AS json
+		FROM
+			t1_survey
+			JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id
+		WHERE
+			t1_survey.source_id = :source_id
+			AND t1_sighting.taxon_id = :taxon_id
+		"""), {
+		'source_id': source_id,
+		'taxon_id': taxon_id
+	})
+
+	[(json_result,)] = result
+
+	return json.loads(json_result)
+
+def time_series_stats(lpi_path):
+	df = pd.read_csv(lpi_path)
+
+	year_cols = [col for col in df.columns if col.isdigit()]
+	gaps = (
+		# Un-pivot to ID,year,value
+		df.melt(id_vars=['ID'], value_vars=year_cols, var_name='year')
+			# Remove years without values
+			.loc[lambda df: df.value.notna()]
+			.drop(columns=['value'])
+			# Calculate consecutive differences between years
+			.sort_values(by=['ID', 'year'])
+			.assign(year=lambda df:pd.to_numeric(df.year))
+			.assign(year_diff = lambda df:df.year.diff() - 1)
+			# Only retain gaps of 1 year or more
+			.loc[lambda df: (df.ID.diff() == 0) & (df.year_diff > 0)]
+	)
+	evenness = gaps[['ID', 'year_diff']].groupby('ID').var().year_diff
+
+	return {
+		'time_series_count': len(df),
+		'time_series_length_mean': safe_float(df.TimeSeriesLength.mean()),
+		'time_series_length_std': safe_float(df.TimeSeriesLength.std()),
+		'time_series_sample_years_mean': safe_float(df.TimeSeriesSampleYears.mean()),
+		'time_series_sample_years_std': safe_float(df.TimeSeriesSampleYears.std()),
+		'time_series_completeness_mean': safe_float(df.TimeSeriesCompleteness.mean() * 100),
+		'time_series_completeness_std': safe_float(df.TimeSeriesCompleteness.std() * 100),
+		'time_series_sampling_evenness_mean': safe_float(evenness.mean()),
+		'time_series_sampling_evenness_std': safe_float(evenness.std())
+	}
+
+def safe_float(x):
+	x = float(x)
+	if math.isnan(x):
+		return 0
+	else:
+		return x
+
+def update_dataset_stats(source_id, taxon_id, data_import_id):
+	log.info("Updating dataset stats for source_id=%s, taxon_id=%s, data_import_id=%s" % (source_id, taxon_id, data_import_id))
+
+	subset_params = {
+		'source_id': source_id,
+		'taxon_id': taxon_id
+	}
+
+	trend_path, lpi_path = subset.subset_generate_trend_sync(subset_params)
+
+	try:
+		with open(trend_path, 'r') as file:
+			trend_data = file.read()
+	except:
+		trend_data = None
+
+	# Generate monitoring consistency plot
+	stats = {
+		'monitoring_consistency': subset.monitoring_consistency_plot_json(subset_params),
+		'intensity_map': subset.subset_intensity_map_json(subset_params),
+		'time_series_stats': time_series_stats(lpi_path),
+		'raw_data_stats': raw_data_stats(source_id, taxon_id),
+		'trend': trend_data,
+		'processing_summary': processing_summary(source_id, taxon_id),
+		'site_management_summary': site_management_summary(source_id, taxon_id)
+	}
+	db_insert('dataset_stats', {
+		'source_id': source_id,
+		'taxon_id': taxon_id,
+		'data_import_id': data_import_id,
+		'stats_json': json.dumps(stats)
+	})
+	db_session.commit()
