@@ -4,11 +4,13 @@ from tsx.api.custodian_feedback_shared import get_form_json_raw, field_options, 
 import json
 from datetime import datetime
 import matplotlib.pyplot as plt
-from io import StringIO
+from io import StringIO, BytesIO
 import os
 from tsx.api.util import db_session
 from sqlalchemy import text
 from tsx.config import data_dir
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
 
 # These lines are necessary to stop MatplotLib from trying to initialize
 # GUI backend and crashing due to not being on the main thread:
@@ -202,14 +204,9 @@ def generate_pdf(form_id):
 	pdf.set_left_margin(pdf.w / 2 + 5)
 	pdf.set_right_margin(15)
 	pdf.set_x(pdf.w / 2 + 5)
-	# pdf.image(svg, w=pdf.epw)
-	pdf.set_fill_color("#EEEEEE")
-	rect_h = pdf.epw * 0.7
-	pdf.rect(pdf.get_x(), y + 4.5, pdf.epw, rect_h, style="F")
-	pdf.set_y(y + rect_h / 2)
-	pdf.set_font(font_name, size=8)
-	pdf.cell(w=pdf.epw, text="[Map]", align="C")
-	pdf.set_y(y + rect_h + 5.5)
+
+	png = intensity_map_png(form['stats']['intensity_map'])
+	pdf.image(png, w=pdf.epw)
 	pdf.ln()
 
 	pdf.set_font(font_name, size=8, style='I')
@@ -618,6 +615,41 @@ def trend_plot_svg(data):
 	fig.savefig(svg_data, format='svg')
 
 	return bytes(svg_data.getvalue(), encoding="utf8")
+
+def intensity_map_png(data):
+	xs = [p["lon"] for p in data]
+	ys = [p["lat"] for p in data]
+
+	map_projection = ccrs.AlbersEqualArea(
+		central_longitude=135,
+		central_latitude=-25,
+		standard_parallels=(-35,-10))
+
+	fig = plt.figure(figsize=(6, 4.5))
+	eps = 0.01
+	ax = fig.add_axes((eps, eps, 1 - 2 * eps, 1 - 2 * eps), projection=map_projection)
+
+	buffer = 7
+	minx = min(min(xs) - buffer, 110)
+	maxx = max(max(xs) + buffer, 160)
+	miny = min(min(ys) - buffer, -45)
+	maxy = max(max(ys) + buffer, -5)
+
+	ax.set_extent([minx, maxx, miny, maxy])
+	# ax.add_feature(cfeature.LAND)
+	# ax.add_feature(cfeature.OCEAN)
+	ax.coastlines()
+	ax.gridlines(draw_labels=False, dms=True, x_inline=False, y_inline=False, color='#00000040')
+
+	scale = 1.5
+	ax.plot(xs, ys, marker='o', linewidth=0, transform=ccrs.Geodetic(), mfc='#6C85CC40', mew=0,  markersize=10 * scale)
+	ax.plot(xs, ys, marker='o', linewidth=0, transform=ccrs.Geodetic(), mfc='#6C85CC80', mew=0,  markersize=9 * scale)
+	ax.plot(xs, ys, marker='o', linewidth=0, transform=ccrs.Geodetic(), mfc='#FD49FB80', mew=0, markersize=7 * scale)
+
+	png_data = BytesIO()
+	fig.savefig(png_data, format='png', dpi=180)
+	return png_data.getvalue()
+
 
 white = "#FFFFFF"
 tsx_green = "#266F6A"

@@ -27,6 +27,7 @@ pytest = "*"
 fpdf2 = "*"
 matplotlib = "*"
 flask-executor = "*"
+cartopy = "*"
 
 [dev-packages]
 
