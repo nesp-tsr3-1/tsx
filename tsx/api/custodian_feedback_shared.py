@@ -202,6 +202,8 @@ form_fields = [
 		name='pop_1750',
 		validators=[val_required_for_submit, validate_integer_or_unsure(0,100)]),
 	Field(
+		name='pop_1750_comments'),
+	Field(
 		name='data_summary_agree',
 		validators=[val_required_for_submit, val_yn]),
 	Field(
@@ -226,9 +228,13 @@ form_fields = [
 		type='int',
 		validators=[val_required_for_submit, validate_integer_or_unsure(1800,2100)]),
 	Field(
+		name='start_year_comments'),
+	Field(
 		name='end_year',
 		type='int',
 		validators=[val_required_for_submit, validate_integer_or_unsure(1800,2100)]),
+	Field(
+		name='end_year_comments'),
 	Field(
 		name='standardisation_of_method_effort',
 		validators=[val_required_integrated_only]),
