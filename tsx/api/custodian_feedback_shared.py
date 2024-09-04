@@ -13,101 +13,101 @@ val_yn = validate_one_of('yes', 'no')
 val_ynu = validate_one_of('yes', 'no', 'unsure')
 
 field_options = {
-  "standardisation_of_method_effort": [
+	"standardisation_of_method_effort": [
 	{
-	  "id": 6,
-	  "description": "Pre-defined sites/plots surveyed repeatedly through time using a single standardised method and effort across the whole monitoring program"
+		"id": 6,
+		"description": "Pre-defined sites/plots surveyed repeatedly through time using a single standardised method and effort across the whole monitoring program"
 	},
 	{
-	  "id": 5,
-	  "description": "Pre-defined sites/plots surveyed repeatedly through time with methods and effort standardised within site units, but not across program - i.e. different sites surveyed have different survey effort/methods"
+		"id": 5,
+		"description": "Pre-defined sites/plots surveyed repeatedly through time with methods and effort standardised within site units, but not across program - i.e. different sites surveyed have different survey effort/methods"
 	},
 	{
-	  "id": 4,
-	  "description": "Pre-defined sites/plots surveyed repeatedly through time with varying methods and effort"
+		"id": 4,
+		"description": "Pre-defined sites/plots surveyed repeatedly through time with varying methods and effort"
 	},
 	{
-	  "id": 3,
-	  "description": "Data collection using standardised methods and effort but surveys not site-based (i.e. surveys spatially ad-hoc). Post-hoc site grouping possible - e.g. a lot of fixed area/time searches conducted within a region but not at pre-defined sites"
+		"id": 3,
+		"description": "Data collection using standardised methods and effort but surveys not site-based (i.e. surveys spatially ad-hoc). Post-hoc site grouping possible - e.g. a lot of fixed area/time searches conducted within a region but not at pre-defined sites"
 	},
 	{
-	  "id": 2,
-	  "description": "Data collection using standardised methods and effort but surveys not site-based (i.e. surveys spatially ad-hoc). Post-hoc site grouping not possible"
+		"id": 2,
+		"description": "Data collection using standardised methods and effort but surveys not site-based (i.e. surveys spatially ad-hoc). Post-hoc site grouping not possible"
 	},
 	{
-	  "id": 1,
-	  "description": "Unstandardised methods/effort, surveys not site-based"
+		"id": 1,
+		"description": "Unstandardised methods/effort, surveys not site-based"
 	}
-  ],
-  "objective_of_monitoring": [
+	],
+	"objective_of_monitoring": [
 	{
-	  "id": 4,
-	  "description": "Monitoring for targeted conservation management"
+		"id": 4,
+		"description": "Monitoring for targeted conservation management"
 	},
 	{
-	  "id": 3,
-	  "description": "Monitoring for general conservation management – ‘surveillance’ monitoring"
+		"id": 3,
+		"description": "Monitoring for general conservation management – ‘surveillance’ monitoring"
 	},
 	{
-	  "id": 2,
-	  "description": "Baseline monitoring"
+		"id": 2,
+		"description": "Baseline monitoring"
 	},
 	{
-	  "id": 1,
-	  "description": "Monitoring for community engagement"
+		"id": 1,
+		"description": "Monitoring for community engagement"
 	},
 	{
-	  "id": "NA",
-	  "description": "Not defined"
+		"id": "NA",
+		"description": "Not defined"
 	}
-  ],
-  "consistency_of_monitoring": [
+	],
+	"consistency_of_monitoring": [
 	{
-	  "id": 4,
-	  "description": "Balanced; all (or virtually all) sites surveyed in each year sampled (no, or virtually no, site turnover)"
+		"id": 4,
+		"description": "Balanced; all (or virtually all) sites surveyed in each year sampled (no, or virtually no, site turnover)"
 	},
 	{
-	  "id": 3,
-	  "description": "Imbalanced (low turnover); sites surveyed consistently through time as established, but new sites are added to program with time."
+		"id": 3,
+		"description": "Imbalanced (low turnover); sites surveyed consistently through time as established, but new sites are added to program with time."
 	},
 	{
-	  "id": 2,
-	  "description": "Imbalanced (high turnover); new sites are surveyed with time, but monitoring of older sites is often not always maintained."
+		"id": 2,
+		"description": "Imbalanced (high turnover); new sites are surveyed with time, but monitoring of older sites is often not always maintained."
 	},
 	{
-	  "id": 1,
-	  "description": "Highly Imbalanced (very high turnover); different sites surveyed in different sampling periods. Sites are generally not surveyed consistently through time (highly biased)"
+		"id": 1,
+		"description": "Highly Imbalanced (very high turnover); different sites surveyed in different sampling periods. Sites are generally not surveyed consistently through time (highly biased)"
 	}
-  ],
-  "monitoring_frequency_and_timing": [
+	],
+	"monitoring_frequency_and_timing": [
 	{
-	  "id": 3,
-	  "description": "Monitoring frequency and timing appropriate for taxon"
+		"id": 3,
+		"description": "Monitoring frequency and timing appropriate for taxon"
 	},
 	{
-	  "id": 2,
-	  "description": "Monitoring frequency or timing inappropriate for taxon for majority of data."
+		"id": 2,
+		"description": "Monitoring frequency or timing inappropriate for taxon for majority of data."
 	},
 	{
-	  "id": 1,
-	  "description": "Monitoring ad-hoc; no pattern to surveys for majority of data (incidental)"
+		"id": 1,
+		"description": "Monitoring ad-hoc; no pattern to surveys for majority of data (incidental)"
 	}
-  ],
-  "absences_recorded": [
+	],
+	"absences_recorded": [
 	{
-	  "id": "yes",
-	  "description": "Yes"
+		"id": "yes",
+		"description": "Yes"
 	},
 	{
-	  "id": "no",
-	  "description": "No"
+		"id": "no",
+		"description": "No"
 	},
 	{
-	  "id": "partially",
-	  "description": "Partially (for some of the survey period)"
+		"id": "partially",
+		"description": "Partially (for some of the survey period)"
 	}
-  ],
-  "monitoring_program_information_provided": [
+	],
+	"monitoring_program_information_provided": [
 	{
 		"id": "provided",
 		"description": "I have provided answers to questions 17 to 32"
@@ -124,8 +124,8 @@ field_options = {
 		"id": "not_provided",
 		"description": "I will not be providing answers to questions 17 to 32"
 	}
-  ],
-  "yes_no": [
+	],
+	"yes_no": [
 	{
 		"id": "yes",
 		"description": "Yes"
@@ -134,8 +134,8 @@ field_options = {
 		"id": "no",
 		"description": "No"
 	}
-  ],
-  "yes_no_unsure": [
+	],
+	"yes_no_unsure": [
 	{
 		"id": "yes",
 		"description": "Yes"
@@ -148,17 +148,17 @@ field_options = {
 		"id": "unsure",
 		"description": "Unsure"
 	}
-  ],
-  "admin_type": [
-  {
-    "id": "formal",
-    "description" : "Formal"
-  },
-  {
-    "id": "informal",
-    "description": "Informal"
-  }
-  ]
+	],
+	"admin_type": [
+	{
+		"id": "formal",
+		"description" : "Formal"
+	},
+	{
+		"id": "informal",
+		"description": "Informal"
+	}
+	]
 }
 
 def val_required_for_submit(value, field, context):
