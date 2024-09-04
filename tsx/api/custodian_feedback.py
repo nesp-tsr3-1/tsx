@@ -173,6 +173,17 @@ def form_pdf(form_id):
 	if not permitted(user, 'view', 'custodian_feedback_form', form_id):
 		return "Not authorized", 401
 
+	file_name = download_file_name(form_id)
+
+	if file_name:
+		path = os.path.join(data_dir("custodian-feedback"), file_name)
+		if os.path.exists(path):
+			return send_file(path,
+				mimetype='application/pdf',
+				max_age=5,
+				as_attachment=True,
+				download_name=file_name)
+
 	pdf = generate_pdf(form_id)
 
 	return Response(pdf,
