@@ -9,6 +9,7 @@ from werkzeug.local import LocalProxy
 import logging
 from sqlalchemy import text
 from flask_executor import Executor
+import pytz
 
 try:
 	from greenlet import getcurrent as _get_ident  # type: ignore
@@ -106,3 +107,6 @@ def get_request_args_or_body():
 		return request.get_json()
 	else:
 		return request.args
+
+def server_timezone():
+	return pytz.timezone('Australia/Sydney')
