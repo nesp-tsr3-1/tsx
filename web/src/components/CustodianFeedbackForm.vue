@@ -193,11 +193,13 @@
               <table v-if="form?.stats?.processing_summary" class='table is-fullwidth is-striped is-bordered'>
                 <thead>
                   <tr>
-                    <th>Search Type Description (monitoring method)</th>
+                    <th>Search Type Description
+                      <p class="content is-size-7 has-text-weight-normal">(Monitoring method)</p></th>
                     <th>Unit of Measurement</th>
                     <th>Unit Type</th>
                     <th>Data Processing Type</th>
-                    <th>Method of Aggregation</th>
+                    <th>Method of Aggregation
+                      <p class="content is-size-7 has-text-weight-normal">(How data were converted to an annual unit for the purpose of trend generation)</p></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -205,8 +207,8 @@
                     <td>{{row.search_type}}</td>
                     <td>{{row.unit}}</td>
                     <td>{{row.unit_type}}</td>
-                    <td></td>
-                    <td></td>
+                    <td>{{row.data_processing_type}}</td>
+                    <td>{{row.aggregation_method}}</td>
                   </tr>
                 </tbody>
               </table>

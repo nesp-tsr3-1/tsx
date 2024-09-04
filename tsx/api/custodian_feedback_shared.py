@@ -438,26 +438,50 @@ def update_all_dataset_stats():
 
 def processing_summary(source_id, taxon_id):
 	result = db_session.execute(text("""
-		SELECT DISTINCT
-			search_type.description AS search_type,
-			unit.description AS unit,
-			unit_type.description AS unit_type
+		SELECT
+				search_type.description AS search_type,
+				unit.description AS unit,
+				unit_type.description AS unit_type,
+				data_processing_type.description AS data_processing_type,
+				response_variable_type.description AS aggregation_method,
+				COUNT(*) = COUNT(DISTINCT start_date_y, site_id) AS annual_data
 		FROM
-			t1_survey
-			JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id
-			JOIN t1_site ON t1_survey.site_id = t1_site.id
-			JOIN search_type ON t1_site.search_type_id = search_type.id
-			JOIN unit ON t1_sighting.unit_id = unit.id
-			LEFT JOIN unit_type ON unit.unit_type_id = unit_type.id
+				t1_survey
+				JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id
+				JOIN t1_site ON t1_survey.site_id = t1_site.id
+				JOIN search_type ON t1_site.search_type_id = search_type.id
+				JOIN unit ON t1_sighting.unit_id = unit.id
+				JOIN source ON t1_survey.source_id = source.id
+				LEFT JOIN unit_type ON unit.unit_type_id = unit_type.id
+				LEFT JOIN data_processing_type ON source.data_processing_type_id = data_processing_type.id
+				LEFT JOIN processing_method pm
+					ON pm.search_type_id = t1_site.search_type_id
+		AND pm.unit_id = t1_sighting.unit_id
+		AND pm.taxon_id = t1_sighting.taxon_id
+		AND pm.source_id = t1_survey.source_id
+		LEFT JOIN response_variable_type ON pm.response_variable_type_id = response_variable_type.id
 		WHERE
-			t1_survey.source_id = :source_id
-			AND t1_sighting.taxon_id = :taxon_id
+				t1_survey.source_id = :source_id
+				AND t1_sighting.taxon_id = :taxon_id
+		GROUP BY
+				source.id,
+				t1_sighting.taxon_id,
+				search_type.id,
+				unit.id,
+				unit_type.id,
+				pm.response_variable_type_id
 		"""), {
 		'source_id': source_id,
 		'taxon_id': taxon_id
 	})
 
-	return [dict(row._mapping) for row in result]
+	summary_data = [dict(row._mapping) for row in result]
+
+	for row in summary_data:
+		if row['annual_data']:
+			row['aggregation_method'] = 'Annual data was provided, no aggregation to an annual unit was required.'
+
+	return summary_data
 
 def site_management_summary(source_id, taxon_id):
 	result = db_session.execute(text("""
