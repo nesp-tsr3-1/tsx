@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request, send_file, session, Response
-from tsx.api.util import db_session, get_user, get_roles, jsonify_rows, db_insert
+from tsx.api.util import db_session, get_user, get_roles, jsonify_rows, db_insert, server_timezone
 from tsx.util import Bunch
 from tsx.api.validation import *
 from tsx.api.permissions import permitted
@@ -9,6 +9,10 @@ from tsx.api.custodian_feedback_pdf import generate_pdf, generate_archive_pdfs
 from tsx.api.custodian_feedback_shared import *
 from tsx.config import data_dir
 import os
+from io import StringIO
+import csv
+from datetime import datetime
+import pytz
 
 bp = Blueprint('custodian_feedback', __name__)
 
@@ -175,6 +179,56 @@ def form_pdf(form_id):
 		mimetype='application/pdf',
 		headers={
 			"Content-Disposition": "attachment; filename=TSX_Custodian_Feedback_%s.pdf" % form_id
+		})
+
+def snake_to_capital_case(snake):
+	parts = []
+	for word in snake.split('_'):
+		if word in ["id"]:
+			parts.append(word.upper())
+		else:
+			parts.append(word.capitalize())
+	return ''.join(parts)
+
+
+def local_date_str(utc_timestamp):
+	ts = datetime.fromisoformat(utc_timestamp)
+	return ts.astimezone(server_timezone()).date().isoformat()
+
+@bp.route('/custodian_feedback/forms/<form_id>/csv', methods = ['GET'])
+def form_csv(form_id):
+	user = get_user()
+
+	if not permitted(user, 'view', 'custodian_feedback_form', form_id):
+		return "Not authorized", 401
+
+	form = json.loads(get_form_json_raw(form_id))
+
+	data = {
+		'CustodianFeedbackID': form['id'],
+		'DatasetID': form['dataset_id'],
+		'SourceID': form['source']['id'],
+		'TaxonID': form['taxon']['id'],
+		'FeedbackType': form['feedback_type']['code'],
+		'DateSurveySent': local_date_str(form['time_created']),
+		'DateFeedbackReceived': local_date_str(form['last_updated'])
+	}
+
+	for field in form_fields:
+		data[snake_to_capital_case(field.name)] = form['answers'].get(field.name, '')
+		# Ignore fields after internal_comments
+		if field.name == 'internal_comments':
+			break
+
+	output = StringIO()
+	writer = csv.DictWriter(output, fieldnames=data.keys())
+	writer.writeheader()
+	writer.writerow(data)
+
+	return Response(output.getvalue(),
+		mimetype='application/csv',
+		headers={
+			"Content-Disposition": "attachment; filename=TSX_Custodian_Feedback_%s.csv" % form_id
 		})
 
 @bp.route('/custodian_feedback/forms/<form_id>/download', methods = ['GET'])

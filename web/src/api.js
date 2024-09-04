@@ -312,6 +312,10 @@ export function custodianFeedbackFormDownloadURL(id) {
   return ROOT_URL + '/custodian_feedback/forms/' + id + '/download'
 }
 
+export function custodianFeedbackFormCSVURL(id) {
+  return ROOT_URL + '/custodian_feedback/forms/' + id + '/csv'
+}
+
 export function updateCustodianForm(id, data) {
   return put('/custodian_feedback/forms/' + id, data)
 }

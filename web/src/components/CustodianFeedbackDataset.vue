@@ -234,6 +234,8 @@ export default {
         return api.custodianFeedbackFormPDFURL(form.id)
       } else if(form.feedback_type.code == 'spreadsheet') {
         return api.custodianFeedbackFormDownloadURL(form.id)
+      } else if(form.feedback_type.code == 'admin') {
+        return api.custodianFeedbackFormCSVURL(form.id)
       }
     },
     downloadLabel(form) {
