@@ -357,6 +357,9 @@ def get_form_json_raw(form_id):
 		SELECT JSON_OBJECT(
 			'id', :form_id,
 			'dataset_id', dataset_id,
+			'time_created', DATE_FORMAT(custodian_feedback.time_created, '%%Y-%%m-%%d %%H:%%i:%%s+00:00'),
+			'last_modified', DATE_FORMAT(custodian_feedback.last_modified, '%%Y-%%m-%%d %%H:%%i:%%s+00:00'),
+			'last_updated', DATE_FORMAT(custodian_feedback.last_updated, '%%Y-%%m-%%d %%H:%%i:%%s+00:00'),
 			'source', JSON_OBJECT(
 				'id', source.id,
 				'description', source.description,

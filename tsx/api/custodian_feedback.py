@@ -47,7 +47,7 @@ def taxon_datasets():
 					'description', integrated_status.description
 				),
 				'time_created', DATE_FORMAT(integrated.time_created, "%Y-%m-%d %H:%i:%sZ"),
-				'last_modified', DATE_FORMAT(integrated.last_modified, "%Y-%m-%d %H:%i:%sZ"),
+				'last_modified', DATE_FORMAT(COALESCE(integrated.last_updated, integrated.time_created), "%Y-%m-%d %H:%i:%sZ"),
 				'admin_feedback_status', JSON_OBJECT(
 					'code', admin_status.code,
 					'description', admin_status.description
@@ -94,7 +94,7 @@ def taxon_dataset(data_id):
 					'description', feedback_status.description
 				),
 				'time_created', DATE_FORMAT(custodian_feedback.time_created, "%Y-%m-%d %H:%i:%sZ"),
-				'last_modified', DATE_FORMAT(custodian_feedback.last_modified, "%Y-%m-%d %H:%i:%sZ")
+				'last_modified', DATE_FORMAT(COALESCE(custodian_feedback.last_updated, custodian_feedback.time_created), "%Y-%m-%d %H:%i:%sZ")
 			) AS form
 			FROM custodian_feedback
 			JOIN feedback_status ON feedback_status.id = custodian_feedback.feedback_status_id
@@ -288,7 +288,8 @@ def update_form(form_id):
 
 	db_session.execute(text("""
 		UPDATE custodian_feedback
-		SET feedback_status_id = (SELECT id FROM feedback_status WHERE code = :new_status_code)
+		SET feedback_status_id = (SELECT id FROM feedback_status WHERE code = :new_status_code),
+		SET last_updated = NOW()
 		WHERE id = :form_id
 	"""), { 'form_id': form_id, 'new_status_code': new_status_code })
 
