@@ -30,7 +30,8 @@ def taxon_datasets():
 				taxon_id,
 				dataset_id,
 				MAX(custodian_feedback.id * (feedback_type.code = 'integrated')) AS last_integrated_id,
-				MAX(custodian_feedback.id * (feedback_type.code = 'admin')) AS admin_id
+				MAX(custodian_feedback.id * (feedback_type.code = 'admin')) AS admin_id,
+				EXISTS (SELECT 1 FROM t1_survey, t1_sighting WHERE t1_survey.id = t1_sighting.survey_id AND t1_survey.source_id = custodian_feedback.source_id AND t1_sighting.taxon_id = custodian_feedback.taxon_id) AS data_present
 			FROM custodian_feedback
 			JOIN feedback_type ON feedback_type.id = custodian_feedback.feedback_type_id
 			GROUP BY source_id, taxon_id
@@ -55,7 +56,8 @@ def taxon_datasets():
 				'admin_feedback_status', JSON_OBJECT(
 					'code', admin_status.code,
 					'description', admin_status.description
-				)
+				),
+				'data_present', taxon_dataset.data_present
 			) AS item
 			FROM taxon_dataset
 			JOIN custodian_feedback integrated ON integrated.id = taxon_dataset.last_integrated_id
@@ -117,7 +119,8 @@ def taxon_dataset(data_id):
 			'taxon', JSON_OBJECT(
 				'id', taxon.id,
 				'scientific_name', taxon.scientific_name
-			)
+			),
+			'data_present', EXISTS (SELECT 1 FROM t1_survey, t1_sighting WHERE t1_survey.id = t1_sighting.survey_id AND t1_survey.source_id = source.id AND t1_sighting.taxon_id = taxon.id)
 		)
 		FROM source, taxon
 		WHERE source.id = :source_id

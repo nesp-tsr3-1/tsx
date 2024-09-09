@@ -25,6 +25,9 @@
             <p class="content">
               The forms below are based on your dataset
               <router-link :to="{ name: 'SourceView', params: { id: taxonDataset.source.id }}">{{taxonDataset.source.description}}</router-link></p>
+            <p v-if="!taxonDataset.data_present" class="notification is-warning">
+              The most recent data import for this dataset does not contain any records with this taxon.
+            </p>
 
             <h3 class="title">Form History</h3>
 

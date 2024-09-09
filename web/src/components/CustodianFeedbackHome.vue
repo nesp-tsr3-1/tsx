@@ -48,6 +48,7 @@
                 <tr v-for="taxonDataset in sortedTaxonDatasets" @click="handleDatasetClick(taxonDataset, $event)">
                   <td>
                     <span class='tag'>{{taxonDataset.id}}</span>
+                    <span v-if="!taxonDataset.data_present" class='tag is-warning' title='Taxon not present in latest data import'>Taxon Dataset removed</span>
                     <p>
                       <template v-for="[nonMatch, match] in taxonDataset.descriptionParts">
                         <span style="white-space: pre-wrap;">{{nonMatch}}</span>
