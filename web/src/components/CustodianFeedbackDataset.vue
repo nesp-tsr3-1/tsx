@@ -59,7 +59,7 @@
                   <td>{{form.feedback_status.description}}</td>
                   <td>{{form.feedback_type.description}}</td>
                   <td>
-                    <a class="button is-small" download v-if="downloadURL(form)" :href="downloadURL(form)">{{downloadLabel(form)}}</a>
+                    <a class="button is-small" target="_blank" v-if="downloadURL(form)" :href="downloadURL(form)">{{downloadLabel(form)}}</a>
                   </td>
                 </tr>
               </tbody>
