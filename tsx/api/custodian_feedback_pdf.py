@@ -260,9 +260,9 @@ def generate_pdf(form_id):
 			row = table.row()
 			row.cell(item['search_type'])
 			row.cell(item['unit'])
-			row.cell(item['unit'])
-			row.cell('')
-			row.cell('')
+			row.cell(item['unit_type'])
+			row.cell(item['data_processing_type'])
+			row.cell(item['aggregation_method'])
 
 	pdf.ln()
 
