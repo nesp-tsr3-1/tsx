@@ -600,6 +600,7 @@ def consistency_plot_svg(data):
 	fig = plt.figure(figsize=(6, 4.5))
 	ax = fig.gca()
 	ax.yaxis.get_major_locator().set_params(integer=True)
+	ax.xaxis.get_major_locator().set_params(integer=True)
 	plt.xlabel('Year')
 	plt.ylabel('Sites (time series)')
 	plt.grid(True)
