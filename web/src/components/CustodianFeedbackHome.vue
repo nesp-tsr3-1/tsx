@@ -27,15 +27,25 @@
             <table class='table is-fullwidth is-striped is-hoverable clickable' v-if="filteredTaxonDatasets.length > 0">
               <thead>
                 <tr>
-                  <th>Taxon Dataset</th>
-                  <th>Latest form created</th>
-                  <th>Latest form modified</th>
-                  <th>Latest form status</th>
-                  <th>Admin status</th>
+                  <th v-on:click="sortBy('description')">
+                    Taxon Dataset {{sortIcon('description')}}
+                  </th>
+                  <th v-on:click="sortBy('time_created')">
+                    Latest form created {{sortIcon('time_created')}}
+                  </th>
+                  <th v-on:click="sortBy('last_modified')">
+                    Latest form modified {{sortIcon('last_modified')}}
+                  </th>
+                  <th v-on:click="sortBy('integrated_feedback_status')">
+                    Latest form status {{sortIcon('integrated_feedback_status')}}
+                  </th>
+                  <th v-on:click="sortBy('admin_feedback_status')">
+                    Admin status {{sortIcon('admin_feedback_status')}}
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="taxonDataset in filteredTaxonDatasets" @click="handleDatasetClick(taxonDataset, $event)">
+                <tr v-for="taxonDataset in sortedTaxonDatasets" @click="handleDatasetClick(taxonDataset, $event)">
                   <td>
                     <span class='tag'>{{taxonDataset.id}}</span>
                     <p>
@@ -70,6 +80,24 @@
 import * as api from '../api.js'
 import { handleLinkClick, formatDateTime, debounce, searchStringToRegex, matchParts } from '../util.js'
 
+let sortMappings = {
+  description(ds) {
+    return ds.source.description
+  },
+  last_modified(ds) {
+    return ds.last_modified
+  },
+  time_created(ds) {
+    return ds.time_created
+  },
+  integrated_feedback_status(ds) {
+    return ds.integrated_feedback_status.description
+  },
+  admin_feedback_status(ds) {
+    return ds.admin_feedback_status.description
+  },
+}
+
 export default {
   name: 'CustodianFeedbackHome',
   data () {
@@ -78,7 +106,11 @@ export default {
       status: 'loading',
       taxonDatasets: [],
       searchText: '',
-      debouncedSearchText: ''
+      debouncedSearchText: '',
+      sort: {
+        key: 'time_created',
+        asc: false
+      }
     }
   },
   created() {
@@ -121,6 +153,15 @@ export default {
         }
         return this.taxonDatasets
       }
+    },
+    sortedTaxonDatasets() {
+      let key = this.sort.key
+      let mapping = sortMappings[key]
+      let result = this.filteredTaxonDatasets.slice().sort((a, b) => (mapping(a) || '').localeCompare(mapping(b) || ''))
+      if(!this.sort.asc) {
+        result.reverse()
+      }
+      return result
     }
   },
   watch: {
@@ -143,7 +184,24 @@ export default {
       let url = "/custodian_feedback/" + taxonDataset.id
       handleLinkClick(evt, url, this.$router)
     },
-    formatDateTime
+    formatDateTime,
+    sortIcon(key) {
+      if(this.sort.key === key) {
+        return this.sort.asc ? '▲' : '▼'
+      } else {
+        return ''
+      }
+    },
+    sortBy(key) {
+      if(this.sort.key === key) {
+        this.sort.asc = !this.sort.asc
+      } else {
+        this.sort = {
+          key: key,
+          asc: true
+        }
+      }
+    }
   }
 }
 </script>
