@@ -145,9 +145,7 @@ def delete_source(source_id=None):
 	if not permitted(user, 'delete', 'source', source_id):
 		return "Not authorized", 401
 
-	db_session.execute(text("""DELETE FROM user_source WHERE source_id = :source_id"""), { 'source_id': source_id })
-	db_session.execute(text("""DELETE FROM data_import WHERE source_id = :source_id"""), { 'source_id': source_id })
-	db_session.execute(text("""DELETE FROM source WHERE id = :source_id"""), { 'source_id': source_id })
+	db_session.execute(text("""CALL delete_source(:source_id)"""), { 'source_id': source_id })
 	remove_orphaned_monitoring_programs()
 	db_session.execute(text("CALL update_custodian_feedback()"))
 	db_session.commit()
