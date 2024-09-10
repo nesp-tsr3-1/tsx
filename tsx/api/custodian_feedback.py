@@ -32,7 +32,11 @@ def taxon_datasets():
 				dataset_id,
 				MAX(custodian_feedback.id * (feedback_type.code = 'integrated')) AS last_integrated_id,
 				MAX(custodian_feedback.id * (feedback_type.code = 'admin')) AS admin_id,
-				EXISTS (SELECT 1 FROM t1_survey, t1_sighting WHERE t1_survey.id = t1_sighting.survey_id AND t1_survey.source_id = custodian_feedback.source_id AND t1_sighting.taxon_id = custodian_feedback.taxon_id) AS data_present
+				(
+					EXISTS (SELECT 1 FROM t1_survey, t1_sighting WHERE t1_survey.id = t1_sighting.survey_id AND t1_survey.source_id = custodian_feedback.source_id AND t1_sighting.taxon_id = custodian_feedback.taxon_id)
+					OR
+					EXISTS (SELECT 1 FROM t2_survey, t2_sighting WHERE t2_survey.id = t2_sighting.survey_id AND t2_survey.source_id = custodian_feedback.source_id AND t2_sighting.taxon_id = custodian_feedback.taxon_id)
+				) AS data_present
 			FROM custodian_feedback
 			JOIN feedback_type ON feedback_type.id = custodian_feedback.feedback_type_id
 			GROUP BY source_id, taxon_id
@@ -61,10 +65,10 @@ def taxon_datasets():
 				'data_present', taxon_dataset.data_present
 			) AS item
 			FROM taxon_dataset
-			JOIN custodian_feedback integrated ON integrated.id = taxon_dataset.last_integrated_id
-			JOIN feedback_status integrated_status ON integrated_status.id = integrated.feedback_status_id
-			JOIN source ON integrated.source_id = source.id
-			JOIN taxon ON integrated.taxon_id = taxon.id
+			JOIN source ON taxon_dataset.source_id = source.id
+			JOIN taxon ON taxon_dataset.taxon_id = taxon.id
+			LEFT JOIN custodian_feedback integrated ON integrated.id = taxon_dataset.last_integrated_id
+			LEFT JOIN feedback_status integrated_status ON integrated_status.id = integrated.feedback_status_id
 			LEFT JOIN custodian_feedback admin ON admin.id = taxon_dataset.admin_id
 			LEFT JOIN feedback_status admin_status ON admin_status.id = admin.feedback_status_id
 		)
@@ -121,7 +125,11 @@ def taxon_dataset(data_id):
 				'id', taxon.id,
 				'scientific_name', taxon.scientific_name
 			),
-			'data_present', EXISTS (SELECT 1 FROM t1_survey, t1_sighting WHERE t1_survey.id = t1_sighting.survey_id AND t1_survey.source_id = source.id AND t1_sighting.taxon_id = taxon.id)
+			'data_present', (
+				EXISTS (SELECT 1 FROM t1_survey, t1_sighting WHERE t1_survey.id = t1_sighting.survey_id AND t1_survey.source_id = source.id AND t1_sighting.taxon_id = taxon.id)
+				OR
+				EXISTS (SELECT 1 FROM t2_survey, t2_sighting WHERE t2_survey.id = t2_sighting.survey_id AND t2_survey.source_id = source.id AND t2_sighting.taxon_id = taxon.id)
+			)
 		)
 		FROM source, taxon
 		WHERE source.id = :source_id
