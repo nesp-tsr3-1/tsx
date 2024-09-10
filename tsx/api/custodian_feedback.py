@@ -13,6 +13,7 @@ from io import StringIO
 import csv
 from datetime import datetime
 import pytz
+import re
 
 bp = Blueprint('custodian_feedback', __name__)
 
@@ -169,14 +170,31 @@ def form(form_id):
 
 	return Response(form_json, mimetype='application/json')
 
+def sanitise_file_name_string(s):
+	s = re.sub(r"[/\\?%*:|\"<>\x7F\x00-\x1F]", "_", s)
+	s = re.sub(r"[-_\s]+", "_", s)
+	return s
+
+def download_file_name_prefix(form):
+	species = form['taxon']['scientific_name']
+	dataset_id = form['dataset_id']
+	form_id = form['id']
+	status = form['feedback_status']['code']
+	date = local_date_str(form['time_created'])
+	type = form['feedback_type']['code']
+	unsanitised_filename = "TSX_Custodian_Feedback_%s_%s_%s_%s_%s_%s" % (species, dataset_id, type, form_id, status, date)
+	return sanitise_file_name_string(unsanitised_filename)
+
+
 @bp.route('/custodian_feedback/forms/<form_id>/pdf', methods = ['GET'])
 def form_pdf(form_id):
 	user = get_user()
+	form = json.loads(get_form_json_raw(form_id))
 
 	if not permitted(user, 'view', 'custodian_feedback_form', form_id):
 		return "Not authorized", 401
 
-	file_name = download_file_name(form_id)
+	file_name = local_file_name(form_id)
 
 	if file_name:
 		path = os.path.join(data_dir("custodian-feedback"), file_name)
@@ -192,7 +210,7 @@ def form_pdf(form_id):
 	return Response(pdf,
 		mimetype='application/pdf',
 		headers={
-			"Content-Disposition": "attachment; filename=TSX_Custodian_Feedback_%s.pdf" % form_id
+			"Content-Disposition": "attachment; filename=%s.pdf" % download_file_name_prefix(form)
 		})
 
 def snake_to_capital_case(snake):
@@ -242,7 +260,7 @@ def form_csv(form_id):
 	return Response(output.getvalue(),
 		mimetype='application/csv',
 		headers={
-			"Content-Disposition": "attachment; filename=TSX_Custodian_Feedback_%s.csv" % form_id
+			"Content-Disposition": "attachment; filename=%s.csv" % download_file_name_prefix(form)
 		})
 
 @bp.route('/custodian_feedback/forms/<form_id>/download', methods = ['GET'])
@@ -252,7 +270,9 @@ def form_download(form_id):
 	if not permitted(user, 'view', 'custodian_feedback_form', form_id):
 		return "Not authorized", 401
 
-	file_name = download_file_name(form_id)
+	form = json.loads(get_form_json_raw(form_id))
+
+	file_name = local_file_name(form_id)
 
 	path = os.path.join(data_dir("custodian-feedback"), file_name)
 
@@ -261,7 +281,7 @@ def form_download(form_id):
 			mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 			max_age=5,
 			as_attachment=True,
-			download_name=file_name)
+			download_name="%s.xlsx" % download_file_name_prefix(form))
 	else:
 		return "Not found", 404
 
@@ -308,7 +328,7 @@ def feedback_type_code(form_id):
 	else:
 		return None
 
-def download_file_name(form_id):
+def local_file_name(form_id):
 	rows = db_session.execute(text("""
 		SELECT custodian_feedback.file_name
 		FROM custodian_feedback
