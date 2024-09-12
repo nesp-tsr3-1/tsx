@@ -324,6 +324,10 @@ export function custodianFeedbackFormDefinition() {
   return get('/custodian_feedback/form_definition')
 }
 
+export function custodianFeedbackPreviousAnswers(id) {
+  return get('/custodian_feedback/previous_answers', { form_id: id })
+}
+
 export function custodianFeedbackConsent() {
   return get('/custodian_feedback/consent')
 }

@@ -18,13 +18,6 @@
               <button class="button is-primary" :disabled="!canSubmit" @click="submitAndClose">Submit</button>
             </div>
             <p class="help is-danger" v-if="saveStatus == 'error'">Failed to save form</p>
-            <div class="notification content">
-              <h4>TODO</h4>
-              <ul>
-                <li>Trend plot editing</li>
-                <li>Ability to load previous answers</li>
-              </ul>
-            </div>
           </div>
         </div>
         <div class="column is-8">
@@ -589,6 +582,22 @@
                 </div>
               </div>
 
+              <div v-if="showPreviousAnswersMenu && previousAnswers.length > 0" class="field has-addons">
+                <div class="control indent">
+                  <div class="select">
+                    <select v-model="selectedPreviousAnswer">
+                      <option :value="null">Select form…</option>
+                      <option v-for="option in previousAnswers" :value="option.id">{{option.description}}</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="control">
+                  <button class="button is-dark" :disabled="disableCopyAnswersButton" @click="copyAnswers">{{copyAnswersButtonLabel}}</button>
+                </div>
+              </div>
+              <div class="notification" v-if="showPreviousAnswersMenu && previousAnswers.length == 0">
+                No previously submitted answers found for this dataset.
+              </div>
               <hr>
 
               <div class="notification is-info is-light" v-if="disableMonitoringProgramFields">
@@ -846,12 +855,16 @@ export default {
       fieldErrors: {},
       options: null,
       formDefinition: null,
-      showAdminTypeDialog: false
+      showAdminTypeDialog: false,
+
+      previousAnswers: [],
+      selectedPreviousAnswer: null,
+      copyAnswerStatus: 'idle'
     }
   },
   created() {
     api.custodianFeedbackFormDefinition().then(formDefinition => {
-      this.formDefinition
+      this.formDefinition = formDefinition
       this.options = formDefinition.options
       this.refresh()
     })
@@ -920,8 +933,17 @@ export default {
       return this.notAdmin
     },
     disableMonitoringProgramFields() {
-      let x = this.formData.cost_data_provided
+      let x = this.formData.monitoring_program_information_provided
       return !(x == "provided" || x == "provided_copy")
+    },
+    showPreviousAnswersMenu() {
+      return this.formData.monitoring_program_information_provided == "provided_copy"
+    },
+    disableCopyAnswersButton() {
+      return this.selectedPreviousAnswer == null || this.copyAnswerStatus != 'idle'
+    },
+    copyAnswersButtonLabel() {
+      return this.copyAnswerStatus == 'idle' ? 'Copy Answers' : 'Copying…'
     }
   },
   watch: {
@@ -956,6 +978,7 @@ export default {
         console.log(error.json)
         this.status = 'error'
       })
+      api.custodianFeedbackPreviousAnswers(this.formId).then((answers) => this.previousAnswers = answers)
     },
     formatDateTime,
     formatDecimal(x) {
@@ -1013,8 +1036,6 @@ export default {
           currentSection = section
         }
 
-        console.log(currentSection)
-
         for(let section of sections) {
           section.link.classList.toggle('current', section === currentSection)
         }
@@ -1034,6 +1055,18 @@ export default {
     switchToFormal() {
       this.formData.admin_type = 'formal'
       this.showAdminTypeDialog = false
+    },
+    copyAnswers() {
+      this.copyAnswerStatus = 'loading'
+      api.custodianFeedbackForm(this.selectedPreviousAnswer).then((formData) => {
+        let fieldNames = this.formDefinition.fields.map(f => f.name)
+        let index = fieldNames.indexOf('monitoring_program_information_provided')
+        for(let field of fieldNames.slice(index + 1)) {
+          this.formData[field] = formData.answers[field]
+        }
+      }).finally(() => {
+        this.copyAnswerStatus = 'idle'
+      })
     }
   }
 }

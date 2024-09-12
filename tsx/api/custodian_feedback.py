@@ -407,6 +407,42 @@ def update_dataset_stats_manual():
 
 	return 'Updated %s dataset stats' % update_count, 200
 
+@bp.route('/custodian_feedback/previous_answers', methods = ['GET'])
+def get_previous_answers():
+	user = get_user()
+
+	form_id = request.args.get('form_id')
+
+	if not form_id:
+		return "form_id parameter is required", 400
+
+	if not permitted(user, 'view', 'custodian_feedback_form', form_id):
+		return "Not authorized", 401
+
+	rows = db_session.execute(text("""
+		WITH items AS (
+			SELECT JSON_OBJECT(
+				'id', old_feedback.id,
+				'description', CONCAT(old_feedback.dataset_id, ' ', taxon.scientific_name, ' ', DATE_FORMAT(CONVERT_TZ(COALESCE(old_feedback.last_updated, old_feedback.time_created), '+00:00', 'Australia/Sydney'), "%d/%m/%Y"))
+			) item
+			FROM custodian_feedback, custodian_feedback old_feedback
+			JOIN feedback_status ON old_feedback.feedback_status_id = feedback_status.id
+			JOIN feedback_type ON old_feedback.feedback_type_id = feedback_type.id
+			JOIN custodian_feedback_answers ON custodian_feedback_answers.custodian_feedback_id = old_feedback.id
+			JOIN taxon ON taxon.id = old_feedback.taxon_id
+			WHERE custodian_feedback.source_id = old_feedback.source_id
+			AND old_feedback.id != custodian_feedback.id
+			AND feedback_status.code IN ("complete", "archived")
+			AND feedback_type.code = "integrated"
+			AND custodian_feedback_answers.monitoring_program_information_provided IN ("provided", "provided_copy")
+			AND custodian_feedback.id = :form_id
+			ORDER BY old_feedback.time_created DESC
+		)
+		SELECT JSON_ARRAYAGG(item) FROM items
+	"""), { 'form_id': form_id })
+
+	[(result,)] = rows
+	return Response(result or "[]", mimetype='application/json')
 
 @bp.route('/custodian_feedback/consent', methods = ['GET'])
 def get_consent():
