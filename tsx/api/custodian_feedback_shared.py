@@ -267,6 +267,8 @@ form_fields = [
 	Field(
 		name='internal_comments'),
 
+	Field(
+		name='monitoring_program_information_contact'),
 
 	Field(
 		name='monitoring_program_information_provided'),

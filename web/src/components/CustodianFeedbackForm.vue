@@ -582,6 +582,12 @@
                 </div>
               </div>
 
+              <div class="field" v-if="formData.monitoring_program_information_provided == 'please_contact'">
+                <div class="control indent">
+                  <input class="input" type="text" placeholder="Enter contact phone number or email address" v-model="formData.monitoring_program_information_contact">
+                </div>
+              </div>
+
               <div v-if="showPreviousAnswersMenu && previousAnswers.length > 0" class="field has-addons">
                 <div class="control indent">
                   <div class="select">
