@@ -575,6 +575,7 @@ def process_import_async(import_id, status):
 			))
 
 		if new_status == 'approved':
+			update_latest_approved_data_import(import_id)
 			db_session.execute(text("CALL update_custodian_feedback()"))
 			db_session.commit()
 			update_all_dataset_stats()
@@ -676,6 +677,7 @@ def approve_import(import_id=None):
 		'status_id': status_ids['approved'],
 		'import_id': import_id
 	})
+	update_latest_approved_data_import(import_id)
 	db_session.execute(text("CALL update_custodian_feedback()"))
 	db_session.commit()
 	get_executor().submit(update_all_dataset_stats)
@@ -684,6 +686,15 @@ def approve_import(import_id=None):
 	data_import.status_id = status_ids['approved']
 
 	return jsonify(data_import_json(data_import))
+
+def update_latest_approved_data_import(import_id):
+	db_session.execute(text("""
+		REPLACE INTO source_latest_approved_import (source_id, data_import_id)
+		SELECT data_import.source_id, data_import.id
+		FROM data_import
+		WHERE data_import.id = :import_id
+	"""), { 'import_id': import_id })
+
 
 def data_import_json(data_import):
 	result = {

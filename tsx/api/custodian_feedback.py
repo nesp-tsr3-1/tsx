@@ -27,19 +27,17 @@ def taxon_datasets():
 	rows = db_session.execute(text("""
 		WITH taxon_dataset AS (
 			SELECT
-				source_id,
-				taxon_id,
+				custodian_feedback.source_id,
+				custodian_feedback.taxon_id,
 				dataset_id,
 				MAX(custodian_feedback.id * (feedback_type.code = 'integrated')) AS last_integrated_id,
 				MAX(custodian_feedback.id * (feedback_type.code = 'admin')) AS admin_id,
-				(
-					EXISTS (SELECT 1 FROM t1_survey, t1_sighting WHERE t1_survey.id = t1_sighting.survey_id AND t1_survey.source_id = custodian_feedback.source_id AND t1_sighting.taxon_id = custodian_feedback.taxon_id)
-					OR
-					EXISTS (SELECT 1 FROM t2_survey, t2_sighting WHERE t2_survey.id = t2_sighting.survey_id AND t2_survey.source_id = custodian_feedback.source_id AND t2_sighting.taxon_id = custodian_feedback.taxon_id)
-				) AS data_present
+				data_import_taxon.taxon_id IS NOT NULL AS data_present
 			FROM custodian_feedback
 			JOIN feedback_type ON feedback_type.id = custodian_feedback.feedback_type_id
-			GROUP BY source_id, taxon_id
+			LEFT JOIN source_latest_approved_import ON source_latest_approved_import.source_id = custodian_feedback.source_id
+			LEFT JOIN data_import_taxon ON data_import_taxon.data_import_id = source_latest_approved_import.data_import_id AND data_import_taxon.taxon_id = custodian_feedback.taxon_id
+			GROUP BY custodian_feedback.source_id, custodian_feedback.taxon_id
 		),
 		json_items AS (
 			SELECT JSON_OBJECT(
@@ -126,9 +124,13 @@ def taxon_dataset(data_id):
 				'scientific_name', taxon.scientific_name
 			),
 			'data_present', (
-				EXISTS (SELECT 1 FROM t1_survey, t1_sighting WHERE t1_survey.id = t1_sighting.survey_id AND t1_survey.source_id = source.id AND t1_sighting.taxon_id = taxon.id)
-				OR
-				EXISTS (SELECT 1 FROM t2_survey, t2_sighting WHERE t2_survey.id = t2_sighting.survey_id AND t2_survey.source_id = source.id AND t2_sighting.taxon_id = taxon.id)
+				EXISTS (
+					SELECT 1
+					FROM data_import_taxon, source_latest_approved_import
+					WHERE data_import_taxon.data_import_id = source_latest_approved_import.data_import_id
+					AND data_import_taxon.taxon_id = :taxon_id
+					AND source_latest_approved_import.source_id = :source_id
+				)
 			)
 		)
 		FROM source, taxon
@@ -385,7 +387,7 @@ def update_form(form_id):
 	db_session.execute(text("""
 		UPDATE custodian_feedback
 		SET feedback_status_id = (SELECT id FROM feedback_status WHERE code = :new_status_code),
-		SET last_updated = NOW()
+		last_updated = NOW()
 		WHERE id = :form_id
 	"""), { 'form_id': form_id, 'new_status_code': new_status_code })
 

@@ -248,6 +248,8 @@ class Importer:
 
 		else:
 			if self.commit:
+				if self.data_import_id:
+					session.execute(text('CALL update_data_import_taxon(:id)'), { 'id': self.data_import_id })
 				self.log.info("Committing changes")
 				session.commit()
 			else:
