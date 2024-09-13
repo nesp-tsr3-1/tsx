@@ -47,7 +47,12 @@
               <tbody>
                 <tr v-for="taxonDataset in sortedTaxonDatasets" @click="handleDatasetClick(taxonDataset, $event)">
                   <td>
-                    <span class='tag'>{{taxonDataset.id}}</span>
+                    <span class='tag'>
+                      <template v-for="[nonMatch, match] in taxonDataset.idParts">
+                        <span style="white-space: pre-wrap;">{{nonMatch}}</span>
+                        <b style="white-space: pre-wrap;">{{match}}</b>
+                      </template>
+                    </span>
                     <span v-if="!taxonDataset.data_present" class='tag is-warning' title='Taxon not present in latest data import'>Taxon Dataset removed</span>
                     <p>
                       <template v-for="[nonMatch, match] in taxonDataset.descriptionParts">
@@ -131,17 +136,18 @@ export default {
   computed: {
     filteredTaxonDatasets() {
       let search = this.debouncedSearchText
-      console.log(search)
       if(search) {
         let searchRegex = searchStringToRegex(search)
 
         function filterDataset(ds) {
           return ds.source.description.match(searchRegex) ||
-            ds.taxon.scientific_name.match(searchRegex)
+            ds.taxon.scientific_name.match(searchRegex) ||
+            ds.id.match(searchRegex)
         }
 
         let matchingDatasets = this.taxonDatasets.filter(filterDataset)
         for(let dataset of matchingDatasets) {
+          dataset.idParts = matchParts(dataset.id, searchRegex)
           dataset.descriptionParts = matchParts(dataset.source.description, searchRegex)
           dataset.taxonParts = matchParts(dataset.taxon.scientific_name, searchRegex)
         }
@@ -149,6 +155,7 @@ export default {
         return matchingDatasets
       } else {
         for(let dataset of this.taxonDatasets) {
+          dataset.idParts = [[dataset.id, ""]]
           dataset.descriptionParts = [[dataset.source.description, ""]]
           dataset.taxonParts = [[dataset.taxon.scientific_name, ""]]
         }
