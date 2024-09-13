@@ -39,7 +39,7 @@
                   <th v-on:click="sortBy('integrated_feedback_status')">
                     Latest form status {{sortIcon('integrated_feedback_status')}}
                   </th>
-                  <th v-on:click="sortBy('admin_feedback_status')">
+                  <th v-if="isAdmin" v-on:click="sortBy('admin_feedback_status')">
                     Admin status {{sortIcon('admin_feedback_status')}}
                   </th>
                 </tr>
@@ -65,7 +65,7 @@
                   <td>{{formatDateTime(taxonDataset.time_created)}}</td>
                   <td>{{formatDateTime(taxonDataset.last_modified)}}</td>
                   <td>{{taxonDataset.integrated_feedback_status.description}}</td>
-                  <td>{{taxonDataset.admin_feedback_status?.description}}</td>
+                  <td v-if="isAdmin">{{taxonDataset.admin_feedback_status?.description}}</td>
                 </tr>
               </tbody>
             </table>
@@ -163,6 +163,9 @@ export default {
         result.reverse()
       }
       return result
+    },
+    isAdmin() {
+      return this.currentUser?.is_admin
     }
   },
   watch: {
