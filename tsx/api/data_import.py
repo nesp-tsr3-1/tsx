@@ -52,8 +52,6 @@ def get_sources():
 	if not permitted(user, 'list', 'source'):
 		return "Not authorized", 401
 
-	db_session.execute(text("SET time_zone = '+00:00'"))
-
 	program_id = request.args.get('program_id')
 
 	rows = db_session.execute(
@@ -164,8 +162,6 @@ def get_source_imports(source_id=None):
 	if source == None:
 		return "Not found", 404
 
-	db_session.execute(text("SET time_zone = '+00:00'"))
-
 	rows = db_session.execute(text("""SELECT
 		data_import.id,
 		data_import.filename,
@@ -194,8 +190,6 @@ def get_source_processing_notes(source_id=None):
 
 	if source == None:
 		return "Not found", 404
-
-	db_session.execute(text("SET time_zone = '+00:00'"))
 
 	rows = db_session.execute(text("""SELECT
 		notes.id,

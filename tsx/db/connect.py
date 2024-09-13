@@ -42,7 +42,9 @@ def get_session_maker(database_config=None):
 
     if database_config not in cached_session_makers:
         url = get_database_url(database_config=database_config)
-        connect_args = {}
+        connect_args = {
+            'time_zone': '+00:00'
+        }
         if url.startswith("mysql+mysqlconnector"):
             connect_args['use_pure'] = True
         engine = create_engine(url,
