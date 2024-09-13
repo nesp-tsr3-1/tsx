@@ -264,13 +264,13 @@ def form_csv(form_id):
 	form = json.loads(get_form_json_raw(form_id))
 
 	data = {
-		'CustodianFeedbackID': form['id'],
-		'DatasetID': form['dataset_id'],
+		'FeedbackDataID': form['dataset_id'],
+		'FeedbackFormID': form['dataset_id'] + "_" + form['feedback_type']['code'] + "_" + form['id'],
 		'SourceID': form['source']['id'],
 		'TaxonID': form['taxon']['id'],
 		'FeedbackType': form['feedback_type']['code'],
 		'DateSurveySent': local_date_str(form['time_created']),
-		'DateFeedbackReceived': local_date_str(form['last_updated'])
+		'DateFeedbackReceived': local_date_str(form['last_updated'] or form['time_created'])
 	}
 
 	for field in form_fields:
