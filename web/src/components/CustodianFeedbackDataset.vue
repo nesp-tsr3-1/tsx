@@ -126,7 +126,7 @@
                 </div>
                 <div class="field">
                   <div class="control">
-                    <button class="button is-primary" v-if="canSaveConsent" @click="saveConsent">Save</button>
+                    <button class="button is-primary" :disabled="!canSaveConsent" @click="saveConsent">Save</button>
                   </div>
                 </div>
                 <p class="help is-danger" v-if="showConsentPrompt">Please complete and save the consent form above in order to access the custodian feedback form.</p>
