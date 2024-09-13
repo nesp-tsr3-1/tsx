@@ -25,7 +25,19 @@ def taxon_datasets():
 		return "Not authorized", 401
 
 	rows = db_session.execute(text("""
-		WITH taxon_dataset AS (
+		WITH source_access AS (
+			SELECT source_id
+			FROM user_source
+			WHERE user_id = :user_id
+		),
+		is_admin AS (
+			SELECT EXISTS (SELECT 1
+			FROM user_role, role
+			WHERE user_role.user_id = :user_id
+			AND user_role.role_id = role.id
+			AND role.description = 'Administrator') AS is_admin
+		),
+		taxon_dataset AS (
 			SELECT
 				custodian_feedback.source_id,
 				custodian_feedback.taxon_id,
@@ -37,6 +49,11 @@ def taxon_datasets():
 			JOIN feedback_type ON feedback_type.id = custodian_feedback.feedback_type_id
 			LEFT JOIN source_latest_approved_import ON source_latest_approved_import.source_id = custodian_feedback.source_id
 			LEFT JOIN data_import_taxon ON data_import_taxon.data_import_id = source_latest_approved_import.data_import_id AND data_import_taxon.taxon_id = custodian_feedback.taxon_id
+			WHERE (
+				custodian_feedback.source_id IN (SELECT source_id FROM source_access)
+				OR
+				(SELECT is_admin FROM is_admin)
+			)
 			GROUP BY custodian_feedback.source_id, custodian_feedback.taxon_id
 		),
 		json_items AS (
@@ -71,7 +88,7 @@ def taxon_datasets():
 			LEFT JOIN feedback_status admin_status ON admin_status.id = admin.feedback_status_id
 		)
 		SELECT JSON_ARRAYAGG(item) FROM json_items
-	"""))
+	"""), { 'user_id': user.id })
 
 	[(result,)] = rows
 	return Response(result, mimetype='application/json')

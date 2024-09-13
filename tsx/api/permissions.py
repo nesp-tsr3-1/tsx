@@ -30,6 +30,16 @@ def is_custodian_of_source(user_id, source_id):
 		'user_id': user_id
 		}).fetchall()) > 0
 
+def is_custodian_of_form(user_id, form_id):
+	return len(db_session.execute(
+		text("""SELECT 1 FROM custodian_feedback
+		JOIN user_source ON user_source.source_id = custodian_feedback.source_id
+		WHERE custodian_feedback.id = :form_id
+		AND user_source.user_id = :user_id"""), {
+		'form_id': form_id,
+		'user_id': user_id
+		}).fetchall()) > 0
+
 def permitted(user, action, resource_type, resource_id=None):
 	if user == None:
 		return False
@@ -70,5 +80,16 @@ def permitted(user, action, resource_type, resource_id=None):
 			return notes.user_id == user.id
 		except:
 			return False
+
+	if resource_type == 'custodian_feedback_dataset':
+		if action in ('list'):
+			return True
+		if action in ('view'):
+			(source_id, taxon_id) = resource_id.split('_', 1)
+			return is_custodian_of_source(user.id, source_id)
+
+	if resource_type == 'custodian_feedback_form':
+		if action in ('view', 'update'):
+			return resource_id != None and is_custodian_of_form(user.id, resource_id)
 
 	return False
