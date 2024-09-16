@@ -1542,7 +1542,7 @@ CREATE TABLE IF NOT EXISTS `data_import_taxon` (
   CONSTRAINT `fk_data_import_taxon_data_import1`
     FOREIGN KEY (`data_import_id`)
     REFERENCES `data_import` (`id`)
-    ON DELETE NO ACTION
+    ON DELETE CASCADE
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_data_import_taxon_taxon1`
     FOREIGN KEY (`taxon_id`)
