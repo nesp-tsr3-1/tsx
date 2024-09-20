@@ -18,6 +18,16 @@
           </div>
 
           <div v-if="status === 'loaded'">
+            <div v-if="taxonDatasets.length == 0" class="columns">
+              <div class="column content">
+                <p>
+                  No taxon datasets found.
+                </p>
+                <p v-if="!isAdmin">
+                  Note: To view a taxon dataset you must be a custodian of the dataset <strong>and</strong> it must have an data import that has been approved.
+                </p>
+              </div>
+            </div>
 
             <div v-if="taxonDatasets.length > 0" class="columns">
               <p class="column title is-6">Showing {{filteredTaxonDatasets.length}} / {{taxonDatasets.length}} taxon datasets</p>
