@@ -681,10 +681,18 @@
                   <label class="label">Effort: How much time on average per year was spent on project labour, i.e. data collection in the field? </label>
                   <div class="control indent">
                     <div class="subfield">
-                      <label>a. Days/year paid labour:</label> <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_labour_paid_days_per_year">
+                      <label>a. Days/year paid labour:</label>
+                      <div>
+                        <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_labour_paid_days_per_year">
+                        <p class="help is-danger" v-if="fieldErrors.effort_labour_paid_days_per_year">{{fieldErrors.effort_labour_paid_days_per_year}}</p>
+                      </div>
                     </div>
                     <div class="subfield">
-                      <label>b. Days/year volunteered time:</label> <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_labour_volunteer_days_per_year">
+                      <label>b. Days/year volunteered time:</label>
+                      <div>
+                        <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_labour_volunteer_days_per_year">
+                        <p class="help is-danger" v-if="fieldErrors.effort_labour_volunteer_days_per_year">{{fieldErrors.effort_labour_volunteer_days_per_year}}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -693,10 +701,18 @@
                   <label class="label">Effort: How much time on average per year was spent on project overheads, e.g. data collation and dataset maintenance? </label>
                   <div class="control indent">
                     <div class="subfield">
-                      <label>a. Days/year paid labour:</label> <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_overheads_paid_days_per_year">
+                      <label>a. Days/year paid labour:</label>
+                      <div>
+                        <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_overheads_paid_days_per_year">
+                        <p class="help is-danger" v-if="fieldErrors.effort_overheads_paid_days_per_year">{{fieldErrors.effort_overheads_paid_days_per_year}}</p>
+                      </div>
                     </div>
                     <div class="subfield">
-                      <label>b. Days/year volunteered time:</label> <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_overheads_volunteer_days_per_year">
+                      <label>b. Days/year volunteered time:</label>
+                      <div>
+                        <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_overheads_volunteer_days_per_year">
+                        <p class="help is-danger" v-if="fieldErrors.effort_overheads_volunteer_days_per_year">{{fieldErrors.effort_overheads_volunteer_days_per_year}}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -705,10 +721,18 @@
                   <label class="label">Effort: Approximately how many people were involved in the last bout of monitoring (including both field and office work)</label>
                   <div class="control indent">
                     <div class="subfield">
-                      <label>a. Paid staff:</label> <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_paid_staff_count">
+                      <label>a. Paid staff:</label>
+                      <div>
+                        <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_paid_staff_count">
+                        <p class="help is-danger" v-if="fieldErrors.effort_paid_staff_count">{{fieldErrors.effort_paid_staff_count}}</p>
+                      </div>
                     </div>
                     <div class="subfield">
-                      <label>b. Volunteers:</label> <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_volunteer_count">
+                      <label>b. Volunteers:</label>
+                      <div>
+                        <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_volunteer_count">
+                        <p class="help is-danger" v-if="fieldErrors.effort_volunteer_count">{{fieldErrors.effort_volunteer_count}}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -717,6 +741,7 @@
                   <label class="label">Funding: How much do you think in AUD$ a single survey costs (not counting in-kind support)?</label>
                   <div class="control indent">
                     <input class="input" type="text" placeholder="Enter your answer" v-model="formData.funding_cost_per_survey_aud">
+                    <p class="help is-danger" v-if="fieldErrors.funding_cost_per_survey_aud">{{fieldErrors.funding_cost_per_survey_aud}}</p>
                   </div>
                 </div>
 
@@ -724,6 +749,7 @@
                   <label class="label">Funding: Can you estimate in AUD$ the total investment in the dataset to date (again not counting in-kind support)?</label>
                   <div class="control indent">
                     <input class="input" type="text" placeholder="Enter your answer" v-model="formData.funding_total_investment_aud">
+                    <p class="help is-danger" v-if="fieldErrors.funding_total_investment_aud">{{fieldErrors.funding_total_investment_aud}}</p>
                   </div>
                 </div>
 
@@ -757,7 +783,10 @@
                     </div>
                     <div class="subfield">
                       <label>e. Can you estimate the total number of funding sources so far?:</label>
-                      <input class="input" type="text" placeholder="Enter your answer" v-model="formData.funding_source_count">
+                      <div>
+                        <input class="input" type="text" placeholder="Enter your answer" v-model="formData.funding_source_count">
+                        <p class="help is-danger" v-if="fieldErrors.funding_source_count">{{fieldErrors.funding_source_count}}</p>
+                      </div>
                     </div>
                   </div>
                 </div>

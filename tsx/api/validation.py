@@ -71,6 +71,42 @@ def validate_integer(min_value=None, max_value=None):
 
 	return _validate_integer
 
+def validate_decimal(min_value=None, max_value=None, max_dp=None):
+	def _validate_decimal(value, field, context):
+		ok = True
+		if value_present(value):
+			try:
+				x = float(value)
+				if min_value != None:
+					ok = ok and x >= min_value
+				if max_value != None:
+					ok = ok and x >= max_value
+			except ValueError:
+				ok = False
+
+			if max_dp != None:
+				if type(value) == str and '.' in value:
+					if len(value.split('.')[1]) > max_dp:
+						ok = False
+
+			if not ok:
+				if min_value != None:
+					if max_value != None:
+						criteria = " between %s and %s (inclusive)" % (min_value, max_value)
+					else:
+						criteria = " greater than or equal to %s" % min_value
+				else:
+					if max_value != None:
+						criteria = " less than or equal to %s" % max_value
+					else:
+						criteria + ""
+
+				if max_dp != None:
+					criteria += " (up to 2 decimal places)"
+
+				return "Must be a number%s" % criteria
+	return _validate_decimal
+
 
 def validate_fields(fields, body, context=None):
 	errors = {}

@@ -274,28 +274,36 @@ form_fields = [
 		name='monitoring_program_information_provided'),
 	Field(
 		name='effort_labour_paid_days_per_year',
-		type='int'),
+		type='int',
+		validators=[validate_integer(min_value=0, max_value=365)]),
 	Field(
 		name='effort_labour_volunteer_days_per_year',
-		type='int'),
+		type='int',
+		validators=[validate_integer(min_value=0)]),
 	Field(
 		name='effort_overheads_paid_days_per_year',
-		type='int'),
+		type='int',
+		validators=[validate_integer(min_value=0)]),
 	Field(
 		name='effort_overheads_volunteer_days_per_year',
-		type='int'),
+		type='int',
+		validators=[validate_integer(min_value=0)]),
 	Field(
 		name='effort_paid_staff_count',
-		type='int'),
+		type='int',
+		validators=[validate_integer(min_value=0)]),
 	Field(
 		name='effort_volunteer_count',
-		type='int'),
+		type='int',
+		validators=[validate_integer(min_value=0)]),
 	Field(
 		name='funding_cost_per_survey_aud',
-		type='decimal'),
+		type='decimal',
+		validators=[validate_decimal(min_value=0,max_dp=2)]),
 	Field(
 		name='funding_total_investment_aud',
-		type='decimal'),
+		type='decimal',
+		validators=[validate_decimal(min_value=0,max_dp=2)]),
 	Field(
 		name='funding_source_government_grants',
 		validators=[val_yn]),
@@ -309,7 +317,8 @@ form_fields = [
 		name='funding_source_other'),
 	Field(
 		name='funding_source_count',
-		type='int'),
+		type='int',
+		validators=[validate_integer(min_value=0)]),
 	Field(
 		name='leadership'),
 	Field(

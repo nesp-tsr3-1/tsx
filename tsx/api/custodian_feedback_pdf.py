@@ -297,7 +297,7 @@ def generate_pdf(form_id):
 	# (pdf.unbreakable() doesn't work with get_y())
 	for doc in avoid_break(pdf):
 		numbered_question(doc, 6, "Do you agree with how your data were handled? If no, please suggest an alternative method of aggregation.")
-		multiple_choice_options(doc, field_options['yes_no'], form['answers'].get('processing_agree'))
+		multiple_choice_options(doc, field_options['yes_no_unsure'], form['answers'].get('processing_agree'))
 
 		text_in_box(doc, get_answer(form, 'processing_agree_comments'))
 		doc.ln()
@@ -369,7 +369,7 @@ def generate_pdf(form_id):
 	pdf.ln()
 
 	numbered_question(pdf, 7, "Do the above statistics appear representative of your dataset?")
-	multiple_choice_options(pdf, field_options['yes_no'], form['answers'].get('statistics_agree'))
+	multiple_choice_options(pdf, field_options['yes_no_unsure'], form['answers'].get('statistics_agree'))
 
 	text_in_box(pdf, get_answer(form, 'statistics_agree_comments'))
 	pdf.ln()
