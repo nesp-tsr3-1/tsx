@@ -51,7 +51,7 @@ class PDF(FPDF):
 		self.set_fill_color(white) # This is needed for text color to be correct, don't know why
 		self.cell(text="www.tsx.org.au", new_y="NEXT", new_x="LEFT", h=5)
 		self.set_font(font_name, size=7)
-		self.cell(text="E tsx@uq.edu.au | @AusTSX | The University of Queensland, Long Pocket Precinct, Level 5 Foxtail Bld #1019 | 80 Meiers Rd, Indooroopilly QLD 4068 Australia", new_x="LEFT")
+		self.cell(text="E tsx@tern.org.au | @AusTSX | The University of Queensland, Long Pocket Precinct, Level 5 Foxtail Bld #1019 | 80 Meiers Rd, Indooroopilly QLD 4068 Australia", new_x="LEFT")
 		self.set_fill_color("#F2F2F2")
 		self.rect(x=0, y=self.h-20, w=self.w, h=20, style="F")
 		self.set_fill_color("#000000")
