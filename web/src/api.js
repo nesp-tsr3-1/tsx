@@ -328,14 +328,6 @@ export function custodianFeedbackPreviousAnswers(id) {
   return get('/custodian_feedback/previous_answers', { form_id: id })
 }
 
-export function custodianFeedbackConsent() {
-  return get('/custodian_feedback/consent')
-}
-
-export function updateCustodianFeedbackConsent(data) {
-  return put('/custodian_feedback/consent', data)
-}
-
 export function upload(file, progressCallback) {
   // Flask seems to need files to be uploaded as multipart/form-data for some reason..
   var data = new FormData()

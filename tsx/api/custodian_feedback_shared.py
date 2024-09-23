@@ -347,7 +347,12 @@ form_fields = [
 		name='co_benefits_other_species',
 		validators=[val_yn]),
 	Field(
-		name='co_benefits_other_species_comments')
+		name='co_benefits_other_species_comments'),
+	Field(
+		name='consent_given',
+		type='boolean'),
+	Field(
+		name='consent_name')
 ]
 
 def sql_select_clause(identifier, type):
