@@ -627,6 +627,8 @@ def trend_plot_svg(data):
 	plt.grid(True)
 	plt.plot(years, trend)
 	plt.gca().set_xlim(years[0], years[-1])
+	ax = fig.gca()
+	ax.xaxis.get_major_locator().set_params(integer=True)
 	# Note: hatch fill doesn't work because it produces an SVG that PyPDF can't render
 	plt.fill_between(years, lower, upper, color="#EEEEEE")
 
