@@ -110,7 +110,7 @@ field_options = {
 	"monitoring_program_information_provided": [
 	{
 		"id": "provided",
-		"description": "I have provided answers to questions 17 to 32"
+		"description": "I will provide answers to questions 17 to 32 in this feedback form."
 	},
 	{
 		"id": "provided_copy",
