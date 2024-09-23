@@ -173,9 +173,8 @@ def generate_pdf(form_id):
 	numbered_question(pdf, 1, "Do you agree with the above suggested citation for your data? If no, please indicate how to correctly cite your data.")
 	multiple_choice_options(pdf, field_options['yes_no'], form['answers'].get('citation_agree'))
 
-	if form['answers'].get('citation_agree') == 'no':
-		text_in_box(pdf, form['answers'].get('citation_agree_comments', ''))
-		pdf.ln()
+	text_in_box(pdf, get_answer(form, 'citation_agree_comments'))
+	pdf.ln()
 
 	numbered_question(pdf, 2, "Has your monitoring program been explicitly designed to detect population trends over time? If no / unsure, please indicate the aims of your monitoring.")
 	multiple_choice_options(pdf, field_options['yes_no_unsure'], form['answers'].get('monitoring_for_trend'))
@@ -185,7 +184,7 @@ def generate_pdf(form_id):
 
 	numbered_question(pdf, 4, "Can you estimate what percentage (%) of your species' population existed in Australia at the start of your monitoring (assuming this was 100% in 1750)? This information is to help understand population baselines and determine whether the majority of a species' decline may have occurred prior to monitoring.")
 	pdf.ln()
-	text_in_box(pdf, str(form['answers'].get('pop_1750', '')))
+	text_in_box(pdf, get_answer(form, 'pop_1750'))
 	pdf.ln()
 
 	pdf.add_page()
@@ -289,9 +288,9 @@ def generate_pdf(form_id):
 
 	numbered_question(pdf, 5, "Are the above values representative of your datasets?")
 	multiple_choice_options(pdf, field_options['yes_no'], form['answers'].get('data_summary_agree'))
-	if form['answers'].get('data_summary_agree') == 'no':
-		text_in_box(pdf, str(form['answers'].get('data_summary_agree_comments', '')))
-		pdf.ln()
+
+	text_in_box(pdf, get_answer(form, 'data_summary_agree_comments'))
+	pdf.ln()
 
 
 	# Proof of concept of code to avoid page-breaks within a section
@@ -299,9 +298,9 @@ def generate_pdf(form_id):
 	for doc in avoid_break(pdf):
 		numbered_question(doc, 6, "Do you agree with how your data were handled? If no, please suggest an alternative method of aggregation.")
 		multiple_choice_options(doc, field_options['yes_no'], form['answers'].get('processing_agree'))
-		if form['answers'].get('processing_agree') == 'no':
-			text_in_box(doc, str(form['answers'].get('processing_agree_comments', '')))
-			doc.ln()
+
+		text_in_box(doc, get_answer(form, 'processing_agree_comments'))
+		doc.ln()
 
 	# ------- Statistics and trend estimate --------
 
@@ -371,9 +370,9 @@ def generate_pdf(form_id):
 
 	numbered_question(pdf, 7, "Do the above statistics appear representative of your dataset?")
 	multiple_choice_options(pdf, field_options['yes_no'], form['answers'].get('statistics_agree'))
-	if form['answers'].get('statistics_agree') == 'no':
-		text_in_box(pdf, str(form['answers'].get('statistics_agree_comments', '')))
-		pdf.ln()
+
+	text_in_box(pdf, get_answer(form, 'statistics_agree_comments'))
+	pdf.ln()
 
 	pdf.ln()
 
@@ -393,18 +392,18 @@ def generate_pdf(form_id):
 
 	numbered_question(pdf, 8, "Do you agree with the trend estimate? If no or unsure, please elaborate (include detail on trends for specific sites where relevant).")
 	multiple_choice_options(pdf, field_options['yes_no_unsure'], form['answers'].get('trend_agree'))
-	if form['answers'].get('trend_agree') == 'no' or form['answers'].get('trend_agree') == 'unsure':
-		text_in_box(pdf, str(form['answers'].get('trend_agree_comments', '')))
-		pdf.ln()
+
+	text_in_box(pdf, get_answer(form, 'trend_agree_comments'))
+	pdf.ln()
 
 	numbered_question(pdf, 9, "Looking at the trend for your data, what should be the reference year at which the index should start?")
 	pdf.ln()
-	text_in_box(pdf, str(form['answers'].get('start_year', '')))
+	text_in_box(pdf, get_answer(form, 'start_year'))
 	pdf.ln()
 
 	numbered_question(pdf, 10, "Looking at the trend for your data, what should be the year at which the index should end?")
 	pdf.ln()
-	text_in_box(pdf, str(form['answers'].get('end_year', '')))
+	text_in_box(pdf, get_answer(form, 'end_year'))
 	pdf.ln()
 
 	pdf.add_page()
@@ -464,7 +463,7 @@ def generate_pdf(form_id):
 	pdf.write(text="Please add any additional comments on data suitability and the criteria below.")
 	pdf.ln()
 	pdf.ln()
-	text_in_box(pdf, str(form['answers'].get('data_suitability_comments', '')))
+	text_in_box(pdf, get_answer(form, 'data_suitability_comments'))
 	pdf.ln()
 
 	pdf.ln()
@@ -475,87 +474,86 @@ def generate_pdf(form_id):
 	multiple_choice_options(pdf, field_options['monitoring_program_information_provided'], form['answers'].get('monitoring_program_information_provided'))
 
 
-	if(form['answers'].get('monitoring_program_information_provided') in ['provided', 'provided_copy']):
-		numbered_question(pdf, 17, "Effort: How much time on average per year was spent on project labour, i.e. data collection in the field?")
-		answer_table(pdf, form, [
-			('a. Days/year paid labour:', 'effort_labour_paid_days_per_year'),
-			('b. Days/year volunteered time:', 'effort_labour_volunteer_days_per_year')])
+	numbered_question(pdf, 17, "Effort: How much time on average per year was spent on project labour, i.e. data collection in the field?")
+	answer_table(pdf, form, [
+		('a. Days/year paid labour:', 'effort_labour_paid_days_per_year'),
+		('b. Days/year volunteered time:', 'effort_labour_volunteer_days_per_year')])
 
-		numbered_question(pdf, 18, "Effort: How much time on average per year was spent on project overheads, e.g. data collation and dataset maintenance?")
-		answer_table(pdf, form, [
-			('a. Days/year paid labour:', 'effort_overheads_paid_days_per_year'),
-			('b. Days/year volunteered time:', 'effort_overheads_volunteer_days_per_year')])
+	numbered_question(pdf, 18, "Effort: How much time on average per year was spent on project overheads, e.g. data collation and dataset maintenance?")
+	answer_table(pdf, form, [
+		('a. Days/year paid labour:', 'effort_overheads_paid_days_per_year'),
+		('b. Days/year volunteered time:', 'effort_overheads_volunteer_days_per_year')])
 
-		numbered_question(pdf, 19, "Effort: Approximately how many people were involved in the last bout of monitoring (including both field and office work)")
-		answer_table(pdf, form, [
-			('a. Paid staff:', 'effort_paid_staff_count'),
-			('b. Volunteers:', 'effort_volunteer_count')])
+	numbered_question(pdf, 19, "Effort: Approximately how many people were involved in the last bout of monitoring (including both field and office work)")
+	answer_table(pdf, form, [
+		('a. Paid staff:', 'effort_paid_staff_count'),
+		('b. Volunteers:', 'effort_volunteer_count')])
 
-		numbered_question(pdf, 20, "Funding: How much do you think in AUD$ a single survey costs (not counting in-kind support)?")
-		text_in_box(pdf, format_currency(form['answers'].get('funding_cost_per_survey_aud')))
-		pdf.ln()
+	numbered_question(pdf, 20, "Funding: How much do you think in AUD$ a single survey costs (not counting in-kind support)?")
+	text_in_box(pdf, format_currency(form['answers'].get('funding_cost_per_survey_aud')))
+	pdf.ln()
 
-		numbered_question(pdf, 21, "Funding: Can you estimate in AUD$ the total investment in the dataset to date (again not counting in-kind support)?")
-		text_in_box(pdf, format_currency(form['answers'].get('funding_total_investment_aud')))
-		pdf.ln()
+	numbered_question(pdf, 21, "Funding: Can you estimate in AUD$ the total investment in the dataset to date (again not counting in-kind support)?")
+	text_in_box(pdf, format_currency(form['answers'].get('funding_total_investment_aud')))
+	pdf.ln()
 
-		numbered_question(pdf, 22, "Funding: Who has been paying for the monitoring? (e.g. government grants, research funds, private donations etc. - list multiple funding sources if they have been needed over the years)")
-		answer_table(pdf, form, [
-			('a. Government grants:', 'funding_source_government_grants'),
-			('b. Research funds:', 'funding_source_research_funds'),
-			('c. Private donations:', 'funding_source_private_donations'),
-			('d. Other:', 'funding_source_other'),
-			('e. Can you estimate the total number of funding sources so far?:', 'funding_source_count')])
+	numbered_question(pdf, 22, "Funding: Who has been paying for the monitoring? (e.g. government grants, research funds, private donations etc. - list multiple funding sources if they have been needed over the years)")
+	answer_table(pdf, form, [
+		('a. Government grants:', 'funding_source_government_grants'),
+		('b. Research funds:', 'funding_source_research_funds'),
+		('c. Private donations:', 'funding_source_private_donations'),
+		('d. Other:', 'funding_source_other'),
+		('e. Can you estimate the total number of funding sources so far?:', 'funding_source_count')])
 
-		pdf.add_page()
+	pdf.add_page()
 
-		numbered_question(pdf, 23, "Leadership: Who has been providing the drive to keep the monitoring going after the baseline was established?")
-		text_in_box(pdf, get_answer(form, 'leadership'))
-		pdf.ln()
+	numbered_question(pdf, 23, "Leadership: Who has been providing the drive to keep the monitoring going after the baseline was established?")
+	text_in_box(pdf, get_answer(form, 'leadership'))
+	pdf.ln()
 
-		numbered_question(pdf, 24, "Impact: Are data being used to directly inform management of the threatened species or measure the effectiveness of management actions?")
-		answer_table(pdf, form, [
-			('a.', 'impact_used_for_management'),
-			('b. Please expand:', 'impact_used_for_management_comments')])
+	numbered_question(pdf, 24, "Impact: Are data being used to directly inform management of the threatened species or measure the effectiveness of management actions?")
+	answer_table(pdf, form, [
+		('a.', 'impact_used_for_management'),
+		('b. Please expand:', 'impact_used_for_management_comments')])
 
-		numbered_question(pdf, 25, "Impact: Is your organisation responsible for managing this species in the monitored area?")
-		text_in_box(pdf, get_answer(form, 'impact_organisation_responsible'))
-		pdf.ln()
+	numbered_question(pdf, 25, "Impact: Is your organisation responsible for managing this species in the monitored area?")
+	text_in_box(pdf, get_answer(form, 'impact_organisation_responsible'))
+	pdf.ln()
 
-		numbered_question(pdf, 26, "Impact: Can you describe any management that has changed because of the monitoring?")
-		text_in_box(pdf, get_answer(form, 'impact_management_changes'))
-		pdf.ln()
+	numbered_question(pdf, 26, "Impact: Can you describe any management that has changed because of the monitoring?")
+	text_in_box(pdf, get_answer(form, 'impact_management_changes'))
+	pdf.ln()
 
-		numbered_question(pdf, 27, "Data availability: Is your monitoring data readily available to the public (e.g. through reports, or on website). If not, can the public access it?")
-		text_in_box(pdf, get_answer(form, 'data_availability'))
-		pdf.ln()
+	numbered_question(pdf, 27, "Data availability: Is your monitoring data readily available to the public (e.g. through reports, or on website). If not, can the public access it?")
+	text_in_box(pdf, get_answer(form, 'data_availability'))
+	pdf.ln()
 
-		numbered_question(pdf, 28, "Succession: Do you have commitments to extend the monitoring into the future?")
-		answer_table(pdf, form, [
-			('a.', 'succession_commitment'),
-			('b. Please expand:', 'succession_commitment_comments')])
+	numbered_question(pdf, 28, "Succession: Do you have commitments to extend the monitoring into the future?")
+	answer_table(pdf, form, [
+		('a.', 'succession_commitment'),
+		('b. Please expand:', 'succession_commitment_comments')])
 
-		numbered_question(pdf, 29, "Succession: Have you developed a plan for continual monitoring when the current organisers/you need to stop?")
-		answer_table(pdf, form, [
-			('a.', 'succession_plan'),
-			('b. Please expand:', 'succession_plan_comments')])
+	numbered_question(pdf, 29, "Succession: Have you developed a plan for continual monitoring when the current organisers/you need to stop?")
+	answer_table(pdf, form, [
+		('a.', 'succession_plan'),
+		('b. Please expand:', 'succession_plan_comments')])
 
-		numbered_question(pdf, 30, "Design: Was there thought about the statistical power of the monitoring when it was started (i.e. the probability that change could be detected?)")
-		answer_table(pdf, form, [
-			('a.', 'design_statistical_power'),
-			('b. Please expand:', 'design_statistical_power_comments')])
+	numbered_question(pdf, 30, "Design: Was there thought about the statistical power of the monitoring when it was started (i.e. the probability that change could be detected?)")
+	answer_table(pdf, form, [
+		('a.', 'design_statistical_power'),
+		('b. Please expand:', 'design_statistical_power_comments')])
 
-		pdf.add_page()
+	pdf.add_page()
 
-		numbered_question(pdf, 31, "Design: Is anything other than the numbers of threatened species being monitored at the same time that could explain changes in abundance (e.g. prevalence of a threat, fire, breeding success, etc?)")
-		answer_table(pdf, form, [
-			('a.', 'design_other_factors'),
-			('b. Please expand:', 'design_other_factors_comments')])
+	numbered_question(pdf, 31, "Design: Is anything other than the numbers of threatened species being monitored at the same time that could explain changes in abundance (e.g. prevalence of a threat, fire, breeding success, etc?)")
+	answer_table(pdf, form, [
+		('a.', 'design_other_factors'),
+		('b. Please expand:', 'design_other_factors_comments')])
 
-		numbered_question(pdf, 32, "Co-benefits: Is the monitoring program for this species also collecting trend information on other threatened species?")
-		answer_table(pdf, form, [
-			('a.', 'co_benefits_other_species'),
-			('b. Please expand:', 'co_benefits_other_species_comments')])
+	numbered_question(pdf, 32, "Co-benefits: Is the monitoring program for this species also collecting trend information on other threatened species?")
+	answer_table(pdf, form, [
+		('a.', 'co_benefits_other_species'),
+		('b. Please expand:', 'co_benefits_other_species_comments')])
 
 
 	return bytes(pdf.output())
