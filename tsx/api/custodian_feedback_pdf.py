@@ -601,7 +601,7 @@ def consistency_plot_svg(data):
 	ax.xaxis.get_major_locator().set_params(integer=True)
 	plt.xlabel('Year')
 	plt.ylabel('Sites (time series)')
-	plt.grid(True)
+	plt.grid(True, color='#ddd')
 	plt.plot(x, y, 'ko', ms=5)
 
 	svg_data = StringIO()
@@ -622,7 +622,7 @@ def trend_plot_svg(data):
 	fig = plt.figure(figsize=(12, 4.5))
 	plt.xlabel('Year')
 	plt.ylabel('Index (%s = 1)' % years[0])
-	plt.grid(True)
+	plt.grid(True, color='#ddd')
 	plt.plot(years, trend)
 	plt.gca().set_xlim(years[0], years[-1])
 	ax = fig.gca()
@@ -656,7 +656,7 @@ def intensity_map_png(data):
 	# ax.add_feature(cfeature.LAND)
 	# ax.add_feature(cfeature.OCEAN)
 	ax.coastlines()
-	gl = ax.gridlines(draw_labels=True, dms=True, x_inline=False, y_inline=False, color='#00000040')
+	gl = ax.gridlines(draw_labels=True, dms=True, x_inline=False, y_inline=False, color='#00000020')
 	gl.top_labels = False
 	gl.right_labels = False
 
