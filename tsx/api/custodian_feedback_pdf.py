@@ -490,11 +490,11 @@ def generate_pdf(form_id):
 		('b. Volunteers:', 'effort_volunteer_count')])
 
 	numbered_question(pdf, 20, "Funding: How much do you think in AUD$ a single survey costs (not counting in-kind support)?")
-	text_in_box(pdf, format_currency(form['answers'].get('funding_cost_per_survey_aud')))
+	text_in_box(pdf, get_answer(form, 'funding_cost_per_survey_aud'))
 	pdf.ln()
 
 	numbered_question(pdf, 21, "Funding: Can you estimate in AUD$ the total investment in the dataset to date (again not counting in-kind support)?")
-	text_in_box(pdf, format_currency(form['answers'].get('funding_total_investment_aud')))
+	text_in_box(pdf, get_answer(form, 'funding_total_investment_aud'))
 	pdf.ln()
 
 	numbered_question(pdf, 22, "Funding: Who has been paying for the monitoring? (e.g. government grants, research funds, private donations etc. - list multiple funding sources if they have been needed over the years)")
@@ -585,11 +585,6 @@ def format_int(x):
 
 def format_decimal(x):
 	return f'{x:,.2f}'
-
-def format_currency(x):
-	if x is None:
-		return ''
-	return "$" + f'{x:,.02f}'
 
 def consistency_plot_svg(data):
 	xys = [(year, i + 1) for i, series in enumerate(data) for year, count in series]
