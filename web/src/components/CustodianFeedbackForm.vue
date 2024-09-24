@@ -46,8 +46,8 @@
               </div>
             </div>
 
-            <div class="notification">
-              Please note: If you need to make any updates to your dataset, we recommend you do this before filling out this form. Updating your dataset will re-set and remove all drafted answers in this form and will archive all previously completed forms.
+            <div class="notification is-warning">
+              <strong>Important:</strong> If you need to make any updates to your dataset, we recommend you do this before filling out this form. Updating your dataset will re-set and remove all drafted answers in this form and will archive all previously completed forms.
             </div>
 
             <hr>
