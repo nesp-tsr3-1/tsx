@@ -76,28 +76,28 @@
                     Data collected from this study will be used to inform the Threatened Species Index at national and various regional scales.
                   </li>
                   <li>
-                    Project outputs will include a web tool and a publicly available aggregated dataset that enables the public to interrogate trends in Australia’s threatened species over space and time.
+                    Project outputs will include a web tool and a publicly available aggregated dataset that enables the public to interrogate trends in Australia’s threatened species over space and time. 
                   </li>
                 </ul>
                 <p>
                   This study adheres to the Guidelines of the ethical review process of The University of Queensland and the National Statement on Ethical Conduct in Human Research. Whilst you are free to discuss your participation in this study with project staff (Project Manager Tayla Lawrie: <a href='mailto:t.lawrie@uq.edu.au'>t.lawrie@uq.edu.au</a> or <b>0476 378 354</b>), if you would like to speak to an officer of the University not involved in the study, you may contact the Ethics Coordinator on 07 3443 1656.
                 </p>
                 <p>
-                  Your involvement in this elicitation process constitutes your consent for the Threatened Species Index team to use the information collected in research, subject to the information provided above.
+                  Your involvement in this elicitation process constitutes your consent for the Threatened Species Index team to use the information collected in research, subject to the information provided above. For more information about this expert elicitation process, please <a href="/data/TSX_Custodian_Feedback_Participant_Information_Sheet_Sep24.pdf" target="_blank">click here</a> to download our participant information sheet.
                 </p>
                 <p>
                   <b>References</b><br>
                   Collen, B., J. Loh, S. Whitmee, L. McRae, R. Amin, and J. E. Baillie. 2009. Monitoring change in vertebrate abundance: the living planet index. Conserv Biol 23:317-327.
                 </p>
                 <p>
-                  <b>I have read and understand the conditions of the expert elicitation study for the project, “A threatened species index for Australia: Development and interpretation of integrated reporting on trends in Australia's threatened species” and provide my consent.</b>
+                  <b>I have read and understood the conditions of the expert elicitation study for the project, “A threatened species index for Australia: Development and interpretation of integrated reporting on trends in Australia's threatened species” and provide my consent.</b>
                 </p>
               </div>
               <div>
                 <div class="field">
                   <label class="checkbox required">
                     <input type="checkbox" v-model="formData.consent_given" />
-                    I agree
+                    Agree
                   </label>
                 </div>
                 <div class="field">
