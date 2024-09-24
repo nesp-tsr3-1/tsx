@@ -440,7 +440,7 @@ def get_previous_answers():
 		WITH items AS (
 			SELECT JSON_OBJECT(
 				'id', old_feedback.id,
-				'description', CONCAT(old_feedback.dataset_id, ' ', taxon.scientific_name, ' ', DATE_FORMAT(CONVERT_TZ(COALESCE(old_feedback.last_updated, old_feedback.time_created), '+00:00', 'Australia/Sydney'), "%d/%m/%Y"))
+				'description', CONCAT(old_feedback.dataset_id, ' ', taxon.scientific_name, ' ', DATE_FORMAT(CONVERT_TZ(COALESCE(old_feedback.last_updated, old_feedback.time_created), '+00:00', 'Australia/Sydney'), "%d/%m/%Y %I:%i%p"))
 			) item
 			FROM custodian_feedback, custodian_feedback old_feedback
 			JOIN feedback_status ON old_feedback.feedback_status_id = feedback_status.id
