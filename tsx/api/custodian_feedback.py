@@ -7,13 +7,16 @@ from sqlalchemy import text
 import json
 from tsx.api.custodian_feedback_pdf import generate_pdf, generate_archive_pdfs
 from tsx.api.custodian_feedback_shared import *
-from tsx.config import data_dir
+from tsx.config import data_dir, config
 import os
 from io import StringIO
 import csv
 from datetime import datetime
 import pytz
 import re
+from tsx.api.mail import send_admin_notification
+from string import Template
+from textwrap import dedent
 
 bp = Blueprint('custodian_feedback', __name__)
 
@@ -381,6 +384,8 @@ def update_form(form_id):
 	context.submitting = (request.json.get('action') == 'submit')
 	context.feedback_type = feedback_type_code(form_id)
 
+	form = json.loads(get_form_json_raw(form_id))
+
 	errors = validate_fields(form_fields, request.json, context)
 	if len(errors):
 		return jsonify(errors), 400
@@ -410,9 +415,35 @@ def update_form(form_id):
 
 	db_session.commit()
 
+	if context.submitting and context.feedback_type == 'integrated':
+		send_admin_notification('Custodian feedback form submitted',
+			custodian_feedback_submitted_notification_body.substitute(
+				dataset_id=form['dataset_id'],
+				dataset_url=taxon_dataset_url(form['dataset_id']),
+				source_name=form['source']['description'],
+				taxon_scientific_name=form['taxon']['scientific_name'],
+				first_name=user.first_name,
+				last_name=user.last_name,
+				email=user.email
+			))
+
 	return "OK", 200
 
-# TODO: Trigger updating of dataset stats automatically as required
+custodian_feedback_submitted_notification_body = Template(dedent("""
+	A custodian feedback form was submitted on the TSX data interface.
+
+	Taxon Dataset ID: $dataset_id
+	Taxon Dataset URL: $dataset_url
+	Dataset name: $source_name
+	Taxon: $taxon_scientific_name
+
+	Submitted by: $first_name $last_name <$email>
+"""))
+
+def taxon_dataset_url(dataset_id):
+	root_url = config.get("api", "data_root_url").rstrip("/")
+	return "%s/custodian_feedback/%s" % (root_url, dataset_id)
+
 @bp.route('/custodian_feedback/update_dataset_stats', methods = ['GET'])
 def update_dataset_stats_manual():
 	user = get_user()
