@@ -200,7 +200,7 @@ form_fields = [
 		name='analyse_own_trends_comments'),
 	Field(
 		name='pop_1750',
-		validators=[val_required_for_submit, validate_integer_or_unsure(0,100)]),
+		validators=[val_required_for_submit]),
 	Field(
 		name='pop_1750_comments'),
 	Field(
@@ -225,14 +225,12 @@ form_fields = [
 		name='trend_agree_comments'),
 	Field(
 		name='start_year',
-		type='int',
-		validators=[val_required_for_submit, validate_integer_or_unsure(1800,2100)]),
+		validators=[val_required_for_submit]),
 	Field(
 		name='start_year_comments'),
 	Field(
 		name='end_year',
-		type='int',
-		validators=[val_required_for_submit, validate_integer_or_unsure(1800,2100)]),
+		validators=[val_required_for_submit]),
 	Field(
 		name='end_year_comments'),
 	Field(
@@ -258,8 +256,7 @@ form_fields = [
 		name='cost_data_provided',
 		validators=[val_yn]),
 	Field(
-		name='estimated_cost_dataset',
-		validators=[validate_integer_or_unsure()]),
+		name='estimated_cost_dataset'),
 	Field(
 		name='cost_data_provided_comments'),
 	Field(
@@ -273,37 +270,21 @@ form_fields = [
 	Field(
 		name='monitoring_program_information_provided'),
 	Field(
-		name='effort_labour_paid_days_per_year',
-		type='int',
-		validators=[validate_integer(min_value=0, max_value=365)]),
+		name='effort_labour_paid_days_per_year'),
 	Field(
-		name='effort_labour_volunteer_days_per_year',
-		type='int',
-		validators=[validate_integer(min_value=0)]),
+		name='effort_labour_volunteer_days_per_year'),
 	Field(
-		name='effort_overheads_paid_days_per_year',
-		type='int',
-		validators=[validate_integer(min_value=0)]),
+		name='effort_overheads_paid_days_per_year'),
 	Field(
-		name='effort_overheads_volunteer_days_per_year',
-		type='int',
-		validators=[validate_integer(min_value=0)]),
+		name='effort_overheads_volunteer_days_per_year'),
 	Field(
-		name='effort_paid_staff_count',
-		type='int',
-		validators=[validate_integer(min_value=0)]),
+		name='effort_paid_staff_count'),
 	Field(
-		name='effort_volunteer_count',
-		type='int',
-		validators=[validate_integer(min_value=0)]),
+		name='effort_volunteer_count'),
 	Field(
-		name='funding_cost_per_survey_aud',
-		type='decimal',
-		validators=[validate_decimal(min_value=0,max_dp=2)]),
+		name='funding_cost_per_survey_aud'),
 	Field(
-		name='funding_total_investment_aud',
-		type='decimal',
-		validators=[validate_decimal(min_value=0,max_dp=2)]),
+		name='funding_total_investment_aud'),
 	Field(
 		name='funding_source_government_grants',
 		validators=[val_yn]),
@@ -316,9 +297,7 @@ form_fields = [
 	Field(
 		name='funding_source_other'),
 	Field(
-		name='funding_source_count',
-		type='int',
-		validators=[validate_integer(min_value=0)]),
+		name='funding_source_count'),
 	Field(
 		name='leadership'),
 	Field(
