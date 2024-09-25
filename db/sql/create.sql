@@ -1615,7 +1615,7 @@ BEGIN
     JOIN tmp_latest_import ON (custodian_feedback.taxon_id = tmp_latest_import.taxon_id AND custodian_feedback.source_id = tmp_latest_import.source_id)
     SET custodian_feedback.feedback_status_id = (SELECT id FROM feedback_status WHERE code = 'incomplete'),
     custodian_feedback.data_import_id = tmp_latest_import.data_import_id
-    WHERE custodian_feedback.data_import_id != tmp_latest_import.data_import_id
+    WHERE COALESCE(custodian_feedback.data_import_id, 0) != tmp_latest_import.data_import_id
     AND feedback_type_id = (SELECT id FROM feedback_type WHERE code = 'admin');
 
     -- Add new incomplete surveys
