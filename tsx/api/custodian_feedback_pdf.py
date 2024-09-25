@@ -421,7 +421,7 @@ def generate_pdf(form_id):
 		padding=2,
 		text_align="LEFT",
 		headings_style=headings_style,
-		col_widths=(3, 3, 1, 1, 4)
+		col_widths=(3, 3, 0.5, 1, 4)
 		) as table:
 		headings = table.row()
 		headings.cell('Suitablility criteria')
@@ -429,7 +429,6 @@ def generate_pdf(form_id):
 		headings.cell('Your assessment', colspan=3)
 
 		form_fields_by_name = { f.name: f for f in form_fields }
-		selected_style = FontFace(fill_color=tsx_green)
 
 		for number, field_name, title, description in [
 			(11, 'standardisation_of_method_effort', 'Standardisation of method effort', 'This data suitability indicator rates the degree of standardisation of monitoring method/effort and is assessed to the data source level by enquiring with the data custodian and examining data.'),
@@ -449,9 +448,9 @@ def generate_pdf(form_id):
 
 				selected = str(option['id']) == form['answers'].get(field_name)
 				if selected:
-					row.cell("", style=selected_style)
+					row.cell(img=filled_circle)
 				else:
-					row.cell("")
+					row.cell(img=empty_circle)
 
 				# row.cell("%s" % selected)
 				row.cell(str(option['id']))
@@ -687,6 +686,9 @@ tsx_green = "#266F6A"
 
 footer_png = importlib.resources.read_binary("tsx.resources", "pdf-footer.png")
 tsx_logo_svg = importlib.resources.read_binary("tsx.resources", "pdf-logo.svg")
+
+filled_circle = BytesIO(b"<svg version='1.1' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'><circle cx='10' cy='10' r='10' stroke-width='1' stroke='black' fill='#266F6A' /></svg>")
+empty_circle = BytesIO(b"<svg version='1.1' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'><circle cx='10' cy='10' r='10' stroke-width='1' stroke='black' /></svg>")
 
 # This should be called after forms have had their status changed to 'archived', which
 # occurs when the update_custodian_feedback() procedure is called.
