@@ -466,6 +466,23 @@ def generate_pdf(form_id):
 	text_in_box(pdf, get_answer(form, 'data_suitability_comments'))
 	pdf.ln()
 
+
+	# ------------ Additional Comments ------------
+
+	pdf.ln()
+	pdf.h2("Additional Comments")
+
+
+	pdf.set_font(font_name, size=10, style="B")
+	pdf.write(text="Please add any additional comments below.")
+	pdf.ln()
+	pdf.ln()
+	text_in_box(pdf, get_answer(form, 'additional_comments'))
+	pdf.ln()
+
+
+	# ------------ Monitoring program funding etc. ---
+
 	pdf.ln()
 	pdf.h2("Monitoring program funding, logistics and governance")
 	pdf.ln()
