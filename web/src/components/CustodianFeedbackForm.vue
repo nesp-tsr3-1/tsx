@@ -1167,6 +1167,7 @@ export default {
       let handler = throttle(updateMenu, 250)
       document.addEventListener("scroll", handler)
       this.disposables.push(() => document.removeEventListener("scroll", handler))
+      setTimeout(updateMenu, 250);
     },
     showField(fieldName) {
       if(fieldName.endsWith("_comments")) {
