@@ -10,6 +10,7 @@
               <li><a href="#summary_section">Data summary and processing</a></li>
               <li><a href="#statistics_section">Statistics and trend estimate</a></li>
               <li><a href="#suitability_section">Data suitability</a></li>
+              <li><a href="#additional_comments_section">Additional comments</a></li>
               <li><a href="#funding_section">Monitoring program funding, logistics and governance (optional)</a></li>
             </ul>
             <hr>
@@ -575,6 +576,19 @@
                 <div class="control">
                   <input class="input" type="text" placeholder="Enter your answer" v-model="formData.data_suitability_comments">
                 </div>
+              </div>
+            </div>
+
+            <!-- Additional comments -->
+
+            <div class="content" id="additional_comments_section">
+              <h3>Additional comments</h3>
+            </div>
+
+            <div class="field">
+              <label class="label">Please add any additional comments below.</label>
+              <div class="control">
+                <textarea class="textarea" placeholder="Enter your answer" v-model="formData.additional_comments"></textarea>
               </div>
             </div>
 

@@ -250,6 +250,8 @@ form_fields = [
 		validators=[val_required_integrated_only]),
 	Field(
 		name='data_suitability_comments'),
+	Field(
+		name='additional_comments'),
 
 
 	Field(
