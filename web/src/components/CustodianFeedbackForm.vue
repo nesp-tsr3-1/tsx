@@ -413,14 +413,110 @@
               </div>
             </div>
 
+            <hr>
+
+            <div class="card block" v-if="trendPlotAvailable">
+              <header class="card-header">
+                <p class="card-header-title"><button class="button" @click="showTrendParameters = !showTrendParameters"> Customise trend</button>
+                </p>
+              </header>
+              <div v-if="showTrendParameters" class="card-content">
+                <div class="columns">
+                  <div class="column">
+                    <div class="field">
+                      <label class="label">Reference year</label>
+                      <div class="control">
+                        <div class="select">
+                          <select v-model="trendParams.refYear">
+                            <option v-for="year in availableYears" :value="year">
+                              {{ year }}
+                            </option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="column">
+                    <div class="field">
+                      <label class="label">Final year</label>
+                        <div class="control">
+                        <div class="select">
+                          <select v-model="trendParams.finalYear">
+                            <option v-for="year in availableYears" :value="year">
+                              {{ year }}
+                            </option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="content">
+                  <div class="field">
+                    <label class="label">Sites</label>
+                    <div class="control">
+                      <Multiselect
+                        mode="multiple"
+                        v-model="trendParams.sites"
+                        :options="querySites"
+                        :delay="500"
+                        :searchable="true"
+                        :close-on-select="false"
+                        :filter-results="false"
+                        no-options-text="No sites found"
+                        placeholder="All sites"
+                        label="name"
+                        value-prop="id"
+                        @open="(select) => select.refreshOptions()"
+                        />
+                    </div>
+                    <div style="border-left: 2px solid #eee; padding-left: 1em; margin-top: 1em">
+                      <table style="border: 1px solid #ccc;" class="table is-narrow" v-if="trendParams.sites.length">
+                        <thead>
+                          <tr>
+                            <th>Site name</th>
+                            <th>Site ID</th>
+                            <th></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="siteInfo in trendParams.sites">
+                            <td>{{siteInfo.split(',')[1]}}</td>
+                            <td>{{siteInfo.split(',')[0]}}</td>
+                            <td><button class="delete is-small" style="margin-top: 4px" @click="deselectSite(siteInfo)"></button></td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+                <button :disabled="trendStatus == 'processing'" class="button is-dark" @click="updateTrend">Update Trend</button>
+              </div>
+            </div>
+
+
+            <div class="notification is-warning is-flex is-align-items-center is-justify-content-space-between" v-if="canResetTrend">
+              <p><strong>Please note:</strong> you are not viewing the original trend in full</p>
+              <button :disabled="trendStatus == 'processing'" class="button is-dark" @click="resetTrend">Reset Trend</button>
+            </div>
+
             <div class="content">
+              <div v-if="trendStatus == 'processing'" style="margin-left: 1em;">
+                Loading <spinner size='small' style='display: inline-block;'></spinner>
+              </div>
+              <div v-if="trendStatus == 'error'">
+                <p>An error occurred while generating the trend.</p>
+              </div>
               <div v-if="trendPlotAvailable" class="content">
                 <canvas ref="trendPlot" style="height: 10em;"></canvas>
-                  <hr>
-                  <p style="font-style: italic;">
-                    The above graph shows the estimated yearly change in relative abundance in relation to a baseline year where the index is set to 1. Changes are proportional - a value of 0.5 indicates the population is 50% below the baseline value; a value of 1.5 indicates 50% above baseline. The overall trend (mean value per year) is shown by the blue line - this line is used in the final multi-species TSX. The grey cloud indicates the uncertainty in the estimate as measured by the variability between all time series in your dataset.
-                  </p>
-              </div>
+               </div>
+             </div>
+
+            <div class="content">
+                <hr>
+                <p style="font-style: italic;">
+                  The above graph shows the estimated yearly change in relative abundance in relation to a baseline year where the index is set to 1. Changes are proportional - a value of 0.5 indicates the population is 50% below the baseline value; a value of 1.5 indicates 50% above baseline. The overall trend (mean value per year) is shown by the blue line - this line is used in the final multi-species TSX. The grey cloud indicates the uncertainty in the estimate as measured by the variability between all time series in your dataset.
+                </p>
             </div>
 
             <div class="field numbered">
@@ -953,11 +1049,16 @@ import { generateCitation } from '../util.js'
 import { plotConsistency } from '../plotConsistency.js'
 import { plotTrend, generateTrendPlotData } from '../plotTrend.js'
 import HeatMap from './HeatMap.vue'
+import Multiselect from '@vueform/multiselect'
+import Spinner from '../../node_modules/vue-simple-spinner/src/components/Spinner.vue'
+
 
 export default {
   name: 'CustodianFeedbackForm',
   components: {
-    HeatMap
+    HeatMap,
+    Multiselect,
+    Spinner
   },
   data () {
     return {
@@ -977,6 +1078,16 @@ export default {
       previousAnswers: [],
       selectedPreviousAnswer: null,
       copyAnswerStatus: 'idle',
+
+      showTrendParameters: false,
+      trendParams: {
+        sites: [],
+        refYear: null,
+        finalYear: null
+      },
+      trendStatus: 'ready',
+      canResetTrend: false,
+      currentTrendPlot: null
     }
   },
   created() {
@@ -1067,6 +1178,16 @@ export default {
     },
     consentLacking() {
       return this.consentRequired && !this.consentGiven
+    },
+    availableYears() {
+      let stats = this.form?.stats?.raw_data_stats
+      if(stats) {
+        let min = stats.min_year
+        let max = stats.max_year
+        return Array.from({length: max - min + 1}, (x, i) => i + min);
+      } else {
+        return []
+      }
     }
   },
   watch: {
@@ -1076,14 +1197,6 @@ export default {
         setTimeout(() => {
           plotConsistency(data, this.$refs.consistencyPlot)
         }, 1000)
-      }
-    },
-    trendPlotAvailable(isAvailable) {
-      let data = this.form?.stats?.trend
-      if(isAvailable && data) {
-        setTimeout(() => {
-          plotTrend(data, this.$refs.trendPlot)
-        })
       }
     }
   },
@@ -1096,6 +1209,14 @@ export default {
           ... form.answers,
           admin_type: form.answers.admin_type || 'informal'
         }
+
+        this.trendParams.refYear = form?.stats?.raw_data_stats?.min_year
+        this.trendParams.finalYear = form?.stats?.raw_data_stats?.max_year
+
+        if(this.trendPlotAvailable) {
+          this.plotTrend(form?.stats?.trend)
+        }
+
         this.status = 'loaded'
       }).catch((error) => {
         console.log(error.json)
@@ -1191,6 +1312,75 @@ export default {
       }).finally(() => {
         this.copyAnswerStatus = 'idle'
       })
+    },
+    querySites(query) {
+      if(!this.form) {
+        return []
+      }
+
+      let params = {
+        source_id: this.form.source.id,
+        taxon_id: this.form.taxon.id
+      }
+      return api.dataSubsetSites(params)
+        .then(sites => sites.map(site => ({ name: site.name, id: site.id + "," + site.name })))
+    },
+    deselectSite(site) {
+      this.trendParams.sites = this.trendParams.sites.filter(x => x != site)
+    },
+    updateTrend() {
+      this.currentTrendPlot?.destroy()
+      let params = {
+        source_id: this.form.source.id,
+        taxon_id: this.form.taxon.id,
+        reference_year: this.trendParams.refYear,
+        final_year: this.trendParams.finalYear
+      }
+      if(this.trendParams.sites.length) {
+        params.site_id = this.trendParams.sites.map(x => x.split(',')[0]).join(",")
+      }
+      api.dataSubsetGenerateTrend(params).then(trend => {
+        this.trendStatus = 'processing'
+        setTimeout(() => this.checkTrend(trend.id), 3000)
+      }).catch(e => {
+        console.log(e)
+        this.trendStatus = 'error'
+      })
+    },
+    checkTrend(id) {
+      api.dataSubsetTrendStatus(id).then(status => {
+        if(status.status == 'ready') {
+          api.dataSubsetTrend(id).then(data => {
+            let plotData = generateTrendPlotData(data)
+            let isEmpty = plotData.labels.length < 2
+            if(isEmpty) {
+              this.trendStatus = 'empty'
+            } else {
+              this.plotTrend(data)
+            }
+            this.canResetTrend = true
+          })
+        } else if(status.status == 'processing') {
+          setTimeout(() => this.checkTrend())
+        }
+      }).catch(e => {
+        console.log(e)
+        this.trendStatus = 'error'
+      })
+    },
+    resetTrend() {
+      this.trendParams.sites = []
+      this.trendParams.refYear = this.form?.stats?.raw_data_stats?.min_year
+      this.trendParams.finalYear = this.form?.stats?.raw_data_stats?.max_year
+      this.canResetTrend = false
+      this.plotTrend(this.form?.stats?.trend)
+    },
+    plotTrend(data) {
+      this.trendStatus = 'ready'
+      this.currentTrendPlot?.destroy()
+      setTimeout(() => {
+        this.currentTrendPlot = plotTrend(data, this.$refs.trendPlot)
+      })
     }
   }
 }
@@ -1283,3 +1473,4 @@ export default {
     flex-basis: 0;
   }
 </style>
+<style src="@vueform/multiselect/themes/default.css"></style>
