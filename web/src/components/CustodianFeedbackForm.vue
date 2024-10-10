@@ -682,7 +682,7 @@
             </div>
 
             <div class="field">
-              <label class="label">Please add any additional comments below.</label>
+              <label class="label">Please provide any additional comments about this dataset and/or trend below.</label>
               <div class="control">
                 <textarea class="textarea" placeholder="Enter your answer" v-model="formData.additional_comments"></textarea>
               </div>

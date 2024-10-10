@@ -573,7 +573,7 @@ def generate_pdf(form_id):
 
 
 	pdf.set_font(font_name, size=10, style="B")
-	pdf.write(text="Please add any additional comments below.")
+	pdf.write(text="Please provide any additional comments about this dataset and/or trend below.")
 	pdf.ln()
 	pdf.ln()
 	text_in_box(pdf, get_answer(form, 'additional_comments'))
