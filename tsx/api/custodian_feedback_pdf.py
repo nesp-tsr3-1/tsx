@@ -1,4 +1,4 @@
-from fpdf import FPDF
+from fpdf import FPDF, TextStyle
 from fpdf.fonts import FontFace
 from tsx.api.custodian_feedback_shared import get_form_json_raw, field_options, form_fields
 from tsx.api.util import server_timezone
@@ -14,6 +14,9 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import importlib
 from datetime import datetime
+from textwrap import dedent
+import urllib.request
+import zipfile
 
 # These lines are necessary to stop MatplotLib from trying to initialize
 # GUI backend and crashing due to not being on the main thread:
@@ -21,7 +24,7 @@ import matplotlib
 matplotlib.use('agg')
 
 # Using a built-in PDF font for now
-font_name='helvetica'
+font_name='Inter'
 
 class PDF(FPDF):
 	def __init__(self, report_status):
@@ -100,7 +103,8 @@ def multiple_choice_options(pdf, options, selected_option=None):
 			style = "DF"
 		else:
 			style = "D"
-		pdf.circle(x=pdf.get_x()+1, y=pdf.get_y()+0.5, r=3.5, style=style)
+		radius = 3.5/2
+		pdf.circle(x=pdf.get_x()+1+radius, y=pdf.get_y()+0.5+radius, radius=radius, style=style)
 		pdf.set_x(pdf.get_x() + 6)
 		pdf.body(option['description'])
 		pdf.ln()
@@ -152,10 +156,46 @@ def avoid_break(pdf):
 		pdf.add_page()
 	yield pdf
 
+def para(pdf, text):
+	pdf.multi_cell(text=text, h=5, w=0, markdown=True)
+	pdf.ln()
+
+def bullet(pdf):
+	pdf.circle(
+		x=pdf.get_x() - 2,
+		y=pdf.get_y() + 2.2,
+		radius=0.7,
+		style="F")
+
+def setup_font(pdf):
+	# Download font if necessary
+	font_url = "https://github.com/rsms/inter/releases/download/v4.0/Inter-4.0.zip"
+	font_dir = data_dir("font")
+	os.makedirs(font_dir, exist_ok=True)
+
+	inter_font_dir = os.path.join(font_dir, "Inter-4.0")
+	if not os.path.exists(inter_font_dir):
+		local_filename, headers = urllib.request.urlretrieve(font_url)
+		with zipfile.ZipFile(local_filename, 'r') as zip:
+			zip.extractall(inter_font_dir)
+
+	# Add font to PDF
+	inter_font_path = os.path.join(data_dir("font"), "Inter-4.0", "extras", "ttf", "Inter%s.ttf")
+	for style, suffix in [('', '-Regular'), ('B', '-Bold'), ('I', '-Italic')]:
+		pdf.add_font('Inter', style, inter_font_path % suffix, uni=True)
+
+def break_if_near_bottom(pdf):
+	if pdf.will_page_break(20):
+		pdf.add_page()
+
 def generate_pdf(form_id):
 	form = json.loads(get_form_json_raw(form_id))
 
 	pdf = PDF(form['feedback_status']['code'].capitalize())
+
+	# Set up font
+	setup_font(pdf)
+
 	pdf.set_title("TSX Custodian Feedback Form %s" % form_id)
 	pdf.set_auto_page_break(True, 40)
 	pdf.reset_margin()
@@ -165,6 +205,58 @@ def generate_pdf(form_id):
 	pdf.set_font(font_name, size=14)
 	pdf.title_text(form['taxon']['scientific_name'] + " (" + form['dataset_id'] + ")")
 	pdf.ln()
+
+
+	# ---- Conditions and consent -----
+
+	pdf.h2("Conditions and consent")
+
+	pdf.set_font(font_name, size=10)
+	para(pdf, dedent("""
+		These feedback forms are based on the species monitoring data generously donated by you or your organisation as a data custodian for the development of Australia's Threatened Species Index. The index will allow for integrated reporting at national, state and regional levels, and track changes in threatened species populations. The goal of this feedback process is to inform decisions about which datasets will be included in the overall multi-species index. If custodians deem datasets to be unrepresentative of true species trends, these may be excluded from final analyses.
+
+		Within your individual datasets (see the ‘Datasets’ tab) you can access a clean version of your processed data in a (1) raw (confidential) and (2) aggregated format (to be made open to the public unless embargoed). For your aggregated data, please note that site names will be masked and spatial information on site locations will be denatured to the IBRA subregion centroids before making the data available to the public. We use the 'Living Planet Index' method to calculate trends (Collen et al. 2009) and follow their requirements on data when we assess suitability of data for trends.
+
+		The information we collect from you using these forms is part of an elicitation process for the project “A threatened species index for Australia: Development and interpretation of integrated reporting on trends in Australia's threatened species”. We would like to inform you of the following:
+		""".strip()))
+
+	# Bulleted list requires special handling
+	pdf.set_x(22)
+	pdf.set_margins(22, 10)
+	bullet(pdf)
+	para(pdf, "Data collected will be anonymous and you will not be identified by name in any publication arising from this work without your consent.")
+	bullet(pdf)
+	para(pdf, "All participation in this process is voluntary. If at any time you do not feel comfortable providing information, you have the right to withdraw any or all of your input to the project.")
+	bullet(pdf)
+	para(pdf, "Data collected from this study will be used to inform the Threatened Species Index at national and various regional scales.")
+	bullet(pdf)
+	para(pdf, "Project outputs will include a web tool and a publicly available aggregated dataset that enables the public to interrogate trends in Australia’s threatened species over space and time.")
+	pdf.reset_margin()
+
+	para(pdf, """
+		This study adheres to the Guidelines of the ethical review process of The University of Queensland and the National Statement on Ethical Conduct in Human Research. Whilst you are free to discuss your participation in this study with project staff (Project Manager Tayla Lawrie: [t.lawrie@uq.edu.au](mailto:t.lawrie@uq.edu.au) or **0476 378 354**), if you would like to speak to an officer of the University not involved in the study, you may contact the Ethics Coordinator on 07 3443 1656.
+
+		Your involvement in this elicitation process constitutes your consent for the Threatened Species Index team to use the information collected in research, subject to the information provided above. For more information about this expert elicitation process, please [click here](https://tsx.org.au/data/TSX_Custodian_Feedback_Participant_Information_Sheet_Sep24.pdf) to download our participant information sheet.
+
+		**References**
+
+		Collen, B., J. Loh, S. Whitmee, L. McRae, R. Amin, and J. E. Baillie. 2009. Monitoring change in vertebrate abundance: the living planet index. Conserv Biol 23:317-327.
+
+		**I have read and understood the conditions of the expert elicitation study for the project, “A threatened species index for Australia: Development and interpretation of integrated reporting on trends in Australia's threatened species” and provide my consent.**
+	""".strip())
+
+	multiple_choice_options(pdf,
+		[{ "id": "agree", "description": "I Agree" }],
+		"agree" if form['answers'].get('consent_given') else "")
+
+	para(pdf, "**Please enter your name**")
+	text_in_box(pdf, get_answer(form, 'consent_name'))
+
+	pdf.add_page()
+
+
+	# ----- Data citation and monitoring aims ------
+
 	pdf.h2("Data citation and monitoring aims")
 	pdf.h3("Data Citation")
 	pdf.body(citation(form))
@@ -178,9 +270,13 @@ def generate_pdf(form_id):
 
 	numbered_question(pdf, 2, "Has your monitoring program been explicitly designed to detect population trends over time? If no / unsure, please indicate the aims of your monitoring.")
 	multiple_choice_options(pdf, field_options['yes_no_unsure'], form['answers'].get('monitoring_for_trend'))
+	text_in_box(pdf, get_answer(form, 'monitoring_for_trend_comments'))
+	pdf.ln()
 
 	numbered_question(pdf, 3, "Do you analyse your own data for trends?")
 	multiple_choice_options(pdf, field_options['yes_no'], form['answers'].get('analyse_own_trends'))
+	text_in_box(pdf, get_answer(form, 'analyse_own_trends_comments'))
+	pdf.ln()
 
 	numbered_question(pdf, 4, "Can you estimate what percentage (%) of your species' population existed in Australia at the start of your monitoring (assuming this was 100% in 1750)? This information is to help understand population baselines and determine whether the majority of a species' decline may have occurred prior to monitoring.")
 	pdf.ln()
@@ -188,6 +284,9 @@ def generate_pdf(form_id):
 	pdf.ln()
 
 	pdf.add_page()
+
+
+	# ----- Data summary and processing -----
 
 	pdf.h2("Data summary and processing")
 
@@ -301,6 +400,8 @@ def generate_pdf(form_id):
 
 		text_in_box(doc, get_answer(form, 'processing_agree_comments'))
 		doc.ln()
+
+
 
 	# ------- Statistics and trend estimate --------
 
@@ -452,7 +553,6 @@ def generate_pdf(form_id):
 				else:
 					row.cell(img=empty_circle)
 
-				# row.cell("%s" % selected)
 				row.cell(str(option['id']))
 				row.cell(str(option['description']).encode('ascii', 'ignore').decode('ascii'))
 
@@ -478,11 +578,12 @@ def generate_pdf(form_id):
 	pdf.ln()
 	text_in_box(pdf, get_answer(form, 'additional_comments'))
 	pdf.ln()
+	pdf.ln()
 
 
 	# ------------ Monitoring program funding etc. ---
 
-	pdf.ln()
+	break_if_near_bottom(pdf)
 	pdf.h2("Monitoring program funding, logistics and governance")
 	pdf.ln()
 
