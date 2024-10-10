@@ -193,8 +193,8 @@
             </div>
 
             <div class="field numbered">
-              <label class="label required" v-if="notAdmin">Do you analyse your own data for trends?</label>
-              <label class="label required" v-if="isAdmin">Does the custodian analyse their own data for trends?</label>
+              <label class="label required" v-if="notAdmin">Do you analyse your own data for trends? If no, please indicate why.</label>
+              <label class="label required" v-if="isAdmin">Does the custodian analyse their own data for trends? If no, please indicate why.</label>
               <div class="control indent">
                 <div class="radio-list">
                   <label class="radio" v-for="option in options.yes_no">
@@ -299,7 +299,7 @@
 
 
             <div class="field numbered">
-              <label class="label required" v-if="notAdmin">Are the above values representative of your datasets?</label>
+              <label class="label required" v-if="notAdmin">Does the above data summary and plots appear representative of your dataset?</label>
               <label class="label required" v-if="isAdmin">Does the custodian agree with the data summary? If no, what specifically do they disagree with?</label>
               <div class="control indent">
                 <div class="radio-list">

@@ -273,7 +273,7 @@ def generate_pdf(form_id):
 	text_in_box(pdf, get_answer(form, 'monitoring_for_trend_comments'))
 	pdf.ln()
 
-	numbered_question(pdf, 3, "Do you analyse your own data for trends?")
+	numbered_question(pdf, 3, "Do you analyse your own data for trends? If no, please indicate why.")
 	multiple_choice_options(pdf, field_options['yes_no'], form['answers'].get('analyse_own_trends'))
 	text_in_box(pdf, get_answer(form, 'analyse_own_trends_comments'))
 	pdf.ln()
@@ -385,7 +385,7 @@ def generate_pdf(form_id):
 	pdf.ln()
 	pdf.ln()
 
-	numbered_question(pdf, 5, "Are the above values representative of your datasets?")
+	numbered_question(pdf, 5, "Does the above data summary and plots appear representative of your dataset?")
 	multiple_choice_options(pdf, field_options['yes_no'], form['answers'].get('data_summary_agree'))
 
 	text_in_box(pdf, get_answer(form, 'data_summary_agree_comments'))
