@@ -513,6 +513,9 @@ def generate_pdf(form_id):
 	pdf.ln()
 	pdf.h2("Data Suitablility")
 
+	pdf.body("The below fields relate to the suitability of your data for demonstrating trends in populations over time. After reading the descriptions, please select the most suitable option.")
+	pdf.ln()
+	pdf.ln()
 
 	pdf.set_fill_color(white)
 	pdf.set_font(font_name, size=8)

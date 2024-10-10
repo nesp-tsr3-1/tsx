@@ -564,7 +564,7 @@
 
             <div class="content">
               <p>
-                The below fields relate to the suitability of your data for demonstrating trends in population over time. After reading the descriptions, please select the most suitable option.
+                The below fields relate to the suitability of your data for demonstrating trends in populations over time. After reading the descriptions, please select the most suitable option.
               </p>
               <table class='table is-fullwidth is-striped is-bordered'>
                 <thead>
