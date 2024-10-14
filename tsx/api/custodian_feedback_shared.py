@@ -484,7 +484,7 @@ def site_management_summary(source_id, taxon_id):
 	result = db_session.execute(text("""
 		SELECT
 			COALESCE(management.description, 'N/A') AS management_category,
-			t1_site.management_comments,
+			COALESCE(NULLIF(t1_site.management_comments, ""), "N/A") AS management_comments,
 			COUNT(DISTINCT t1_site.id) AS site_count
 		FROM
 			t1_survey
