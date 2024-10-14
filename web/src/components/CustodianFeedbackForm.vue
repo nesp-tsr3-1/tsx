@@ -507,6 +507,9 @@
               <div v-if="trendStatus == 'error'">
                 <p>An error occurred while generating the trend.</p>
               </div>
+              <div v-if="trendStatus == 'empty'">
+                <p>Insufficient data available to generate a trend</p>
+              </div>
               <div v-if="trendPlotAvailable" class="content">
                 <canvas ref="trendPlot" style="height: 10em;"></canvas>
                </div>
@@ -1366,6 +1369,7 @@ export default {
       }).catch(e => {
         console.log(e)
         this.trendStatus = 'error'
+        this.canResetTrend = true
       })
     },
     resetTrend() {
