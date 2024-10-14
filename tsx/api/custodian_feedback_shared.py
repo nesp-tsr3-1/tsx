@@ -438,9 +438,9 @@ def processing_summary(source_id, taxon_id):
 		SELECT
 				search_type.description AS search_type,
 				unit.description AS unit,
-				unit_type.description AS unit_type,
-				data_processing_type.description AS data_processing_type,
-				response_variable_type.description AS aggregation_method,
+				COALESCE(unit_type.description, 'N/A') AS unit_type,
+				COALESCE(data_processing_type.description, 'N/A') AS data_processing_type,
+				COALESCE(response_variable_type.description, 'N/A') AS aggregation_method,
 				COUNT(*) = COUNT(DISTINCT start_date_y, site_id) AS annual_data
 		FROM
 				t1_survey
@@ -483,14 +483,14 @@ def processing_summary(source_id, taxon_id):
 def site_management_summary(source_id, taxon_id):
 	result = db_session.execute(text("""
 		SELECT
-			management.description AS management_category,
+			COALESCE(management.description, 'N/A') AS management_category,
 			t1_site.management_comments,
 			COUNT(DISTINCT t1_site.id) AS site_count
 		FROM
 			t1_survey
 			JOIN t1_sighting ON t1_sighting.survey_id = t1_survey.id
 			JOIN t1_site ON t1_survey.site_id = t1_site.id
-			JOIN management ON t1_site.management_id = management.id
+			LEFT JOIN management ON t1_site.management_id = management.id
 		WHERE
 			t1_survey.source_id = :source_id
 			AND t1_sighting.taxon_id = :taxon_id
