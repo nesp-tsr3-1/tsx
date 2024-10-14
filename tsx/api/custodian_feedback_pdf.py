@@ -194,7 +194,7 @@ def setup_font(pdf):
 		pdf.add_font('Inter', style, inter_font_path % suffix, uni=True)
 
 def break_if_near_bottom(pdf):
-	if pdf.will_page_break(20):
+	if pdf.will_page_break(60):
 		pdf.add_page()
 
 def generate_pdf(form_id):
@@ -411,6 +411,7 @@ def generate_pdf(form_id):
 	# ------- Statistics and trend estimate --------
 
 	pdf.reset_margin()
+	break_if_near_bottom(pdf)
 	pdf.h2("Statistics and trend estimate")
 	pdf.set_fill_color(white)
 	pdf.set_font(font_name, size=8)
