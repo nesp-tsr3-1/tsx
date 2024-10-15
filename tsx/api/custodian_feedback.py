@@ -110,6 +110,7 @@ def taxon_dataset(data_id):
 	except ValueError:
 		return "Not found", 404
 
+	# Fun fact: we can't control the order of items in JSON_ARRAYAGG(), so we sort the forms afterwards (See below)
 	rows = db_session.execute(text("""
 		WITH forms AS (
 			SELECT JSON_OBJECT(
@@ -130,7 +131,6 @@ def taxon_dataset(data_id):
 			JOIN feedback_type ON feedback_type.id = custodian_feedback.feedback_type_id
 			WHERE custodian_feedback.dataset_id = :data_id
 			AND (:can_view_admin_forms OR feedback_type.code != 'admin')
-			ORDER BY custodian_feedback.last_modified DESC
 		)
 		SELECT JSON_OBJECT(
 			'id', :data_id,
@@ -168,6 +168,12 @@ def taxon_dataset(data_id):
 		return "Not found", 404
 
 	[(result,)] = rows
+
+	# Hack to sort forms
+	result = json.loads(result)
+	result["forms"].sort(key=lambda x: x["time_created"], reverse=True)
+	result = json.dumps(result)
+
 	return Response(result, mimetype='application/json')
 
 def field_json(field):
