@@ -289,6 +289,8 @@ def generate_pdf(form_id):
 	for pdf in avoid_break(pdf):
 		numbered_question(pdf, 4, "Can you estimate what percentage (%) of your species' population existed in Australia at the start of your monitoring (assuming this was 100% in 1750)? This information is to help understand population baselines and determine whether the majority of a species' decline may have occurred prior to monitoring.")
 		text_in_box(pdf, get_answer(form, 'pop_1750'))
+		if get_answer(form, 'pop_1750').lower() == 'unsure':
+			text_in_box(pdf, get_answer(form, 'pop_1750_comments'))
 
 	pdf.add_page()
 
