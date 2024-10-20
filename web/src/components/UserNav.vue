@@ -21,6 +21,9 @@
           class="navbar-item"
           v-if="isProgramManager"
           :to="{ name: 'DataSubsetDownloads' }">Downloads</router-link>
+        <router-link
+          class="navbar-item"
+          :to="{ name: 'CustodianFeedbackHome' }">Feedback</router-link>
 
         <div class="navbar-item has-dropdown is-hoverable">
           <a class="navbar-link is-arrowless">
