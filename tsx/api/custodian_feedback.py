@@ -390,6 +390,12 @@ def update_form(form_id):
 	context.submitting = (request.json.get('action') == 'submit')
 	context.feedback_type = feedback_type_code(form_id)
 
+	try:
+		print(json.dumps(request.json))
+	except:
+		print("Failed to dump json")
+		pass
+
 	form = json.loads(get_form_json_raw(form_id))
 
 	errors = validate_fields(form_fields, request.json, context)
