@@ -28,6 +28,7 @@ fpdf2 = "*"
 matplotlib = "*"
 flask-executor = "*"
 cartopy = "*"
+cachelib = "*"
 
 [dev-packages]
 

@@ -5,6 +5,7 @@ import tsx.config
 import uuid
 from flask_cors import CORS
 from flask_session import Session
+from cachelib.file import FileSystemCache
 from flask.json.provider import DefaultJSONProvider
 import os.path
 
@@ -31,8 +32,9 @@ CORS(app=app, supports_credentials=True)
 
 # Setup secret key
 app.secret_key = tsx.config.get("api", "secret_key") or "not-secret"
-# app.config['SECRET_KEY'] = tsx.config.get("api", "secret_key") or "not-secret"
-app.config['SESSION_TYPE']='filesystem'
+app.config['SESSION_TYPE'] = 'cachelib'
+app.config['SESSION_SERIALIZATION_FORMAT'] = 'json'
+app.config['SESSION_CACHELIB'] = FileSystemCache(threshold=500, cache_dir=tsx.config.data_dir("flask_session"))
 Session(app)
 
 setup_db(app)
