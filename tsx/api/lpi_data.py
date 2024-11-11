@@ -614,7 +614,7 @@ def build_filter_sql(taxon_only=False):
 		#state
 		if 'state' in request.args:
 			states = request.args.get('state', type=str).split('+')
-			param_names = [":state%s" % i for i in range(len(states))]
+			param_names = ["state%s" % i for i in range(len(states))]
 			placeholders = ", ".join(":%s" % p for p in param_names)
 			expressions.append("region.state IN (%s)" % placeholders)
 			values.update(dict(zip(param_names, states)))
