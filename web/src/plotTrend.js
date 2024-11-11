@@ -122,7 +122,7 @@ export function generateTrendPlotData(data) {
   let numSpecies = series.map(x => parseInt(x[4] ?? -1))
 
   let isSingleSpecies = index.map((x, i) => (lowerCI[i] === upperCI[i]) || (numSpecies[i] === 1))
-  let solidIndex = index.map((x, i) => !isSingleSpecies[i] || !isSingleSpecies[i - 1] || !isSingleSpecies[i + 1] ? x : undefined)
+  let solidIndex = index.map((x, i) => !isSingleSpecies[i] || (i > 0 && !isSingleSpecies[i - 1]) || (i < index.length - 1 && !isSingleSpecies[i + 1]) ? x : undefined)
   let dashedIndex = index.map((x, i) => isSingleSpecies[i] ? x : undefined)
 
   let allSingleSpecies = isSingleSpecies.every(x => x)
