@@ -449,7 +449,7 @@ def processing_summary(source_id, taxon_id):
 				JOIN search_type ON t1_site.search_type_id = search_type.id
 				JOIN unit ON t1_sighting.unit_id = unit.id
 				JOIN source ON t1_survey.source_id = source.id
-				LEFT JOIN unit_type ON unit.unit_type_id = unit_type.id
+				LEFT JOIN unit_type ON t1_sighting.unit_type_id = unit_type.id
 				LEFT JOIN data_processing_type ON source.data_processing_type_id = data_processing_type.id
 				LEFT JOIN processing_method pm
 					ON pm.search_type_id = t1_site.search_type_id
