@@ -62,15 +62,12 @@ def aggregate_monthly(taxon_id, simple_mode = False, commit = False, database_co
 
             if response_variable_type_id == 1:
                 aggregate_expression = 'AVG(count)'
-                where_conditions.append("unit_id > 1") # TODO: remove hard-coded unit id check
 
             elif response_variable_type_id == 2:
                 aggregate_expression = 'MAX(count)'
-                where_conditions.append("unit_id > 1") # TODO: remove hard-coded unit id check
 
             elif response_variable_type_id == 3:
                 aggregate_expression = 'AVG(count > 0)'
-                where_conditions.append("unit_id = 1") # TODO: remove hard-coded unit id check
 
             if simple_mode:
                 region_expression = 'NULL'
