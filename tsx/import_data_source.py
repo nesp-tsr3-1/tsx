@@ -45,6 +45,12 @@ def main():
 			if args.relax and row['SourceID'].strip() in ('', 'NULL', 'NA'):
 				continue
 
+			data_id = row.get('DataID') or None
+			expected_data_id = data['source_id'] + "_" + data['taxon_id']
+			if data_id:
+				if expected_data_id != data_id:
+					log.warning("Data id %s does not match expected %s" % (data_id, expected_data_id))
+
 			r = session.execute(text("SELECT 1 FROM source WHERE id = :id"), { 'id': data['source_id'] }).fetchall()
 			if len(r) == 0:
 				if args.relax:
