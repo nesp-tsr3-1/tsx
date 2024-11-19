@@ -28,7 +28,7 @@ def main():
 		for row in tqdm(list(reader)):
 			if row['response_variable_type_id'] in ('0', ''):
 				continue
-			if row['positional_accuracy_threshold_in_m'] == '':
+			if row.get('positional_accuracy_threshold_in_m', '') == '':
 				row['positional_accuracy_threshold_in_m'] = None
 
 			source_id = int(row['source_id'])
