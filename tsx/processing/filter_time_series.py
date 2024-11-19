@@ -59,7 +59,15 @@ def process_database():
 
 	session.execute(text("""UPDATE aggregated_by_year agg
 		JOIN time_series_inclusion ON agg.time_series_id = time_series_inclusion.time_series_id
-		SET agg.include_in_analysis = time_series_inclusion.include_in_analysis"""))
+		LEFT JOIN data_source ON data_source.taxon_id = agg.taxon_id AND data_source.source_id = agg.source_id
+		SET agg.include_in_analysis = (
+			time_series_inclusion.include_in_analysis
+			AND agg.start_date_y <= COALESCE(data_source.end_year, :max_year)
+			AND agg.start_date_y >= COALESCE(data_source.start_year, :min_year)
+		)"""), {
+		'min_year': min_year,
+		'max_year': max_year
+	})
 
 	session.commit()
 

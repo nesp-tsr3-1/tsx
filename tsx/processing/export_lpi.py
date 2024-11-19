@@ -35,17 +35,24 @@ def process_database(species = None, monthly = False, filter_output = False, inc
     log.info("Checking time_series_inclusion is consistent")
 
     result = list(session.execute(text("""
+        WITH agg AS (
+            SELECT time_series_id, MAX(include_in_analysis) AS include_in_analysis
+            FROM aggregated_by_year
+            GROUP BY time_series_id
+        )
         SELECT
+            (SELECT COUNT(*) FROM agg) = (SELECT COUNT(*) FROM time_series_inclusion)
+            AND
             (
-                SELECT count(*)
-                FROM aggregated_by_year agg
-                LEFT JOIN time_series_inclusion inc
+                SELECT COUNT(*)
+                FROM agg
+            ) = (
+                SELECT COUNT(*)
+                FROM agg
+                JOIN time_series_inclusion inc
                 ON agg.time_series_id = inc.time_series_id
                 WHERE agg.include_in_analysis = inc.include_in_analysis
-            ) = (
-                SELECT count(*)
-                FROM aggregated_by_year
-            )
+            );
         """)))
 
     if result != [(1,)]:
@@ -287,8 +294,8 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                     LEFT JOIN t1_site ON site_id = t1_site.id AND agg.data_type = 1
                     LEFT JOIN t2_site ON site_id = t2_site.id AND agg.data_type = 2
                 WHERE agg.taxon_id = :taxon_id
-                AND start_date_y >= :min_year
-                AND start_date_y <= :max_year
+                AND start_date_y >= COALESCE(data_source.start_year, :min_year)
+                AND start_date_y <= COALESCE(data_source.end_year, :max_year)
                 {where_conditions}
                 GROUP BY
                     agg.source_id,
