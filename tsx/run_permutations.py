@@ -17,8 +17,8 @@ from random import shuffle
 
 log = logging.getLogger(__name__)
 
-reference_years = [1985, 1990, 1995, 2000]
-end_year = 2020
+default_reference_years = [1985, 1990, 1995, 2000]
+end_year = 2021
 
 def main():
     logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)-15s %(name)s %(levelname)-8s %(message)s')
@@ -146,6 +146,17 @@ def permutation_dir(perm):
     path = abbreviate(path)
     return path
 
+def reference_years(perm):
+    years = default_reference_years.copy()
+
+    if perm['FunctionalGroup'] in ('Chytrid impacted', 'Chytrid non-impacted'):
+        years.append(1997)
+
+    if perm['FunctionalGroup'] in ('Wetland breeding', 'Terrestrial breeding', 'Stream breeding'):
+        years.append(2001)
+
+    return years
+
 def iterate_tasks(df, work_path, script_path):
     for perm, df in iterate_permutations(df):
 
@@ -165,7 +176,7 @@ def iterate_tasks(df, work_path, script_path):
             df.to_csv(os.path.join(path, 'input.csv'))
             yield perm, path, script_path
         else:
-            for year in reference_years:
+            for year in reference_years(perm):
                 perm = dict(perm)
                 perm['ReferenceYear'] = year
 
