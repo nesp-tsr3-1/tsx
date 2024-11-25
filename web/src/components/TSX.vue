@@ -439,6 +439,8 @@ export default {
     },
     createMainIndexPlot() {
       this.mainIndexPlot = plotTrend("", this.$refs.lpiplot)
+      this.mainIndexPlot.options.scales.yAxis.title.display = false
+      this.mainIndexPlot.options.scales.xAxis.title.display = false
       this.mainIndexPlot.options.maintainAspectRatio = false
     },
     updateMainIndexPlot(params) {
