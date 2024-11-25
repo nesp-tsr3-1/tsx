@@ -819,7 +819,7 @@ def parse_trend(trend):
 	for line in trend.split("\n"):
 		values = [ x.strip('"') for x in line.split(" ") ]
 
-		if len(values) == 4 and values[0].isnumeric() and values[2] != 'NA':
+		if len(values) >= 4 and values[0].isnumeric() and values[2] != 'NA':
 			result.append([int(values[0]), float(values[1]), float(values[2]), float(values[3])])
 
 	return dict(zip(['year', 'value', 'low', 'high'], list(zip(*result)))) # Column-wise
