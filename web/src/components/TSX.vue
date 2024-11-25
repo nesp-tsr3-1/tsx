@@ -595,8 +595,8 @@ export default {
             setTimeout(() => {
               this.map.invalidateSize()
               this.map.fitBounds(bounds, { padding: L.point(10, 10) })
-            }, 200)
-          }, 200)
+            }, 400)
+          }, 400)
         }
       }).finally(() => {
         this.loadingMap = false
