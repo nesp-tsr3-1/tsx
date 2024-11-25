@@ -28,7 +28,15 @@ def read_data(filename, table="time_series", index_col="ID"):
 		db = sqlite3.connect(data_path)
 		df = pd.read_sql("SELECT * FROM %s" % table, db, index_col=index_col)
 		db.close()
-		return df.fillna(value=np.nan)
+
+		if table == "time_series":
+			# Special case - ensure all year columns are float64
+			# (If a year column contains no data it gets incorrectly loaded as type 'object'')
+			years = [col for col in df.columns if col.isdigit()]
+			type_map = dict(zip(years, ['float64'] * len(years)))
+			df = df.astype(type_map)
+
+		return df
 	else:
 		return None
 
