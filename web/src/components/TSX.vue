@@ -174,9 +174,9 @@
           <span class="modal-card-title">Caution</span>
         </header>
         <section class="modal-card-body" style="color:black">
-          <p>This page presents preliminary trends for the 2022 compilation of the Threatened Species Index, for consultation purposes. These trends may change following review by key stakeholders, which will be finalised in early 2023.</p>
-          <p>Please also consider that the trends produced by this tool vary in their reliability. While the TSX team implements rigorous data quality standards, a trend is ultimately only as good as the underlying data.</p>
-          <p>We have developed diagnostic tools to help assess the reliability of each trend. <a target="_blank" rel="noopener noreferrer" href="https://tsx.org.au/visualising-the-index/how-good/">(Click here for more details on how to assess reliability of trends)</a></p>
+          <p>The trends produced by this tool vary in their reliability. While the TSX team implements rigorous data quality standards, a trend is ultimately only as good as the underlying data.</p>
+          <p>We have developed diagnostic tools to help assess the reliability of each trend.</p>
+          <p><a target="_blank" rel="noopener noreferrer" href="https://tsx.org.au/visualising-the-index/how-good/">(Click here for more details on how to assess reliability of trends)</a></p>
           <p>By using this tool you acknowledge the preliminary nature of these trends and the precautions regarding trend generation and reliability.</p>
         </section>
         <footer class="modal-card-foot">
