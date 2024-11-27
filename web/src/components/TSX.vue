@@ -459,8 +459,9 @@ export default {
         }
         if(data) {
           this.trendData = data
+          let plotOptions = { ignoreNumSpecies: true }
 
-          Object.assign(plotData, generateTrendPlotData(data))
+          Object.assign(plotData, generateTrendPlotData(data, plotOptions))
           let minYear = plotData.labels[0]
           this.mainIndexPlot.options.scales.yAxis.title.text = 'Index (' + minYear + ' = 1)'
 

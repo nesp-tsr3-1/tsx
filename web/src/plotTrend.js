@@ -37,8 +37,8 @@ Chart.register(
 let solidFill = 'rgba(230,230,230,0.5)'
 let stripeFill = createDiagonalPattern('grey', 1, 4)
 
-export function plotTrend(data, dom) {
-  let plotData = generateTrendPlotData(data)
+export function plotTrend(data, dom, options) {
+  let plotData = generateTrendPlotData(data, options)
 
   let minYear = plotData.labels[0]
 
@@ -109,7 +109,12 @@ function createDiagonalPattern(color = 'black', width = 2, gap = 8) {
   return c.createPattern(shape, 'repeat')
 }
 
-export function generateTrendPlotData(data) {
+export function generateTrendPlotData(data, options) {
+  options = {
+    ignoreNumSpecies: false,
+    ...options
+  }
+
   let series = data.split('\n')
       .slice(1) // Ignore first line
       .filter(line => line.trim().length > 0 && !/NA/.test(line)) // Ignore empty or NA lines
@@ -119,7 +124,12 @@ export function generateTrendPlotData(data) {
   let index = series.map(x => parseFloat(x[1]))
   let lowerCI = series.map(x => parseFloat(x[2]))
   let upperCI = series.map(x => parseFloat(x[3]))
-  let numSpecies = series.map(x => parseInt(x[4] ?? -1))
+  let numSpecies
+  if(options.ignoreNumSpecies) {
+    numSpecies = series.map(x => -1)
+  } else {
+    numSpecies = series.map(x => parseInt(x[4] ?? -1))
+  }
 
   let isSingleSpecies = index.map((x, i) => (lowerCI[i] === upperCI[i]) || (numSpecies[i] === 1))
   let solidIndex = index.map((x, i) => !isSingleSpecies[i] || (i > 0 && !isSingleSpecies[i - 1]) || (i < index.length - 1 && !isSingleSpecies[i + 1]) ? x : undefined)
