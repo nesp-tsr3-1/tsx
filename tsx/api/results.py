@@ -372,7 +372,7 @@ def stats_html():
 
 	query_type = request.args.get('type', default='all', type=str)
 
-	include_spatial_rep = get_dataset_name() != 'tsx2023'
+	include_spatial_rep = get_dataset_name() not in ['tsx2023', 'tsx2024']
 
 	template = u"""
 	<html>
