@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 import csv
 from flask import request, make_response, g, jsonify, Blueprint, Response
-from flask_headers import headers
 from tsx.api.util import csv_response
 from datetime import datetime
 from tsx.util import run_parallel, log_time
@@ -123,13 +122,18 @@ def plot():
 	})
 
 @bp.route('/spatial', methods = ['GET'])
-@headers({'Cache-Control':'public, max-age=602'})
 def get_intensity():
 	filtered_data = get_filtered_data()
-	if len(filtered_data) == 0:
-		return jsonify([])
 
-	return jsonify(get_intensity_data(filtered_data))
+	if len(filtered_data) == 0:
+		result = []
+	else:
+		result = get_intensity_data(filtered_data)
+
+	response = jsonify(result)
+	response.headers['Cache-Control'] = 'public, max-age=602'
+
+	return response
 
 
 def get_intensity_data(filtered_data, format='json'):
