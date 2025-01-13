@@ -1,0 +1,79 @@
+FROM condaforge/miniforge3:24.9.2-0 as base
+
+RUN conda install --yes \
+	python=3.9 \
+	argon2-cffi==23.1.0 \
+	Cartopy==0.23.0 \
+	fiona==1.10.1 \
+	Flask-Cors==5.0.0 \
+	Flask-Executor==1.0.0 \
+	Flask-Session==0.8.0 \
+	fpdf2==2.8.1 \
+	mysql-connector-python==9.0.0 \
+	openpyxl==3.1.5 \
+	pandas==2.2.3 \
+	passlib==1.7.4 \
+	pytest==8.3.3 \
+	rpy2==3.5.11 \
+	scipy==1.13.1 \
+	sqlacodegen==3.0.0rc5 \
+	tqdm==4.66.6 \
+	watchdog==5.0.3 \
+	r-data.table=1.15.4 \
+    r-docopt=0.7.1 \
+    r-dplyr=1.1.4 \
+    r-ggplot2=3.5.1 \
+    r-irkernel=1.3.2 \
+    r-pak=0.8.0 \
+    r-plyr=1.8.9 \
+    r-tidyr=1.3.1 \
+    r-base=4.3.3 \
+    r-essentials=4.3 \
+	r-doparallel=1.0.17 \
+	r-foreach=1.5.2 \
+	r-plyr=1.8.9 \
+	r-reshape2=1.4.4
+
+# Note: dependencies is set to FALSE below due to the fact that pak wants to reinstall dependencies that are already installed by conda, but it then tries to download the latest versions of those depencies which aren't compatible with our R version. Not sure what is at fault here, but to work around the issue I am manually installing all dependencies via Conda above (obviously that means that the packages installed via Conda will have to be updated if the rlpi package changes its dependencies). Also I notice the the rlpi package does not specify any versions in its dependencies, which is problematic.
+
+RUN R --no-save <<EOF
+options(Ncpus = 1)
+pak::pak_update()
+pak::pkg_install("nesp-tsr3-1/rlpi", dependencies=FALSE)
+EOF
+
+#----- Prod (workflow CLI) -----
+
+FROM base AS prod
+
+# LABEL org.opencontainers.image.source https://github.com/nesp-tsr3-1/tsx
+
+WORKDIR /root
+
+RUN apt-get update && apt-get install -y --no-install-recommends default-mysql-client
+
+COPY sample-data/ sample-data/
+COPY tsx/ tsx/
+COPY db/ db/
+COPY r/ r/
+COPY containers/tsx.conf tsx.conf
+COPY containers/bashrc .bashrc
+COPY containers/my.cnf .my.cnf
+
+CMD ["bash"]
+
+#----- Jupyter Lab ------
+
+FROM prod AS jupyter
+
+RUN conda install jupyterlab
+
+CMD ["conda", "run", "jupyter", "lab", "--allow-root", "--ip", "0.0.0.0", "--no-browser", "--LabApp.token=''"]
+
+#----- Test -----
+
+FROM prod as test
+COPY tsx.conf.test tsx.conf.test
+
+COPY tests/ tests/
+CMD ["python", "-m", "pytest", "tests"]
