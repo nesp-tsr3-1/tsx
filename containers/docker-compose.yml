@@ -39,17 +39,30 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      phpmyadmin:
+        condition: service_started
     # build: .
     volumes:
-      - ../data:/root/data
+      - ./data:/root/data
     stdin_open: true # docker run -i
     tty: true        # docker run -t
   test:
     profiles: ["test"]
     build:
       context: ..
-      dockerfile: containers/Dockerfile
+      dockerfile: containers/Dockerfile-conda
       target: test
+    depends_on:
+      mysql:
+        condition: service_healthy
+  jupyter:
+    profiles: ["jupyter"]
+    build:
+      context: ..
+      dockerfile: containers/Dockerfile-conda
+      target: jupyter
+    ports:
+      - 8034:8888
     depends_on:
       mysql:
         condition: service_healthy

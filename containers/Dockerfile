@@ -42,6 +42,14 @@ COPY containers/my.cnf .my.cnf
 
 CMD ["bash"]
 
+#----- Jupyter Lab ------
+
+FROM prod AS jupyter
+
+RUN pipenv install jupyterlab
+
+CMD ["pipenv", "run", "jupyter", "lab", "--allow-root", "--ip", "0.0.0.0", "--no-browser", "--LabApp.token=''"]
+
 #----- Test -----
 
 FROM prod as test

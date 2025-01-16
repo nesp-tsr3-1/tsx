@@ -78,6 +78,32 @@ include::include/install-virtualbox.adoc[]
 
 That's it! You can now skip straight to <<Running the workflow>>.
 
+=== Installation using Docker
+
+If you do not already have Docker installed on your machine, we recommend installing Docker Desktop via https://docs.docker.com/get-started/get-docker/. If you install Docker using a different method, you must ensure that Docker Compose is also installed.
+
+Create a new folder for running the workflow (any name is fine).
+
+Download and save the following file into the folder: https://raw.githubusercontent.com/nesp-tsr3-1/tsx/master/containers/docker-compose.yml
+
+Using the command line/terminal, run the following command inside the folder where you placed docker-compose.yml:
+
+----
+docker compose run --rm workflow_cli
+----
+
+The first time you run this command, Docker will need to download and the necessary containers, which can take a few minutes. When the containers have been loaded, you will be presented with a command prompt which you can use to follow along with the rest of this guide. The command prompt looks like this:
+
+----
+Welcome to the TSX Workflow docker image.
+
+TSX:~# 
+----
+
+You can now proceed to <<Running the workflow>>.
+
+Note that when the workflow is running in Docker, you can access the MySQL database admin interface by going to http://localhost:8033
+
 === Installation on Linux/macOS
 
 include::include/install-linux.adoc[]
@@ -85,20 +111,6 @@ include::include/install-linux.adoc[]
 === Installation on Windows (advanced)
 
 include::include/install-windows.adoc[]
-
-=== Installation using Docker (advanced)
-
-These instructions assume Docker is installed (including Docker Compose) and that the reader is familiar with basic Docker usage.
-
-Download and save the following file into a new folder: https://raw.githubusercontent.com/nesp-tsr3-1/tsx/master/containers/docker-compose.yml
-
-Run the following command inside the folder:
-
-----
-docker compose run --rm workflow_cli
-----
-
-After loading and starting the necessary containers, you will be presented with a bash prompt which you can use to follow along with the rest of this guide.
 
 = Running the workflow
 
@@ -453,6 +465,14 @@ Then click *Login* to connect.
 You should now be able to browse the TSX files. Unlike the networking sharing method, you can't edit the files directly on the virtual machine. Instead you will have to edit the files in a folder on your computer's hard drive, and download and upload files from the virtual machine as necessary.
 
 include::include/appendix-file-formats.adoc[]
+
+== Accessing files in Docker
+
+To access your own files when running the workflow via Docker, first create a folder called 'data' under the same folder as the 'docker-compose.yml' file. This 'data' folder will be automatically shared with the Docker workflow command prompt. For example if you placed a file called `my-surveys.csv` into this folder, then you could import them in the Docker workflow command prompt by running:
+
+---
+python -m tsx.importer --type 1 -c data/my-surveys.csv
+---
 
 [appendix]
 = Data Classification
