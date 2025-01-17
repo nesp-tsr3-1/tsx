@@ -52,13 +52,18 @@ WORKDIR /root
 
 RUN apt-get update && apt-get install -y --no-install-recommends default-mysql-client
 
+RUN mkdir /seed
+WORKDIR /seed
+
 COPY sample-data/ sample-data/
 COPY tsx/ tsx/
 COPY db/ db/
 COPY r/ r/
 COPY containers/tsx.conf tsx.conf
-COPY containers/bashrc .bashrc
+
+WORKDIR /root
 COPY containers/my.cnf .my.cnf
+COPY containers/bashrc .bashrc
 
 CMD ["bash"]
 

@@ -17,9 +17,14 @@ fi
 
 
 if [ -z "$(mysql -sNe "SHOW TABLES")" ]; then
-	mysql < $HOME/db/sql/create.sql
-	mysql < $HOME/db/sql/init.sql
-	mysql < $HOME/sample-data/seed.sql
+	mysql < /seed/db/sql/create.sql
+	mysql < /seed/db/sql/init.sql
+	mysql < /seed/sample-data/seed.sql
 fi
 
+# Fixes: ERROR 1: PROJ: proj_create_from_database: Open of /opt/conda/share/proj failed
+# See https://github.com/PDAL/PDAL/issues/2544
+export PROJ_LIB=/opt/conda/share/proj
 
+cp -rn /seed/* /root/data
+cd /root/data

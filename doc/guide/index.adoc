@@ -97,12 +97,20 @@ The first time you run this command, Docker will need to download and the necess
 ----
 Welcome to the TSX Workflow docker image.
 
-TSX:~# 
+TSX:~#
 ----
 
 You can now proceed to <<Running the workflow>>.
 
-Note that when the workflow is running in Docker, you can access the MySQL database admin interface by going to http://localhost:8033
+Important notes:
+
+ - A folder called `data` will be created in the same folder that you placed docker-compose.yml. This folder is shared with the Docker container, so you can access any files that you place in the folder from the TSX Workflow command prompt. This folder will also contain the Python and R scripts which can edit if you want to experiment with modifying the workflow.
+
+ - When the workflow is running in Docker, you can access the MySQL database admin interface by going to http://localhost:8033
+
+ - In order to update to the latest version of the Docker image, run: `docker compose pull workflow_cli`
+
+ - To completely reset all data and code changes, delete all Docker containers under the `tsx` project, delete the Docker volume called `tsx_tsx_mysql_data` and delete the `data` folder
 
 === Installation on Linux/macOS
 
@@ -162,7 +170,7 @@ During data processing, all observations are matched to Interim Biogeographic Re
 
 Import the SubIBRA regions into the database:
 ----
-python -m tsx.import_region sample-data/spatial/Regions.shp
+python -m tsx.import_region sample-data/spatial/Regions-simplified.shp
 ----
 
 NOTE: Calling this command can take up to 20–30 minutes to process depending on you computer.

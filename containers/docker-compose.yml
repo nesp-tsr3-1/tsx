@@ -5,6 +5,7 @@
 # podman compose -f containers/docker-compose.yml run --rm workflow_cli
 
 version: "3.1"
+name: tsx
 services:
   mysql:
     image: mysql:8.3.0
@@ -36,12 +37,15 @@ services:
   workflow_cli:
     profiles: ["cli"] # prevents this service from starting automatically
     image: ghcr.io/nesp-tsr3-1/tsx-workflow:latest
+    # build:
+    #   context: ..
+    #   dockerfile: containers/Dockerfile-conda
+    #   target: prod
     depends_on:
       mysql:
         condition: service_healthy
       phpmyadmin:
         condition: service_started
-    # build: .
     volumes:
       - ./data:/root/data
     stdin_open: true # docker run -i

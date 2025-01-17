@@ -27,3 +27,5 @@ vagrant-env/
 flask_session/
 
 /.ipynb_checkpoints
+
+/containers/data
