@@ -80,7 +80,7 @@ That's it! You can now skip straight to <<Running the workflow>>.
 
 === Installation using Docker
 
-If you do not already have Docker installed on your machine, we recommend installing Docker Desktop via https://docs.docker.com/get-started/get-docker/. If you install Docker using a different method, you must ensure that Docker Compose is also installed.
+If you do not already have Docker installed on your machine, we recommend installing Docker Desktop via https://docs.docker.com/get-started/get-docker/. If you install Docker using a different method, you must ensure that Docker Compose is also installed. You can check this by attempting to run `docker compose` on the command line/terminal.
 
 Create a new folder for running the workflow (any name is fine).
 
@@ -108,7 +108,7 @@ Please note the following:
 
  - To update to the latest version of the Docker image in future, run: `docker compose pull workflow_cli` at the command line/terminal (*not* inside the TSX command prompt)
 
- - To completely reset all data and code changes, delete all Docker containers under the `tsx` project, delete the Docker volume called `tsx_tsx_mysql_data` and delete the `data` folder. This can be done either via the Docker Desktop GUI or by using the `docker` command in the terminal.
+ - To completely reset all data and code changes, delete all Docker containers under the `tsx` project, delete the Docker volume called `tsx_tsx_mysql_data` and delete the `data` folder. Deleting Docker volumes and containers can be done either via the Docker Desktop GUI or by using the `docker` command in the terminal.
 
 You can now proceed to <<Running the workflow>>.
 
