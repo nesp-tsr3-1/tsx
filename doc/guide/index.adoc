@@ -97,20 +97,20 @@ The first time you run this command, Docker will need to download and the necess
 ----
 Welcome to the TSX Workflow docker image.
 
-TSX:~#
+TSX:~/data#
 ----
 
+Please note the following:
+
+ - A folder called `data` will be created in the same folder that you placed docker-compose.yml. This folder is shared with the Docker container, so you can access any files that you place in the folder from the TSX Workflow command prompt. This folder will also contain the Python and R scripts which you can edit if you want to experiment with modifying the workflow.
+
+ - When the workflow is running in Docker, you can access the MySQL database admin interface by going to http://localhost:8033/index.php?route=/database/structure&db=tsx
+
+ - To update to the latest version of the Docker image in future, run: `docker compose pull workflow_cli` at the command line/terminal (*not* inside the TSX command prompt)
+
+ - To completely reset all data and code changes, delete all Docker containers under the `tsx` project, delete the Docker volume called `tsx_tsx_mysql_data` and delete the `data` folder. This can be done either via the Docker Desktop GUI or by using the `docker` command in the terminal.
+
 You can now proceed to <<Running the workflow>>.
-
-Important notes:
-
- - A folder called `data` will be created in the same folder that you placed docker-compose.yml. This folder is shared with the Docker container, so you can access any files that you place in the folder from the TSX Workflow command prompt. This folder will also contain the Python and R scripts which can edit if you want to experiment with modifying the workflow.
-
- - When the workflow is running in Docker, you can access the MySQL database admin interface by going to http://localhost:8033
-
- - In order to update to the latest version of the Docker image, run: `docker compose pull workflow_cli`
-
- - To completely reset all data and code changes, delete all Docker containers under the `tsx` project, delete the Docker volume called `tsx_tsx_mysql_data` and delete the `data` folder
 
 === Installation on Linux/macOS
 
@@ -399,7 +399,7 @@ Alternatively, you can run the LPI calculation directly on the command line:
 (cd r; Rscript lpi.R)
 ----
 
-This will generate the result data in a file named `infile_infile_Results.txt`, but it will not display a plot.
+This will generate the result data in a file named `infile_infile_Results.txt` (inside the `r` subdirectory), but it will not display a plot. However, a plot will be generated in a file called `Rplots.pdf`.
 
 To run the entire workflow, including the LPI calculation, run the following command:
 ----
@@ -476,10 +476,10 @@ include::include/appendix-file-formats.adoc[]
 
 == Accessing files in Docker
 
-To access your own files when running the workflow via Docker, first create a folder called 'data' under the same folder as the 'docker-compose.yml' file. This 'data' folder will be automatically shared with the Docker workflow command prompt. For example if you placed a file called `my-surveys.csv` into this folder, then you could import them in the Docker workflow command prompt by running:
+To access your own files when running the workflow via Docker, place them inside the `data` folder which is automatically created in the same folder as the 'docker-compose.yml' file when you first run the workflow. Files in this folder are accessible from the Docker workflow command prompt. For example if you placed a file called `my-surveys.csv` into this folder, then you could import them in the Docker workflow command prompt by running:
 
 ---
-python -m tsx.importer --type 1 -c data/my-surveys.csv
+python -m tsx.importer --type 1 -c my-surveys.csv
 ---
 
 [appendix]
