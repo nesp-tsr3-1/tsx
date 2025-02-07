@@ -223,4 +223,9 @@ fieldset {
 fieldset:disabled {
   opacity: 0.7;
 }
+p.textarea {
+  height: auto;
+  min-height: 0;
+  max-height: none;
+}
 </style>
