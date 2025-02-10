@@ -847,12 +847,6 @@ class Importer:
 		return self.get_cached('source', description,
 			lambda: session.query(Source).filter_by(description = description).one_or_none())
 
-	def get_source_type(self, session, description):
-		if description == None:
-			return None
-		return self.get_cached('source_type', description,
-			lambda: session.query(SourceType).filter_by(description = description).one_or_none())
-
 	def get_or_create_search_type(self, session, description):
 		return self.get_cached('search_type', description,
 			lambda: get_or_create(session, SearchType, description = description))
