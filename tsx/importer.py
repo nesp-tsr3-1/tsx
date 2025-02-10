@@ -323,6 +323,15 @@ class Importer:
 			"Breeding"
 		])
 
+		recognized_headers = (required_headers | optional_headers).intersection(headers)
+		if len(recognized_headers) == 0:
+			raise ImportError("""
+				First row of input does not contain any recognized heading names.
+				Please make sure you remove all explanatory headers from the TSX data import template
+				(rows 1-5) before uploading the file.
+				Column names (row 6 of the template) should be in row 1 of the uploaded file.
+			""")
+
 		if self.data_type == 2:
 			required_headers -= set(['SourceType', 'TaxonID', 'UnitOfMeasurement', 'ScientificName'])
 			required_headers |= set(['SecondarySourceID'])
