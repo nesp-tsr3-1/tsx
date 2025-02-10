@@ -808,7 +808,7 @@ class Importer:
 
 
 	def validate_lookup(self, session, model):
-		lookup = self.get_cached('lookup', model, lambda: { x.description: x for x in session.query(model).all() })
+		lookup = self.get_cached('lookup', model, lambda: { x.description.lower(): x for x in session.query(model).all() })
 		return validate_lookup(lookup)
 
 	def get_unit(self, session, unit_id):
@@ -948,8 +948,8 @@ def validate_greater_than_or_equal(y):
 
 def validate_lookup(lookup):
 	def v(x):
-		if x in lookup:
-			return lookup[x]
+		if x.lower() in lookup:
+			return lookup[x.lower()]
 		else:
 			raise ValueError('must be one of %s' % quoted_strings(lookup.keys()))
 	return v
