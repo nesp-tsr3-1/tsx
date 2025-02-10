@@ -693,15 +693,16 @@ class Importer:
 						log.error("Invalid TaxonID/Spno: %s, %s" % (taxon_id, spno))
 						return False
 
+			if taxon is None and scientific_name:
+				taxon = self.get_taxon_by_scientific_name(session, scientific_name)
+				if not taxon:
+					log.warning("Unrecognized scientific name: %s", scientific_name)
+
 			if taxon is None and common_name:
 				taxon = self.get_taxon_by_common_name(session, common_name)
 				if not taxon:
 					log.warning("Unrecognized common name: %s", common_name)
 
-			if taxon is None and scientific_name:
-				taxon = self.get_taxon_by_scientific_name(session, scientific_name)
-				if not taxon:
-					log.warning("Unrecognized scientific name: %s", scientific_name)
 
 			if taxon is None:
 				log.error("Could not identify taxon from TaxonID, CommonName or ScientificName")
@@ -709,7 +710,13 @@ class Importer:
 
 			# Now check consistency of common/scientific names
 			if common_name and taxon.common_name and taxon.common_name != common_name:
-				log.warning("Common name (%s) does not match expected (%s)" % (common_name, taxon.common_name))
+				a = normalize_strongly(common_name)
+				b = normalize_strongly(taxon.common_name)
+				if a != b:
+					key = 'warn_cn_' + a
+					if key not in self.cache:
+						self.cache[key] = True
+						log.warning("Common name (%s) does not match expected (%s)" % (common_name, taxon.common_name))
 			if scientific_name and taxon.scientific_name != scientific_name:
 				log.warning("Scientific name (%s) does not match expected (%s)" % (scientific_name, taxon.scientific_name))
 
@@ -1066,6 +1073,9 @@ def normalize(s):
 		return None
 	else:
 		return re.sub(r'\s+', ' ', s)
+
+def normalize_strongly(s):
+	return re.sub(r'[\W_0-9]', '', s.lower())
 
 def quoted_strings(s):
 	return ", ".join(["'%s'" % x for x in s])
