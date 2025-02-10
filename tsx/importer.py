@@ -414,11 +414,18 @@ class Importer:
 				ok[0] = False
 
 		# Strip leading/trailing whitespace from all values, and convert empty strings to None
+		row_is_empty = True
 		for key in row:
 			if type(row[key]) in (str, text_type):
 				row[key] = row[key].strip()
 			if row[key] == '':
 				row[key] = None
+			if row[key] != None:
+				row_is_empty = False
+
+		if row_is_empty:
+			log.info("Skipping empty row")
+			return
 
 		# Check that survey information doesn't change for the same SourcePrimaryKey
 		if self.source_id == None:
