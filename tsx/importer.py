@@ -225,12 +225,13 @@ class Importer:
 
 			elif format == 'csv':
 				# Count rows first - this is used so we can track progress
-				with open(self.filename, "r") as csvfile:
+				with open(self.filename, "r", encoding="utf-8-sig") as csvfile:
 					reader = csv.DictReader(csvfile)
-					self.row_count = sum(1 for row in reader)
+					self.row_count = sum(1 for row in reader) + 1
 
-				with open(self.filename, "r") as csvfile:
+				with open(self.filename, "r", encoding="utf-8-sig") as csvfile:
 					reader = csv.DictReader(csvfile)
+					print(reader.fieldnames)
 					self.check_headers(reader.fieldnames)
 					self.processed_rows = 1
 					for i, row in enumerate(self.progress_wrapper(reader)):
