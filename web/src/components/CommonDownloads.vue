@@ -259,7 +259,7 @@
     <p style="font-style: italic;">The below trend graph shows the average change in populations compared to a baseline year. It shows a relative change and not population numbers themselves. At the reference year, the index gets an index score of one. A score of 1.2 would mean a 20% increase on average compared to the reference year, while a score of 0.8 would mean a 20% decrease on average compared to the reference year. The overall trend (mean value per year) is shown by the blue line (dashed for single species and solid for multiple species). The grey cloud indicates the uncertainty in the estimate as measured by the variability between all-time series in the dataset or data subset. Please note that this trend has been generated using the Living Planet Index methodology, which is designed for producing composite trends rather than single-species trends.</p>
     <canvas v-show="showPlot" ref="plot" style="height: 10em;"></canvas>
     <p>
-      <button type="button" class="button is-primary" @click="downloadTrend">Download Population Trend (TXT format)</button>
+      <button type="button" class="button is-primary" @click="downloadTrend">Download Population Trend (CSV format)</button>
     </p>
   </div>
   <div v-if="trendStatus == 'empty'" class="block">

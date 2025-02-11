@@ -828,6 +828,13 @@ def parse_trend(trend):
 
 	return dict(zip(['year', 'value', 'low', 'high'], list(zip(*result)))) # Column-wise
 
+def trend_txt_to_csv(trend_txt):
+	trend_data = parse_trend(trend_txt)
+	output = io.StringIO()
+	writer = csv.writer(output)
+	writer.writerow(trend_data.keys())
+	writer.writerows(zip(*trend_data.values()))
+	return output.getvalue()
 
 @bp.route('/trends', methods = ['GET'])
 def get_trend():
@@ -863,11 +870,7 @@ def get_trend():
 	elif result_format == 'json':
 		return jsonify(parse_trend(raw_trend))
 	elif result_format == 'csv':
-		t = parse_trend(raw_trend)
-		output = io.StringIO()
-		writer = csv.writer(output)
-		writer.writerow(t.keys())
-		writer.writerows(zip(*t.values()))
-		return Response(output.getvalue(), mimetype="text/csv")
+		trend_csv = trend_txt_to_csv(raw_trend)
+		return Response(trend_csv, mimetype="text/csv")
 	else:
-		return jsonify("Invalid format (Allowed formats: raw, json)"), 400
+		return jsonify("Invalid format (Allowed formats: raw, json, csv)"), 400

@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request, send_file, session, Response
-from tsx.api.util import db_session, get_user, get_roles, jsonify_rows, db_insert, server_timezone
+from tsx.api.util import db_session, get_user, get_roles, jsonify_rows, db_insert, server_timezone, sanitise_file_name_string
 from tsx.util import Bunch
 from tsx.api.validation import *
 from tsx.api.permissions import permitted
@@ -13,7 +13,6 @@ from io import StringIO
 import csv
 from datetime import datetime
 import pytz
-import re
 from tsx.api.mail import send_admin_notification
 from string import Template
 from textwrap import dedent
@@ -205,11 +204,6 @@ def form(form_id):
 		return "Not found", 404
 
 	return Response(form_json, mimetype='application/json')
-
-def sanitise_file_name_string(s):
-	s = re.sub(r"[/\\?%*:|\"<>\x7F\x00-\x1F]", "_", s)
-	s = re.sub(r"[-_\s]+", "_", s)
-	return s
 
 def download_file_name_prefix(form):
 	species = form['taxon']['scientific_name']

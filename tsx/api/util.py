@@ -10,6 +10,7 @@ import logging
 from sqlalchemy import text
 from flask_executor import Executor
 import pytz
+import re
 
 try:
 	from greenlet import getcurrent as _get_ident  # type: ignore
@@ -110,3 +111,8 @@ def get_request_args_or_body():
 
 def server_timezone():
 	return pytz.timezone('Australia/Sydney')
+
+def sanitise_file_name_string(s):
+	s = re.sub(r"[/\\?%*:|\"<>\x7F\x00-\x1F]", "_", s)
+	s = re.sub(r"[-_\s]+", "_", s)
+	return s

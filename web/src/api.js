@@ -218,7 +218,7 @@ export function dataSubsetTrend(id) {
 }
 
 export function dataSubsetTrendDownloadURL(id) {
-  return ROOT_URL + '/subset/trend/' + id
+  return ROOT_URL + '/subset/trend/' + id + '?format=csv'
 }
 
 export function login(email, password) {

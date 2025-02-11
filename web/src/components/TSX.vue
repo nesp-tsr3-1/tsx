@@ -619,7 +619,7 @@ export default {
     },
     downloadTrend: function(evt) {
       api.trend({ format: 'csv', ...this.dataParams}).then((data) => {
-        saveTextFile(data, 'text/cs', "tsx-trend-" + this.filterFilenamePart + ".csv")
+        saveTextFile(data, 'text/csv', "tsx-trend-" + this.filterFilenamePart + ".csv")
       })
 
       if(evt.shiftKey) {

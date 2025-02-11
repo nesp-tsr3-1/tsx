@@ -1,8 +1,9 @@
 from flask import Blueprint, jsonify, request, send_file, session, Response
 import csv
 from uuid import uuid4
-from tsx.api.util import db_session, get_user, get_roles, jsonify_rows, get_request_args_or_body
+from tsx.api.util import db_session, get_user, get_roles, jsonify_rows, get_request_args_or_body, sanitise_file_name_string
 from tsx.api.permissions import permitted
+from tsx.api.results import trend_txt_to_csv
 from tsx.config import data_dir
 import os
 from threading import Thread, Lock
@@ -14,6 +15,7 @@ import tempfile
 from zipfile import ZipFile, ZIP_DEFLATED
 import json
 from sqlalchemy import text
+import hashlib
 
 bp = Blueprint('subset', __name__)
 
@@ -48,10 +50,12 @@ def subset_raw_data():
     if not params_permitted():
         return "Not authorized", 401
 
+    filename = 'tsx-raw-data&%s.zip' % filename_component_from_params()
+
     result = query_subset_raw_data()
     extra_dir = data_dir('raw-download-extras')
     extra_entries = [(filename, os.path.join(extra_dir, filename), 'file') for filename in os.listdir(extra_dir)]
-    return zip_response([('raw_data.csv', csv_string(result), 'str')] + extra_entries, 'raw_data.zip')
+    return zip_response([('raw_data.csv', csv_string(result), 'str')] + extra_entries, filename)
 
 @bp.route('/subset/stats', methods = ['GET'])
 def subset_stats():
@@ -208,6 +212,86 @@ def subset_species():
 
     result = db_session.execute(text(sql), params).fetchall()
     return jsonify_rows(result)
+
+
+# This tries to strike a balance between a descriptive name and not being too long
+def filename_component_from_params(params=None):
+    if params == None:
+        params = get_request_args_or_body()
+    parts = []
+
+    if 'source_id' in params:
+        source_id = params['source_id']
+        source_name = db_query_single("SELECT description FROM source WHERE id = :id", { 'id': source_id })
+        parts.append(('dataset', "%s_%s" % (source_id, source_name)))
+
+    if 'taxon_id' in params:
+        taxon_list = params['taxon_id'].split(',')
+        if len(taxon_list) > 1:
+            parts.append(('taxon', ",".join(taxon_list)))
+        else:
+            taxon_id = taxon_list[0]
+            sci_name = db_query_single("SELECT scientific_name FROM taxon WHERE id = :id", { 'id': taxon_id })
+            parts.append(('taxon', '%s_%s' % (taxon_id, sci_name)))
+
+    if 'state' in params:
+        parts.append(('state', params['state']))
+
+    if 'monitoring_programs' in params:
+        ids = params['monitoring_programs']
+
+        if isinstance(ids, str):
+            ids = ids.split(",")
+
+        if 'any' in ids:
+            if 'none' in ids:
+                pass
+            else:
+                parts.append(('monitoring_programs', 'any'))
+        else:
+            if -1 in ids:
+                ids.remove(-1)
+                ids.append('none')
+
+            if len(ids) == 1 and ids[0] != 'none':
+                monitoring_program_name = db_query_single("SELECT description FROM monitoring_program WHERE id = :id", { 'id': ids[0] })
+                parts.append(('monitoring_programs', '%s_%s' % (ids[0], monitoring_program_name)))
+            else:
+                parts.append(('monitoring_programs', ",".join(ids)))
+
+    if 'management' in params:
+        parts.append(('management', params['management']))
+
+    if 'taxonomic_group' in params:
+        parts.append(('taxonomic_group', params['taxonomic_group']))
+
+    if 'site_id' in params:
+        parts.append(('site', params['site_id']))
+
+    if 'reference_year' in params:
+        parts.append(('reference_year', params['reference_year']))
+
+    if 'final_year' in params:
+        parts.append(('final_year', params['final_year']))
+
+    result = sanitise_file_name_string("&".join("%s=%s" % (k, v) for k, v in parts))
+
+    # Truncate result if too long and add hash
+    max_len = 128
+    hash_len = 8
+    if len(result) > max_len:
+        h = hashlib.md5(result.encode('utf-8')).hexdigest()[0:hash_len]
+        result = result[0:(max_len - hash_len - 1)] + "_" + h
+
+    return result
+
+def db_query_single(sql, params):
+    result = db_session.execute(text(sql), params).fetchall()
+    if len(result) == 1:
+        return result[0][0]
+    else:
+        return None
+
 
 def subset_sql_params(subset_params=None, state_via_region=False):
     where_conditions = []
@@ -378,10 +462,12 @@ def subset_time_series():
     if not params_permitted():
         return "Not authorized", 401
 
+    filename = 'tsx-time-series&%s.zip' % filename_component_from_params()
+
     result = query_subset_time_series()
     extra_dir = data_dir('time-series-download-extras')
     extra_entries = [(filename, os.path.join(extra_dir, filename), 'file') for filename in os.listdir(extra_dir)]
-    return zip_response([('time_series.csv', csv_string(result), 'str')] + extra_entries, 'time_series.zip')
+    return zip_response([('time_series.csv', csv_string(result), 'str')] + extra_entries, filename)
 
 
 @bp.route('/subset/monitoring_consistency', methods = ['GET'])
@@ -634,12 +720,9 @@ def subset_generate_trend_async(subset_params=None):
     result = query_subset_time_series(subset_params)
     save_csv(result, os.path.join(path, "lpi.csv"))
 
-    # Save extra trend parameters e.g. reference/final year
+    # Save subset parameters and extra trend parameters e.g. reference/final year
     args = get_request_args_or_body()
-    trend_params = {}
-    for p in ['reference_year', 'final_year']:
-        if p in args:
-            trend_params[p] = args[p]
+    trend_params = { **args, **(subset_params or {})}
 
     with open(os.path.join(path, "params.json"), "w") as f:
         json.dump(trend_params, f)
@@ -670,10 +753,36 @@ def subset_get_trend_status(trend_id):
                 return "Not found", 404
 
 
+def get_trend_params(trend_id):
+    path = trend_work_dir(trend_id)
+    try:
+        with open(os.path.join(path, "params.json"), "r") as f:
+            return json.load(f)
+    except:
+        return None
+
 @bp.route('/subset/trend/<trend_id>')
 def subset_get_trend(trend_id):
     path = os.path.join(trend_work_dir(trend_id), "trend.txt")
     if os.path.exists(path):
-        return send_file(path, mimetype='text/plain', max_age=5, as_attachment=True, download_name='trend.txt')
+        with open(path, 'r') as file:
+            raw_trend = file.read()
+        result_format = request.args.get('format', default='raw', type=str)
+        if result_format == 'raw':
+            return Response(raw_trend, mimetype="text/plain")
+        elif result_format == 'csv':
+            params = get_trend_params(trend_id)
+            if params:
+                filename = 'tsx-trend&%s.csv' % filename_component_from_params(params)
+            else:
+                filename = 'tsx-trend-%s.csv' % trend_id
+
+            trend_csv = trend_txt_to_csv(raw_trend)
+            return Response(trend_csv, mimetype="text/csv", headers={
+               "Content-Disposition": "attachment; filename=%s" % (filename)
+            })
+        else:
+            return jsonify("Invalid format (Allowed formats: raw, csv)"), 400
+
     else:
         return "Not found", 404
