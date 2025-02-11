@@ -695,6 +695,8 @@ def process_trend(trend_id):
         except:
             pass
 
+        script_params.append('--filter-rows')
+
         subprocess.run(["Rscript", os.path.join(path, "lpi.R")] + script_params)
         results_path = os.path.join(path, "data_infile_Results.txt")
         if os.path.exists(results_path):

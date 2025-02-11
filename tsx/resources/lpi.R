@@ -2,7 +2,7 @@ library(rlpi)
 library(dplyr)
 library(tidyr)
 
-## Usage: lpi.R input_file work_dir [refYear] [plotMax]
+## Usage: lpi.R input_file work_dir [refYear] [plotMax] [--filter-rows]
 
 args <- commandArgs(TRUE)
 
@@ -24,8 +24,21 @@ if(nSpecies == 1) {
 yearCols <- grep("X[0-9]+", colnames(data), value=TRUE)
 years <- strtoi(substr(yearCols, 2, 5))
 
-refYear <- ifelse(is.na(args[3]), min(years), strtoi(args[3]))
-plotMax <- ifelse(is.na(args[4]), max(years), strtoi(args[4]))
+refYear <- ifelse(is.na(strtoi(args[3])), min(years), strtoi(args[3]))
+plotMax <- ifelse(is.na(strtoi(args[4])), max(years), strtoi(args[4]))
+
+# Remove rows with all zeroes or only one value within range
+filterRows <- any(args == '--filter-rows')
+if(filterRows) {
+  cat("Rows before filtering:", nrow(data), "\n")
+  yearColsInRange <- yearCols[years >= refYear & years <= plotMax]
+  data <- dplyr::filter(data, apply(!is.na(data[yearColsInRange]), 1, sum) > 1)
+  data <- dplyr::filter(data, apply(data[yearColsInRange], 1, max, na.rm=TRUE) > 0)
+  cat("Rows after filtering:", nrow(data), "\n")
+  if(nrow(data) == 0) {
+    stop("No data to process")
+  }
+}
 
 infile_name <- create_infile(data, name='data', start_col_name=min(yearCols), end_col_name=max(yearCols))
 
