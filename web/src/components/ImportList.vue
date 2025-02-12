@@ -20,6 +20,7 @@
             <th>Filename</th>
             <th>Status</th>
             <th>Uploaded</th>
+            <th style="width: 4em;"></th>
           </tr>
         </thead>
         <tbody>
@@ -34,6 +35,10 @@
               <button class="button is-small" v-if='canApproveImport(i)' v-on:click='function() { approveImport(i) }' v-bind:class="{ 'is-loading': i.isApproving }">Approve</button>
             </td>
             <td>{{formatDateTime(i.time_created)}} by {{i.user}}</td>
+            <td class="visibility">
+              <button v-if="canShowImport(i)" @click="showImport(i)" title="Hidden from custodians" :disabled="i.isUpdatingVisibility"><img src="../assets/icons/visibility_off.svg"></button>
+              <button v-if="canHideImport(i)" @click="hideImport(i)"  title="Visible to custodians" :disabled="i.isUpdatingVisibility"><img src="../assets/icons/visibility.svg"></button>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -67,7 +72,10 @@ export default {
     refresh() {
       var importsPromise = api.dataSourceImports(this.sourceId)
       importsPromise.then((imports) => {
-        imports.forEach(i => { i.isApproving = false })
+        imports.forEach(i => {
+          i.isApproving = false
+          i.isUpdatingVisibility = false
+        })
         this.imports = imports
         //   .sort((a, b) => b.time_created.localeCompare(a.time_created))
         this.status = 'loaded'
@@ -101,10 +109,39 @@ export default {
     canApproveImport(i) {
       return this.currentUserCanApprove() && i.status === 'imported' && i === this.imports[0]
     },
+    showImport(i) {
+      i.isUpdatingVisibility = true
+      api.showImport(i.id).then(() => {
+        i.is_hidden = false
+      }).catch((error) => {
+        console.log(error)
+      }).finally(() => {
+        i.isUpdatingVisibility = false
+      })
+    },
+    hideImport(i) {
+      i.isUpdatingVisibility = true
+      api.hideImport(i.id).then(() => {
+        i.is_hidden = true
+      }).catch((error) => {
+        console.log(error)
+      }).finally(() => {
+        i.isUpdatingVisibility = false
+      })
+    },
+    canShowImport(i) {
+      return this.currentUserIsAdmin() && i.is_hidden
+    },
+    canHideImport(i) {
+      return this.currentUserIsAdmin() && !i.is_hidden
+    },
     isMostRecentImport(i) {
       return i == this.imports[0]
     },
     currentUserCanApprove() {
+      return this.currentUserIsAdmin()
+    },
+    currentUserIsAdmin() {
       return this.currentUser !== null && this.currentUser.roles.some(x => x === 'Administrator')
     },
     humanizeStatus,
@@ -134,5 +171,14 @@ export default {
   }
   .table tbody tr {
     cursor: pointer;
+  }
+  td.visibility button {
+    appearance: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  button:disabled {
+    opacity: 0.5;
   }
 </style>

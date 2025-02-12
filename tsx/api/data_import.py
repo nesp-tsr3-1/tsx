@@ -162,6 +162,8 @@ def get_source_imports(source_id=None):
 	if source == None:
 		return "Not found", 404
 
+	show_hidden = permitted(user, 'view_hidden_import', 'source', source_id)
+
 	rows = db_session.execute(text("""SELECT
 		data_import.id,
 		data_import.filename,
@@ -173,13 +175,15 @@ def get_source_imports(source_id=None):
 			WHEN user.id IS NULL OR EXISTS (SELECT 1 FROM user_role WHERE user_role.role_id = 1 AND user_role.user_id = user.id)
 			THEN 'an administrator'
 			ELSE COALESCE(CONCAT(user.first_name, " ", user.last_name), user.email, user.id)
-		END AS user
+		END AS user,
+		data_import.is_hidden
 		FROM data_import
 		LEFT JOIN data_import_status ON data_import_status.id = data_import.status_id
 		LEFT JOIN user ON user.id = data_import.user_id
 		WHERE data_import.source_id = :source_id
+		AND (:show_hidden OR (NOT data_import.is_hidden))
 		ORDER BY data_import.time_created DESC
-	"""), { 'source_id': source_id })
+	"""), { 'source_id': source_id, 'show_hidden': show_hidden })
 
 	return jsonify_rows(rows)
 
@@ -652,6 +656,30 @@ def update_import(import_id=None):
 	process_import_async(import_id, new_status)
 
 	return jsonify(data_import_json(data_import))
+
+@bp.route('/imports/<int:import_id>/show', methods = ['POST'])
+def show_import(import_id=None):
+	return update_import_visibility(import_id, True)
+
+@bp.route('/imports/<int:import_id>/hide', methods = ['POST'])
+def hide_import(import_id=None):
+	return update_import_visibility(import_id, False)
+
+def update_import_visibility(import_id, visible):
+	user = get_user()
+
+	if not permitted(user, 'update_visbility', 'import', import_id):
+		return "Forbidden", 403
+
+	db_session.execute(
+		text("UPDATE data_import SET is_hidden = :is_hidden WHERE id = :id"),
+		{
+			"is_hidden": not visible,
+			"id": import_id
+		})
+	db_session.commit()
+
+	return "OK", 200
 
 def remove_orphaned_monitoring_programs():
 	db_session.execute(text("""DELETE FROM user_program_manager WHERE monitoring_program_id NOT IN (SELECT monitoring_program_id FROM source WHERE monitoring_program_id IS NOT NULL)"""))

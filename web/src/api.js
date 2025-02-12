@@ -21,6 +21,14 @@ export function approveImport(id) {
   return post('/imports/' + id + '/approve')
 }
 
+export function showImport(id) {
+  return post("/imports/" + id + "/show")
+}
+
+export function hideImport(id) {
+  return post("/imports/" + id + "/hide")
+}
+
 export function dataSources(criteria) {
   return get('/data_sources', criteria)
 }
