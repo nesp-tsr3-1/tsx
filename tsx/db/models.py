@@ -1,6 +1,6 @@
 from typing import Any, List, Optional
 
-from sqlalchemy import CHAR, Column, Computed, Date, Double, ForeignKeyConstraint, Index, Integer, SmallInteger, String, TIMESTAMP, Table, Text, Time, text
+from sqlalchemy import CHAR, Column, Computed, Date, Double, ForeignKeyConstraint, Index, Integer, JSON, SmallInteger, String, TIMESTAMP, Table, Text, Time, text
 from sqlalchemy.dialects.mysql import MEDIUMTEXT, TINYINT
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.sql.sqltypes import NullType
@@ -26,6 +26,30 @@ class DataProcessingType(Base):
     __tablename__ = 'data_processing_type'
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    description: Mapped[str] = mapped_column(String(255))
+
+
+class FeedbackStatus(Base):
+    __tablename__ = 'feedback_status'
+    __table_args__ = (
+        Index('code_UNIQUE', 'code', unique=True),
+        Index('description_UNIQUE', 'description', unique=True)
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    code: Mapped[str] = mapped_column(String(32))
+    description: Mapped[str] = mapped_column(String(255))
+
+
+class FeedbackType(Base):
+    __tablename__ = 'feedback_type'
+    __table_args__ = (
+        Index('code_UNIQUE', 'code', unique=True),
+        Index('des_UNIQUE', 'description', unique=True)
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    code: Mapped[str] = mapped_column(String(32))
     description: Mapped[str] = mapped_column(String(255))
 
 
@@ -393,6 +417,8 @@ class DataImport(Base):
     source: Mapped['Source'] = relationship('Source')
     status: Mapped['DataImportStatus'] = relationship('DataImportStatus')
     user: Mapped['User'] = relationship('User')
+    taxon: Mapped[List['Taxon']] = relationship('Taxon', secondary='data_import_taxon')
+    source_: Mapped[List['Source']] = relationship('Source', secondary='source_latest_approved_import')
 
 
 class DataProcessingNotes(Base):
@@ -564,6 +590,81 @@ t_user_source = Table(
 )
 
 
+class CustodianFeedback(Base):
+    __tablename__ = 'custodian_feedback'
+    __table_args__ = (
+        ForeignKeyConstraint(['data_import_id'], ['data_import.id'], name='fk_custodian_feedback_data_import1'),
+        ForeignKeyConstraint(['feedback_status_id'], ['feedback_status.id'], name='fk_custodian_feedback_feedback_status1'),
+        ForeignKeyConstraint(['feedback_type_id'], ['feedback_type.id'], name='fk_custodian_feedback_feedback_type1'),
+        ForeignKeyConstraint(['source_id'], ['source.id'], name='fk_custodian_feedback_source1'),
+        ForeignKeyConstraint(['taxon_id'], ['taxon.id'], name='fk_custodian_feedback_taxon1'),
+        Index('fk_custodian_feedback_data_import1_idx', 'data_import_id'),
+        Index('fk_custodian_feedback_feedback_status1_idx', 'feedback_status_id'),
+        Index('fk_custodian_feedback_feedback_type1_idx', 'feedback_type_id'),
+        Index('fk_custodian_feedback_source1_idx', 'source_id'),
+        Index('fk_custodian_feedback_taxon1_idx', 'taxon_id')
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    source_id: Mapped[int] = mapped_column(Integer)
+    taxon_id: Mapped[str] = mapped_column(CHAR(8))
+    feedback_status_id: Mapped[int] = mapped_column(Integer)
+    feedback_type_id: Mapped[int] = mapped_column(Integer)
+    time_created: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
+    last_modified: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+    dataset_id: Mapped[Optional[str]] = mapped_column(String(45), Computed("(concat(`source_id`,_utf8mb4'_',`taxon_id`))", persisted=False))
+    data_import_id: Mapped[Optional[int]] = mapped_column(Integer)
+    file_name: Mapped[Optional[str]] = mapped_column(String(255))
+    last_updated: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP)
+
+    data_import: Mapped['DataImport'] = relationship('DataImport')
+    feedback_status: Mapped['FeedbackStatus'] = relationship('FeedbackStatus')
+    feedback_type: Mapped['FeedbackType'] = relationship('FeedbackType')
+    source: Mapped['Source'] = relationship('Source')
+    taxon: Mapped['Taxon'] = relationship('Taxon')
+
+
+t_data_import_taxon = Table(
+    'data_import_taxon', Base.metadata,
+    Column('data_import_id', Integer, primary_key=True, nullable=False),
+    Column('taxon_id', CHAR(8), primary_key=True, nullable=False),
+    ForeignKeyConstraint(['data_import_id'], ['data_import.id'], ondelete='CASCADE', name='fk_data_import_taxon_data_import1'),
+    ForeignKeyConstraint(['taxon_id'], ['taxon.id'], name='fk_data_import_taxon_taxon1'),
+    Index('fk_data_import_taxon_taxon1_idx', 'taxon_id')
+)
+
+
+class DatasetStats(Base):
+    __tablename__ = 'dataset_stats'
+    __table_args__ = (
+        ForeignKeyConstraint(['data_import_id'], ['data_import.id'], name='fk_dataset_stats_data_import1'),
+        ForeignKeyConstraint(['source_id'], ['source.id'], name='fk_dataset_stats_source1'),
+        ForeignKeyConstraint(['taxon_id'], ['taxon.id'], name='fk_dataset_stats_taxon1'),
+        Index('fk_dataset_stats_data_import1_idx', 'data_import_id'),
+        Index('fk_dataset_stats_source1_idx', 'source_id'),
+        Index('fk_dataset_stats_taxon1_idx', 'taxon_id')
+    )
+
+    source_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    taxon_id: Mapped[str] = mapped_column(CHAR(8), primary_key=True)
+    data_import_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    stats_json: Mapped[Optional[dict]] = mapped_column(JSON)
+
+    data_import: Mapped['DataImport'] = relationship('DataImport')
+    source: Mapped['Source'] = relationship('Source')
+    taxon: Mapped['Taxon'] = relationship('Taxon')
+
+
+t_source_latest_approved_import = Table(
+    'source_latest_approved_import', Base.metadata,
+    Column('source_id', Integer, primary_key=True),
+    Column('data_import_id', Integer, nullable=False),
+    ForeignKeyConstraint(['data_import_id'], ['data_import.id'], name='fk_source_latest_approved_import_data_import1'),
+    ForeignKeyConstraint(['source_id'], ['source.id'], name='fk_source_latest_approved_import_source1'),
+    Index('fk_source_latest_approved_import_data_import1_idx', 'data_import_id')
+)
+
+
 class T1Site(Base):
     __tablename__ = 't1_site'
     __table_args__ = (
@@ -576,7 +677,8 @@ class T1Site(Base):
         Index('fk_T1Site_Source1_idx', 'source_id'),
         Index('fk_t1_site_data_import1_idx', 'data_import_id'),
         Index('fk_t1_site_intensive_management1_idx', 'intensive_management_id'),
-        Index('fk_t1_site_management1_idx', 'management_id')
+        Index('fk_t1_site_management1_idx', 'management_id'),
+        Index('t1_site_source_id_name', 'source_id', 'name')
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -620,6 +722,82 @@ class T2Site(Base):
     survey: Mapped[List['T2Survey']] = relationship('T2Survey', secondary='t2_survey_site')
 
 
+class CustodianFeedbackAnswers(CustodianFeedback):
+    __tablename__ = 'custodian_feedback_answers'
+    __table_args__ = (
+        ForeignKeyConstraint(['custodian_feedback_id'], ['custodian_feedback.id'], ondelete='CASCADE', name='fk_custodian_feedback_answers_custodian_feedback1'),
+        Index('fk_custodian_feedback_answers_custodian_feedback1_idx', 'custodian_feedback_id')
+    )
+
+    custodian_feedback_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    admin_type: Mapped[Optional[str]] = mapped_column(Text)
+    citation_agree: Mapped[Optional[str]] = mapped_column(String(10))
+    citation_agree_comments: Mapped[Optional[str]] = mapped_column(Text)
+    monitoring_for_trend: Mapped[Optional[str]] = mapped_column(String(10))
+    monitoring_for_trend_comments: Mapped[Optional[str]] = mapped_column(Text)
+    analyse_own_trends: Mapped[Optional[str]] = mapped_column(String(10))
+    analyse_own_trends_comments: Mapped[Optional[str]] = mapped_column(Text)
+    pop_1750: Mapped[Optional[str]] = mapped_column(Text)
+    pop_1750_comments: Mapped[Optional[str]] = mapped_column(Text)
+    data_summary_agree: Mapped[Optional[str]] = mapped_column(String(10))
+    data_summary_agree_comments: Mapped[Optional[str]] = mapped_column(Text)
+    processing_agree: Mapped[Optional[str]] = mapped_column(String(10))
+    processing_agree_comments: Mapped[Optional[str]] = mapped_column(Text)
+    statistics_agree: Mapped[Optional[str]] = mapped_column(String(10))
+    statistics_agree_comments: Mapped[Optional[str]] = mapped_column(Text)
+    trend_agree: Mapped[Optional[str]] = mapped_column(String(10))
+    trend_agree_comments: Mapped[Optional[str]] = mapped_column(Text)
+    start_year: Mapped[Optional[str]] = mapped_column(Text)
+    start_year_comments: Mapped[Optional[str]] = mapped_column(Text)
+    end_year: Mapped[Optional[str]] = mapped_column(Text)
+    end_year_comments: Mapped[Optional[str]] = mapped_column(Text)
+    standardisation_of_method_effort: Mapped[Optional[str]] = mapped_column(String(10))
+    objective_of_monitoring: Mapped[Optional[str]] = mapped_column(String(10))
+    consistency_of_monitoring: Mapped[Optional[str]] = mapped_column(String(10))
+    monitoring_frequency_and_timing: Mapped[Optional[str]] = mapped_column(String(10))
+    absences_recorded: Mapped[Optional[str]] = mapped_column(String(10))
+    data_suitability_comments: Mapped[Optional[str]] = mapped_column(Text)
+    additional_comments: Mapped[Optional[str]] = mapped_column(Text)
+    cost_data_provided: Mapped[Optional[str]] = mapped_column(String(20))
+    estimated_cost_dataset: Mapped[Optional[str]] = mapped_column(Text)
+    cost_data_provided_comments: Mapped[Optional[str]] = mapped_column(Text)
+    custodian_comments: Mapped[Optional[str]] = mapped_column(Text)
+    internal_comments: Mapped[Optional[str]] = mapped_column(Text)
+    monitoring_program_information_contact: Mapped[Optional[str]] = mapped_column(Text)
+    monitoring_program_information_provided: Mapped[Optional[str]] = mapped_column(String(20))
+    effort_labour_paid_days_per_year: Mapped[Optional[str]] = mapped_column(Text)
+    effort_labour_volunteer_days_per_year: Mapped[Optional[str]] = mapped_column(Text)
+    effort_overheads_paid_days_per_year: Mapped[Optional[str]] = mapped_column(Text)
+    effort_overheads_volunteer_days_per_year: Mapped[Optional[str]] = mapped_column(Text)
+    effort_paid_staff_count: Mapped[Optional[str]] = mapped_column(Text)
+    effort_volunteer_count: Mapped[Optional[str]] = mapped_column(Text)
+    funding_cost_per_survey_aud: Mapped[Optional[str]] = mapped_column(Text)
+    funding_total_investment_aud: Mapped[Optional[str]] = mapped_column(Text)
+    funding_source_government_grants: Mapped[Optional[str]] = mapped_column(String(10))
+    funding_source_research_funds: Mapped[Optional[str]] = mapped_column(String(10))
+    funding_source_private_donations: Mapped[Optional[str]] = mapped_column(String(10))
+    funding_source_other: Mapped[Optional[str]] = mapped_column(Text)
+    funding_source_count: Mapped[Optional[str]] = mapped_column(Text)
+    leadership: Mapped[Optional[str]] = mapped_column(Text)
+    impact_used_for_management: Mapped[Optional[str]] = mapped_column(String(10))
+    impact_used_for_management_comments: Mapped[Optional[str]] = mapped_column(Text)
+    impact_organisation_responsible: Mapped[Optional[str]] = mapped_column(Text)
+    impact_management_changes: Mapped[Optional[str]] = mapped_column(Text)
+    data_availability: Mapped[Optional[str]] = mapped_column(Text)
+    succession_commitment: Mapped[Optional[str]] = mapped_column(String(10))
+    succession_commitment_comments: Mapped[Optional[str]] = mapped_column(Text)
+    succession_plan: Mapped[Optional[str]] = mapped_column(String(10))
+    succession_plan_comments: Mapped[Optional[str]] = mapped_column(Text)
+    design_statistical_power: Mapped[Optional[str]] = mapped_column(String(10))
+    design_statistical_power_comments: Mapped[Optional[str]] = mapped_column(Text)
+    design_other_factors: Mapped[Optional[str]] = mapped_column(String(10))
+    design_other_factors_comments: Mapped[Optional[str]] = mapped_column(Text)
+    co_benefits_other_species: Mapped[Optional[str]] = mapped_column(String(10))
+    co_benefits_other_species_comments: Mapped[Optional[str]] = mapped_column(Text)
+    consent_name: Mapped[Optional[str]] = mapped_column(String(200))
+    consent_given: Mapped[Optional[int]] = mapped_column(TINYINT(1))
+
+
 class T1Survey(Base):
     __tablename__ = 't1_survey'
     __table_args__ = (
@@ -635,7 +813,7 @@ class T1Survey(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     site_id: Mapped[int] = mapped_column(Integer)
     source_id: Mapped[int] = mapped_column(Integer)
-    source_primary_key: Mapped[str] = mapped_column(String(255))
+    source_primary_key: Mapped[str] = mapped_column(String(511))
     start_date_y: Mapped[int] = mapped_column(SmallInteger)
     coords: Mapped[str] = mapped_column(NullType)
     data_import_id: Mapped[Optional[int]] = mapped_column(Integer)
