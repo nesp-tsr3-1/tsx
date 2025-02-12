@@ -73,10 +73,6 @@ export function deleteDataSource(id) {
   return del('/data_sources/' + id)
 }
 
-export function dataImports() {
-  return get('/imports')
-}
-
 export function dataImport(id) {
   return get('/imports/' + id)
 }

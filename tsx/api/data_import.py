@@ -168,9 +168,15 @@ def get_source_imports(source_id=None):
 		data_import.data_type,
 		data_import_status.code AS status,
 		data_import.time_created,
-		data_import.upload_uuid
+		data_import.upload_uuid,
+		CASE
+			WHEN user.id IS NULL OR EXISTS (SELECT 1 FROM user_role WHERE user_role.role_id = 1 AND user_role.user_id = user.id)
+			THEN 'an administrator'
+			ELSE COALESCE(CONCAT(user.first_name, " ", user.last_name), user.email, user.id)
+		END AS user
 		FROM data_import
 		LEFT JOIN data_import_status ON data_import_status.id = data_import.status_id
+		LEFT JOIN user ON user.id = data_import.user_id
 		WHERE data_import.source_id = :source_id
 		ORDER BY data_import.time_created DESC
 	"""), { 'source_id': source_id })

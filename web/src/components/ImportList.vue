@@ -33,7 +33,7 @@
               <a v-bind:href="importLogUrl(i)" target="_blank">(log)</a>
               <button class="button is-small" v-if='canApproveImport(i)' v-on:click='function() { approveImport(i) }' v-bind:class="{ 'is-loading': i.isApproving }">Approve</button>
             </td>
-            <td>{{formatDateTime(i.time_created)}}</td>
+            <td>{{formatDateTime(i.time_created)}} by {{i.user}}</td>
           </tr>
         </tbody>
       </table>
@@ -65,7 +65,7 @@ export default {
   },
   methods: {
     refresh() {
-      var importsPromise = this.sourceId ? api.dataSourceImports(this.sourceId) : api.dataImports()
+      var importsPromise = api.dataSourceImports(this.sourceId)
       importsPromise.then((imports) => {
         imports.forEach(i => { i.isApproving = false })
         this.imports = imports
