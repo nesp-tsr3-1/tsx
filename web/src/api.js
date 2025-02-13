@@ -1,5 +1,4 @@
 import * as util from './util'
-import _ from 'underscore'
 
 // export const ROOT_URL = 'https://tsx.org.au/tsxapi'
 
@@ -418,12 +417,12 @@ function del(url) {
 }
 
 function get(url, params) {
-  params = params || {}
+  params = { ...params }
 
   var options = params._options || {}
-  params = _.omit(params, '_options')
+  delete params._options
 
-  if(!_.isEmpty(params)) {
+  if(Object.entries(params).length > 0) {
     url += '?' + util.encodeParams(params)
   }
 
@@ -441,26 +440,15 @@ function get(url, params) {
   xhr.responseType = ''
   xhr.withCredentials = true
 
-  _.each(options.headers || {}, function(v, k) {
+  Object.entries(options.headers || {}).forEach(([v, k]) => {
     xhr.setRequestHeader(k, v)
   })
-
-  // var accessToken = util.store.get('accessToken');
-  // if(accessToken) {
-  //   xhr.setRequestHeader("Authorization", "Bearer " + accessToken);
-  // }
 
   return xhrPromise(xhr).then(function(xhr) {
     var response = xhr.responseText
     try { response = JSON.parse(response) } catch(e) {}
     return response
   })
-
-  // .catch(function(e) {
-  //   if(xhr.status == 401) {
-  //     return refreshAccessToken().then(() => get(url, params));
-  //   }
-  // })
 }
 
 function xhrPromise(xhr, dataToSend) {

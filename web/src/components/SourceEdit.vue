@@ -115,8 +115,7 @@
 
 <script>
 import * as api from '../api.js'
-import _ from 'underscore'
-import { generateCitation } from '../util.js'
+import { generateCitation, pick } from '../util.js'
 
 const sourceProps = ['description', 'details', 'provider', 'authors', 'monitoring_program', 'contact_name', 'contact_institution', 'contact_position', 'contact_email', 'contact_phone']
 
@@ -177,7 +176,7 @@ export default {
   },
   methods: {
     submit: function() {
-      var source = _.pick(this, sourceProps)
+      var source = pick(this, sourceProps)
 
       if(source.monitoring_program === '__new__') {
         source.monitoring_program = this.new_monitoring_program

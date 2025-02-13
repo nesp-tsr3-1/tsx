@@ -1,4 +1,3 @@
-import _ from 'underscore'
 
 // Converts a simple query string a=b&c=d&e=f into a javascript object
 // Doesn't allow for keys with more than one - last value overwrites previous values for a given key
@@ -16,13 +15,9 @@ export function parseParams(queryString) {
 }
 
 export function encodeParams(params) {
-  return _.chain(params)
-    .pairs()
-    .map(function(p) {
-      return encodeURIComponent(p[0]) + '=' + encodeURIComponent(p[1])
-    })
-    .sort()
-    .value()
+  return Object.entries(params)
+    .map(p => encodeURIComponent(p[0]) + '=' + encodeURIComponent(p[1]))
+    .toSorted()
     .join('&')
 }
 
