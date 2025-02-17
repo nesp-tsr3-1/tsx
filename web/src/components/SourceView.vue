@@ -93,7 +93,7 @@
                 </div>
                 <hr>
 
-                <source-downloads :sourceId="sourceId"></source-downloads>
+                <source-downloads :sourceId="sourceId" :enableMap="true"></source-downloads>
               </div>
             </div>
           </div>
