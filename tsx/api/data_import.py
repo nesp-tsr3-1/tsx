@@ -355,6 +355,54 @@ def delete_source_custodian(source_id=None, user_id=None):
 
 #------
 
+@bp.route('/data_sources/<int:source_id>/site_summary')
+def site_summary(source_id=None):
+	sql = """
+		WITH t AS (
+			SELECT
+				taxon.id AS taxon_id,
+				taxon.common_name,
+				taxon.scientific_name,
+				t1_site.name AS site_name,
+				search_type.description AS search_type,
+				min(start_date_y) as min_year,
+				max(start_date_y) as max_year
+			FROM
+				t1_survey,
+				t1_sighting,
+				t1_site,
+				search_type,
+				taxon
+			WHERE t1_survey.id = t1_sighting.survey_id
+			AND t1_site.id = t1_survey.site_id
+			AND t1_survey.source_id = :source_id
+			AND t1_site.search_type_id = search_type.id
+			AND taxon.id = t1_sighting.taxon_id
+			GROUP BY taxon.id, t1_site.id, search_type.id
+		),
+		u AS (
+			SELECT JSON_OBJECT(
+				'taxon_id', taxon_id,
+				'common_name', common_name,
+				'scientific_name', scientific_name,
+				'ts', JSON_ARRAYAGG(
+					JSON_OBJECT(
+						'site_name', site_name,
+						'search_type', search_type,
+						'max_year', max_year,
+						'min_year', min_year
+					)
+				)
+			) AS item
+			FROM t
+			GROUP BY taxon_id, common_name, scientific_name
+		)
+		SELECT JSON_ARRAYAGG(item) FROM u;
+	"""
+
+	[(result,)] = db_session.execute(text(sql), { 'source_id': source_id })
+	return Response(result or "[]", mimetype='application/json')
+
 
 def create_or_update_source(source_id=None):
 	action = 'update' if source_id else 'create'

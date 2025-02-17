@@ -58,6 +58,14 @@
             </div>
           </div>
 
+          <hr>
+
+          <h4 class="title is-4">
+            Dataset Summary
+          </h4>
+
+          <source-data-summary v-bind:sourceId="sourceId"></source-data-summary>
+
           <div v-if="manageCustodiansPermitted">
             <hr>
 
@@ -153,6 +161,7 @@ import ImportData from './ImportData.vue'
 import ProcessingNotes from './ProcessingNotes.vue'
 import SourceCustodians from './SourceCustodians.vue'
 import SourceDownloads from './SourceDownloads.vue'
+import SourceDataSummary from './SourceDataSummary.vue'
 
 export default {
   name: 'SourceView',
@@ -161,7 +170,8 @@ export default {
     'import-data': ImportData,
     'processing-notes': ProcessingNotes,
     'source-custodians': SourceCustodians,
-    'source-downloads': SourceDownloads
+    'source-downloads': SourceDownloads,
+    'source-data-summary': SourceDataSummary
   },
   data () {
     return {
