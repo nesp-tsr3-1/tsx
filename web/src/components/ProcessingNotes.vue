@@ -17,7 +17,7 @@
         @deleted="refreshNotes">
       </note-row>
       <p v-if="notes.length === 0" class="content">
-        There are have been no notes recorded for this data source.
+        No notes have been recorded for this dataset.
       </p>
       <div class="field">
         <div class="control">
