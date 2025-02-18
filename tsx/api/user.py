@@ -57,7 +57,7 @@ def create_user():
 		# User already exists
 		pass
 
-	db_session.execute(text("""INSERT INTO user_role (user_id, role_id)
+	db_session.execute(text("""INSERT IGNORE INTO user_role (user_id, role_id)
 		VALUES (:user_id, (SELECT id FROM role WHERE description = 'Custodian'))"""),
 		{'user_id': user.id})
 
