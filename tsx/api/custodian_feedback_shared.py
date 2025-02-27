@@ -253,6 +253,11 @@ form_fields = [
 	Field(
 		name='additional_comments'),
 
+	Field(
+		name='consent_given',
+		type='boolean'),
+	Field(
+		name='consent_name'),
 
 	Field(
 		name='cost_data_provided',
@@ -269,6 +274,8 @@ form_fields = [
 	Field(
 		name='monitoring_program_information_contact'),
 
+	# Fields for integrated form section:
+	# "Monitoring program funding, logistics and governance"
 	Field(
 		name='monitoring_program_information_provided'),
 	Field(
@@ -337,12 +344,9 @@ form_fields = [
 		name='co_benefits_other_species',
 		validators=[val_yn]),
 	Field(
-		name='co_benefits_other_species_comments'),
-	Field(
-		name='consent_given',
-		type='boolean'),
-	Field(
-		name='consent_name')
+		name='co_benefits_other_species_comments')
+	# Note: do not add fields after here unless they belong to the
+	# "Monitoring program funding, logistics and governance" section.
 ]
 
 def sql_select_clause(identifier, type):
