@@ -457,10 +457,11 @@ def processing_summary(source_id, taxon_id):
 				LEFT JOIN data_processing_type ON source.data_processing_type_id = data_processing_type.id
 				LEFT JOIN processing_method pm
 					ON pm.search_type_id = t1_site.search_type_id
-		AND pm.unit_id = t1_sighting.unit_id
-		AND pm.taxon_id = t1_sighting.taxon_id
-		AND pm.source_id = t1_survey.source_id
-		LEFT JOIN response_variable_type ON pm.response_variable_type_id = response_variable_type.id
+					AND pm.unit_id = t1_sighting.unit_id
+					AND pm.taxon_id = t1_sighting.taxon_id
+					AND pm.source_id = t1_survey.source_id
+				LEFT JOIN response_variable_type
+					ON pm.response_variable_type_id = response_variable_type.id
 		WHERE
 				t1_survey.source_id = :source_id
 				AND t1_sighting.taxon_id = :taxon_id
