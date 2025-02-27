@@ -6,12 +6,30 @@
           <div class="sticky-top" style="padding-top: 1.5em;">
             <p class="menu-label">Contents</p>
             <ul class="menu-list" ref="sideMenu">
-              <li><a href="#citation_section">Data citation and monitoring aims</a></li>
-              <li><a href="#summary_section">Data summary and processing</a></li>
-              <li><a href="#statistics_section">Statistics and trend estimate</a></li>
-              <li><a href="#suitability_section">Data suitability</a></li>
-              <li><a href="#additional_comments_section">Additional comments</a></li>
-              <li><a href="#funding_section">Monitoring program funding, logistics and governance (optional)</a></li>
+              <li v-if="consentRequired">
+                <a href="#consent_section">Conditions and consent</a>
+              </li>
+              <li v-if="showSection('citation')">
+                <a href="#citation_section">Data citation and monitoring aims</a>
+              </li>
+              <li v-if="showSection('summary')">
+                <a href="#summary_section">Data summary and processing</a>
+              </li>
+              <li v-if="showSection('statistics')">
+                <a href="#statistics_section">Statistics and trend estimate</a>
+              </li>
+              <li>
+                <a href="#suitability_section">Data suitability</a>
+              </li>
+              <li v-if="showSection('additional_comments_custodian')">
+                <a href="#additional_comments_section">Additional comments</a>
+              </li>
+              <li v-if="showSection('funding_admin') || showSection('funding_custodian')">
+                <a href="#funding_section">Monitoring program funding, logistics and governance (optional)</a>
+              </li>
+              <li v-if="showSection('additional_comments_admin')">
+                <a href="#additional_comments_section">Additional comments</a>
+              </li>
             </ul>
             <hr>
             <div class="buttons">
@@ -77,7 +95,7 @@
                     Data collected from this study will be used to inform the Threatened Species Index at national and various regional scales.
                   </li>
                   <li>
-                    Project outputs will include a web tool and a publicly available aggregated dataset that enables the public to interrogate trends in Australia’s threatened species over space and time. 
+                    Project outputs will include a web tool and a publicly available aggregated dataset that enables the public to interrogate trends in Australia’s threatened species over space and time.
                   </li>
                 </ul>
                 <p>
@@ -154,6 +172,8 @@
 
             <!---- Data citation and monitoring aims ---->
 
+            <template v-if="showSection('citation')">
+
             <div class="content" id="citation_section">
               <h3>Data citation and monitoring aims</h3>
               <p>
@@ -162,7 +182,7 @@
               </p>
             </div>
 
-            <div class="field numbered">
+            <div class="field numbered" v-if="showField('citation_agree')">
               <label class="label required" v-if="notAdmin">Do you agree with the above suggested citation for your data? If no, please indicate how to correctly cite your data.</label>
               <label class="label required" v-if="isAdmin">Does the custodian agree with the suggested citation? If no, what changes have they suggested to correctly cite their data?</label>
               <div class="control indent">
@@ -177,7 +197,7 @@
               </div>
             </div>
 
-            <div class="field numbered">
+            <div class="field numbered" v-if="showField('monitoring_for_trend')">
               <label class="label required" v-if="notAdmin">Has your monitoring program been explicitly designed to detect population trends over time? If no / unsure, please indicate the aims of your monitoring.</label>
               <label class="label required" v-if="isAdmin">Is the monitoring program explicitly designed to detect population trends over time? If no or unsure, what are the aims of their monitoring?</label>
               <div class="control indent">
@@ -192,7 +212,7 @@
               </div>
             </div>
 
-            <div class="field numbered">
+            <div class="field numbered" v-if="showField('analyse_own_trends')">
               <label class="label required" v-if="notAdmin">Do you analyse your own data for trends? If no, please indicate why.</label>
               <label class="label required" v-if="isAdmin">Does the custodian analyse their own data for trends? If no, please indicate why.</label>
               <div class="control indent">
@@ -207,7 +227,7 @@
               </div>
             </div>
 
-            <div class="field numbered">
+            <div class="field numbered" v-if="showField('pop_1750')">
               <label class="label required" v-if="notAdmin">Can you estimate what percentage (%) of your species’ population existed in Australia at the start of your monitoring (assuming this was 100% in 1750)? <strong>This information is to help understand population baselines and determine whether the majority of a species' decline may have occurred prior to monitoring.</strong></label>
               <label class="label required" v-if="isAdmin">What has the custodian estimated to be the percentage (%) of the species’ population that existed in Australia at the start of the monitoring (assuming this was 100% in 1750)?</label>
               <div class="control indent">
@@ -218,7 +238,11 @@
               </div>
             </div>
 
+            </template>
+
             <!---- Data summary and processing ---->
+
+            <template v-if="showSection('summary')">
 
             <div class="content" id="summary_section">
               <h3>Data summary and processing</h3>
@@ -328,7 +352,11 @@
               </div>
             </div>
 
+            </template>
+
              <!---- Statistics and Trend Estimate ---->
+
+            <template v-if="showSection('statistics')">
 
             <div class="content" id="statistics_section">
               <h3>Statistics and trend estimate</h3>
@@ -397,7 +425,7 @@
               </table>
             </div>
 
-            <div class="field numbered">
+            <div class="field numbered" v-if="showField('statistics_agree')">
               <label class="label required" v-if="notAdmin">Do the above statistics appear representative of your dataset?</label>
               <label class="label required" v-if="isAdmin">Does the custodian agree with the data statistics (raw and aggregated)? If no, what specifically do they disagree with?</label>
               <div class="control indent">
@@ -559,7 +587,11 @@
               </div>
             </div>
 
+            </template>
+
             <!---- Data suitability ---->
+
+            <template v-if="showSection('suitability')">
 
             <div class="content" id="suitability_section">
               <h3>Data suitability</h3>
@@ -678,27 +710,32 @@
               </div>
             </div>
 
+            </template>
+
             <!-- Additional comments -->
+
+            <template v-if="showSection('additional_comments_custodian')">
 
             <div class="content" id="additional_comments_section">
               <h3>Additional comments</h3>
             </div>
 
-            <div class="field">
+            <div class="field" v-if="showField('additional_comments')">
               <label class="label">Please provide any additional comments about this dataset and/or trend below.</label>
               <div class="control">
                 <textarea class="textarea" placeholder="Enter your answer" v-model="formData.additional_comments"></textarea>
               </div>
             </div>
 
+            </template>
+
             <!-- Monitoring program funding, logistics and governance -->
 
-            <div class="content" id="funding_section">
-              <h3>Monitoring program funding, logistics and governance</h3>
-            </div>
+            <template v-if="showSection('funding_admin')">
+              <div class="content" id="funding_section">
+                <h3>Monitoring program funding, logistics and governance</h3>
+              </div>
 
-
-            <template v-if="isAdmin">
               <div class="field numbered">
                 <label class="label required">Has the custodian answered the optional questions about funding, logistics and governance?</label>
                 <div class="control indent">
@@ -727,6 +764,14 @@
                 </div>
               </div>
 
+            </template>
+
+            <template v-if="showSection('additional_comments_admin')">
+
+              <div class="content" id="additional_comments_section">
+                <h3>Additional comments</h3>
+              </div>
+
               <div class="field">
                 <label class="label">Please add any additional comments from the custodian below.</label>
                 <div class="control">
@@ -742,9 +787,13 @@
                   <p class="help is-danger" v-if="fieldErrors.internal_comments">{{fieldErrors.internal_comments}}</p>
                 </div>
               </div>
+
             </template>
 
-            <template v-if="notAdmin">
+            <template v-if="showSection('funding_custodian')">
+              <div class="content" id="funding_section">
+                <h3>Monitoring program funding, logistics and governance</h3>
+              </div>
 
               <p class="content">
                 Questions 17 to 32 below are optional. We hope you are interested in providing some further information about your monitoring program.
@@ -1127,7 +1176,7 @@ export default {
       return source && generateCitation(source.authors, source.details, source.provider)
     },
     isAdmin() {
-      return this.form.feedback_type.code === 'admin'
+      return this.form && this.form.feedback_type.code === 'admin'
     },
     notAdmin() {
       return this.form.feedback_type.code !== 'admin'
@@ -1298,6 +1347,39 @@ export default {
         let parentFieldName = fieldName.replace(/_comments$/, '')
         let parentFieldValue = this.formData[parentFieldName] ?? ''
         return this.isAdmin || ['no', 'unsure'].includes(parentFieldValue.toLowerCase())
+      }
+
+
+      if(this.isAdmin && this.formData.admin_type == 'informal') {
+        let informalFields = [
+          'trend_agree',
+          'trend_agree_comments',
+          'start_year',
+          'start_year_comments',
+          'end_year',
+          'end_year_comments',
+          'custodian_comments',
+          'internal_comments'
+        ]
+        return informalFields.includes(fieldName);
+      }
+
+      return true
+    },
+    showSection(sectionName) {
+      if(this.form && this.isAdmin && this.formData.admin_type == 'informal') {
+        let informalSections = [
+          'citation',
+          'statistics',
+          'additional_comments_admin'
+        ]
+        return informalSections.includes(sectionName)
+      } else if(sectionName.endsWith("_admin")) {
+        return this.isAdmin
+      } else if(sectionName.endsWith("_custodian")) {
+        return !this.isAdmin
+      } else {
+        return true
       }
     },
     switchToFormal() {
