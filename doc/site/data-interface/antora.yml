@@ -1,0 +1,10 @@
+name: data-interface
+title: TSX Data Interface
+version: ~
+start_page: index.adoc
+asciidoc:
+  attributes:
+    source-language: asciidoc@
+    table-caption: false
+nav:
+- modules/ROOT/nav.adoc

@@ -1,0 +1,121 @@
+= Downloads
+
+The TSX data interface offers a variety of data outputs for download. These outputs can be accessed in two different contexts:
+
+ * On the xref:datasets.adoc[Dataset Details] page, where the data is limited to that individual dataset only.
+ * On the Downloads page, which exposes data from multiple datasets and is accessible to Program Managers and Administrators only. The Downloads page URL is: https://tsx.org.au/data/downloads
+
+The downloads interface for these two contexts is very similar, so they are documented together in this chapter with any differences noted along the way.
+
+In the individual dataset context, a 'TSX Dataset Downloads Factsheet' button is shown, which links to a PDF document providing additional information regarding the outputs available in this section.
+
+The following downloadable outputs are available:
+
+ * Raw data download in CSV format
+ * Time series download in CSV format
+ * Monitoring consistency - displayed as a plot and also available as a CSV download
+ * Population trend - displayed as a plot and also available as a CSV download
+
+== Filter Criteria
+
+Before generating and downloading the data outputs, users can first choose to filter the data records which are used to generate those outputs.
+
+In the individual dataset context, the data is implicitly filtered to include the current dataset only.
+
+In the multi-dataset context, if the user is a Program Manager, the data is always limited to only include monitoring programs that the user has access to. This is explicitly shown in the Programs filter.
+
+=== State/Territory
+
+This filter is only available on the Downloads page.
+
+User may select a single state or territory, or leave unspecified to include data from all states/territories.
+
+=== Programs
+
+This filter is only available on the Downloads page.
+
+For Program Managers, only programs that they have access to are listed. For Administrators, all programs are listed, as well as an 'Any program' and 'No program' option.
+
+The various programs are listed as checkboxes, so any combination of programs can be selected. If the 'Any program' is option selected, all other programs are automatically selected and disabled.
+
+The 'No program' option causes data with no associated monitoring program to be included.
+
+=== Taxonomic Group
+
+This filter is only available on the Downloads page.
+
+If specified, this option also limits the Species options available in the subsequent filter.
+
+=== Species
+
+This filter uses a searchable drop down list consisting of all species for which data exists, taking into account the other filters that have already been specified.
+
+Multiple species can be added, and these are displayed in a table showing the Common name, Scientific name and Taxon ID of each species added.
+
+The list of added species can be exported and imported as a CSV file, which makes it possible to re-use the species lists without having to manually enter them each time.
+
+=== Sites
+
+The sites filter also uses a searchable drop down list, this time consisting of all sites for which data exists, taking into account existing filters.
+
+Selected sites are displayed in a table showing the site name and ID.
+
+=== Management
+
+This filter is a selection of one of the following:
+
+ * All sites (managed & unmanaged)
+ * Actively managed
+ * No known management
+
+The 'No known management' option combines the 'No management' and 'Unknown' categories from the TSX data import template.
+
+== Quick Summary
+
+A quick data summary shows the number of surveys, taxa, datasets and time series (approximately) matching the filtering criteria. This data summary updates automatically as filters are changed by the user.
+
+== Site Map
+
+A map shows the location of all sites with surveys that match the filter criteria, and automatically updates as filters are changed by the user.
+
+Only approximate locations are shown – the map zoom is limited and sites are represented by a blurred heat map rather than discrete points.
+
+== Raw Data
+
+Raw data downloads are provided in CSV format. The download consists of a ZIP archive containing the data in CSV format, accompanied by an explanatory data dictionary in PDF format.
+
+The download filename is based on the filtering parameters, e.g.:
+
+`tsx-raw-data&taxon=221,u518&monitoring_programs=any&taxonomic_group=Birds&site=249331,249334,375032.zip`
+
+In this example, the data has been filtered down to records involving two taxa within the Birds taxonomic group, from any monitoring program, and restrictred to three individual sites.
+
+This same naming scheme applies to the other downloaded outputs described in this section (*except monitoring consistency - TODO)
+
+== Time Series
+
+Time series data are also provided in CSV format within a ZIP archive, accompanied by a data dictionary in PDF format.
+
+The time series download is an aggregated output. Each distinct combination of dataset, site, taxon, search type and unit found in the raw data constitutes a separate time series. Within each time series, records from the same year are averaged to produce a series of yearly values.
+
+== Monitoring Consistency Plot
+
+The monitoring consistency plot is designed to give a visual indication of how consistently sites have been monitored over time, and how that consistency is distributed over the dataset as a whole.
+
+Up to 50 time series are displayed on this plot – if the actual number of time series exceeds 50, then a random sample of 50 time series is displayed. Each time series is represented by a row of dots, where a dot is present for each year where data exists in the time series.
+
+This plot is only generated when the user clicks 'Generate Monitoring Consistency Plot'. If the filtering criteria are subsequently changed, the plot disappears and can be regenerated again if desired.
+
+Once a plot is generated, its data can be downloaded in CSV format by clicking 'Download Monitoring Consistency Plot'.
+
+== Population Trend
+
+The population trend is produced by taking the aggregated <<Time Series>> data and processing it using the Living Planet Index (LPI) method. This is achieved using the https://github.com/Zoological-Society-of-London/rlpi[rlpi] R library provided by the Zoological Society of London (ZSL).
+
+A population trend plot is generated and displayed when the user clicks 'Generate Population Trend'. The user can also select the reference year and final year of the plot, which by default are set to the first and last year respectively for which data exists.
+
+If the filtering criteria or year ranges are subsequently changed, the plot disappears and can be regenerated again if desired.
+
+When producing the trend, time series are excluded if they only have zero values, or if they only have data for one year within the specified date range.
+
+Once a population trend plot has been generated, the trend can be downloaded in CSV format by clicking 'Download Population Trend'.

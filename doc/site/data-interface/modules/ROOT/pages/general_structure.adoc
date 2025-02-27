@@ -1,0 +1,97 @@
+= General Structure
+
+== Site Navigation
+
+A navigation header is present on all pages of the site, and contains the following items:
+
+[cols="1,1,1"]
+|===
+| Item | Visibility | Function
+
+| Datasets
+| All users
+| Link to xref:datasets.adoc[Datasets] page
+
+| Manage Users
+| Admin only
+| Link to <<Manage Users>> page
+
+| Downloads
+| Admin/PM only
+| Link to xref:downloads.adoc[Downloads] page
+
+| Feedback
+| All users
+| Link to xref:custodian_feedback.adoc[Custodian Feedback] page
+
+| Help
+| All users
+| Shows drop down with a link to the TSX website and a contact email address.
+
+| Logout & User name
+| All users
+| Logs out the current user and navigates to <<Login>> page
+|===
+
+
+== Login
+
+Users are required to log in to access any part the site.
+
+The login form provides links to <<Create an account,create an account>> or <<Password reset,reset a password>>
+
+== Password reset
+
+Users can request a password reset via the 'Forgot password?' link on the Login page.
+
+Users are required to enter their email address in order to request a password reset. If an account with the entered email address exists, an email will be sent to that address with a password reset link.
+
+If multiple password resets are requested, only the most resent password reset link will be usable. A password reset link can only be used once.
+
+== Create an account
+
+Anyone may create an account by filling out the following information:
+
+ - First name
+ - Last name
+ - Email address
+ - Contact phone number (optional)
+ - Password
+
+The password must contain at least 8 characters and must be entered twice for confirmation.
+
+Only one account can be created per email address. If an account with the email address already exists, an error is shown.
+
+Newly created users are assigned the 'Custodian' role, but will not have access to any existing datasets, unless their email address was already assigned to one. Newly created users can create their own dataset and start uploading data.
+
+== Roles
+
+Users are assigned one of 3 roles:
+
+ - Custodian (default)
+ - Program manager
+ - Administrator
+
+Custodians have access to individual datasets to which they have been assigned. A Custodian can also create a new dataset, which they will automatically be assigned to as a Custodian.
+
+Program Managers are assigned to one or more monitoring programs, and can access all datasets belonging to those monitoring programs. In addition, they can download data subsets relating to those monitoring programs using the Downloads tool. Program Managers can also be assigned as custodians of any individual dataset in the same way as a Custodian user.
+
+Administrators have unrestricted access to all aspects of the site.
+
+== Manage Users
+
+The Manage Users page is accessible by Administrators only.
+
+All users are displayed in a table with the following columns:
+
+ - Name
+ - Email
+ - Role
+
+If the user account is a reserved account (created via the xref:datasets.adoc#custodians[Custodians] section of a Dataset), the Name column is empty.
+
+The role column contains a drop down menu which allows a <<Roles,role>> to be assigned to the user.
+
+If the Program Manager role is selected, a list of monitoring programs with checkboxes appears, enabling the Administrator to choose which programs the user will have access to.
+
+A search bar at the top of the table allows the list of users to be searched by name or email address.

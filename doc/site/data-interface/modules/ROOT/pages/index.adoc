@@ -1,0 +1,3 @@
+= Introduction
+
+This documentation describes the functionality of the TSX Data interface, which is accessible at https://tsx.org.au/data

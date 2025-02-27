@@ -1,0 +1,191 @@
+= Datasets
+
+The TSX data entry interface is centered around the concept of "datasets".
+
+A dataset is a collection of related survey records which is managed as a single unit within the TSX database.
+
+Datasets can be updated over time by uploading new survey data. Each dataset has one or more custodians who are responsible for managing the dataset.
+
+== Dataset Listing
+
+Page URL: https://tsx.org.au/data/datasets
+
+The dataset listing page is the default page shown after logging into the TSX data interface.
+
+=== Table
+
+All datasets which the user has access to are listed in a table.
+
+The table shows the following information for each dataset:
+
+ * Description
+ * Date/Time Created
+ * Date/Time Last Modified (Administrators only)
+ * Latest Import Status
+
+The table can be sorted on any column in ascending or descending order by clicking on the column heading.
+
+=== Search Bar
+
+A search bar above the table allows datasets to be searched by description and custodian name. As text is entered into the search bar, the datasets table is automatically filtered to show only matching records. When the search text matches a custodian name or email address, the custodian name also appears along side the dataset. Text which matches the search text is higlighted in bold.
+
+=== Dataset Count
+
+The interface displays the total number of datasets accessible by the user, and the number of datasets currently displayed based on the search criteria.
+
+=== Create Dataset
+
+The "Create Dataset" button navigates to the Dataset Editing interface where a user can fill out dataset details in order to create a new dataset.
+
+== Dataset Details
+
+The dataset details displays information related to an individual dataset and provides a variety of management functions.
+
+The dataset description is displayed as the page title.
+
+The first section displays the following dataset metadata:
+
+ * Data Details
+ * Data Provider
+ * Authors
+ * Contact Information
+ * Data Citation
+ * Monitoring Program
+
+An "Edit" button displayed at the top of the section navigates to the Dataset Editing page where these details can be updated by the user.
+
+=== Dataset Summary
+
+The dataset summary displays a summary of the survey records that have been imported for this dataset.
+
+If no records have been imported for the dataset yet, this section simply says "No records have been imported for this dataset."
+
+=== Custodians
+
+This section lists all custodians of the dataset, and allows users to add or remove custodians.
+
+The email address and full name (if known) of each custodian is shown, along with a button for removing them from the dataset.
+
+If a user is removed as a custodian, they immediately lose access to the dataset (unless they are an Administrator or Program Manager with access).
+
+Custodians are added by entering their email address into a text box and clicking 'Add Custodian'. If a user account exists for that email address, it is immediately added as a custodian; otherwise, a 'reserved' account is created for that email address and then added as a custodian.
+
+Later, if someone signs up with a email address belong to a reserved account, they are assigned to that account and recieve any custodian access that belongs to it.
+
+=== Downloads
+
+The downloads section allows users to access both raw and processed data outputs for the current dataset. It is only displayed once survey records have been imported for the dataset.
+
+The download functionality is documented in its own chapter – see <<Downloads>>.
+
+=== Data Processing Notes
+
+This section enables data custodians to record notes relating to the data that they prepare and upload for this dataset. These notes are visible to all users with access to the dataset.
+
+Notes consist of plain text only. Each note is displayed in chronological order, along with the name of the author and the date and time of entry. Existing notes can be edited or deleted by the author or an Administrator.
+
+=== Import History
+
+All previous data imports are displayed in a table in reverse-chronological order with the following columns:
+
+ * Filename
+ * Status
+ * Uploaded
+
+The 'Filename' column contains a downloadable link to the file that was uploaded for each import.
+
+The 'Status' column is one of:
+
+ * Checking
+ * Checked - OK
+ * Checked - Error
+ * Importing
+ * Import Error
+ * Imported - Awaiting Approval
+ * Imported - Approved
+
+This column also contains a link to view the import log. For imports awaiting approval, there is also an 'Approve' button shown to Administrators only, which updates the Import status to `Imported - Approved`.
+
+The 'Uploaded' column shows the date and time of the import, and describes the user who performed the import either by their full name, or just 'an administrator' if that user is an Administrator.
+
+Administrators also have the ability to hide data imports from view by non-Administrator users. Each import row has a visibility icon that toggles between visible and hidden when clicked.
+
+The most recent data import has an information label saying: "Most recent import – use this file to update your dataset." This is to help users understand that they cannot simply upload new records to add them to a dataset – each upload **replaces** the existing records, so each upload must include any existing records that should remain in the database. This has several advantages:
+
+ * It provides a way to delete and update existing records in a dataset
+ * It makes it easier for user to check for duplicate records when preparing their uploads
+ * It makes it easier to know which records that exist in the dataset, since only the most recent import needs to be examined
+
+IMPORTANT: Uploading a new survey data file *replaces* all existing data in the dataset. Any existing records that are not present in the new data file will be deleted.
+
+=== Import Data
+
+This section is used to upload survey data for checking and subsequent import into the database.
+
+The Data Type field specifies whether the data to be uploaded conforms to the Type 1 or Type 2/3 data specification. The default is Type 1, which is appropriate for most datasets.
+
+When a file is selected, it immediately begins to be uploaded. Upload progress is indicated using in a progress bar.
+
+When the upload completes, the file is immediately processed by the data checker which looks for any errors or potential problems in the data being supplied. No data is actually imported into the database at this time. This processing can take some time and progress is indicated using a progress bar.
+
+The importer accepts CSV or XSLX (Excel) files that follow the TSX Data Import Template (TODO: link).
+
+Once the data checker has completed, it displays a log of messages. Each message is classified as `INFO` (informational only), `WARNING` (a potential problem to be aware of) or `ERROR` (a problem that prevents the file from being imported).
+
+If the log contains an error, the status of the data import is `Checked (error)`, and the user is prompted to upload a new file after addressing the problems found.
+
+Otherwise, the status of the data import is `Checked (OK)`. The user is prompted to review the import log and given the option to either finish importing the data, or to upload an edited file for re-checking.
+
+When the user chooses to finish the import data, this again can take some time and progress is indicated. After the import completes successfully, its status changes to `Imported - Awaiting Approval` (or `Imported - Approved` if the user is an Administrator). The data import is now complete.
+
+The following informational messages are always displayed in the data import interface:
+
+[quote]
+____
+Important: Before updating your dataset, please ensure that all draft custodian feedback forms have been submitted. Importing new data will reset and permanently remove all drafted responses in the most recent form. All previously completed forms will also be archived.
+
+Tip: the import will run faster if records belonging to the same survey and site are grouped into contiguous rows instead of scattered throughout the file
+____
+
+=== Delete Dataset
+
+Datasets can be deleted by any of their Custodians or by an Administrator.
+
+The dataset is completely removed from the database along with its imported data, processing notes and custodian feedback form data.
+
+To prevent accidental deletion, users must tick a checkbox to confirm their decision before the deletion can proceed.
+
+== Dataset Editing
+
+The Dataset Editing interface is used for entering and updating dataset metadata and contact details.
+
+=== Metadata fields
+
+The following fields are all required:
+
+ * Dataset description (plain text)
+ * Data details (plain text)
+ * Data provider (plain text)
+ * Author(s) (plain text)
+ * Monitoring program (drop down list)
+
+The first four of these fields are assembled to form a data citation, which is displayed below them. The format for the data citation is:
+
+[quote]
+`<Author(s)>` (`<Current Year>`). `<Data Details>`. `<Data Provider>`. Aggregated for the Australian Threatened Species Index, an output of the NESP Threatened Species Recovery Hub and operated by the Terrestrial Ecosystem Research Network, The University of Queensland.
+
+Any trailing full stops or spaces entered into the fields are automatically cleaned to avoid extraneous characters in the generated citation.
+
+The Monitoring program field is a drop down list of program names, defaulting to N/A. There is an option to add a new monitoring program name to the list. Adding a new option here makes it available to all other user for selection.
+
+=== Contact fields
+
+These fields all fields required unless marked otherwise:
+
+ * Full name (plain text)
+ * Institution (plain text)
+ * Position (plain text)
+ * Email (plain text)
+ * Phone number (optional, plain text)
+
+All fields are validated when the user attempts to submit the form, and any fields with errors are highlighted.
