@@ -68,14 +68,6 @@ def permitted(user, action, resource_type, resource_id=None):
 		if action in ('create'):
 			return 'Program manager' in user_roles
 
-
-	if resource_type == 'notes' and 'Custodian' in user_roles:
-		try:
-			notes = db_session.query(DataProcessingNotes).get(resource_id)
-			return notes.user_id == user.id
-		except:
-			return False
-
 	if resource_type == 'custodian_feedback_dataset':
 		if action in ('list'):
 			return True
