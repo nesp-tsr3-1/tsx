@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div ref="container">
     <div v-if="status == 'loading'">
       <p>
         Loading…
@@ -14,11 +14,69 @@
       <div v-if="items.length == 0">
         <p class="content">No records have been imported for this dataset.</p>
       </div>
+      <div id="summary_top"></div>
       <div v-for="taxon in items">
+        <div :id="taxon.id"></div>
+        <div class="table-header">
+            <div class="table-header-title">
+              <em>{{taxon.scientific_name}}</em> <span v-if="taxon.common_name">({{firstCommonName(taxon)}})</span>
+            </div>
+            <ul class="table-header-links" v-if="!showExpand">
+              <li v-if="taxon.prevId">
+                <a href="#summary_top" title="Top">
+                  <span class="icon" aria-label="top">
+                    <i class="fas fa-fast-backward" aria-hidden="true"></i>
+                  </span>
+                </a>
+              </li>
+              <li v-else>
+                <span class="icon" aria-label="top">
+                  <i class="fas fa-fast-backward" aria-hidden="true"></i>
+                </span>
+              </li>
+
+              <li v-if="taxon.prevId">
+                <a :href="'#' + taxon.prevId" title="Previous taxon">
+                  <span class="icon" aria-label="prev">
+                    <i class="fas fa-step-backward" aria-hidden="true"></i>
+                  </span>
+                </a>
+              </li>
+              <li v-else>
+                <span class="icon" aria-label="top" title="Previous taxon">
+                  <i class="fas fa-step-backward" aria-hidden="true"></i>
+                </span>
+              </li>
+
+              <li v-if="taxon.nextId">
+                <a :href="'#' + taxon.nextId">
+                  <span class="icon" aria-label="top" title="Next taxon">
+                    <i class="fas fa-step-forward" aria-hidden="true"></i>
+                  </span>
+                </a>
+              </li>
+              <li v-else>
+                <span class="icon" aria-label="top">
+                  <i class="fas fa-step-forward" aria-hidden="true"></i>
+                </span>
+              </li>
+
+              <li v-if="true">
+                <a href="#summary_bottom">
+                  <span class="icon" aria-label="top" title="Bottom">
+                    <i class="fas fa-fast-forward" aria-hidden="true"></i>
+                  </span>
+                </a>
+              </li>
+              <li v-else>
+                <span class="icon" aria-label="top">
+                  <i class="fas fa-fast-forward" aria-hidden="true"></i>
+                </span>
+              </li>
+            </ul>
+
+        </div>
         <table class="table is-fullwidth">
-          <caption>
-            <em>{{taxon.scientific_name}}</em> <span v-if="taxon.common_name">({{taxon.common_name}})</span>
-          </caption>
           <thead>
             <tr>
               <th>Site</th>
@@ -35,8 +93,12 @@
           </tbody>
         </table>
       </div>
+      <div id="summary_bottom"></div>
       <div class="expander" v-if="showExpand">
         <button class="button is-light is-small" @click="expand">Show {{hiddenRowCount}} more rows</button>
+      </div>
+      <div class="expander" v-if="showCollapse">
+        <button class="button is-light is-small" @click="collapse">Collapse summary</button>
       </div>
     </div>
   </div>
@@ -68,6 +130,9 @@ export default {
     },
     showExpand() {
       return !this.showAllItems && this.fullRowCount > rowLimit
+    },
+    showCollapse() {
+      return this.showAllItems
     }
   },
   created() {
@@ -95,6 +160,16 @@ export default {
 
         this.truncatedItems = limitedItems
 
+        var prevItem = null
+        for(let item of items) {
+          item.id = 'summary_' + item.taxon_id
+          item.prevId = prevItem?.id
+          if(prevItem) {
+            prevItem.nextId = item.id
+          }
+          prevItem = item
+        }
+
         this.status = 'loaded'
       }).catch((error) => {
         console.log(error)
@@ -103,6 +178,13 @@ export default {
     },
     expand() {
       this.showAllItems = true
+    },
+    collapse() {
+      this.showAllItems = false
+      this.$refs.container.scrollIntoView(true)
+    },
+    firstCommonName(taxon) {
+      return taxon.common_name.split(",")[0]
     }
   },
   props: {
@@ -115,12 +197,40 @@ export default {
 <style scoped>
 table {
   table-layout: fixed;
+  overflow-wrap: break-word;
 }
 caption {
   margin-top: 1em;
+  margin-bottom: 1em;
   text-align: left;
-  padding: 0 0.75em;
 }
+caption .notification {
+  padding: 1em 0.75em;
+  font-weight: bold;
+}
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1em 0.75em;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  position: sticky;
+  top: 0;
+  background: #eee;
+}
+.table-header-title {
+  font-weight: bold;
+}
+ul.table-header-links {
+  display: flex;
+  gap: 0em;
+  color: #aaa;
+}
+ul.table-header-links a {
+  color: #333;
+}
+
 .expander {
   text-align: center;
   border-top: solid 1px #ddd;
