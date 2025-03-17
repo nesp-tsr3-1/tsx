@@ -457,7 +457,7 @@ class Importer:
 			self.first_row = row
 		else:
 			for key in self.constant_keys:
-				if row.get(key) != self.first_row.get(key):
+				if not case_insensitive_equal(row.get(key), self.first_row.get(key)):
 					log.error("%s: must match the first row of the file (%s)" % (key, self.first_row.get(key)))
 					ok[0] = False
 
@@ -892,8 +892,8 @@ class Importer:
 
 			# Find the fields that are different and log them:
 			a, b = self.survey_fields_by_pk[primary_key], fields
-			a_diff = { k: a[k] for k in a if a[k] != b.get(k) }
-			b_diff = { k: b[k] for k in b if b[k] != a.get(k) }
+			a_diff = { k: a[k] for k in a if not case_insensitive_equal(a[k], b.get(k)) }
+			b_diff = { k: b[k] for k in b if not case_insensitive_equal(b[k], a.get(k)) }
 
 			raise ValueError("Survey fields do not match for the same SourcePrimaryKey (%s):\n%s\n%s" % (row.get('SourcePrimaryKey'), a_diff, b_diff))
 
@@ -1073,6 +1073,12 @@ def normalize_strongly(s):
 
 def quoted_strings(s):
 	return ", ".join(["'%s'" % x for x in s])
+
+def case_insensitive_equal(a, b):
+	return a == b or (
+		type(a) == str and
+		type(b) == str and
+		a.casefold() == b.casefold())
 
 if __name__ == '__main__':
 	main()
