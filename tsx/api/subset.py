@@ -50,12 +50,13 @@ def subset_raw_data():
     if not params_permitted():
         return "Not authorized", 401
 
-    filename = 'tsx-raw-data&%s.zip' % filename_component_from_params()
+    zip_filename = 'tsx-raw-data.zip'
+    csv_filename = 'raw-data&%s.csv' % filename_component_from_params()
 
     result = query_subset_raw_data()
     extra_dir = data_dir('raw-download-extras')
     extra_entries = [(filename, os.path.join(extra_dir, filename), 'file') for filename in os.listdir(extra_dir)]
-    return zip_response([('raw_data.csv', csv_string(result), 'str')] + extra_entries, filename)
+    return zip_response([(csv_filename, csv_string(result), 'str')] + extra_entries, zip_filename)
 
 @bp.route('/subset/stats', methods = ['GET'])
 def subset_stats():
@@ -462,12 +463,13 @@ def subset_time_series():
     if not params_permitted():
         return "Not authorized", 401
 
-    filename = 'tsx-time-series&%s.zip' % filename_component_from_params()
+    zip_filename = 'tsx-time-series.zip'
+    csv_filename = 'time-series&%s.csv' % filename_component_from_params()
 
     result = query_subset_time_series()
     extra_dir = data_dir('time-series-download-extras')
     extra_entries = [(filename, os.path.join(extra_dir, filename), 'file') for filename in os.listdir(extra_dir)]
-    return zip_response([('time_series.csv', csv_string(result), 'str')] + extra_entries, filename)
+    return zip_response([(csv_filename, csv_string(result), 'str')] + extra_entries, zip_filename)
 
 
 @bp.route('/subset/monitoring_consistency', methods = ['GET'])
