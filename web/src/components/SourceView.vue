@@ -64,7 +64,7 @@
             Dataset Summary
           </h4>
 
-          <source-data-summary v-bind:sourceId="sourceId"></source-data-summary>
+          <source-data-summary v-bind:sourceId="sourceId" ref="dataSummary"></source-data-summary>
 
           <div v-if="manageCustodiansPermitted">
             <hr>
@@ -215,6 +215,7 @@ export default {
     },
     handleDataImportUpdated() {
       this.$refs.importList.refresh()
+      this.$refs.dataSummary.refresh()
       api.dataSource(this.sourceId).then(source => {
         this.showDownloads = source.has_t1_data
       })

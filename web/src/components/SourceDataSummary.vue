@@ -136,10 +136,10 @@ export default {
     }
   },
   created() {
-    this.refreshData()
+    this.refresh()
   },
   methods: {
-    refreshData() {
+    refresh() {
       this.status = 'loading'
       api.dataSourceSiteSummary(this.sourceId).then((items) => {
         this.fullItems = items
