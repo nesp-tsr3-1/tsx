@@ -34,7 +34,7 @@ def main():
 			source_id = int(row['source_id'])
 
 			if source_id not in source_by_id:
-				raise ValueError("Unrecognized source_id: %s" % source_id)
+				raise ValueError("Unrecognised source_id: %s" % source_id)
 
 
 			if 'source_description' in row and source_by_id[source_id] != row['source_description']:
@@ -48,7 +48,7 @@ def main():
 			search_type_id = int(row['search_type_id'])
 
 			if search_type_id not in search_type_by_id:
-				raise ValueError("Unrecognized search_type_id: %s" % search_type_id)
+				raise ValueError("Unrecognised search_type_id: %s" % search_type_id)
 
 			if 'search_type_description' in row and search_type_by_id[search_type_id] != row['search_type_description']:
 				msg = "Search type description does not match (search_type_id: %s, search_type_description: %s, database description: %s)" % (

@@ -48,7 +48,7 @@ def write_csv(result, output):
 @bp.route('/subset/raw_data', methods = ['GET'])
 def subset_raw_data():
     if not params_permitted():
-        return "Not authorized", 401
+        return "Not authorised", 401
 
     zip_filename = 'tsx-raw-data.zip'
     csv_filename = 'raw-data&%s.csv' % filename_component_from_params()
@@ -461,7 +461,7 @@ def params_permitted():
 @bp.route('/subset/time_series', methods = ['GET'])
 def subset_time_series():
     if not params_permitted():
-        return "Not authorized", 401
+        return "Not authorised", 401
 
     zip_filename = 'tsx-time-series.zip'
     csv_filename = 'time-series&%s.csv' % filename_component_from_params()

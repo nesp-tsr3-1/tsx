@@ -323,10 +323,10 @@ class Importer:
 			"Breeding"
 		])
 
-		recognized_headers = (required_headers | optional_headers).intersection(headers)
-		if len(recognized_headers) == 0:
+		recognised_headers = (required_headers | optional_headers).intersection(headers)
+		if len(recognised_headers) == 0:
 			raise ImportError("""
-				First row of input does not contain any recognized heading names.
+				First row of input does not contain any recognised heading names.
 				Please make sure you remove all explanatory headers from the TSX data import template
 				(rows 1-5) before uploading the file.
 				Column names (row 6 of the template) should be in row 1 of the uploaded file.
@@ -345,10 +345,10 @@ class Importer:
 		if set(["UnitID", "UnitOfMeasurement"]).isdisjoint(set(headers)):
 			raise ImportError("Either UnitID or UnitOfMeasurement column is required")
 
-		unrecognized_headers = set(headers) - required_headers - optional_headers - set([None])
+		unrecognised_headers = set(headers) - required_headers - optional_headers - set([None])
 
-		if len(unrecognized_headers) > 0:
-			self.log.warning("Unrecognized column(s) - will be ignored: %s" % ', '.join(unrecognized_headers))
+		if len(unrecognised_headers) > 0:
+			self.log.warning("Unrecognised column(s) - will be ignored: %s" % ', '.join(unrecognised_headers))
 
 		if self.source_id:
 			self.log.info("Note: SourceDesc, SourceType, SourceProvider and MonitoringProgram will be ignored since this information is specified via the web interface")
@@ -696,12 +696,12 @@ class Importer:
 			if taxon is None and scientific_name:
 				taxon = self.get_taxon_by_scientific_name(session, scientific_name)
 				if not taxon:
-					log.warning("Unrecognized scientific name: %s", scientific_name)
+					log.warning("Unrecognised scientific name: %s", scientific_name)
 
 			if taxon is None and common_name:
 				taxon = self.get_taxon_by_common_name(session, common_name)
 				if not taxon:
-					log.warning("Unrecognized common name: %s", common_name)
+					log.warning("Unrecognised common name: %s", common_name)
 
 
 			if taxon is None:
@@ -753,7 +753,7 @@ class Importer:
 					try:
 						sighting.unit = self.get_unit(session, unit_id)
 					except NoResultFound:
-						raise ValueError('Unrecognized ID')
+						raise ValueError('Unrecognised ID')
 
 			with field('UnitOfMeasurement') as value:
 				if value == 'Sample: Occupancy (# presences/# absences)':
@@ -906,8 +906,8 @@ def create_point(x, y, projection_ref):
 		try:
 			transformer = get_proj_transformer(projection_ref)
 		except:
-			log.exception("Invalid/unrecognized projection")
-			raise ImportError("Invalid/unrecognized projection: %s" % projection_ref)
+			log.exception("Invalid/unrecognised projection")
+			raise ImportError("Invalid/unrecognised projection: %s" % projection_ref)
 		x, y = transformer.transform(x, y)
 
 	return Point(x, y)

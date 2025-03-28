@@ -24,7 +24,7 @@ def taxon_datasets():
 	user = get_user()
 
 	if not permitted(user, 'list', 'custodian_feedback_dataset'):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	rows = db_session.execute(text("""
 		WITH source_access AS (
@@ -100,7 +100,7 @@ def taxon_dataset(data_id):
 	user = get_user()
 
 	if not permitted(user, 'view', 'custodian_feedback_dataset', data_id):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	can_view_admin_forms = permitted(user, 'view', 'custodian_feedback_admin_forms', data_id)
 
@@ -196,7 +196,7 @@ def form(form_id):
 	user = get_user()
 
 	if not permitted(user, 'view', 'custodian_feedback_form', form_id):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	form_json = get_form_json_raw(form_id)
 
@@ -222,7 +222,7 @@ def form_pdf(form_id):
 	form = json.loads(get_form_json_raw(form_id))
 
 	if not permitted(user, 'view', 'custodian_feedback_form', form_id):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	file_name = local_file_name(form_id)
 
@@ -262,7 +262,7 @@ def form_csv(form_id):
 	user = get_user()
 
 	if not permitted(user, 'view', 'custodian_feedback_form', form_id):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	form = json.loads(get_form_json_raw(form_id))
 
@@ -298,7 +298,7 @@ def form_download(form_id):
 	user = get_user()
 
 	if not permitted(user, 'view', 'custodian_feedback_form', form_id):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	form = json.loads(get_form_json_raw(form_id))
 
@@ -378,7 +378,7 @@ def update_form(form_id):
 	user = get_user()
 
 	if not permitted(user, 'update', 'custodian_feedback_form', form_id):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	context = Bunch()
 	context.submitting = (request.json.get('action') == 'submit')
@@ -455,7 +455,7 @@ def update_dataset_stats_manual():
 	user = get_user()
 
 	if not permitted(user, 'generate', 'dataset_stats'):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	update_count = update_all_dataset_stats()
 
@@ -471,7 +471,7 @@ def get_previous_answers():
 		return "form_id parameter is required", 400
 
 	if not permitted(user, 'view', 'custodian_feedback_form', form_id):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	rows = db_session.execute(text("""
 		WITH items AS (
