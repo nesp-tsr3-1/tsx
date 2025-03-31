@@ -14,16 +14,15 @@
       <div v-if="items.length == 0">
         <p class="content">No records have been imported for this dataset.</p>
       </div>
-      <div id="summary_top"></div>
       <div v-for="taxon in items">
         <div :id="taxon.id"></div>
         <div class="table-header">
             <div class="table-header-title">
               <em>{{taxon.scientific_name}}</em> <span v-if="taxon.common_name">({{firstCommonName(taxon)}})</span>
             </div>
-            <ul class="table-header-links" v-if="!showExpand">
-              <li v-if="taxon.prevId">
-                <a href="#summary_top" title="Top">
+            <ul class="table-header-links" v-if="showNavigationButtons">
+              <li v-if="true">
+                <a href="#summary_top" title="Top of dataset summary">
                   <span class="icon" aria-label="top">
                     <i class="fas fa-fast-backward" aria-hidden="true"></i>
                   </span>
@@ -63,7 +62,7 @@
 
               <li v-if="true">
                 <a href="#summary_bottom">
-                  <span class="icon" aria-label="top" title="Bottom">
+                  <span class="icon" aria-label="top" title="Bottom of dataset summary">
                     <i class="fas fa-fast-forward" aria-hidden="true"></i>
                   </span>
                 </a>
@@ -93,7 +92,38 @@
           </tbody>
         </table>
       </div>
-      <div id="summary_bottom"></div>
+      <div id="summary_bottom" v-if="showNavigationButtons">
+        <p><em>End of summary</em></p>
+        <ul class="table-header-links" v-if="showNavigationButtons">
+          <li>
+            <a href="#summary_top" title="Top of dataset summary">
+              <span class="icon" aria-label="top">
+                <i class="fas fa-fast-backward" aria-hidden="true"></i>
+              </span>
+            </a>
+          </li>
+
+          <li>
+            <a :href="'#' + lastTaxonId" title="Previous taxon">
+              <span class="icon" aria-label="prev">
+                <i class="fas fa-step-backward" aria-hidden="true"></i>
+              </span>
+            </a>
+          </li>
+
+          <li>
+            <span class="icon" aria-label="top">
+              <i class="fas fa-step-forward" aria-hidden="true"></i>
+            </span>
+          </li>
+
+          <li>
+            <span class="icon" aria-label="top">
+              <i class="fas fa-fast-forward" aria-hidden="true"></i>
+            </span>
+          </li>
+        </ul>
+      </div>
       <div class="expander" v-if="showExpand">
         <button class="button is-light is-small" @click="expand">Show {{hiddenRowCount}} more rows</button>
       </div>
@@ -129,10 +159,19 @@ export default {
       return this.fullRowCount - rowLimit
     },
     showExpand() {
-      return !this.showAllItems && this.fullRowCount > rowLimit
+      return !this.showAllItems && this.exceedsRowLimit
     },
     showCollapse() {
-      return this.showAllItems
+      return this.showAllItems && this.exceedsRowLimit
+    },
+    showNavigationButtons() {
+      return this.showAllItems && this.exceedsRowLimit
+    },
+    exceedsRowLimit() {
+      return this.fullRowCount > rowLimit
+    },
+    lastTaxonId() {
+      return this.fullItems.at(-1)?.id
     }
   },
   created() {
@@ -234,5 +273,12 @@ ul.table-header-links a {
 .expander {
   text-align: center;
   border-top: solid 1px #ddd;
+}
+
+#summary_bottom {
+  display: flex;
+  background: #eee;
+  padding: 1em 0.75em;
+  justify-content: space-between;
 }
 </style>

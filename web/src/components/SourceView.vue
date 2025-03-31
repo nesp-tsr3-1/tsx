@@ -60,7 +60,7 @@
 
           <hr>
 
-          <h4 class="title is-4">
+          <h4 class="title is-4" id="summary_top">
             Dataset Summary
           </h4>
 
