@@ -406,10 +406,19 @@ export default {
 
       this.loadingData = true
       api.visualisationParameters(params).then(result => {
+        let typeField = result.fields.find(x=>x.name=='type')
+
         if(!enableIndividualTrends) {
           // Hide individual trends
-          let typeField = result.fields.find(x=>x.name=='type')
           typeField.options = typeField.options.filter(x => x.value != 'individual')
+        }
+
+        let priorityOption = typeField.options.find(x => x.value == 'priority')
+
+        if(priorityOption) {
+          priorityOption.help = `<p>
+            The Australian Government’s Threatened Species Action Plan 2022–2032 identifies 110 Priority Species that require focussed conservation action. <a style="color: white; text-decoration: underline;" href="https://www.dcceew.gov.au/environment/biodiversity/threatened/publications/priority-species" target="_blank">Learn more.</a>
+            </p>`
         }
 
         this.fields = result.fields
