@@ -27,7 +27,7 @@
           <tr v-for="i in imports">
             <td :title="i.filename"><span class="tag is-danger" style="margin-right: 0.5em" v-if="i.data_type === 2">Type 2</span><a v-bind:href="importUrl(i)">{{i.filename}}</a>
               <br>
-              <span class="tag" v-if="isMostRecentImport(i)">Most recent import – use this file to update your dataset.</span>
+              <span class="most-recent-import-message" v-if="isMostRecentImport(i)">Most recent import – to update your dataset, download this file and add your new data.</span>
             </td>
             <td>
               {{humanizeStatus(i.status)}}
@@ -180,5 +180,15 @@ export default {
   }
   button:disabled {
     opacity: 0.5;
+  }
+  .most-recent-import-message {
+    background: hsl(0, 0%, 96%);
+    color: hsl(0, 0%, 29%);
+    font-size: 0.75rem;
+    padding: 0.3em 0.75em;
+    display: block;
+    white-space: normal;
+    border-radius: 4px;
+    margin-top: 0.3em;
   }
 </style>
