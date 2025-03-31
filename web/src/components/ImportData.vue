@@ -20,7 +20,7 @@
           <button class='button' v-on:click='selectFile'>Select file</button>
         </p>
         <p class="notification is-warning is-light"><strong>Important:</strong> Before updating your dataset, please ensure that all draft custodian feedback forms have been submitted. Importing new data will reset and permanently remove all drafted responses in the most recent form. All previously completed forms will also be archived.</p>
-        <p class="notification is-info is-light"><strong>Tip:</strong> the import will run faster if records belonging to the same survey and site are grouped into contiguous rows instead of scattered throughout the file</p>
+        <p class="notification is-info is-light"><strong>Tip:</strong> The import will run faster if records belonging to the same survey and site are grouped into contiguous rows instead of scattered throughout the file.</p>
       </div>
 
       <p v-if='uploading'>
