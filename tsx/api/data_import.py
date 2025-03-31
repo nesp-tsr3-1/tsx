@@ -50,7 +50,7 @@ def get_sources():
 	user = get_user()
 
 	if not permitted(user, 'list', 'source'):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	program_id = request.args.get('program_id')
 
@@ -120,7 +120,7 @@ def get_source(source_id=None):
 	user = get_user()
 
 	if not permitted(user, 'get', 'source', source_id):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	source = db_session.query(Source).get(source_id) if source_id else None
 
@@ -141,7 +141,7 @@ def delete_source(source_id=None):
 	user = get_user()
 
 	if not permitted(user, 'delete', 'source', source_id):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	db_session.execute(text("""CALL delete_source(:source_id)"""), { 'source_id': source_id })
 	remove_orphaned_monitoring_programs()
@@ -155,7 +155,7 @@ def get_source_imports(source_id=None):
 	user = get_user()
 
 	if not permitted(user, 'get', 'source', source_id):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	source = db_session.query(Source).get(source_id) if source_id else None
 
@@ -194,7 +194,7 @@ def get_source_processing_notes(source_id=None):
 	user = get_user()
 
 	if not permitted(user, 'get', 'source', source_id):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	source = db_session.query(Source).get(source_id) if source_id else None
 
@@ -222,7 +222,7 @@ def create_source_processing_notes(source_id=None):
 	user = get_user()
 
 	if not permitted(user, 'update', 'source', source_id):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	body = request.json
 
@@ -242,7 +242,7 @@ def update_source_processing_notes(source_id=None, note_id=None):
 	user = get_user()
 
 	if not permitted(user, 'update', 'source', source_id):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	notes = db_session.query(DataProcessingNotes).get(note_id)
 
@@ -261,7 +261,7 @@ def delete_source_processing_notes(source_id=None, note_id=None):
 	user = get_user()
 
 	if not permitted(user, 'delete', 'source', source_id):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	notes = db_session.query(DataProcessingNotes).get(note_id)
 
@@ -280,7 +280,7 @@ def get_source_custodians(source_id=None):
 	user = get_user()
 
 	if not permitted(user, 'manage_custodians', 'source', source_id):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	source = db_session.query(Source).get(source_id) if source_id else None
 
@@ -306,7 +306,7 @@ def create_source_custodian(source_id=None):
 	user = get_user()
 
 	if not permitted(user, 'manage_custodians', 'source', source_id):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	body = request.json
 
@@ -344,7 +344,7 @@ def delete_source_custodian(source_id=None, user_id=None):
 	user = get_user()
 
 	if not permitted(user, 'manage_custodians', 'source', source_id):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	db_session.execute(text("""DELETE FROM user_source
 		WHERE user_id = :user_id
@@ -410,7 +410,7 @@ def create_or_update_source(source_id=None):
 	user = get_user()
 
 	if not permitted(user, action, 'source', source_id):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	if source_id:
 		source = db_session.query(Source).get(source_id)

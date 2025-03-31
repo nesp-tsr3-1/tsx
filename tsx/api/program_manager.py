@@ -11,7 +11,7 @@ def get_program_managers(program_id = None):
 	user = get_user()
 
 	if not permitted(user, 'list_managers', 'program', program_id):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	if program_id == None:
 		return "Not found", 404
@@ -30,7 +30,7 @@ def get_programs(user_id = None):
 	user = get_user()
 
 	if not permitted(user, 'list_programs', 'user', user_id):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	if user_id == None:
 		return "Not found", 404
@@ -48,7 +48,7 @@ def update_programs(user_id = None):
 	user = get_user()
 
 	if not permitted(user, 'update_programs', 'user', user_id):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	if user_id == None:
 		return "Not found", 404

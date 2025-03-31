@@ -18,7 +18,7 @@ def get_program(program_id=None):
 	user = get_user()
 
 	if not permitted(user, 'get', 'program', program_id):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	program = db_session.query(MonitoringProgram).get(program_id) if program_id else None
 
@@ -54,7 +54,7 @@ def delete_monitoring_program(program_id = None):
 	user = get_user()
 
 	if not permitted(user, 'delete', 'program', program_id):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	db_session.execute(text("""DELETE FROM monitoring_program WHERE id = :program_id"""), { 'program_id': program_id })
 	db_session.commit()
@@ -69,7 +69,7 @@ def remove_source_from_monitoring_program(program_id = None, source_id = None):
 	user = get_user()
 
 	if not permitted(user, 'update', 'source', program_id):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	db_session.execute(text("""UPDATE source SET monitoring_program_id = NULL WHERE id = :source_id AND monitoring_program_id = :program_id"""),
 		{ 'program_id': program_id, 'source_id': source_id })
@@ -85,7 +85,7 @@ def remove_manager_from_monitoring_program(program_id = None, user_id = None):
 	user = get_user()
 
 	if not permitted(user, 'mangage_managers', 'program', program_id):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	db_session.execute(text("""DELETE FROM user_program_manager WHERE user_id = :user_id AND monitoring_program_id = :program_id"""),
 		{ 'program_id': program_id, 'user_id': user_id })
@@ -101,7 +101,7 @@ def add_manager_to_monitoring_program(program_id = None):
 	user = get_user()
 
 	if not permitted(user, 'mangage_managers', 'program', program_id):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	body = request.json
 
@@ -130,7 +130,7 @@ def create_or_update_program(program_id=None):
 	user = get_user()
 
 	if not permitted(user, action, 'program', program_id):
-		return "Not authorized", 401
+		return "Not authorised", 401
 
 	if program_id:
 		program = db_session.query(MonitoringProgram).get(program_id)
