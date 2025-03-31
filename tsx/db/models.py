@@ -404,6 +404,7 @@ class DataImport(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     data_type: Mapped[int] = mapped_column(Integer)
     is_hidden: Mapped[int] = mapped_column(TINYINT(1), server_default=text("'0'"))
+    is_admin: Mapped[int] = mapped_column(TINYINT(1))
     time_created: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
     last_modified: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
     source_id: Mapped[Optional[int]] = mapped_column(Integer)

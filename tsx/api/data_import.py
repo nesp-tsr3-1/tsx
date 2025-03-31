@@ -172,9 +172,11 @@ def get_source_imports(source_id=None):
 		data_import.time_created,
 		data_import.upload_uuid,
 		CASE
-			WHEN user.id IS NULL OR EXISTS (SELECT 1 FROM user_role WHERE user_role.role_id = 1 AND user_role.user_id = user.id)
+			-- WHEN data_import.is_admin AND :show_hidden
+			-- THEN CONCAT('an administrator (', COALESCE(CONCAT(user.first_name, " ", user.last_name), user.email, 'Unknown user'), ')')
+			WHEN data_import.is_admin
 			THEN 'an administrator'
-			ELSE COALESCE(CONCAT(user.first_name, " ", user.last_name), user.email, user.id)
+			ELSE COALESCE(CONCAT(user.first_name, " ", user.last_name), user.email, 'an unknown user')
 		END AS user,
 		data_import.is_hidden
 		FROM data_import
@@ -559,7 +561,8 @@ def post_import():
 		upload_uuid = body['upload_uuid'],
 		filename = get_upload_name(upload_uuid),
 		data_type = body.get('data_type'),
-		user_id = user.id
+		user_id = user.id,
+		is_admin = 'Administrator' in get_roles(user)
 	)
 	db_session.add(data_import)
 	db_session.commit()
