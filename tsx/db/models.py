@@ -179,6 +179,7 @@ class TaxonStatus(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     description: Mapped[Optional[str]] = mapped_column(String(255))
+    code: Mapped[Optional[str]] = mapped_column(String(3))
 
 
 class TimeSeriesInclusion(Base):

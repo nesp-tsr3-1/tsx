@@ -343,6 +343,15 @@ def subset_sql_params(subset_params=None, state_via_region=False):
         params.update({ 'taxonomic_group': args['taxonomic_group'] })
         where_conditions.append('taxon.taxonomic_group = :taxonomic_group')
 
+    if 'status_auth' in args and 'taxon_status' in args:
+        status_auth = args['status_auth']
+        taxon_status = args['taxon_status'].split(',')
+        if status_auth in ["max", "epbc", "iucn", "bird_action_plan"]:
+            param_names = ['taxon_status_id_%s' % i for i in range(0, len(taxon_status))]
+            params.update(dict(zip(param_names, taxon_status)))
+            param_placeholder = ",".join(":" + p for p in param_names)
+            where_conditions.append('COALESCE(%s_status_id, 1) IN (SELECT id FROM taxon_status WHERE code IN (%s))' % (status_auth, param_placeholder))
+
     if 'source_id' in args:
         where_conditions.append('source.id = :source_id')
         params['source_id'] = args['source_id']

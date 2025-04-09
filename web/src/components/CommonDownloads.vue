@@ -38,6 +38,24 @@
         </div>
       </div>
     </div>
+    <div class="field" v-if="enableTaxonStatusFilter">
+      <label class="label">Taxon Status</label>
+      <div class="control" style="margin-bottom: 1em;">
+        <div class="select">
+          <select v-model="criteria.statusAuthority">
+            <option :value="null" selected>Select authority…</option>
+            <option v-for="s in options.statusAuthority" :value="s">
+              {{ s.name }}
+            </option>
+          </select>
+        </div>
+      </div>
+      <div class="control">
+        <div v-for="status in options.taxonStatus">
+          <label><input type="checkbox" :value="status" v-model="criteria.taxonStatus" :disabled="criteria.statusAuthority == null"> {{status.name}}</label>
+        </div>
+      </div>
+    </div>
     <div class="field">
       <label class="label">Species</label>
       <div class="control">
@@ -303,6 +321,20 @@ export default {
           'Tasmania',
           'Victoria'
         ],
+        taxonStatus: [
+          { name: 'Least Concern and Unlisted', id: 'LC' },
+          { name: 'Near Threatened', id: 'NT' },
+          { name: 'Vulnerable', id: 'VU' },
+          { name: 'Endangered', id: 'EN' },
+          { name: 'Critically Endangered', id: 'CR' },
+          { name: 'Extinct', id: 'EX' },
+        ],
+        statusAuthority: [
+          { name: 'Max', id: 'max'},
+          { name: 'EPBC', id: 'epbc'},
+          { name: 'Australian IUCN status', id: 'iucn'},
+          { name: '2020 Bird Action Plan', id: 'bird_action_plan'},
+        ],
         monitoringPrograms: [],
         taxonomicGroup: [],
         species: []
@@ -314,7 +346,10 @@ export default {
         species: [],
         sites: [],
         management: null,
-        taxonomicGroup: null
+        taxonomicGroup: null,
+        taxonStatus: [],
+        statusAuthority: null
+
       },
       changeCounter: 0, // Incremented every time criteria are changed
       stats: null,
@@ -382,10 +417,17 @@ export default {
         }
 
         this.changeCounter++
-        this.updateStats()
-        this.trendStatus = 'idle'
-        this.showPlot = false
-        this.consistencyPlotStatus = 'idle'
+        var c = this.changeCounter
+
+        // Wait for criteria to settle
+        setTimeout(() => {
+          if(c == this.changeCounter) {
+            this.updateStats()
+            this.trendStatus = 'idle'
+            this.showPlot = false
+            this.consistencyPlotStatus = 'idle'
+          }
+        }, 1500)
       },
       deep: true
     }
@@ -425,6 +467,8 @@ export default {
         api.taxonomicGroups().then(options =>
           this.options.taxonomicGroup = options.map(option => option.description)))
     }
+
+    this.criteria.taxonStatus = [ ...this.options.taxonStatus ]
 
     initialisationPromises.push(speciesPromise.then((species) => {
       species.forEach(sp => {
@@ -613,6 +657,11 @@ export default {
         params.taxonomic_group = this.criteria.taxonomicGroup
       }
 
+      if(this.enableTaxonStatusFilter && this.criteria.statusAuthority) {
+        params.status_auth = this.criteria.statusAuthority.id
+        params.taxon_status = this.criteria.taxonStatus.map(x => x.id).join(",")
+      }
+
       return params
     },
     formatQuantity: function(x, singular, plural) {
@@ -677,7 +726,8 @@ export default {
     enableStateFilter: Boolean,
     enableManagementFilter: Boolean,
     enableTaxonomicGroupFilter: Boolean,
-    enableMap: Boolean
+    enableMap: Boolean,
+    enableTaxonStatusFilter: Boolean
   }
 }
 
