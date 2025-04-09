@@ -21,7 +21,7 @@
     "heatmap.js": "^2.0.5",
     "leaflet": "^1.7.1",
     "leaflet-easybutton": "^2.4.0",
-    "vue": "^3.4.27",
+    "vue": "^3.5.13",
     "vue-autofocus-directive": "^1.0.4",
     "vue-router": "^4.0.11",
     "vue-simple-spinner": "^1.2.10",
@@ -29,7 +29,6 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.5",
-    "@vue/compiler-sfc": "^3.0.5",
     "sass": "^1.38.1",
     "vite": "^5.2.12"
   }
