@@ -67,6 +67,19 @@
                 </div>
                 <p class="help is-danger" v-if="errors.monitoring_program">{{ errors.monitoring_program }}</p>
               </div>
+              <div class="field">
+                <label class="label">Source type</label>
+                <div class="radio">
+                  <label class="radio">
+                    <input type="radio" name="source_type" value="custodian" v-model="source_type" /> Custodian
+                  </label>
+                  <label class="radio">
+                    <input type="radio" name="source_type" value="paper/report" v-model="source_type" /> Paper/report
+                  </label>
+                </div>
+                <p class="help">Please specify whether your data is provided as electronic primary data from a custodian or extracted from a published scientific paper or report.</p>
+                <p class="help is-danger" v-if="errors.source_type">{{ errors.source_type }}</p>
+              </div>
 
               <h3 class="title is-4" style="margin-top: 1em">Contact</h3>
               <div class="field">
@@ -117,7 +130,7 @@
 import * as api from '../api.js'
 import { generateCitation, pick } from '../util.js'
 
-const sourceProps = ['description', 'details', 'provider', 'authors', 'monitoring_program', 'contact_name', 'contact_institution', 'contact_position', 'contact_email', 'contact_phone']
+const sourceProps = ['description', 'details', 'provider', 'authors', 'monitoring_program', 'source_type', 'contact_name', 'contact_institution', 'contact_position', 'contact_email', 'contact_phone']
 
 function withFullStop(str) {
   return str.trim().replace(/\.?$/, ".")
@@ -138,6 +151,7 @@ export default {
       provider: '',
       authors: '',
       monitoring_program: null,
+      source_type: null,
       new_monitoring_program: '',
       contact_name: '',
       contact_institution: '',

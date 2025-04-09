@@ -55,6 +55,10 @@
                 <h4>Monitoring Program</h4>
                 {{ source.monitoring_program }}
               </div>
+              <div>
+                <h4>Source Type</h4>
+                {{ sourceType }}
+              </div>
             </div>
           </div>
 
@@ -155,7 +159,7 @@
 
 <script>
 import * as api from '../api.js'
-import { generateCitation } from '../util.js'
+import { generateCitation, capitalise } from '../util.js'
 import ImportList from './ImportList.vue'
 import ImportData from './ImportData.vue'
 import ProcessingNotes from './ProcessingNotes.vue'
@@ -202,6 +206,9 @@ export default {
     },
     citation() {
       return this.source && generateCitation(this.source.authors, this.source.details, this.source.provider)
+    },
+    sourceType() {
+      return capitalise(this.source.source_type ?? "")
     }
   },
   methods: {

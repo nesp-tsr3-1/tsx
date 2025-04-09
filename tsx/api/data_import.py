@@ -485,6 +485,8 @@ def update_source_from_json(source, json):
 	for field in source_fields:
 		if field.name == 'monitoring_program':
 			source.monitoring_program_id = get_monitoring_program_id(json['monitoring_program'])
+		elif field.name == 'source_type':
+			source.source_type_id = get_source_type_id(json['source_type'])
 		else:
 			setattr(source, field.name, clean(json.get(field.name)))
 
@@ -501,6 +503,14 @@ def get_monitoring_program_id(description):
 		VALUES (:description)"""),
 		{ "description": description}).lastrowid
 
+def get_source_type_id(description):
+	if not description:
+		return None
+
+	for (source_type_id,) in db_session.execute(text("""SELECT id FROM source_type WHERE description = :description"""), { "description": description}):
+		return source_type_id
+
+	raise ValueError('Invalid source type: %s' + description)
 
 
 def source_to_json(source):
@@ -512,6 +522,8 @@ def source_to_json(source):
 	for field in source_fields:
 		if field.name == 'monitoring_program' and source.monitoring_program:
 			json['monitoring_program'] = source.monitoring_program.description
+		elif field.name == 'source_type':
+			json['source_type'] = source.source_type.description
 		else:
 			json[field.name] = getattr(source, field.name)
 	return json
@@ -522,6 +534,7 @@ source_fields = [
 	Field(name='provider', title='Dataset provider', validators=[validate_required, validate_max_chars(4096)]),
 	Field(name='authors', title='Author(s)', validators=[validate_required, validate_max_chars(4096)]),
 	Field(name='monitoring_program', title='Monitoring program', validators=[validate_max_chars(255)]),
+	Field(name='source_type', title='Source type', validators=[validate_required, validate_one_of('paper/report', 'custodian')]),
 
 	Field(name='contact_name', title='Full name', validators=[validate_required, validate_max_chars(255)]),
 	Field(name='contact_institution', title='Institution', validators=[validate_required, validate_max_chars(255)]),
