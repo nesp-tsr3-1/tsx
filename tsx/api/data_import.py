@@ -172,8 +172,8 @@ def get_source_imports(source_id=None):
 		data_import.time_created,
 		data_import.upload_uuid,
 		CASE
-			-- WHEN data_import.is_admin AND :show_hidden
-			-- THEN CONCAT('an administrator (', COALESCE(CONCAT(user.first_name, " ", user.last_name), user.email, 'Unknown user'), ')')
+			WHEN data_import.is_admin AND :show_hidden
+			THEN CONCAT('an administrator (', COALESCE(CONCAT(user.first_name, " ", user.last_name), user.email, 'Unknown user'), ')')
 			WHEN data_import.is_admin
 			THEN 'an administrator'
 			ELSE COALESCE(CONCAT(user.first_name, " ", user.last_name), user.email, 'an unknown user')
