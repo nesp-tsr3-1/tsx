@@ -101,9 +101,15 @@ const router = createRouter({
       component: CustodianFeedbackDataset
     },
     {
-      path: '/custodian_feedback/form/:id',
-      name: 'CustodianFeedbackForm',
+      path: '/custodian_feedback/form/:id/edit',
+      name: 'EditCustodianFeedbackForm',
       component: CustodianFeedbackForm
+    },
+    {
+      path: '/custodian_feedback/form/:id',
+      name: 'ViewCustodianFeedbackForm',
+      component: CustodianFeedbackForm,
+      props: { viewOnly: true }
     },
     {
       path: '/',

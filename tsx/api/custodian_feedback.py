@@ -122,12 +122,14 @@ def taxon_dataset(data_id):
 					'code', feedback_status.code,
 					'description', feedback_status.description
 				),
+				'is_current_form_version', COALESCE(custodian_feedback_answers.form_version, 0) = :current_form_version,
 				'time_created', DATE_FORMAT(custodian_feedback.time_created, "%Y-%m-%d %H:%i:%sZ"),
 				'last_modified', DATE_FORMAT(COALESCE(custodian_feedback.last_updated, custodian_feedback.time_created), "%Y-%m-%d %H:%i:%sZ")
 			) AS form
 			FROM custodian_feedback
 			JOIN feedback_status ON feedback_status.id = custodian_feedback.feedback_status_id
 			JOIN feedback_type ON feedback_type.id = custodian_feedback.feedback_type_id
+			LEFT JOIN custodian_feedback_answers ON custodian_feedback_answers.custodian_feedback_id = custodian_feedback.id
 			WHERE custodian_feedback.dataset_id = :data_id
 			AND (:can_view_admin_forms OR feedback_type.code != 'admin')
 		)
@@ -159,7 +161,8 @@ def taxon_dataset(data_id):
 		'data_id': data_id,
 		'source_id': source_id,
 		'taxon_id': taxon_id,
-		'can_view_admin_forms': can_view_admin_forms
+		'can_view_admin_forms': can_view_admin_forms,
+		'current_form_version': current_form_version
 	})
 
 	rows = list(rows)

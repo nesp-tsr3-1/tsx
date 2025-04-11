@@ -33,8 +33,13 @@
             </ul>
             <hr>
             <div class="buttons">
-              <button class="button is-primary" :disabled="!canSaveDraft" @click="saveAndClose">{{saveButtonLabel}}</button>
-              <button class="button is-primary" :disabled="!canSubmit" @click="submitAndClose">Submit</button>
+              <template v-if="viewOnly">
+                <button class="button is-primary" @click="close">Close</button>
+              </template>
+              <template v-else>
+                <button class="button is-primary" :disabled="!canSaveDraft" @click="saveAndClose">{{saveButtonLabel}}</button>
+                <button class="button is-primary" :disabled="!canSubmit" @click="submitAndClose">Submit</button>
+              </template>
             </div>
             <p class="help is-danger" v-if="saveStatus == 'error'">Failed to save form</p>
           </div>
@@ -65,11 +70,26 @@
               </div>
             </div>
 
-            <div class="notification is-warning">
+            <div v-if="!viewOnly" class="notification is-warning">
               <strong>Important:</strong> If you need to make any updates to your dataset, we recommend you do this before filling out this form. Updating your dataset will re-set and remove all drafted answers in this form and will archive all previously completed forms.
             </div>
 
+            <div v-if="viewOnly && canEdit" class="notification is-warning sticky-top is-flex is-justify-content-space-between is-align-items-center" style="z-index: 10000">
+              <span>You are currently viewing this form in read-only mode.</span>
+              <router-link
+                :to="{
+                  name: 'EditCustodianFeedbackForm',
+                  params: { id: this.formId }}
+              "><button class="button is-primary">Edit Form</button></router-link>
+            </div>
+
+            <div v-if="viewOnly && !canEdit" class="notification is-warning sticky-top is-flex is-justify-content-space-between is-align-items-center" style="z-index: 10000">
+              <span>This form has been archived and cannot be edited.</span>
+            </div>
+
             <hr>
+
+            <fieldset :class="{ 'view-only': viewOnly }">
 
             <!-- Conditions and Consent -->
             <div v-if="consentRequired">
@@ -122,7 +142,7 @@
                 <div class="field">
                   <label class="label required">Please enter your name.</label>
                   <div class="control">
-                    <input class="input" type="text" placeholder="" v-model="formData.consent_name">
+                    <input class="input" :readonly="viewOnly" type="text" placeholder="" v-model="formData.consent_name">
                   </div>
                 </div>
               </div>
@@ -192,7 +212,7 @@
                   </label>
                 </div>
                 <p class="help is-danger" v-if="fieldErrors.citation_agree">{{fieldErrors.citation_agree}}</p>
-                <input class="input" type="text" placeholder="Suggested citation" v-if="showField('citation_agree_comments')" v-model="formData.citation_agree_comments">
+                <input class="input" :readonly="viewOnly" type="text" placeholder="Suggested citation" v-if="showField('citation_agree_comments')" v-model="formData.citation_agree_comments">
                 <p class="help is-danger" v-if="fieldErrors.citation_agree_comments">{{fieldErrors.citation_agree_comments}}</p>
               </div>
             </div>
@@ -207,7 +227,7 @@
                   </label>
                 </div>
                 <p class="help is-danger" v-if="fieldErrors.monitoring_for_trend">{{fieldErrors.monitoring_for_trend}}</p>
-                <input class="input" type="text" placeholder="Enter your answer" v-model="formData.monitoring_for_trend_comments" v-if="showField('monitoring_for_trend_comments')">
+                <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-model="formData.monitoring_for_trend_comments" v-if="showField('monitoring_for_trend_comments')">
                 <p class="help is-danger" v-if="fieldErrors.monitoring_for_trend_comments">{{fieldErrors.monitoring_for_trend_comments}}</p>
               </div>
             </div>
@@ -222,7 +242,7 @@
                   </label>
                 </div>
                 <p class="help is-danger" v-if="fieldErrors.analyse_own_trends">{{fieldErrors.analyse_own_trends}}</p>
-                <input class="input" type="text" placeholder="Enter your answer" v-model="formData.analyse_own_trends_comments" v-if="showField('analyse_own_trends_comments')">
+                <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-model="formData.analyse_own_trends_comments" v-if="showField('analyse_own_trends_comments')">
                 <p class="help is-danger" v-if="fieldErrors.analyse_own_trends_comments">{{fieldErrors.analyse_own_trends_comments}}</p>
               </div>
             </div>
@@ -231,9 +251,9 @@
               <label class="label required" v-if="notAdmin">Can you estimate what percentage (%) of your species’ population existed in Australia at the start of your monitoring (assuming this was 100% in 1750)? <strong>This information is to help understand population baselines and determine whether the majority of a species' decline may have occurred prior to monitoring.</strong></label>
               <label class="label required" v-if="isAdmin">What has the custodian estimated to be the percentage (%) of the species’ population that existed in Australia at the start of the monitoring (assuming this was 100% in 1750)?</label>
               <div class="control indent">
-                <input class="input" type="text" placeholder="Enter a percentage or 'Unsure'" v-model="formData.pop_1750">
+                <input class="input" :readonly="viewOnly" type="text" placeholder="Enter a percentage or 'Unsure'" v-model="formData.pop_1750">
                 <p class="help is-danger" v-if="fieldErrors.pop_1750">{{fieldErrors.pop_1750}}</p>
-                <input class="input" style="margin-top: 1em" type="text" placeholder="Additional comments" v-model="formData.pop_1750_comments" v-if="showField('pop_1750_comments')">
+                <input class="input" :readonly="viewOnly" style="margin-top: 1em" type="text" placeholder="Additional comments" v-model="formData.pop_1750_comments" v-if="showField('pop_1750_comments')">
                 <p class="help is-danger" v-if="fieldErrors.pop_1750_comments">{{fieldErrors.pop_1750_comments}}</p>
               </div>
             </div>
@@ -332,7 +352,7 @@
                   </label>
                 </div>
                 <p class="help is-danger" v-if="fieldErrors.data_summary_agree">{{fieldErrors.data_summary_agree}}</p>
-                <input class="input" type="text" placeholder="Enter your answer" v-if="showField('data_summary_agree_comments')" v-model="formData.data_summary_agree_comments">
+                <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-if="showField('data_summary_agree_comments')" v-model="formData.data_summary_agree_comments">
                 <p class="help is-danger" v-if="fieldErrors.data_summary_agree_comments">{{fieldErrors.data_summary_agree_comments}}</p>
               </div>
             </div>
@@ -347,7 +367,7 @@
                   </label>
                 </div>
                 <p class="help is-danger" v-if="fieldErrors.processing_agree">{{fieldErrors.processing_agree}}</p>
-                <input class="input" type="text" placeholder="Enter your answer" v-if="showField('processing_agree_comments')" v-model="formData.processing_agree_comments">
+                <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-if="showField('processing_agree_comments')" v-model="formData.processing_agree_comments">
                 <p class="help is-danger" v-if="fieldErrors.processing_agree_comments">{{fieldErrors.processing_agree_comments}}</p>
               </div>
             </div>
@@ -435,7 +455,7 @@
                   </label>
                 </div>
                 <p class="help is-danger" v-if="fieldErrors.statistics_agree">{{fieldErrors.statistics_agree}}</p>
-                <input class="input" type="text" placeholder="Enter your answer" v-if="showField('statistics_agree_comments')" v-model="formData.statistics_agree_comments">
+                <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-if="showField('statistics_agree_comments')" v-model="formData.statistics_agree_comments">
                 <p class="help is-danger" v-if="fieldErrors.statistics_agree_comments">{{fieldErrors.statistics_agree_comments}}</p>
 
               </div>
@@ -443,7 +463,7 @@
 
             <hr>
 
-            <div class="card block" v-if="trendPlotAvailable">
+            <div class="card block" id="trend-parameters" v-if="trendPlotAvailable">
               <header class="card-header">
                 <p class="card-header-title"><button class="button" @click="showTrendParameters = !showTrendParameters"> Customise trend</button>
                 </p>
@@ -539,15 +559,21 @@
                 <p>Insufficient data available to generate a trend</p>
               </div>
               <div v-if="trendPlotAvailable" class="content">
-                <canvas ref="trendPlot" style="height: 10em;"></canvas>
+                <canvas id="trend-plot" ref="trendPlot" style="height: 10em;"></canvas>
                </div>
              </div>
 
-            <div class="content">
+            <div v-if="trendPlotAvailable" class="content">
                 <hr>
                 <p style="font-style: italic;">
                   The above graph shows the estimated yearly change in relative abundance in relation to a baseline year where the index is set to 1. Changes are proportional - a value of 0.5 indicates the population is 50% below the baseline value; a value of 1.5 indicates 50% above baseline. The overall trend (mean value per year) is shown by the blue line - this line is used in the final multi-species TSX. The grey cloud indicates the uncertainty in the estimate as measured by the variability between all time series in your dataset. This trend excludes one-off surveys and absent-only time series.
                 </p>
+            </div>
+            <div v-else class="content">
+              <p style="font-style: italic;">
+                (Trend plot not available)
+              </p>
+              <hr>
             </div>
 
             <div class="field numbered">
@@ -560,7 +586,7 @@
                   </label>
                 </div>
                 <p class="help is-danger" v-if="fieldErrors.trend_agree">{{fieldErrors.trend_agree}}</p>
-                <input class="input" type="text" placeholder="Enter your answer" v-if="showField('trend_agree_comments')" v-model="formData.trend_agree_comments">
+                <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-if="showField('trend_agree_comments')" v-model="formData.trend_agree_comments">
                 <p class="help is-danger" v-if="fieldErrors.trend_agree_comments">{{fieldErrors.trend_agree_comments}}</p>
               </div>
             </div>
@@ -569,9 +595,9 @@
               <label class="label required" v-if="notAdmin">Looking at the trend for your data, what should be the reference year at which the index should start?</label>
               <label class="label required" v-if="isAdmin">What reference year has the custodian suggested for their trend?</label>
               <div class="control indent">
-                <input class="input" type="text" placeholder="Enter your answer" v-model="formData.start_year">
+                <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-model="formData.start_year">
                 <p class="help is-danger" v-if="fieldErrors.start_year">{{fieldErrors.start_year}}</p>
-                <input class="input" style="margin-top:1em;" type="text" placeholder="Additional comments" v-if="showField('start_year_comments')" v-model="formData.start_year_comments">
+                <input class="input" :readonly="viewOnly" style="margin-top:1em;" type="text" placeholder="Additional comments" v-if="showField('start_year_comments')" v-model="formData.start_year_comments">
                 <p class="help is-danger" v-if="fieldErrors.start_year_comments">{{fieldErrors.start_year_comments}}</p>
               </div>
             </div>
@@ -580,9 +606,9 @@
               <label class="label required" v-if="notAdmin">Looking at the trend for your data, what should be the year at which the index should end?</label>
               <label class="label required" v-if="isAdmin">What end year has the custodian suggested for their trend?</label>
               <div class="control indent">
-                <input class="input" type="text" placeholder="Enter your answer" v-model="formData.end_year">
+                <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-model="formData.end_year">
                 <p class="help is-danger" v-if="fieldErrors.end_year">{{fieldErrors.end_year}}</p>
-                <input class="input" style="margin-top:1em;" type="text" placeholder="Additional comments" v-if="showField('end_year_comments')" v-model="formData.end_year_comments">
+                <input class="input" :readonly="viewOnly" style="margin-top:1em;" type="text" placeholder="Additional comments" v-if="showField('end_year_comments')" v-model="formData.end_year_comments">
                 <p class="help is-danger" v-if="fieldErrors.end_year_comments">{{fieldErrors.end_year_comments}}</p>
               </div>
             </div>
@@ -705,7 +731,7 @@
                 <label class="label" v-if="notAdmin">Please add any additional comments on data suitability and the criteria below.</label>
                 <label class="label" v-if="isAdmin">What additional comments on data suitability and the criteria has the custodian provided?</label>
                 <div class="control">
-                  <input class="input" type="text" placeholder="Enter your answer" v-model="formData.data_suitability_comments">
+                  <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-model="formData.data_suitability_comments">
                 </div>
               </div>
             </div>
@@ -751,7 +777,7 @@
               <div class="field numbered">
                 <label class="label required">Where the custodian has provided funding data, what value have they estimated as the total investment in the dataset to date (not counting in-kind support)?</label>
                 <div class="control indent">
-                  <input class="input" type="text" placeholder="Enter value or type 'unsure'" v-model="formData.estimated_cost_dataset">
+                  <input class="input" :readonly="viewOnly" type="text" placeholder="Enter value or type 'unsure'" v-model="formData.estimated_cost_dataset">
                   <p class="help is-danger" v-if="fieldErrors.estimated_cost_dataset">{{fieldErrors.estimated_cost_dataset}}</p>
                 </div>
               </div>
@@ -759,7 +785,7 @@
               <div class="field numbered">
                 <label class="label">Please add any additional comments from the custodian about the monitoring program below.</label>
                 <div class="control indent">
-                  <input class="input" type="text" placeholder="Enter your answer" v-model="formData.cost_data_provided_comments">
+                  <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-model="formData.cost_data_provided_comments">
                   <p class="help is-danger" v-if="fieldErrors.cost_data_provided_comments">{{fieldErrors.cost_data_provided_comments}}</p>
                 </div>
               </div>
@@ -812,7 +838,7 @@
 
               <div class="field" v-if="formData.monitoring_program_information_provided == 'please_contact'">
                 <div class="control indent">
-                  <input class="input" type="text" placeholder="Enter contact phone number or email address" v-model="formData.monitoring_program_information_contact">
+                  <input class="input" :readonly="viewOnly" type="text" placeholder="Enter contact phone number or email address" v-model="formData.monitoring_program_information_contact">
                 </div>
               </div>
 
@@ -845,14 +871,14 @@
                     <div class="subfield">
                       <label>a. Days/year paid labour:</label>
                       <div>
-                        <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_labour_paid_days_per_year">
+                        <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-model="formData.effort_labour_paid_days_per_year">
                         <p class="help is-danger" v-if="fieldErrors.effort_labour_paid_days_per_year">{{fieldErrors.effort_labour_paid_days_per_year}}</p>
                       </div>
                     </div>
                     <div class="subfield">
                       <label>b. Days/year volunteered time:</label>
                       <div>
-                        <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_labour_volunteer_days_per_year">
+                        <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-model="formData.effort_labour_volunteer_days_per_year">
                         <p class="help is-danger" v-if="fieldErrors.effort_labour_volunteer_days_per_year">{{fieldErrors.effort_labour_volunteer_days_per_year}}</p>
                       </div>
                     </div>
@@ -865,14 +891,14 @@
                     <div class="subfield">
                       <label>a. Days/year paid labour:</label>
                       <div>
-                        <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_overheads_paid_days_per_year">
+                        <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-model="formData.effort_overheads_paid_days_per_year">
                         <p class="help is-danger" v-if="fieldErrors.effort_overheads_paid_days_per_year">{{fieldErrors.effort_overheads_paid_days_per_year}}</p>
                       </div>
                     </div>
                     <div class="subfield">
                       <label>b. Days/year volunteered time:</label>
                       <div>
-                        <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_overheads_volunteer_days_per_year">
+                        <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-model="formData.effort_overheads_volunteer_days_per_year">
                         <p class="help is-danger" v-if="fieldErrors.effort_overheads_volunteer_days_per_year">{{fieldErrors.effort_overheads_volunteer_days_per_year}}</p>
                       </div>
                     </div>
@@ -885,14 +911,14 @@
                     <div class="subfield">
                       <label>a. Paid staff:</label>
                       <div>
-                        <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_paid_staff_count">
+                        <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-model="formData.effort_paid_staff_count">
                         <p class="help is-danger" v-if="fieldErrors.effort_paid_staff_count">{{fieldErrors.effort_paid_staff_count}}</p>
                       </div>
                     </div>
                     <div class="subfield">
                       <label>b. Volunteers:</label>
                       <div>
-                        <input class="input" type="text" placeholder="Enter your answer" v-model="formData.effort_volunteer_count">
+                        <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-model="formData.effort_volunteer_count">
                         <p class="help is-danger" v-if="fieldErrors.effort_volunteer_count">{{fieldErrors.effort_volunteer_count}}</p>
                       </div>
                     </div>
@@ -902,7 +928,7 @@
                 <div class="field numbered">
                   <label class="label">Funding: How much do you think in AUD$ a single survey costs (not counting in-kind support)?</label>
                   <div class="control indent">
-                    <input class="input" type="text" placeholder="Enter your answer" v-model="formData.funding_cost_per_survey_aud">
+                    <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-model="formData.funding_cost_per_survey_aud">
                     <p class="help is-danger" v-if="fieldErrors.funding_cost_per_survey_aud">{{fieldErrors.funding_cost_per_survey_aud}}</p>
                   </div>
                 </div>
@@ -910,7 +936,7 @@
                 <div class="field numbered">
                   <label class="label">Funding: Can you estimate in AUD$ the total investment in the dataset to date (again not counting in-kind support)?</label>
                   <div class="control indent">
-                    <input class="input" type="text" placeholder="Enter your answer" v-model="formData.funding_total_investment_aud">
+                    <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-model="formData.funding_total_investment_aud">
                     <p class="help is-danger" v-if="fieldErrors.funding_total_investment_aud">{{fieldErrors.funding_total_investment_aud}}</p>
                   </div>
                 </div>
@@ -941,12 +967,12 @@
                     </div>
                     <div class="subfield">
                       <label>d. Other:</label>
-                      <input class="input" type="text" placeholder="Enter your answer" v-model="formData.funding_source_other">
+                      <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-model="formData.funding_source_other">
                     </div>
                     <div class="subfield">
                       <label>e. Can you estimate the total number of funding sources so far?:</label>
                       <div>
-                        <input class="input" type="text" placeholder="Enter your answer" v-model="formData.funding_source_count">
+                        <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-model="formData.funding_source_count">
                         <p class="help is-danger" v-if="fieldErrors.funding_source_count">{{fieldErrors.funding_source_count}}</p>
                       </div>
                     </div>
@@ -956,7 +982,7 @@
                 <div class="field numbered">
                   <label class="label">Leadership: Who has been providing the drive to keep the monitoring going after the baseline was established?</label>
                   <div class="control indent">
-                    <input class="input" type="text" placeholder="Enter your answer" v-model="formData.leadership">
+                    <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-model="formData.leadership">
                   </div>
                 </div>
 
@@ -972,7 +998,7 @@
                     </div>
                     <div class="subfield">
                       <label>b. Please expand:</label>
-                      <input class="input" type="text" placeholder="Enter your answer" v-model="formData.impact_used_for_management_comments">
+                      <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-model="formData.impact_used_for_management_comments">
                     </div>
                   </div>
                 </div>
@@ -980,21 +1006,21 @@
                 <div class="field numbered">
                   <label class="label">Impact: Is your organisation responsible for managing this species in the monitored area?</label>
                   <div class="control indent">
-                    <input class="input" type="text" placeholder="Enter your answer" v-model="formData.impact_organisation_responsible">
+                    <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-model="formData.impact_organisation_responsible">
                   </div>
                 </div>
 
                 <div class="field numbered">
                   <label class="label">Impact: Can you describe any management that has changed because of the monitoring?</label>
                   <div class="control indent">
-                    <input class="input" type="text" placeholder="Enter your answer" v-model="formData.impact_management_changes">
+                    <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-model="formData.impact_management_changes">
                   </div>
                 </div>
 
                 <div class="field numbered">
                   <label class="label">Data availability: Is your monitoring data readily available to the public (e.g. through reports, or on website). If not, can the public access it?</label>
                   <div class="control indent">
-                    <input class="input" type="text" placeholder="Enter your answer" v-model="formData.data_availability">
+                    <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-model="formData.data_availability">
                   </div>
                 </div>
 
@@ -1010,7 +1036,7 @@
                     </div>
                     <div class="subfield">
                       <label>b. Please expand:</label>
-                      <input class="input" type="text" placeholder="Enter your answer" v-model="formData.succession_commitment_comments">
+                      <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-model="formData.succession_commitment_comments">
                     </div>
                   </div>
                 </div>
@@ -1027,7 +1053,7 @@
                     </div>
                     <div class="subfield">
                       <label>b. Please expand:</label>
-                      <input class="input" type="text" placeholder="Enter your answer" v-model="formData.succession_plan_comments">
+                      <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-model="formData.succession_plan_comments">
                     </div>
                   </div>
                 </div>
@@ -1044,7 +1070,7 @@
                     </div>
                     <div class="subfield">
                       <label>b. Please expand:</label>
-                      <input class="input" type="text" placeholder="Enter your answer" v-model="formData.design_statistical_power_comments">
+                      <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-model="formData.design_statistical_power_comments">
                     </div>
                   </div>
                 </div>
@@ -1061,7 +1087,7 @@
                     </div>
                     <div class="subfield">
                       <label>b. Please expand:</label>
-                      <input class="input" type="text" placeholder="Enter your answer" v-model="formData.design_other_factors_comments">
+                      <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-model="formData.design_other_factors_comments">
                     </div>
                   </div>
                 </div>
@@ -1078,7 +1104,7 @@
                     </div>
                     <div class="subfield">
                       <label>b. Please expand:</label>
-                      <input class="input" type="text" placeholder="Enter your answer" v-model="formData.co_benefits_other_species_comments">
+                      <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-model="formData.co_benefits_other_species_comments">
                     </div>
                   </div>
                 </div>
@@ -1086,7 +1112,7 @@
             </template>
 
             </fieldset>
-          </div>
+          </fieldset></div>
         </div>
       </div>
     </div>
@@ -1103,7 +1129,6 @@ import { plotTrend, generateTrendPlotData } from '../plotTrend.js'
 import HeatMap from './HeatMap.vue'
 import Multiselect from '@vueform/multiselect'
 import Spinner from '../../node_modules/vue-simple-spinner/src/components/Spinner.vue'
-
 
 export default {
   name: 'CustodianFeedbackForm',
@@ -1240,6 +1265,9 @@ export default {
       } else {
         return []
       }
+    },
+    canEdit() {
+      return ['incomplete', 'draft', 'complete'].includes(this.form.feedback_status.code)
     }
   },
   watch: {
@@ -1250,6 +1278,19 @@ export default {
           plotConsistency(data, this.$refs.consistencyPlot)
         }, 1000)
       }
+    },
+    formData: {
+      deep: true,
+      handler() {
+        if(this.viewOnly && !this.ignoreNextFormDataUpdate) {
+          setTimeout(() => {
+            this.ignoreNextFormDataUpdate = true
+            this.formData = structuredClone(this.initialFormData)
+          })
+        } else {
+          this.ignoreNextFormDataUpdate = false
+        }
+      }
     }
   },
   methods: {
@@ -1257,10 +1298,13 @@ export default {
       api.custodianFeedbackForm(this.formId).then((form) => {
         this.form = form
 
-        this.formData = {
+        let initialFormData = {
           ... form.answers,
           admin_type: form.answers.admin_type || 'informal'
         }
+
+        this.formData = initialFormData
+        this.initialFormData = structuredClone(initialFormData)
 
         this.trendParams.refYear = form?.stats?.raw_data_stats?.min_year
         this.trendParams.finalYear = form?.stats?.raw_data_stats?.max_year
@@ -1271,6 +1315,7 @@ export default {
 
         this.status = 'loaded'
       }).catch((error) => {
+        console.log(error)
         console.log(error.json)
         this.status = 'error'
       })
@@ -1299,7 +1344,7 @@ export default {
           this.saveStatus = 'error'
         }).then(() => {
           if(this.saveStatus == 'saved' && close) {
-            this.$router.push({ name: 'CustodianFeedbackDataset', params: { id: this.form.dataset_id }})
+            this.close()
           }
         })
       }, 1000)
@@ -1309,6 +1354,9 @@ export default {
     },
     submitAndClose() {
       this.save(true, true)
+    },
+    close() {
+      this.$router.push({ name: 'CustodianFeedbackDataset', params: { id: this.form.dataset_id }})
     },
     setupSideMenu() {
       // TODO: Clean up on unmount
@@ -1468,6 +1516,9 @@ export default {
         this.currentTrendPlot = plotTrend(data, this.$refs.trendPlot)
       })
     }
+  },
+  props: {
+    viewOnly: Boolean,
   }
 }
 </script>
@@ -1557,6 +1608,18 @@ export default {
     flex-grow: 3;
     flex-shrink: 1;
     flex-basis: 0;
+  }
+
+  fieldset[disabled] {
+    opacity: 0.7;
+  }
+
+  /* Disable pointer events on most inputs when in view-only mode */
+  fieldset.view-only .radio,
+  fieldset.view-only .select,
+  fieldset.view-only .checkbox,
+  fieldset.view-only tr {
+    pointer-events: none;
   }
 </style>
 <style src="@vueform/multiselect/themes/default.css"></style>

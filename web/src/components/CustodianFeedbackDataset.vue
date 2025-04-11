@@ -40,7 +40,7 @@
                   <th>Modified</th>
                   <th>Status</th>
                   <th>Type</th>
-                  <th>Action</th>
+                  <th>Download</th>
                 </tr>
               </thead>
               <tbody>
@@ -50,10 +50,12 @@
                     <span class='tag'>{{taxonDataset.id}}</span>
                   </td>
                   <td>
-                    <template v-if="canEdit(form)">
-                      <router-link
-                        :to="{ name: 'CustodianFeedbackForm', params: { id: form.id }}" tag="button" class="button is-dark is-small" >{{editButtonLabel(form)}}</router-link>
-                    </template>
+                    <div class="buttons">
+                      <router-link v-if="canEdit(form)"
+                        :to="{ name: 'EditCustodianFeedbackForm', params: { id: form.id }}" tag="button" class="button is-dark is-small" >{{editButtonLabel(form)}}</router-link>
+                      <router-link v-if="canView(form)"
+                        :to="{ name: 'ViewCustodianFeedbackForm', params: { id: form.id }}" tag="button" class="button is-dark is-small" >View</router-link>
+                    </div>
                   </td>
                   <td>{{formatDateTime(form.time_created)}}</td>
                   <td>{{formatDateTime(form.last_modified)}}</td>
@@ -119,6 +121,9 @@ export default {
     formatDateTime,
     canEdit(form) {
       return ['incomplete', 'draft', 'complete'].includes(form.feedback_status.code)
+    },
+    canView(form) {
+      return form.feedback_type.code == 'integrated' && form.is_current_form_version
     },
     editButtonLabel(form) {
       return form.feedback_status.code == 'incomplete' ? 'Start' : 'Edit'

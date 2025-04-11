@@ -9,6 +9,8 @@ import logging
 
 log = logging.getLogger(__name__)
 
+current_form_version = 1
+
 val_yn = validate_one_of('yes', 'no')
 val_ynu = validate_one_of('yes', 'no', 'unsure')
 
@@ -387,7 +389,8 @@ def get_form_json_raw(form_id):
 				'description', feedback_status.description
 			),
 			'answers', JSON_OBJECT(%s),
-			'stats', dataset_stats.stats_json
+			'stats', dataset_stats.stats_json,
+			'is_current_form_version', COALESCE(custodian_feedback_answers.form_version, 0) = :current_form_version
 		)
 		FROM custodian_feedback
 		JOIN source ON custodian_feedback.source_id = source.id
@@ -398,7 +401,8 @@ def get_form_json_raw(form_id):
 		LEFT JOIN dataset_stats ON dataset_stats.source_id = source.id AND dataset_stats.taxon_id = taxon.id AND dataset_stats.data_import_id = custodian_feedback.data_import_id
 		WHERE custodian_feedback.id = :form_id
 	""" % answer_select_json_sql), {
-		'form_id': form_id
+		'form_id': form_id,
+		'current_form_version': current_form_version
 	})
 
 	rows = list(rows)
