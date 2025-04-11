@@ -25,7 +25,7 @@
           <p class="content is-size-7" v-if="fieldValues && fieldValues.type == 'individual'">NOTE: The LPI method was not designed for single-species trends. These trends vary greatly in reliability, with some having very sparse underlying data.</p>
           <hr>
 
-          <p v-if="!noData">
+          <div v-if="!noData">
             <div class="dropdown is-hoverable">
               <div class="dropdown-trigger">
                 <button class="button is-primary" aria-haspopup="true" area-controls="dropdown-menu">
@@ -43,7 +43,7 @@
                 </div>
               </div>
             </div>
-          </p>
+          </div>
         </div>
       </div>
 
