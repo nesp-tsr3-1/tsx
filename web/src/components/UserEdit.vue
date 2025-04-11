@@ -120,13 +120,7 @@ export default {
 }
 </script>
 
-<style>
-.sign-up {
-  font-size: 100%;
-  width: 100%;
-  max-width: 40em;
-  margin: 0 auto;
-}
+<style scoped>
 fieldset {
   border: none;
 }

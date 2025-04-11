@@ -67,7 +67,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 .login {
   width: 100%;
   max-width: 24em !important;

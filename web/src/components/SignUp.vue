@@ -99,7 +99,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 .sign-up {
   font-size: 100%;
   width: 100%;

@@ -140,7 +140,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 .forgot-password {
   width: 100%;
   max-width: 24em !important;
