@@ -101,25 +101,6 @@ u385a.c which denotes a hybrid zone of subspecies u385a and u385c
 - 6 = Introduced
 |===
 
-=== Type 2 Sites file format
-
-Format: Shapefile
-
-Sample file: `spatial/t2_site.shp`
-
-|===
-|Column	|Notes
-|SiteType	|Numeric, must match IDs in the search_type database table
-|===
-
-=== Grid Polygons file format
-
-Format: Shapefile
-
-Sample file: `spatial/10min_mainland.shp`
-
-No columns required
-
 === SubIBRA Region Polygons file format
 
 Citation: Australian Government Department of the Environment and Energy, and State Territory land management agencies. 2012. IBRA version 7. Australian Government Department of the Environment and Energy and State/Territory land management agencies, Australia.
