@@ -93,3 +93,7 @@ def get_intensive_management_group():
 @bp.route('/taxonomic_group', methods = ['GET'])
 def get_taxonomic_group():
 	return query_to_json("""SELECT DISTINCT taxonomic_group AS description FROM taxon""")
+
+@bp.route('/data_agreement_status', methods = ['GET'])
+def get_data_agreement_status():
+	return query_to_json("""SELECT code, description FROM data_agreement_status""")

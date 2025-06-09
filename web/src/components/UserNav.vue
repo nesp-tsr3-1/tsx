@@ -24,6 +24,10 @@
         <router-link
           class="navbar-item"
           :to="{ name: 'CustodianFeedbackHome' }">Feedback</router-link>
+        <router-link
+          v-if="features.documents"
+          class="navbar-item"
+          :to="{ name: 'DataAgreementHome' }">Documents</router-link>
 
         <div class="navbar-item has-dropdown is-hoverable">
           <a class="navbar-link is-arrowless">
@@ -74,6 +78,7 @@
 
 <script>
 import * as api from '../api.js'
+import features from '../features.js'
 
 export default {
   name: 'UserNav',
@@ -81,7 +86,8 @@ export default {
     return {
       status: 'loading',
       user: null,
-      burgerActive: false
+      burgerActive: false,
+      features
     }
   },
   computed: {

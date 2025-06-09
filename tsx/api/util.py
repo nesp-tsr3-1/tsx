@@ -56,7 +56,7 @@ def csv_response(rows, filename="export.csv"):
 db_session = orm.scoped_session(Session, scopefunc= _get_ident)
 
 # Simple interface to insert a row into a table based on a python dict
-def db_insert(table, row_dict):
+def db_insert(table, row_dict, replace=False):
 	keys, values = zip(*row_dict.items())
 
 	for key in [*keys, table]:
@@ -65,9 +65,12 @@ def db_insert(table, row_dict):
 
 	cols = ", ".join("`%s`" % key for key in keys)
 	placeholders = ", ".join(":%s" % key for key in keys)
-	sql = "INSERT INTO `%s` (%s) VALUES (%s)" % (table, cols, placeholders)
+	verb = "REPLACE" if replace else "INSERT"
+	sql = "%s INTO `%s` (%s) VALUES (%s)" % (verb, table, cols, placeholders)
 
-	db_session.execute(text(sql), row_dict)
+	result = db_session.execute(text(sql), row_dict)
+
+	return result.lastrowid
 
 def get_user():
 	try:

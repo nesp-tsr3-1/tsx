@@ -155,6 +155,17 @@ export function formatDateTime(str) {
   return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
 }
 
+export function formatDate(str) {
+  if(!str) {
+    return ''
+  }
+  let date = new Date(Date.parse(str))
+  if(!date) {
+    return ''
+  }
+  return date.toLocaleDateString(undefined, { timeZone: "UTC"})
+}
+
 export function debounce(fn, delay) {
   var timerId
   return function() {
@@ -376,4 +387,48 @@ export function matchParts(str, regex) {
 
 export function capitalise(str) {
   return str.charAt(0).toUpperCase() + str.slice(1)
+}
+
+/*
+Sets up automatic highlighting of a set of intra-page navigation links as the
+user scrolls.
+This function takes a dom element and searches for all link elements that are
+descendants of that element. Only intra-page links are processed.
+It then sets up a page scroll listener which adds a 'current' class to the
+link element that the user is currently viewing.
+
+Returns an object with a dispose() method which cleans up any resources.
+*/
+export function setupPageNavigationHighlighting(menuDom) {
+  function updateMenu() {
+    let sections = Array.from(menuDom.querySelectorAll("a"))
+      .map(a => ({
+        link: a,
+        target: document.querySelector(a.getAttribute("href"))
+      }))
+      .filter(s => s.target)
+
+    let currentSection = sections[0]
+
+    for(let section of sections.slice(1)) {
+      if(section.target.getBoundingClientRect().top > 50) { // window.innerHeight / 2) {
+        break
+      }
+      currentSection = section
+    }
+
+    for(let section of sections) {
+      section.link.classList.toggle('current', section === currentSection)
+    }
+  }
+
+  let handler = throttle(updateMenu, 250)
+  document.addEventListener("scroll", handler)
+  setTimeout(updateMenu, 250);
+
+  return {
+    dispose() {
+      document.removeEventListener("scroll", handler)
+    }
+  }
 }

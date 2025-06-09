@@ -2,7 +2,7 @@
   <div class="section">
     <div class="container source-home">
       <div class="columns">
-        <div class="column is-8 is-offset-2">
+        <div class="column">
           <user-nav></user-nav>
           <h2 class="title">Datasets</h2>
 
@@ -19,7 +19,9 @@
           <div v-if="state === 'loaded'">
             <router-link to="/datasets/edit/new" tag="button" class="button is-primary">Create New Dataset</router-link>
             <hr>
-            <source-list @click-source='handleSourceClick'></source-list>
+            <source-list
+              @click-source='handleSourceClick'
+              :show-agreement='showAgreement'></source-list>
           </div>
         </div>
       </div>
@@ -30,6 +32,7 @@
 
 <script>
 import * as api from '../api.js'
+import features from '../features.js'
 import SourceList from './SourceList.vue'
 import { handleLinkClick } from '../util.js'
 
@@ -67,6 +70,9 @@ export default {
       } else {
         return 'noAccess'
       }
+    },
+    showAgreement() {
+      return features.documents
     }
   },
   methods: {

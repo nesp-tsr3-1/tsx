@@ -32,18 +32,21 @@ def post_upload():
 	if len(files) > 0:
 		file = files[0]
 		# save file
-		filename = str(uuid.uuid4())
-		file.save(get_upload_path(filename))
+		upload_uuid = str(uuid.uuid4())
+		file.save(get_upload_path(upload_uuid))
 
 		# save metadata
 		meta = {
 			'type': file.mimetype,
 			'name': file.filename
 		}
-		with open(get_upload_path(filename, meta=True), "w") as meta_file:
+		with open(get_upload_path(upload_uuid, meta=True), "w") as meta_file:
 			json.dump(meta, meta_file)
 
-		return jsonify({ 'uuid': filename })
+		return jsonify({
+			'uuid': upload_uuid,
+			'filename': file.filename
+		})
 
 	else:
 		return jsonify("No file detected"), 400

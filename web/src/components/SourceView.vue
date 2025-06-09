@@ -7,6 +7,10 @@
 
           <h2 class="title">{{ source.description }}</h2>
 
+          <div class="notification is-danger is-light" v-if="showNoDataAgreementMessage">
+            Note: There is currently no data sharing agreement in place for this dataset.
+          </div>
+
           <hr>
 
           <h4 class="title is-4">
@@ -58,6 +62,13 @@
               <div>
                 <h4>Source Type</h4>
                 {{ sourceType }}
+              </div>
+              <div v-if="documentsEnabled">
+                <h4>Agreement</h4>
+                {{ source.data_agreement_status_long_description }}
+                <div v-if="source.data_agreement_filename">
+                  Filename: <a :href="uploadURL(source.data_agreement_upload_uuid)">{{source.data_agreement_filename}}</a>
+                </div>
               </div>
             </div>
           </div>
@@ -159,6 +170,7 @@
 
 <script>
 import * as api from '../api.js'
+import features from '../features.js'
 import { generateCitation, capitalise } from '../util.js'
 import ImportList from './ImportList.vue'
 import ImportData from './ImportData.vue'
@@ -209,6 +221,12 @@ export default {
     },
     sourceType() {
       return capitalise(this.source.source_type ?? "")
+    },
+    documentsEnabled() {
+      return features.documents
+    },
+    showNoDataAgreementMessage() {
+      return this.documentsEnabled && this.source.show_no_agreement_message
     }
   },
   methods: {
@@ -226,7 +244,8 @@ export default {
       api.dataSource(this.sourceId).then(source => {
         this.showDownloads = source.has_t1_data
       })
-    }
+    },
+    uploadURL: api.uploadURL
   },
   created () {
     api.isLoggedIn().then(isLoggedIn => {

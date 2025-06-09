@@ -75,13 +75,15 @@ def get_sources():
 					WHERE user_source.source_id = source.id
 					AND user.id = user_source.user_id
 					AND user.email IS NOT NULL
-				)
+				),
+				'data_agreement_status_description', data_agreement_status.description
 			))
 		FROM source
 		LEFT JOIN (SELECT source_id, max(data_import.id) AS data_import_id FROM data_import GROUP BY source_id) AS latest_import
 			ON latest_import.source_id = source.id
 		LEFT JOIN data_import ON latest_import.data_import_id = data_import.id
 		LEFT JOIN data_import_status ON data_import_status.id = data_import.status_id
+		JOIN data_agreement_status ON data_agreement_status.id = source.data_agreement_status_id
 		WHERE
 			(
 				EXISTS (SELECT 1 FROM user_role WHERE user_id = :user_id AND role_id = 1) OR
@@ -132,6 +134,9 @@ def get_source(source_id=None):
 	result['can_delete'] = permitted(user, 'delete', 'source', source_id)
 	result['can_import_data'] = permitted(user, 'import_data', 'source', source_id)
 	result['can_manage_custodians'] = permitted(user, 'manage_custodians', 'source', source_id)
+
+	is_admin = 'Administrator' in get_roles(user)
+	result['show_no_agreement_message'] = is_admin and source.data_agreement_status.code == 'no_agreement'
 
 	return jsonify(result), 200
 
@@ -424,6 +429,18 @@ def create_or_update_source(source_id=None):
 
 	body = request.json
 
+
+	is_admin = 'Administrator' in get_roles(user)
+	if not is_admin:
+		# For non admin users, we need to strip any data agreement fields
+		for key in ['data_agreement_status', 'data_agreement_id']:
+			if key in body:
+				del body[key]
+	else:
+		# Otherwise, we need to make sure data agreement is
+		if 'data_agreement_status' in body and body['data_agreement_status'] != 'agreement_executed':
+			body['data_agreement_id'] = None
+
 	errors = validate_fields(source_fields, body)
 
 	if len(errors):
@@ -483,10 +500,14 @@ def update_source_from_json(source, json):
 		return value
 
 	for field in source_fields:
+		if field.name not in json:
+			continue
 		if field.name == 'monitoring_program':
 			source.monitoring_program_id = get_monitoring_program_id(json['monitoring_program'])
 		elif field.name == 'source_type':
 			source.source_type_id = get_source_type_id(json['source_type'])
+		elif field.name == 'data_agreement_status':
+			source.data_agreement_status_id = get_data_agreement_status_id(json['data_agreement_status'])
 		else:
 			setattr(source, field.name, clean(json.get(field.name)))
 
@@ -510,7 +531,16 @@ def get_source_type_id(description):
 	for (source_type_id,) in db_session.execute(text("""SELECT id FROM source_type WHERE description = :description"""), { "description": description}):
 		return source_type_id
 
-	raise ValueError('Invalid source type: %s' + description)
+	raise ValueError('Invalid source type: %s' % description)
+
+def get_data_agreement_status_id(code):
+	if not code:
+		return None
+
+	for (status_id,) in db_session.execute(text("""SELECT id FROM data_agreement_status WHERE code = :code"""), { "code": code }):
+		return status_id
+
+	raise ValueError('Invalid data agreement status: %s' % code)
 
 
 def source_to_json(source):
@@ -524,8 +554,15 @@ def source_to_json(source):
 			json['monitoring_program'] = source.monitoring_program.description
 		elif field.name == 'source_type':
 			json['source_type'] = source.source_type.description
+		elif field.name == 'data_agreement_status':
+			json['data_agreement_status'] = source.data_agreement_status.code
 		else:
 			json[field.name] = getattr(source, field.name)
+	json['data_agreement_status_description'] = source.data_agreement_status.description
+	json['data_agreement_status_long_description'] = source.data_agreement_status.long_description
+	if source.data_agreement:
+		json['data_agreement_filename'] = source.data_agreement.filename
+		json['data_agreement_upload_uuid'] = source.data_agreement.upload_uuid
 	return json
 
 source_fields = [
@@ -540,7 +577,10 @@ source_fields = [
 	Field(name='contact_institution', title='Institution', validators=[validate_required, validate_max_chars(255)]),
 	Field(name='contact_position', title='Position', validators=[validate_required, validate_max_chars(255)]),
 	Field(name='contact_email', title='Email address', validators=[validate_required, validate_email]),
-	Field(name='contact_phone', title='Phone number', validators=[validate_max_chars(32)])
+	Field(name='contact_phone', title='Phone number', validators=[validate_max_chars(32)]),
+
+	Field(name='data_agreement_status', title='Data sharing agreement status', validators=[]),
+	Field(name='data_agreement_id', title='Data sharing agreement', validators=[])
 ]
 
 @bp.route('/imports', methods = ['POST'])

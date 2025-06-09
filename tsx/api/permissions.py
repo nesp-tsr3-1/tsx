@@ -79,4 +79,8 @@ def permitted(user, action, resource_type, resource_id=None):
 		if action in ('view', 'update'):
 			return resource_id != None and is_custodian_of_form(user.id, resource_id)
 
+	if resource_type == 'data_agreement':
+		if action in ('list'):
+			return True
+
 	return False

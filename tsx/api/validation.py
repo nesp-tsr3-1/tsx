@@ -2,6 +2,7 @@
 from collections.abc import Collection, Callable
 from dataclasses import dataclass, field
 import re
+from datetime import date
 
 # Field = namedtuple("Field", "name title validators")
 
@@ -42,6 +43,19 @@ def validate_one_of(*items):
 		if value_present(value) and value not in items:
 			return "Must be one of: %s" % ", ".join(items)
 	return _validate_one_of
+
+def validate_boolean():
+	return validate_one_of(True, False)
+
+def validate_date():
+	def _validate_date(value, field, context):
+		if value_present(value):
+			try:
+				print(value)
+				date.fromisoformat(value)
+			except ValueError:
+				return "Must be a valid date"
+	return _validate_date
 
 def validate_integer(min_value=None, max_value=None):
 	def _validate_integer(value, field, context):
@@ -112,7 +126,7 @@ def validate_fields(fields, body, context=None):
 	errors = {}
 
 	for field in fields:
-		value = body[field.name]
+		value = body.get(field.name)
 
 		if type(value) == str:
 			value = value.strip()

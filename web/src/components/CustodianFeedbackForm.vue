@@ -1122,7 +1122,7 @@
 
 <script>
 import * as api from '../api.js'
-import { handleLinkClick, formatDateTime, throttle, deepEquals } from '../util.js'
+import { handleLinkClick, formatDateTime, throttle, deepEquals, setupPageNavigationHighlighting } from '../util.js'
 import { generateCitation } from '../util.js'
 import { plotConsistency } from '../plotConsistency.js'
 import { plotTrend, generateTrendPlotData } from '../plotTrend.js'
@@ -1359,36 +1359,8 @@ export default {
       this.$router.push({ name: 'CustodianFeedbackDataset', params: { id: this.form.dataset_id }})
     },
     setupSideMenu() {
-      // TODO: Clean up on unmount
-      let menuDom = this.$refs.sideMenu
-
-      function updateMenu() {
-        let sections = Array.from(menuDom.querySelectorAll("a"))
-          .map(a => ({
-            link: a,
-            target: document.querySelector(a.getAttribute("href"))
-          }))
-          .filter(s => s.target)
-
-        let currentSection = sections[0]
-
-        // Current section should be the have the highest negative top value
-        for(let section of sections.slice(1)) {
-          if(section.target.getBoundingClientRect().top > window.innerHeight / 2) {
-            break
-          }
-          currentSection = section
-        }
-
-        for(let section of sections) {
-          section.link.classList.toggle('current', section === currentSection)
-        }
-      }
-
-      let handler = throttle(updateMenu, 250)
-      document.addEventListener("scroll", handler)
-      this.disposables.push(() => document.removeEventListener("scroll", handler))
-      setTimeout(updateMenu, 250);
+      let highlighter = setupPageNavigationHighlighting(this.$refs.sideMenu)
+      this.disposables.push(() => highlighter.dispose())
     },
     showField(fieldName) {
       if(fieldName.endsWith("_comments")) {

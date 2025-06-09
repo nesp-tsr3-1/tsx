@@ -188,3 +188,19 @@ INSERT INTO feedback_status (id, code, description) VALUES
   (3, 'complete', 'Complete'),
   (4, 'archived', 'Archived'),
   (5, 'dataset_deleted', 'Dataset Deleted');
+
+INSERT INTO data_agreement_status (id, code, description, category, long_description) VALUES
+( 1, "no_agreement", "No agreement in place",
+  "None", "No data sharing agreement is in place for this dataset."),
+( 2, "in_negotiation", "Agreement in negotiation",
+  "None", "A data sharing agreement is currently being negotiated for this dataset."),
+( 3, "pending_uq_signature", "Pending UQ signature",
+  "Pending", "A data sharing agreement is in place for this dataset and is awaiting signing by UQ."),
+( 4, "agreement_executed", "Agreement executed",
+  "Executed", "A data sharing agreement is in place for this dataset."),
+( 5, "uq_owned_data", "UQ-owned data",
+  "Not Required", "No data sharing agreement is needed for this dataset as the data is owned by UQ."),
+( 6, "public_data", "Publicly available data",
+  "Not Required", "No data sharing agreement is needed for this dataset as the data is publicly available."),
+( 7, "informal_agreement", "Informal agreement in place",
+  "Not Required", "No data sharing agreement is needed for this dataset.");

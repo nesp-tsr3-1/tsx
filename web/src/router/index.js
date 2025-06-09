@@ -15,6 +15,10 @@ import UserEdit from '../components/UserEdit.vue'
 import CustodianFeedbackHome from '../components/CustodianFeedbackHome.vue'
 import CustodianFeedbackDataset from '../components/CustodianFeedbackDataset.vue'
 import CustodianFeedbackForm from '../components/CustodianFeedbackForm.vue'
+import DataAgreementHome from '../components/DataAgreementHome.vue'
+import DataAgreementEdit from '../components/DataAgreementEdit.vue'
+import LocalSettings from '../components/LocalSettings.vue'
+import NotFound from '../components/NotFound.vue'
 import * as api from '../api'
 
 const router = createRouter({
@@ -119,6 +123,26 @@ const router = createRouter({
       // legacy URL redirect
       path: '/source',
       redirect: '/datasets'
+    },
+    {
+      path: '/documents/data_agreements',
+      name: 'DataAgreementHome',
+      component: DataAgreementHome
+    },
+    {
+      path: '/documents/data_agreements/edit/:id',
+      name: 'DataAgreementEdit',
+      component: DataAgreementEdit
+    },
+    {
+      path: '/local_settings',
+      name: 'LocalSettings',
+      component: LocalSettings
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'NotFound',
+      component: NotFound
     }
   ]
 })

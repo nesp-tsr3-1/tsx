@@ -25,6 +25,10 @@
             <th v-on:click="sortBy('time_created')">Created {{sortIcon('time_created')}}</th>
             <th v-if="showModified" v-on:click="sortBy('last_modified')">Modified {{sortIcon('last_modified')}}</th>
             <th v-if="showStatus" v-on:click="sortBy('status')">Status {{sortIcon('status')}}</th>
+            <th v-if="showAgreement"
+              @click="sortBy('data_agreement_status_description')">  Agreement
+              {{sortIcon('data_agreement_status_description')}}
+            </th>
             <th v-if="actions">Manage</th>
           </tr>
         </thead>
@@ -53,6 +57,7 @@
                 v-for="action in actions"
                 @click.stop="$emit('action', action, source)">{{action}}</button>
             </td>
+            <td v-if="showAgreement">{{source.data_agreement_status_description}}</td>
           </tr>
         </tbody>
       </table>
@@ -195,6 +200,10 @@ export default {
     showStatus: {
       type: Boolean,
       default: true
+    },
+    showAgreement: {
+      type: Boolean,
+      default: false
     },
     actions: Array,
     clickableRows: {

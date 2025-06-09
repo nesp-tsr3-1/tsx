@@ -117,6 +117,40 @@
                 </div>
                 <p class="help is-danger" v-if="errors.contact_phone">{{ errors.contact_phone }}</p>
               </div>
+
+              <div class="documents" v-if="showDocumentsSection">
+                <h3 class="title is-4" style="margin-top: 1em">Data sharing agreement</h3>
+                <div class="field">
+                  <label class="label">Please indicate the status of the data sharing agreement for this dataset</label>
+                  <div v-for="option in dataAgreementStatusOptions">
+                    <div class="control">
+                      <label class="radio">
+                        <input
+                          type="radio"
+                          name="data_agreement_status"
+                          :value="option.code"
+                          v-model="data_agreement_status"
+                          />
+                        {{option.description}}
+                      </label>
+                    </div>
+                    <div v-if="option.code == 'agreement_executed' && data_agreement_status == 'agreement_executed'" class="control">
+                      <Multiselect
+                        mode="single"
+                        v-model="data_agreement_id"
+                        :options="dataAgreements"
+                        :searchable="true"
+                        no-options-text="No agreements found"
+                        placeholder="Select agreement…"
+                        label="filename"
+                        value-prop="id"
+                        />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+
               <button type="button" class="button is-primary" v-on:click='submit' style="margin: 0.5em 0;">{{ buttonLabel }}</button>
             </fieldset>
           </form>
@@ -129,8 +163,10 @@
 <script>
 import * as api from '../api.js'
 import { generateCitation, pick } from '../util.js'
+import features from '../features.js'
+import Multiselect from '@vueform/multiselect'
 
-const sourceProps = ['description', 'details', 'provider', 'authors', 'monitoring_program', 'source_type', 'contact_name', 'contact_institution', 'contact_position', 'contact_email', 'contact_phone']
+const sourceProps = ['description', 'details', 'provider', 'authors', 'monitoring_program', 'source_type', 'contact_name', 'contact_institution', 'contact_position', 'contact_email', 'contact_phone', 'data_agreement_status', 'data_agreement_id']
 
 function withFullStop(str) {
   return str.trim().replace(/\.?$/, ".")
@@ -138,6 +174,9 @@ function withFullStop(str) {
 
 export default {
   name: 'SourceEdit',
+  components: {
+    Multiselect
+  },
   data () {
     var sourceId = this.$route.params.id
     return {
@@ -157,7 +196,12 @@ export default {
       contact_institution: '',
       contact_position: '',
       contact_email: '',
-      contact_phone: ''
+      contact_phone: '',
+      data_agreement_status: null,
+      data_agreement_id: null,
+      currentUser: null,
+      dataAgreementStatusOptions: null,
+      dataAgreements: []
     }
   },
   computed: {
@@ -169,6 +213,12 @@ export default {
     },
     citation: function() {
       return generateCitation(this.authors, this.details, this.provider)
+    },
+    showDocumentsSection() {
+      return features.documents && this.isAdmin && this.dataAgreementStatusOptions
+    },
+    isAdmin() {
+      return this.currentUser?.roles?.includes('Administrator') === true
     }
   },
   created() {
@@ -177,6 +227,9 @@ export default {
         this.$router.replace({ path: '/login', query: { after_login: this.$route.path } })
       }
     })
+    api.currentUser().then(currentUser => {
+      this.currentUser = currentUser
+    });
     if(this.sourceId) {
       api.dataSource(this.sourceId).then((source) => {
         for(let k of sourceProps) {
@@ -186,6 +239,12 @@ export default {
     }
     api.monitoringPrograms().then((mps) => {
       this.monitoringPrograms = mps.map(mp => mp.description)
+    })
+    api.dataAgreementStatusOptions().then((x) => {
+      this.dataAgreementStatusOptions = x
+    })
+    api.dataAgreements().then((x) => {
+      this.dataAgreements = x
     })
   },
   methods: {
@@ -240,5 +299,8 @@ p.textarea {
   height: auto;
   min-height: 0;
   max-height: none;
+}
+.documents input[type=radio] {
+  margin-bottom: 1em;
 }
 </style>

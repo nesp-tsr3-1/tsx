@@ -287,6 +287,10 @@ export function status() {
   return get('/status')
 }
 
+export function dataAgreementStatusOptions() {
+  return get('/data_agreement_status')
+}
+
 export function deleteImport(id) {
   return del('/imports/' + id)
 }
@@ -335,6 +339,30 @@ export function custodianFeedbackPreviousAnswers(id) {
   return get('/custodian_feedback/previous_answers', { form_id: id })
 }
 
+export function dataAgreements(params) {
+  return get('/documents/data_agreements', params)
+}
+
+export function dataAgreement(id) {
+  return get('/documents/data_agreements/' + id)
+}
+
+export function dataAgreementCSVURL(id) {
+  return ROOT_URL + '/documents/data_agreements/' + id + '/csv'
+}
+
+export function createDataAgreement(data) {
+  return post('/documents/data_agreements', data)
+}
+
+export function updateDataAgreement(id, data) {
+  return put('/documents/data_agreements/' + id, data)
+}
+
+export function documentStats() {
+  return get('/documents/stats')
+}
+
 export function upload(file, progressCallback) {
   // Flask seems to need files to be uploaded as multipart/form-data for some reason..
   var data = new FormData()
@@ -343,7 +371,7 @@ export function upload(file, progressCallback) {
   // Must pass contentType = null for multipart/form-data
   return post('/uploads', data, null, progressCallback).then(function(result) {
     return {
-      uuid: result.uuid,
+      ...result,
       url: ROOT_URL + '/uploads/' + result.uuid
     }
   })

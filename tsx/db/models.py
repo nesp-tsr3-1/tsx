@@ -11,6 +11,52 @@ class Base(DeclarativeBase):
     pass
 
 
+class DataAgreement(Base):
+    __tablename__ = 'data_agreement'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    is_draft: Mapped[int] = mapped_column(TINYINT(1))
+    time_created: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
+    last_modified: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+    upload_uuid: Mapped[Optional[str]] = mapped_column(String(36))
+    filename: Mapped[Optional[str]] = mapped_column(String(255))
+    ala_yes: Mapped[Optional[int]] = mapped_column(TINYINT(1))
+    dcceew_yes: Mapped[Optional[int]] = mapped_column(TINYINT(1))
+    conditions_raw: Mapped[Optional[str]] = mapped_column(Text)
+    conditions_sensitive: Mapped[Optional[str]] = mapped_column(Text)
+    expiry_date: Mapped[Optional[datetime.date]] = mapped_column(Date)
+    embargo_date: Mapped[Optional[datetime.date]] = mapped_column(Date)
+    provider_name: Mapped[Optional[str]] = mapped_column(String(255))
+    provider_organisation: Mapped[Optional[str]] = mapped_column(String(255))
+    provider_email: Mapped[Optional[str]] = mapped_column(String(255))
+    provider_phone: Mapped[Optional[str]] = mapped_column(String(255))
+    provider_postal_address: Mapped[Optional[str]] = mapped_column(String(255))
+    provider_abn: Mapped[Optional[str]] = mapped_column(String(32))
+    data_description: Mapped[Optional[str]] = mapped_column(Text)
+    provider_signatory: Mapped[Optional[str]] = mapped_column(String(255))
+    provider_witness: Mapped[Optional[str]] = mapped_column(String(255))
+    provider_date_signed: Mapped[Optional[datetime.date]] = mapped_column(Date)
+    uq_signatory: Mapped[Optional[str]] = mapped_column(String(255))
+    uq_witness: Mapped[Optional[str]] = mapped_column(String(255))
+    uq_date_signed: Mapped[Optional[datetime.date]] = mapped_column(Date)
+    last_edited_by: Mapped[Optional[int]] = mapped_column(Integer)
+    last_edited: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP)
+
+
+class DataAgreementStatus(Base):
+    __tablename__ = 'data_agreement_status'
+    __table_args__ = (
+        Index('code_UNIQUE', 'code', unique=True),
+        Index('description_UNIQUE', 'description', unique=True)
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    code: Mapped[str] = mapped_column(String(32))
+    description: Mapped[str] = mapped_column(String(255))
+    long_description: Mapped[str] = mapped_column(String(255))
+    category: Mapped[str] = mapped_column(String(45))
+
+
 class DataImportStatus(Base):
     __tablename__ = 'data_import_status'
     __table_args__ = (
@@ -232,15 +278,20 @@ class User(Base):
 class Source(Base):
     __tablename__ = 'source'
     __table_args__ = (
+        ForeignKeyConstraint(['data_agreement_id'], ['data_agreement.id'], name='fk_source_data_agreement1'),
+        ForeignKeyConstraint(['data_agreement_status_id'], ['data_agreement_status.id'], name='fk_source_data_agreement_status1'),
         ForeignKeyConstraint(['data_processing_type_id'], ['data_processing_type.id'], name='fk_source_data_processing_type1'),
         ForeignKeyConstraint(['monitoring_program_id'], ['monitoring_program.id'], ondelete='SET NULL', onupdate='CASCADE', name='fk_source_monitoring_program1'),
         ForeignKeyConstraint(['source_type_id'], ['source_type.id'], name='fk_Source_SourceType'),
         Index('fk_Source_SourceType_idx', 'source_type_id'),
+        Index('fk_source_data_agreement1_idx', 'data_agreement_id'),
+        Index('fk_source_data_agreement_status1_idx', 'data_agreement_status_id'),
         Index('fk_source_data_processing_type1_idx', 'data_processing_type_id'),
         Index('fk_source_monitoring_program1_idx', 'monitoring_program_id')
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    data_agreement_status_id: Mapped[int] = mapped_column(Integer, server_default=text("'1'"))
     time_created: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
     last_modified: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
     source_type_id: Mapped[Optional[int]] = mapped_column(Integer)
@@ -257,7 +308,10 @@ class Source(Base):
     monitoring_program_id: Mapped[Optional[int]] = mapped_column(Integer)
     monitoring_program_comments: Mapped[Optional[str]] = mapped_column(Text)
     data_processing_type_id: Mapped[Optional[int]] = mapped_column(Integer)
+    data_agreement_id: Mapped[Optional[int]] = mapped_column(Integer)
 
+    data_agreement: Mapped['DataAgreement'] = relationship('DataAgreement')
+    data_agreement_status: Mapped['DataAgreementStatus'] = relationship('DataAgreementStatus')
     data_processing_type: Mapped['DataProcessingType'] = relationship('DataProcessingType')
     monitoring_program: Mapped['MonitoringProgram'] = relationship('MonitoringProgram')
     source_type: Mapped['SourceType'] = relationship('SourceType')
@@ -288,7 +342,7 @@ class Taxon(Base):
     suppress_spatial_representativeness: Mapped[int] = mapped_column(TINYINT(1), server_default=text("'0'"))
     taxon_level_id: Mapped[Optional[int]] = mapped_column(Integer)
     spno: Mapped[Optional[int]] = mapped_column(SmallInteger)
-    common_name: Mapped[Optional[str]] = mapped_column(String(255))
+    common_name: Mapped[Optional[str]] = mapped_column(String(512))
     family_common_name: Mapped[Optional[str]] = mapped_column(String(255))
     family_scientific_name: Mapped[Optional[str]] = mapped_column(String(255))
     order: Mapped[Optional[str]] = mapped_column(String(255))
@@ -732,6 +786,7 @@ class CustodianFeedbackAnswers(CustodianFeedback):
     )
 
     custodian_feedback_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    form_version: Mapped[int] = mapped_column(Integer, server_default=text("'1'"))
     admin_type: Mapped[Optional[str]] = mapped_column(Text)
     citation_agree: Mapped[Optional[str]] = mapped_column(String(10))
     citation_agree_comments: Mapped[Optional[str]] = mapped_column(Text)
