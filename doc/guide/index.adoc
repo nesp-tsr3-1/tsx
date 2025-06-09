@@ -162,7 +162,7 @@ Type 2 data is imported in much the same way as Type 1 data. Sample Type 2 data 
 python -m tsx.importer --type 2 -c sample-data/type_2_sample.csv
 ----
 
-This imports data into the `t2_survey` and `t2_sighting` tables. (Note that the `t2_site` table is populated in a separate step because Type 2 data does not have sites defined in the raw observation data).
+This imports data into the `t2_survey` and `t2_sighting` tables.
 
 === Import Region Polygons
 

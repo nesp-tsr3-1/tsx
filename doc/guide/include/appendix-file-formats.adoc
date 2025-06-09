@@ -53,6 +53,7 @@ Sample file: `processing_methods.csv`
 |source_description	|Text, must match description in the `source` database table
 |search_type_id	|Numeric, must match IDs in the `search_type` database table
 |search_type_description	|Text, must match description in the `search_type` database table
+| data_type |Numeric, 1 or 2 – determines whether this row applies to type 1 or type 2 data
 |response_variable_type_id	a|Numeric
 
 - 0 = Do not process
@@ -139,10 +140,10 @@ Sample file: `data_sources.csv`
 - 3 = Monitoring for general conservation management – ‘surveillance’ monitoring
 - 4 = Monitoring for targeted conservation management
 
-|NoAbsencesRecorded	a|Numeric
+|AbsencesRecorded	a|Numeric
 
-- 0 = absences of species were recorded (non-detections)
-- 1 = absences of species were observed in the field but not recorded
+- 1 = absences of species were recorded (non-detections)
+- 0 = absences of species were observed in the field but not recorded
 
 |StandardisationOfMethodEffort	a|Numeric
 
@@ -161,7 +162,7 @@ but surveys not site-based (i.e. surveys spatially ad-hoc). Post-hoc site groupi
 - 4 = Balanced; all (>90%) sites surveyed in each year sampled
 |StartYear	|Numeric, optional, records before this year will be omitted from filtered output
 |EndYear	|Numeric, optional, records after this year will be omitted from filtered output
-|Exclude	|Boolean (0 = no, 1 = yes), all records will be omitted from filtered output
+|NotInIndex	|Boolean (1 = all records will be omitted from filtered output, 0 = records will be included in filtered output, subject to other filtering rules)
 |SuppressAggregatedData	|Boolean (0 = no, 1 = yes), does not affect processing but is simply copied to the final output to indicate that aggregated data from this data source should not be published.
 |Authors	|Used to generate citations for this data source
 |Provider	|Used to generate citations for this data source
