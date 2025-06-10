@@ -11,38 +11,6 @@ class Base(DeclarativeBase):
     pass
 
 
-class DataAgreement(Base):
-    __tablename__ = 'data_agreement'
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    is_draft: Mapped[int] = mapped_column(TINYINT(1))
-    time_created: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
-    last_modified: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
-    upload_uuid: Mapped[Optional[str]] = mapped_column(String(36))
-    filename: Mapped[Optional[str]] = mapped_column(String(255))
-    ala_yes: Mapped[Optional[int]] = mapped_column(TINYINT(1))
-    dcceew_yes: Mapped[Optional[int]] = mapped_column(TINYINT(1))
-    conditions_raw: Mapped[Optional[str]] = mapped_column(Text)
-    conditions_sensitive: Mapped[Optional[str]] = mapped_column(Text)
-    expiry_date: Mapped[Optional[datetime.date]] = mapped_column(Date)
-    embargo_date: Mapped[Optional[datetime.date]] = mapped_column(Date)
-    provider_name: Mapped[Optional[str]] = mapped_column(String(255))
-    provider_organisation: Mapped[Optional[str]] = mapped_column(String(255))
-    provider_email: Mapped[Optional[str]] = mapped_column(String(255))
-    provider_phone: Mapped[Optional[str]] = mapped_column(String(255))
-    provider_postal_address: Mapped[Optional[str]] = mapped_column(String(255))
-    provider_abn: Mapped[Optional[str]] = mapped_column(String(32))
-    data_description: Mapped[Optional[str]] = mapped_column(Text)
-    provider_signatory: Mapped[Optional[str]] = mapped_column(String(255))
-    provider_witness: Mapped[Optional[str]] = mapped_column(String(255))
-    provider_date_signed: Mapped[Optional[datetime.date]] = mapped_column(Date)
-    uq_signatory: Mapped[Optional[str]] = mapped_column(String(255))
-    uq_witness: Mapped[Optional[str]] = mapped_column(String(255))
-    uq_date_signed: Mapped[Optional[datetime.date]] = mapped_column(Date)
-    last_edited_by: Mapped[Optional[int]] = mapped_column(Integer)
-    last_edited: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP)
-
-
 class DataAgreementStatus(Base):
     __tablename__ = 'data_agreement_status'
     __table_args__ = (
@@ -275,47 +243,42 @@ class User(Base):
     last_modified: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
 
 
-class Source(Base):
-    __tablename__ = 'source'
+class DataAgreement(Base):
+    __tablename__ = 'data_agreement'
     __table_args__ = (
-        ForeignKeyConstraint(['data_agreement_id'], ['data_agreement.id'], name='fk_source_data_agreement1'),
-        ForeignKeyConstraint(['data_agreement_status_id'], ['data_agreement_status.id'], name='fk_source_data_agreement_status1'),
-        ForeignKeyConstraint(['data_processing_type_id'], ['data_processing_type.id'], name='fk_source_data_processing_type1'),
-        ForeignKeyConstraint(['monitoring_program_id'], ['monitoring_program.id'], ondelete='SET NULL', onupdate='CASCADE', name='fk_source_monitoring_program1'),
-        ForeignKeyConstraint(['source_type_id'], ['source_type.id'], name='fk_Source_SourceType'),
-        Index('fk_Source_SourceType_idx', 'source_type_id'),
-        Index('fk_source_data_agreement1_idx', 'data_agreement_id'),
-        Index('fk_source_data_agreement_status1_idx', 'data_agreement_status_id'),
-        Index('fk_source_data_processing_type1_idx', 'data_processing_type_id'),
-        Index('fk_source_monitoring_program1_idx', 'monitoring_program_id')
+        ForeignKeyConstraint(['last_edited_by'], ['user.id'], name='last_edited_by'),
+        Index('last_edited_by_idx', 'last_edited_by')
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    data_agreement_status_id: Mapped[int] = mapped_column(Integer, server_default=text("'1'"))
+    is_draft: Mapped[int] = mapped_column(TINYINT(1))
     time_created: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
     last_modified: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
-    source_type_id: Mapped[Optional[int]] = mapped_column(Integer)
-    provider: Mapped[Optional[str]] = mapped_column(Text)
-    description: Mapped[Optional[str]] = mapped_column(Text)
-    details: Mapped[Optional[str]] = mapped_column(Text)
-    notes: Mapped[Optional[str]] = mapped_column(Text)
-    authors: Mapped[Optional[str]] = mapped_column(Text)
-    contact_name: Mapped[Optional[str]] = mapped_column(Text)
-    contact_institution: Mapped[Optional[str]] = mapped_column(Text)
-    contact_position: Mapped[Optional[str]] = mapped_column(Text)
-    contact_email: Mapped[Optional[str]] = mapped_column(Text)
-    contact_phone: Mapped[Optional[str]] = mapped_column(Text)
-    monitoring_program_id: Mapped[Optional[int]] = mapped_column(Integer)
-    monitoring_program_comments: Mapped[Optional[str]] = mapped_column(Text)
-    data_processing_type_id: Mapped[Optional[int]] = mapped_column(Integer)
-    data_agreement_id: Mapped[Optional[int]] = mapped_column(Integer)
+    upload_uuid: Mapped[Optional[str]] = mapped_column(String(36))
+    filename: Mapped[Optional[str]] = mapped_column(String(255))
+    ala_yes: Mapped[Optional[int]] = mapped_column(TINYINT(1))
+    dcceew_yes: Mapped[Optional[int]] = mapped_column(TINYINT(1))
+    conditions_raw: Mapped[Optional[str]] = mapped_column(Text)
+    conditions_sensitive: Mapped[Optional[str]] = mapped_column(Text)
+    expiry_date: Mapped[Optional[datetime.date]] = mapped_column(Date)
+    embargo_date: Mapped[Optional[datetime.date]] = mapped_column(Date)
+    provider_name: Mapped[Optional[str]] = mapped_column(String(255))
+    provider_organisation: Mapped[Optional[str]] = mapped_column(String(255))
+    provider_email: Mapped[Optional[str]] = mapped_column(String(255))
+    provider_phone: Mapped[Optional[str]] = mapped_column(String(255))
+    provider_postal_address: Mapped[Optional[str]] = mapped_column(String(255))
+    provider_abn: Mapped[Optional[str]] = mapped_column(String(32))
+    data_description: Mapped[Optional[str]] = mapped_column(Text)
+    provider_signatory: Mapped[Optional[str]] = mapped_column(String(255))
+    provider_witness: Mapped[Optional[str]] = mapped_column(String(255))
+    provider_date_signed: Mapped[Optional[datetime.date]] = mapped_column(Date)
+    uq_signatory: Mapped[Optional[str]] = mapped_column(String(255))
+    uq_witness: Mapped[Optional[str]] = mapped_column(String(255))
+    uq_date_signed: Mapped[Optional[datetime.date]] = mapped_column(Date)
+    last_edited_by: Mapped[Optional[int]] = mapped_column(Integer)
+    last_edited: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP)
 
-    data_agreement: Mapped['DataAgreement'] = relationship('DataAgreement')
-    data_agreement_status: Mapped['DataAgreementStatus'] = relationship('DataAgreementStatus')
-    data_processing_type: Mapped['DataProcessingType'] = relationship('DataProcessingType')
-    monitoring_program: Mapped['MonitoringProgram'] = relationship('MonitoringProgram')
-    source_type: Mapped['SourceType'] = relationship('SourceType')
-    user: Mapped[List['User']] = relationship('User', secondary='user_source')
+    user: Mapped['User'] = relationship('User')
 
 
 class Taxon(Base):
@@ -378,6 +341,144 @@ t_user_role = Table(
     ForeignKeyConstraint(['role_id'], ['role.id'], name='fk_user_role_role1'),
     ForeignKeyConstraint(['user_id'], ['user.id'], name='fk_user_role_user1'),
     Index('fk_user_role_role1_idx', 'role_id')
+)
+
+
+t_incidental_sighting = Table(
+    'incidental_sighting', Base.metadata,
+    Column('taxon_id', CHAR(8), nullable=False),
+    Column('coords', NullType),
+    Column('date', Date),
+    ForeignKeyConstraint(['taxon_id'], ['taxon.id'], name='fk_incidental_sighting_taxon1'),
+    Index('fk_incidental_sighting_taxon1_idx', 'taxon_id')
+)
+
+
+class Source(Base):
+    __tablename__ = 'source'
+    __table_args__ = (
+        ForeignKeyConstraint(['data_agreement_id'], ['data_agreement.id'], name='fk_source_data_agreement1'),
+        ForeignKeyConstraint(['data_agreement_status_id'], ['data_agreement_status.id'], name='fk_source_data_agreement_status1'),
+        ForeignKeyConstraint(['data_processing_type_id'], ['data_processing_type.id'], name='fk_source_data_processing_type1'),
+        ForeignKeyConstraint(['monitoring_program_id'], ['monitoring_program.id'], ondelete='SET NULL', onupdate='CASCADE', name='fk_source_monitoring_program1'),
+        ForeignKeyConstraint(['source_type_id'], ['source_type.id'], name='fk_Source_SourceType'),
+        Index('fk_Source_SourceType_idx', 'source_type_id'),
+        Index('fk_source_data_agreement1_idx', 'data_agreement_id'),
+        Index('fk_source_data_agreement_status1_idx', 'data_agreement_status_id'),
+        Index('fk_source_data_processing_type1_idx', 'data_processing_type_id'),
+        Index('fk_source_monitoring_program1_idx', 'monitoring_program_id')
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    data_agreement_status_id: Mapped[int] = mapped_column(Integer, server_default=text("'1'"))
+    time_created: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
+    last_modified: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+    source_type_id: Mapped[Optional[int]] = mapped_column(Integer)
+    provider: Mapped[Optional[str]] = mapped_column(Text)
+    description: Mapped[Optional[str]] = mapped_column(Text)
+    details: Mapped[Optional[str]] = mapped_column(Text)
+    notes: Mapped[Optional[str]] = mapped_column(Text)
+    authors: Mapped[Optional[str]] = mapped_column(Text)
+    contact_name: Mapped[Optional[str]] = mapped_column(Text)
+    contact_institution: Mapped[Optional[str]] = mapped_column(Text)
+    contact_position: Mapped[Optional[str]] = mapped_column(Text)
+    contact_email: Mapped[Optional[str]] = mapped_column(Text)
+    contact_phone: Mapped[Optional[str]] = mapped_column(Text)
+    monitoring_program_id: Mapped[Optional[int]] = mapped_column(Integer)
+    monitoring_program_comments: Mapped[Optional[str]] = mapped_column(Text)
+    data_processing_type_id: Mapped[Optional[int]] = mapped_column(Integer)
+    data_agreement_id: Mapped[Optional[int]] = mapped_column(Integer)
+
+    data_agreement: Mapped['DataAgreement'] = relationship('DataAgreement')
+    data_agreement_status: Mapped['DataAgreementStatus'] = relationship('DataAgreementStatus')
+    data_processing_type: Mapped['DataProcessingType'] = relationship('DataProcessingType')
+    monitoring_program: Mapped['MonitoringProgram'] = relationship('MonitoringProgram')
+    source_type: Mapped['SourceType'] = relationship('SourceType')
+    user: Mapped[List['User']] = relationship('User', secondary='user_source')
+
+
+class TaxonGroup(Base):
+    __tablename__ = 'taxon_group'
+    __table_args__ = (
+        ForeignKeyConstraint(['taxon_id'], ['taxon.id'], name='fk_taxon_group_taxon1'),
+        Index('fk_taxon_group_taxon1_idx', 'taxon_id'),
+        Index('taxon_group_subgroup', 'taxon_id', 'group_name', 'subgroup_name', unique=True)
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    taxon_id: Mapped[str] = mapped_column(CHAR(8))
+    group_name: Mapped[str] = mapped_column(String(255))
+    subgroup_name: Mapped[Optional[str]] = mapped_column(String(255))
+
+    taxon: Mapped['Taxon'] = relationship('Taxon')
+
+
+class TaxonHybrid(Base):
+    __tablename__ = 'taxon_hybrid'
+    __table_args__ = (
+        ForeignKeyConstraint(['taxon_id'], ['taxon.id'], name='fk_TaxonHybrid_Taxon1'),
+        Index('fk_TaxonHybrid_Taxon1_idx', 'taxon_id')
+    )
+
+    id: Mapped[str] = mapped_column(CHAR(12), primary_key=True, comment='e.g. u123a.b.c')
+    taxon_id: Mapped[Optional[str]] = mapped_column(CHAR(8))
+
+    taxon: Mapped['Taxon'] = relationship('Taxon')
+
+
+t_taxon_presence_alpha_hull = Table(
+    'taxon_presence_alpha_hull', Base.metadata,
+    Column('taxon_id', CHAR(8), nullable=False),
+    Column('range_id', Integer, nullable=False),
+    Column('breeding_range_id', Integer),
+    Column('geometry', NullType, nullable=False),
+    ForeignKeyConstraint(['range_id'], ['range.id'], name='fk_taxon_presence_alpha_hull_range1'),
+    ForeignKeyConstraint(['taxon_id'], ['taxon.id'], name='fk_taxon_presence_alpha_hull_taxon1'),
+    Index('fk_taxon_presence_alpha_hull_range1_idx', 'range_id'),
+    Index('fk_taxon_presence_alpha_hull_taxon1', 'taxon_id')
+)
+
+
+t_taxon_presence_alpha_hull_subdiv = Table(
+    'taxon_presence_alpha_hull_subdiv', Base.metadata,
+    Column('taxon_id', CHAR(8), nullable=False),
+    Column('range_id', Integer, nullable=False),
+    Column('breeding_range_id', Integer),
+    Column('geometry', NullType, nullable=False),
+    ForeignKeyConstraint(['range_id'], ['range.id'], name='fk_taxon_presence_alpha_hull_range10'),
+    ForeignKeyConstraint(['taxon_id'], ['taxon.id'], name='fk_taxon_presence_alpha_hull_taxon10'),
+    Index('fk_taxon_presence_alpha_hull_range1_idx', 'range_id'),
+    Index('fk_taxon_presence_alpha_hull_taxon10', 'taxon_id')
+)
+
+
+t_taxon_range = Table(
+    'taxon_range', Base.metadata,
+    Column('taxon_id', CHAR(8), nullable=False),
+    Column('range_id', Integer, nullable=False),
+    Column('breeding_range_id', Integer),
+    Column('geometry', NullType, nullable=False),
+    ForeignKeyConstraint(['breeding_range_id'], ['range.id'], name='fk_taxon_range_range2'),
+    ForeignKeyConstraint(['range_id'], ['range.id'], name='fk_taxon_range_range1'),
+    ForeignKeyConstraint(['taxon_id'], ['taxon.id'], name='fk_taxon_range_taxon1'),
+    Index('fk_taxon_range_range1_idx', 'range_id'),
+    Index('fk_taxon_range_range2_idx', 'breeding_range_id'),
+    Index('fk_taxon_range_taxon1_idx', 'taxon_id')
+)
+
+
+t_taxon_range_subdiv = Table(
+    'taxon_range_subdiv', Base.metadata,
+    Column('taxon_id', CHAR(8), nullable=False),
+    Column('range_id', Integer, nullable=False),
+    Column('breeding_range_id', Integer),
+    Column('geometry', NullType, nullable=False),
+    ForeignKeyConstraint(['breeding_range_id'], ['range.id'], name='fk_taxon_range_range20'),
+    ForeignKeyConstraint(['range_id'], ['range.id'], name='fk_taxon_range_range10'),
+    ForeignKeyConstraint(['taxon_id'], ['taxon.id'], name='fk_taxon_range_taxon10'),
+    Index('fk_taxon_range_range1_idx', 'range_id'),
+    Index('fk_taxon_range_range2_idx', 'breeding_range_id'),
+    Index('fk_taxon_range_taxon1_idx', 'taxon_id')
 )
 
 
@@ -521,16 +622,6 @@ class DataSource(Base):
     taxon: Mapped['Taxon'] = relationship('Taxon')
 
 
-t_incidental_sighting = Table(
-    'incidental_sighting', Base.metadata,
-    Column('taxon_id', CHAR(8), nullable=False),
-    Column('coords', NullType),
-    Column('date', Date),
-    ForeignKeyConstraint(['taxon_id'], ['taxon.id'], name='fk_incidental_sighting_taxon1'),
-    Index('fk_incidental_sighting_taxon1_idx', 'taxon_id')
-)
-
-
 t_processing_method = Table(
     'processing_method', Base.metadata,
     Column('taxon_id', CHAR(8), nullable=False),
@@ -548,91 +639,6 @@ t_processing_method = Table(
     Index('fk_processing_method_source1_idx', 'source_id'),
     Index('fk_processing_method_unit1_idx', 'unit_id'),
     Index('uniq', 'taxon_id', 'unit_id', 'source_id', 'search_type_id', 'data_type', unique=True)
-)
-
-
-class TaxonGroup(Base):
-    __tablename__ = 'taxon_group'
-    __table_args__ = (
-        ForeignKeyConstraint(['taxon_id'], ['taxon.id'], name='fk_taxon_group_taxon1'),
-        Index('fk_taxon_group_taxon1_idx', 'taxon_id'),
-        Index('taxon_group_subgroup', 'taxon_id', 'group_name', 'subgroup_name', unique=True)
-    )
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    taxon_id: Mapped[str] = mapped_column(CHAR(8))
-    group_name: Mapped[str] = mapped_column(String(255))
-    subgroup_name: Mapped[Optional[str]] = mapped_column(String(255))
-
-    taxon: Mapped['Taxon'] = relationship('Taxon')
-
-
-class TaxonHybrid(Base):
-    __tablename__ = 'taxon_hybrid'
-    __table_args__ = (
-        ForeignKeyConstraint(['taxon_id'], ['taxon.id'], name='fk_TaxonHybrid_Taxon1'),
-        Index('fk_TaxonHybrid_Taxon1_idx', 'taxon_id')
-    )
-
-    id: Mapped[str] = mapped_column(CHAR(12), primary_key=True, comment='e.g. u123a.b.c')
-    taxon_id: Mapped[Optional[str]] = mapped_column(CHAR(8))
-
-    taxon: Mapped['Taxon'] = relationship('Taxon')
-
-
-t_taxon_presence_alpha_hull = Table(
-    'taxon_presence_alpha_hull', Base.metadata,
-    Column('taxon_id', CHAR(8), nullable=False),
-    Column('range_id', Integer, nullable=False),
-    Column('breeding_range_id', Integer),
-    Column('geometry', NullType, nullable=False),
-    ForeignKeyConstraint(['range_id'], ['range.id'], name='fk_taxon_presence_alpha_hull_range1'),
-    ForeignKeyConstraint(['taxon_id'], ['taxon.id'], name='fk_taxon_presence_alpha_hull_taxon1'),
-    Index('fk_taxon_presence_alpha_hull_range1_idx', 'range_id'),
-    Index('fk_taxon_presence_alpha_hull_taxon1', 'taxon_id')
-)
-
-
-t_taxon_presence_alpha_hull_subdiv = Table(
-    'taxon_presence_alpha_hull_subdiv', Base.metadata,
-    Column('taxon_id', CHAR(8), nullable=False),
-    Column('range_id', Integer, nullable=False),
-    Column('breeding_range_id', Integer),
-    Column('geometry', NullType, nullable=False),
-    ForeignKeyConstraint(['range_id'], ['range.id'], name='fk_taxon_presence_alpha_hull_range10'),
-    ForeignKeyConstraint(['taxon_id'], ['taxon.id'], name='fk_taxon_presence_alpha_hull_taxon10'),
-    Index('fk_taxon_presence_alpha_hull_range1_idx', 'range_id'),
-    Index('fk_taxon_presence_alpha_hull_taxon10', 'taxon_id')
-)
-
-
-t_taxon_range = Table(
-    'taxon_range', Base.metadata,
-    Column('taxon_id', CHAR(8), nullable=False),
-    Column('range_id', Integer, nullable=False),
-    Column('breeding_range_id', Integer),
-    Column('geometry', NullType, nullable=False),
-    ForeignKeyConstraint(['breeding_range_id'], ['range.id'], name='fk_taxon_range_range2'),
-    ForeignKeyConstraint(['range_id'], ['range.id'], name='fk_taxon_range_range1'),
-    ForeignKeyConstraint(['taxon_id'], ['taxon.id'], name='fk_taxon_range_taxon1'),
-    Index('fk_taxon_range_range1_idx', 'range_id'),
-    Index('fk_taxon_range_range2_idx', 'breeding_range_id'),
-    Index('fk_taxon_range_taxon1_idx', 'taxon_id')
-)
-
-
-t_taxon_range_subdiv = Table(
-    'taxon_range_subdiv', Base.metadata,
-    Column('taxon_id', CHAR(8), nullable=False),
-    Column('range_id', Integer, nullable=False),
-    Column('breeding_range_id', Integer),
-    Column('geometry', NullType, nullable=False),
-    ForeignKeyConstraint(['breeding_range_id'], ['range.id'], name='fk_taxon_range_range20'),
-    ForeignKeyConstraint(['range_id'], ['range.id'], name='fk_taxon_range_range10'),
-    ForeignKeyConstraint(['taxon_id'], ['taxon.id'], name='fk_taxon_range_taxon10'),
-    Index('fk_taxon_range_range1_idx', 'range_id'),
-    Index('fk_taxon_range_range2_idx', 'breeding_range_id'),
-    Index('fk_taxon_range_taxon1_idx', 'taxon_id')
 )
 
 
