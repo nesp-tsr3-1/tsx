@@ -64,10 +64,10 @@
                 {{ sourceType }}
               </div>
               <div v-if="documentsEnabled">
-                <h4>Agreement</h4>
+                <h4>Agreement(s)</h4>
                 {{ source.data_agreement_status_long_description }}
-                <div v-if="source.data_agreement_filename">
-                  Filename: <a :href="uploadURL(source.data_agreement_upload_uuid)">{{source.data_agreement_filename}}</a>
+                <div v-for="file in source.data_agreement_files">
+                  Filename: <a :href="uploadURL(file.upload_uuid)">{{file.filename}}</a>
                 </div>
               </div>
             </div>

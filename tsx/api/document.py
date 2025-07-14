@@ -33,8 +33,9 @@ def data_agreements():
 							COALESCE(CONCAT("<", user.email, ">"), "")
 						)
 					)
-					FROM source, user_source, user
-					WHERE source.data_agreement_id = data_agreement.id
+					FROM source_data_agreement, source, user_source, user
+					WHERE source_data_agreement.data_agreement_id = data_agreement.id
+					AND source.id = source_data_agreement.source_id
 					AND user_source.source_id = source.id
 					AND user.id = user_source.user_id
 				),
@@ -42,8 +43,9 @@ def data_agreements():
 					SELECT JSON_ARRAYAGG(
 						CONCAT(source.description, " (", source.id, ")")
 					)
-					FROM source
-					WHERE source.data_agreement_id = data_agreement.id
+					FROM source_data_agreement, source
+					WHERE source_data_agreement.data_agreement_id = data_agreement.id
+					AND source.id = source_data_agreement.source_id
 				),
 				'is_draft', is_draft
 			))
@@ -103,8 +105,9 @@ permission_clause = """
 			FROM user_source
 			JOIN source ON user_source.source_id = source.id
 			JOIN data_agreement_status ON data_agreement_status_id = data_agreement_status.id
+			JOIN source_data_agreement ON source_data_agreement.source_id
 			WHERE user_source.user_id = :user_id
-			AND source.data_agreement_id = data_agreement.id
+			AND source_data_agreement.data_agreement_id = data_agreement.id
 			AND data_agreement_status.code = 'agreement_executed'
 		)
 	)

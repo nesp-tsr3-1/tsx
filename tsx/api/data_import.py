@@ -433,13 +433,13 @@ def create_or_update_source(source_id=None):
 	is_admin = 'Administrator' in get_roles(user)
 	if not is_admin:
 		# For non admin users, we need to strip any data agreement fields
-		for key in ['data_agreement_status', 'data_agreement_id']:
+		for key in ['data_agreement_status', 'data_agreement_ids']:
 			if key in body:
 				del body[key]
 	else:
-		# Otherwise, we need to make sure data agreement is
+		# Otherwise, we need to make sure data agreement is only set if status = agreement_executed
 		if 'data_agreement_status' in body and body['data_agreement_status'] != 'agreement_executed':
-			body['data_agreement_id'] = None
+			body['data_agreement_ids'] = []
 
 	errors = validate_fields(source_fields, body)
 
@@ -453,6 +453,11 @@ def create_or_update_source(source_id=None):
 	if action == 'create':
 		db_session.execute(text("""INSERT INTO user_source (user_id, source_id) VALUES (:user_id, :source_id)"""),
 				{ 'source_id': source.id, 'user_id': user.id })
+
+	# Update source_data_agreement table
+	db_session.execute(text("""DELETE FROM source_data_agreement WHERE source_id = :source_id"""), { 'source_id': source.id })
+	for data_agreement_id in body.get('data_agreement_ids', []):
+		db_session.execute(text("""INSERT INTO source_data_agreement(source_id, data_agreement_id) VALUES (:source_id, :data_agreement_id)"""), { 'source_id': source.id, 'data_agreement_id': data_agreement_id })
 
 	else:
 		remove_orphaned_monitoring_programs()
@@ -508,6 +513,8 @@ def update_source_from_json(source, json):
 			source.source_type_id = get_source_type_id(json['source_type'])
 		elif field.name == 'data_agreement_status':
 			source.data_agreement_status_id = get_data_agreement_status_id(json['data_agreement_status'])
+		elif field.name == 'data_agreement_ids':
+			pass # These are handled separately
 		else:
 			setattr(source, field.name, clean(json.get(field.name)))
 
@@ -556,14 +563,36 @@ def source_to_json(source):
 			json['source_type'] = source.source_type.description
 		elif field.name == 'data_agreement_status':
 			json['data_agreement_status'] = source.data_agreement_status.code
+		elif field.name == 'data_agreement_ids':
+			json['data_agreement_ids'] = get_data_agreement_ids(source.id)
 		else:
 			json[field.name] = getattr(source, field.name)
 	json['data_agreement_status_description'] = source.data_agreement_status.description
 	json['data_agreement_status_long_description'] = source.data_agreement_status.long_description
-	if source.data_agreement:
-		json['data_agreement_filename'] = source.data_agreement.filename
-		json['data_agreement_upload_uuid'] = source.data_agreement.upload_uuid
+
+	json['data_agreement_files'] = []
+	for (filename, upload_uuid) in get_data_agreement_files(source.id):
+		json['data_agreement_files'].append({
+			'filename': filename,
+			'upload_uuid': upload_uuid
+		})
+
 	return json
+
+def get_data_agreement_ids(source_id):
+	return [x for (x,) in db_session.execute(text("""
+		SELECT data_agreement_id
+		FROM source_data_agreement
+		WHERE source_data_agreement.source_id = :source_id
+	"""), {"source_id": source_id}).fetchall()]
+
+def get_data_agreement_files(source_id):
+	return db_session.execute(text("""
+		SELECT data_agreement.filename, data_agreement.upload_uuid
+		FROM data_agreement, source_data_agreement
+		WHERE source_data_agreement.source_id = :source_id
+		AND data_agreement.id = source_data_agreement.data_agreement_id
+	"""), {"source_id": source_id}).fetchall()
 
 source_fields = [
 	Field(name='description', title='Dataset description', validators=[validate_required, validate_max_chars(4096)]),
@@ -580,7 +609,7 @@ source_fields = [
 	Field(name='contact_phone', title='Phone number', validators=[validate_max_chars(32)]),
 
 	Field(name='data_agreement_status', title='Data sharing agreement status', validators=[]),
-	Field(name='data_agreement_id', title='Data sharing agreement', validators=[])
+	Field(name='data_agreement_ids', title='Data sharing agreement', validators=[])
 ]
 
 @bp.route('/imports', methods = ['POST'])

@@ -136,8 +136,8 @@
                     </div>
                     <div v-if="option.code == 'agreement_executed' && data_agreement_status == 'agreement_executed'" class="control">
                       <Multiselect
-                        mode="single"
-                        v-model="data_agreement_id"
+                        mode="tags"
+                        v-model="data_agreement_ids"
                         :options="dataAgreements"
                         :searchable="true"
                         no-options-text="No agreements found"
@@ -166,7 +166,7 @@ import { generateCitation, pick } from '../util.js'
 import features from '../features.js'
 import Multiselect from '@vueform/multiselect'
 
-const sourceProps = ['description', 'details', 'provider', 'authors', 'monitoring_program', 'source_type', 'contact_name', 'contact_institution', 'contact_position', 'contact_email', 'contact_phone', 'data_agreement_status', 'data_agreement_id']
+const sourceProps = ['description', 'details', 'provider', 'authors', 'monitoring_program', 'source_type', 'contact_name', 'contact_institution', 'contact_position', 'contact_email', 'contact_phone', 'data_agreement_status', 'data_agreement_ids']
 
 function withFullStop(str) {
   return str.trim().replace(/\.?$/, ".")
@@ -198,7 +198,7 @@ export default {
       contact_email: '',
       contact_phone: '',
       data_agreement_status: null,
-      data_agreement_id: null,
+      data_agreement_ids: [],
       currentUser: null,
       dataAgreementStatusOptions: null,
       dataAgreements: []
