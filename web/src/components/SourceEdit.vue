@@ -142,7 +142,7 @@
                         :searchable="true"
                         no-options-text="No agreements found"
                         placeholder="Select agreement…"
-                        label="filename"
+                        label="description"
                         value-prop="id"
                         />
                     </div>

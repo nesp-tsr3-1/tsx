@@ -1,12 +1,13 @@
 
-from flask import Blueprint, jsonify, request, Response #, send_file, session, 
-from tsx.api.util import db_session, get_user, get_roles, jsonify_rows, db_insert #, server_timezone, sanitise_file_name_string
+from flask import Blueprint, jsonify, request, Response #, send_file, session,
+from tsx.api.util import db_session, get_user, get_roles, jsonify_rows, db_insert, db_update #, server_timezone, sanitise_file_name_string
 from tsx.util import Bunch
 from tsx.api.validation import *
 from tsx.api.permissions import permitted
 from sqlalchemy import text
 from io import StringIO
 import csv
+import json
 
 bp = Blueprint('documents', __name__)
 
@@ -23,8 +24,22 @@ def data_agreements():
 		SELECT
 			JSON_ARRAYAGG(JSON_OBJECT(
 				'id', id,
-				'filename', filename,
-				'upload_uuid', upload_uuid,
+				'files', COALESCE((
+					SELECT JSON_ARRAYAGG(
+						JSON_OBJECT(
+							'filename', filename,
+							'upload_uuid', upload_uuid
+						)
+					)
+					FROM data_agreement_file
+					WHERE data_agreement_file.data_agreement_id = data_agreement.id
+				), JSON_ARRAY()),
+				'description', (
+					SELECT filename
+					FROM data_agreement_file
+					WHERE data_agreement_file.data_agreement_id = data_agreement.id
+					LIMIT 1
+				),
 				'commencement_date', provider_date_signed,
 				'custodians', (
 					SELECT JSON_ARRAYAGG(
@@ -185,6 +200,18 @@ def get_agreement_json(agreement_id):
 		)
 		AS `last_edited_by`
 	""")
+	select_clauses.append("""
+		(
+			SELECT JSON_ARRAYAGG(
+				JSON_OBJECT(
+					'filename', filename,
+					'upload_uuid', upload_uuid
+				)
+			)
+			FROM data_agreement_file
+			WHERE data_agreement_file.data_agreement_id = data_agreement.id
+		) AS `files`
+		""")
 	fields_sql = ", ".join(select_clauses)
 	sql = "SELECT %s FROM data_agreement WHERE id = :id" % fields_sql
 	rows = list(db_session.execute(text(sql), { "id": agreement_id }))
@@ -194,6 +221,7 @@ def get_agreement_json(agreement_id):
 		map_fields(data, backend_fields)
 		data['has_expiry_date'] = data['expiry_date'] != None
 		data['has_embargo_date'] = data['embargo_date'] != None
+		data['files'] = json.loads(data['files'] or '[]')
 		return data
 	else:
 		return None
@@ -253,10 +281,12 @@ def create_or_update_data_agreement(agreement_id=None):
 
 	keys = [field.name for field in backend_fields]
 	data = dict((key, body.get(key)) for key in keys)
+
 	if agreement_id:
 		data["id"] = agreement_id
-
-	agreement_id = db_insert('data_agreement', data, replace=True)
+		db_update('data_agreement', data, 'id')
+	else:
+		agreement_id = db_insert('data_agreement', data)
 
 	db_session.execute(text("""
 		UPDATE data_agreement
@@ -266,17 +296,32 @@ def create_or_update_data_agreement(agreement_id=None):
 		'agreement_id': agreement_id
 	})
 
+	# Update files
+	db_session.execute(text("""
+		DELETE FROM data_agreement_file
+		WHERE data_agreement_id = :agreement_id
+		"""), {
+		'agreement_id': agreement_id
+	})
+
+	for file in body.get('files'):
+		db_session.execute(text("""
+			INSERT INTO data_agreement_file (data_agreement_id, filename, upload_uuid)
+			VALUES (:data_agreement_id, :filename, :upload_uuid)
+		"""), {
+			'data_agreement_id': agreement_id,
+			'filename': file['filename'],
+			'upload_uuid': file['upload_uuid']
+		})
+
 	db_session.commit()
 
 	return jsonify(data), 200 if action == 'update' else 201
 
+
 def val_required_for_submit(value, field, context):
 	if context.submitting:
 		return validate_required(value, field, context)
-
-def validate_upload_uuid(value, field, context):
-	# We could double check here that upload uuid exists
-	pass
 
 def val_required_if(other_field):
 	def _validate_required_if(value, field, context):
@@ -284,17 +329,23 @@ def val_required_if(other_field):
 			return validate_required(value, field, context)
 	return _validate_required_if
 
+def val_list(value, field, context):
+	if value != None and type(value) != list:
+		return "Must be a list"
+
+def val_non_empty_for_submit(value, field, context):
+	if context.submitting:
+		if type(value) == list and len(value) == 0:
+			return "Must contain at least one value"
+
 
 form_fields = [
 	Field(
 		name='is_draft',
 		validators=[]),
 	Field(
-		name='filename',
-		validators=[val_required_for_submit]),
-	Field(
-		name='upload_uuid',
-		validators=[val_required_for_submit, validate_upload_uuid]),
+		name='files',
+		validators=[validate_required, val_list, val_non_empty_for_submit]),
 	Field(
 		name='ala_yes',
 		type='boolean',
@@ -361,4 +412,4 @@ form_fields = [
 		validators=[validate_date()])
 ]
 
-backend_fields = [f for f in form_fields if f.name not in ["has_expiry_date", "has_embargo_date"]]
+backend_fields = [f for f in form_fields if f.name not in ["has_expiry_date", "has_embargo_date", "files"]]

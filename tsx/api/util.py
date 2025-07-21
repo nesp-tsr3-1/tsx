@@ -72,6 +72,18 @@ def db_insert(table, row_dict, replace=False):
 
 	return result.lastrowid
 
+def db_update(table, row_dict, id_column):
+	keys, values = zip(*row_dict.items())
+
+	for key in [*keys, table, id_column]:
+		if not key.isidentifier():
+			raise ValueError("%s is not a supported identifier" % key)
+
+	placeholders = ", ".join("`%s` = :%s" % (key, key) for key in keys if key != id_column)
+	sql = "UPDATE `%s` SET %s WHERE `%s` = :%s" % (table, placeholders, id_column, id_column)
+
+	db_session.execute(text(sql), row_dict)
+
 def get_user():
 	try:
 		user_id = session['user_id']

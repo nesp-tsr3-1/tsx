@@ -67,7 +67,7 @@
                 <h4>Agreement(s)</h4>
                 {{ source.data_agreement_status_long_description }}
                 <div v-for="file in source.data_agreement_files">
-                  Filename: <a :href="uploadURL(file.upload_uuid)">{{file.filename}}</a>
+                  <a :href="uploadURL(file.upload_uuid)">{{file.filename}}</a>
                 </div>
               </div>
             </div>

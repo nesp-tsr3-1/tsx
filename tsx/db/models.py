@@ -254,8 +254,6 @@ class DataAgreement(Base):
     is_draft: Mapped[int] = mapped_column(TINYINT(1))
     time_created: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
     last_modified: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
-    upload_uuid: Mapped[Optional[str]] = mapped_column(String(36))
-    filename: Mapped[Optional[str]] = mapped_column(String(255))
     ala_yes: Mapped[Optional[int]] = mapped_column(TINYINT(1))
     dcceew_yes: Mapped[Optional[int]] = mapped_column(TINYINT(1))
     conditions_raw: Mapped[Optional[str]] = mapped_column(Text)
@@ -448,6 +446,19 @@ t_aggregated_by_year = Table(
 )
 
 
+class DataAgreementFile(Base):
+    __tablename__ = 'data_agreement_file'
+    __table_args__ = (
+        ForeignKeyConstraint(['data_agreement_id'], ['data_agreement.id'], name='fk_data_agreement_file_data_agreement_id'),
+    )
+
+    data_agreement_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    upload_uuid: Mapped[str] = mapped_column(String(36), primary_key=True)
+    filename: Mapped[str] = mapped_column(String(255))
+
+    data_agreement: Mapped['DataAgreement'] = relationship('DataAgreement')
+
+
 class DataImport(Base):
     __tablename__ = 'data_import'
     __table_args__ = (
@@ -558,8 +569,8 @@ t_source_data_agreement = Table(
     'source_data_agreement', Base.metadata,
     Column('source_id', Integer, primary_key=True, nullable=False),
     Column('data_agreement_id', Integer, primary_key=True, nullable=False),
-    ForeignKeyConstraint(['data_agreement_id'], ['data_agreement.id'], name='data_agreement_id'),
-    ForeignKeyConstraint(['source_id'], ['source.id'], name='source_id'),
+    ForeignKeyConstraint(['data_agreement_id'], ['data_agreement.id'], name='fk_source_data_agreement_data_agreement_id'),
+    ForeignKeyConstraint(['source_id'], ['source.id'], name='fk_source_data_agreement_source_id'),
     Index('data_agreement_id_idx', 'data_agreement_id')
 )
 

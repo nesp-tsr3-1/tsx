@@ -51,22 +51,26 @@
           <table class="table is-fullwidth is-striped is-hoverable" v-if="filteredAgreements.length > 0">
             <thead>
               <tr>
-                <th @click="sortBy('filename')">Filename {{sortIcon('filename')}}</th>
+                <th @click="sortBy('filenames')">Filename(s) {{sortIcon('filenames')}}</th>
                 <th @click="sortBy('commencement_date')">Commencement Date {{sortIcon('commencement_date')}}</th>
                 <th v-if="isAdmin">Action</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="agreement in sortedAgreements">
-                <td :title="agreement.filename">
-                  <div v-if="agreement.upload_uuid">
-                    <a :href="fileURL(agreement)">
-                      <template v-for="[nonMatch, match] in agreement.filenameParts">
+                <td :title="agreement.filenames">
+                  <div v-for="file in agreement.files">
+                    <a :href="fileURL(file)">
+                      <template v-for="[nonMatch, match] in file.filenameParts">
                         <span style="white-space: pre-wrap;">{{nonMatch}}</span>
                         <b style="white-space: pre-wrap;">{{match}}</b>
                       </template>
                     </a>
                   </div>
+                  <div v-if="agreement.files.length == 0">
+                    (No files)
+                  </div>
+
                   <div style="display: flex;gap: 0.5em;">
                     <span v-for="parts in agreement.custodianParts" class="tag is-info is-light">
                       <template v-for="[nonMatch, match] in parts">
@@ -135,14 +139,16 @@ export default {
         let searchRegex = searchStringToRegex(search)
 
         function filterAgreement(agreement) {
-          return agreement.filename.match(searchRegex) ||
+          return agreement.files.some(x => x.filename.match(searchRegex)) ||
             agreement.sources?.some(x => x.match(searchRegex)) ||
             agreement.custodians?.some(x => x.match(searchRegex))
         }
 
         let matchingAgreements = this.agreements.filter(filterAgreement)
         for(let agreement of matchingAgreements) {
-          agreement.filenameParts = matchParts(agreement.filename, searchRegex)
+          for(let file of agreement.files) {
+            file.filenameParts = matchParts(file.filename, searchRegex)
+          }
           agreement.custodianParts = (agreement.custodians || [])
             .map(custodian => matchParts(custodian, searchRegex))
             .filter(parts => parts.length > 1)
@@ -154,7 +160,10 @@ export default {
       } else {
         return this.agreements.map(agreement => ({
           ...agreement,
-          filenameParts: [[agreement.filename, ""]],
+          files: agreement.files.map(file => ({
+            ...file,
+            filenameParts: [[file.filename, ""]]
+          })),
           custodianParts: [],
           sourceParts: []
         }))
@@ -190,6 +199,13 @@ export default {
         api.documentStats()
       ]).then(([agreements, stats]) => {
         this.agreements = agreements
+        this.agreements.forEach(agg => {
+          if(agg.files.length > 0) {
+            agg.filenames = agg.files.map(f => f.filename).join(', ')
+          } else {
+            agg.filenames = '(No files)'
+          }
+        })
         this.stats = stats
         this.status = 'loaded'
       }).catch(error => {
@@ -198,8 +214,8 @@ export default {
         this.status = 'error'
       })
     },
-    fileURL(agreement) {
-      return api.uploadURL(agreement.upload_uuid)
+    fileURL(file) {
+      return api.uploadURL(file.upload_uuid)
     },
     downloadURL(agreement) {
       return api.dataAgreementCSVURL(agreement.id)

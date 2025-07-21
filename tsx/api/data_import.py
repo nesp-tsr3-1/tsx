@@ -588,10 +588,10 @@ def get_data_agreement_ids(source_id):
 
 def get_data_agreement_files(source_id):
 	return db_session.execute(text("""
-		SELECT data_agreement.filename, data_agreement.upload_uuid
-		FROM data_agreement, source_data_agreement
+		SELECT data_agreement_file.filename, data_agreement_file.upload_uuid
+		FROM data_agreement_file, source_data_agreement
 		WHERE source_data_agreement.source_id = :source_id
-		AND data_agreement.id = source_data_agreement.data_agreement_id
+		AND data_agreement_file.data_agreement_id = source_data_agreement.data_agreement_id
 	"""), {"source_id": source_id}).fetchall()
 
 source_fields = [

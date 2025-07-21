@@ -39,26 +39,69 @@
           <form>
             <fieldset v-if="loaded" v-bind:disabled="submitting">
               <h3 class="title is-5" id="upload_section">Upload document</h3>
-              <p v-if='showUploadButton' class="content">
-                <button type="button" class="button" @click="selectFile">Select file…</button>
+
+              <!-- Uploaded files -->
+              <div class="content" v-if="uploadedFiles.length > 0">
+                <table class="table" style="width: 100%">
+                  <thead>
+                    <tr>
+                      <th>Uploaded files</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="file in uploadedFiles">
+                      <td>
+                        <a v-bind:href='file.downloadURL()'>{{file.filename}}</a>
+                      </td>
+                      <td style="width: 10em; text-align: right;">
+                        <button type="button" class="button is-small is-dark" @click="() => file.remove()">Remove file</button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Uploading files -->
+              <div class="content" v-if="uploadingFiles.length > 0">
+                <table class="table" style="width: 100%">
+                  <thead>
+                    <tr>
+                      <th>Uploads in progress</th>
+                      <th></th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="file in uploadingFiles">
+                      <td>
+                        {{file.filename}}<br>
+                        <progress v-if="file.state == 'uploading'" class="progress is-primary is-small" v-bind:value='file.uploadProgress' max="100">{{file.uploadProgress}}%</progress>
+                      </td>
+                      <td>
+                        <p v-if='file.state == "error"' class="content has-text-danger">Upload failed</p>
+                        <p v-if='file.state == "uploading"' class="content">Uploading</p>
+                      </td>
+                      <td style="width: 10em; text-align: right;">
+                        <button v-if='file.state == "error"'
+                          type="button"
+                          class="button is-small is-light"
+                          @click="() => file.remove()">
+                          Clear
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <hr>
+
+              <p class="content">
+                <button type="button" class="button" @click="selectFile">Select file(s)…</button>
               </p>
 
-              <p v-if='uploadState == "uploading"' class="content">
-                Uploading
-                <progress class="progress is-primary is-small" v-bind:value='uploadProgress' max="100">{{uploadProgress}}%</progress>
-              </p>
-
-              <p v-if='uploadState == "uploaded"' class="content">
-                File uploaded: <a v-bind:href='fileURL'>{{agreement.filename}}</a>
-                <br><br><button type="button" class="button is-small" @click="removeFile">Remove file</button>
-              </p>
-
-
-              <p v-if='uploadState == "error"' class="content">
-                File upload failed.
-              </p>
-
-              <p class="help is-danger" v-if="errors.upload_uuid">{{ errors.upload_uuid }}</p>
+              <p class="help is-danger" v-if="errors.files">{{ errors.files }}</p>
 
               <h3 class="title is-5" id="conditions_section">Conditions to data sharing</h3>
 
@@ -255,10 +298,12 @@
 <script>
 import * as api from '../api.js'
 import { selectFiles, pick, setupPageNavigationHighlighting } from '../util.js'
+import { reactive } from 'vue'
 
 function withFullStop(str) {
   return str.trim().replace(/\.?$/, ".")
 }
+
 
 export default {
   name: 'DataAgreementEdit',
@@ -272,9 +317,7 @@ export default {
       submitError: null,
       agreement: undefined,
       loaded: false,
-      uploading: false,
-      uploadProgress: 0,
-      uploadState: 'init' // no_upload, uploading, uploaded
+      files: []
     }
   },
   computed: {
@@ -301,6 +344,12 @@ export default {
       } else {
         return null
       }
+    },
+    uploadedFiles() {
+      return this.files.filter(f => f.state == 'uploaded')
+    },
+    uploadingFiles() {
+      return this.files.filter(f => f.state != 'uploaded')
     }
   },
   created() {
@@ -312,6 +361,7 @@ export default {
     if(this.dataAgreementId) {
       api.dataAgreement(this.dataAgreementId).then((agreement) => {
         this.agreement = agreement
+        this.files = agreement.files.map(f => this.fileModelFromJSON(f))
         this.uploadState = this.agreement.upload_uuid ? 'uploaded' : 'no_upload'
         this.loaded = true
       })
@@ -331,15 +381,16 @@ export default {
   },
   methods: {
     submit() {
-      this.save(false);
+      this.save(false)
     },
     saveAndClose() {
-      this.agreement.is_draft = true;
-      this.save(true);
+      this.agreement.is_draft = true
+      this.save(true)
     },
     save(asDraft) {
       var agreement = JSON.parse(JSON.stringify(this.agreement))
       agreement.is_draft = asDraft
+      agreement.files = this.files.map(f => f.toJSON()).filter(x => x)
 
       this.submitError = null
       this.submitting = true
@@ -372,28 +423,79 @@ export default {
     selectFile() {
       selectFiles({
         accept: 'application/pdf',
-        multiple: false
+        multiple: true
       }).then((files) => {
-        if(files.length > 0) {
-          this.uploadState = 'uploading'
-          return api.upload(files[0], (progress) => {
-            this.uploadProgress = progress * 100
-          }).then((result) => {
-            console.log(result)
-            this.agreement.upload_uuid = result.uuid
-            this.agreement.filename = result.filename
-            this.uploadState = 'uploaded'
-          }).catch((e) => {
-            console.log(e)
-            this.uploadState = 'error'
-          })
+        // Clear any existing error files before uploading
+        this.files = this.files.filter(f => f.state != 'error');
+
+        for(let file of files) {
+          let fileModel = this.fileModelFromFile(file);
+          fileModel.upload()
+          this.files.push(fileModel)
         }
       })
     },
-    removeFile() {
-      this.uploadState = 'no_upload'
-      this.agreement.upload_uuid = null
-      this.agreement.filename = null
+    fileModelFromFile(file) {
+      return this.fileModel(file)
+    },
+    fileModelFromJSON(json) {
+      return this.fileModel(undefined, json)
+    },
+    fileModel(file, json) {
+      let parent = this
+
+      let fileModel
+      if(file) {
+        fileModel = reactive({
+          state: 'uploading',
+          uploadProgress: 0,
+          uploadUUID: null,
+          filename: file.name,
+          upload() {
+            if(file) {
+              api.upload(file, (progress) => {
+                this.uploadProgress = progress * 100
+              }).then((result) => {
+                this.uploadUUID = result.uuid
+                this.state = 'uploaded'
+              }).catch((e) => {
+                console.log(e)
+                this.state = 'error'
+              })
+            }
+          }
+        })
+      } else {
+        fileModel = reactive({
+          state: 'uploaded',
+          uploadProgress: 100,
+          uploadUUID: json.upload_uuid,
+          filename: json.filename,
+          upload() {
+          }
+        })
+      }
+
+      fileModel.remove = function() {
+        parent.files = parent.files.filter(x => x !== this)
+      }
+
+      fileModel.downloadURL = function() {
+        if(this.uploadUUID) {
+          return api.uploadURL(this.uploadUUID)
+        }
+      }
+
+      fileModel.toJSON = function() {
+        if(this.state == 'uploaded') {
+          return {
+            filename: this.filename,
+            upload_uuid: this.uploadUUID
+          }
+        }
+      }
+
+      return fileModel
     }
   }
 }
