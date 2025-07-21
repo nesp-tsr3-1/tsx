@@ -376,6 +376,9 @@ form_fields = [
 		name='provider_name',
 		validators=[validate_max_chars(255)]),
 	Field(
+		name='provider_position',
+		validators=[validate_max_chars(255)]),
+	Field(
 		name='provider_organisation',
 		validators=[validate_max_chars(255)]),
 	Field(

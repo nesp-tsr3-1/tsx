@@ -261,6 +261,7 @@ class DataAgreement(Base):
     expiry_date: Mapped[Optional[datetime.date]] = mapped_column(Date)
     embargo_date: Mapped[Optional[datetime.date]] = mapped_column(Date)
     provider_name: Mapped[Optional[str]] = mapped_column(String(255))
+    provider_position: Mapped[Optional[str]] = mapped_column(String(255))
     provider_organisation: Mapped[Optional[str]] = mapped_column(String(255))
     provider_email: Mapped[Optional[str]] = mapped_column(String(255))
     provider_phone: Mapped[Optional[str]] = mapped_column(String(255))

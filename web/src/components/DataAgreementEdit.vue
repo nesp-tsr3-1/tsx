@@ -171,19 +171,25 @@
               <h3 class="title is-5" id="provider_section">Data provider details</h3>
 
               <div class="field">
-                <label class="label">7. What is the name of the data provider as listed in Schedule A?</label>
-                <input class="input" type="text" v-model="agreement.provider_name">
-                <p class="help is-danger" v-if="errors.provider_name">{{ errors.provider_name }}</p>
-              </div>
-
-              <div class="field">
-                <label class="label">8. What are the organisational details of the data provider as listed in Schedule A?</label>
+                <label class="label">7. What are the organisational details of the data provider as listed in Schedule A?</label>
                 <input class="input" type="text" v-model="agreement.provider_organisation">
                 <p class="help is-danger" v-if="errors.provider_organisation">{{ errors.provider_organisation }}</p>
               </div>
 
               <div class="field">
-                <label class="label">9. What are the contact details of the data provider as listed in Schedule A?</label>
+                <label class="label">8. What is the name of the data provider as listed in Schedule A?</label>
+                <input class="input" type="text" v-model="agreement.provider_name">
+                <p class="help is-danger" v-if="errors.provider_name">{{ errors.provider_name }}</p>
+              </div>
+
+              <div class="field">
+                <label class="label">9. What are the position details of the data provider as listed in Schedule A?</label>
+                <input class="input" type="text" v-model="agreement.provider_position">
+                <p class="help is-danger" v-if="errors.provider_position">{{ errors.provider_position }}</p>
+              </div>
+
+              <div class="field">
+                <label class="label">10. What are the contact details of the data provider as listed in Schedule A?</label>
               </div>
 
               <div class="field is-horizontal">
@@ -211,13 +217,13 @@
               </div>
 
               <div class="field">
-                <label class="label">10. What is the postal address details for the data provider as listed in Schedule A?</label>
+                <label class="label">11. What is the postal address details for the data provider as listed in Schedule A?</label>
                 <input class="input" type="text" v-model="agreement.provider_postal_address">
                 <p class="help is-danger" v-if="errors.provider_postal_address">{{ errors.provider_postal_address }}</p>
               </div>
 
               <div class="field">
-                <label class="label">11. What is the ABN for the data provider as listed in Schedule A?</label>
+                <label class="label">12. What is the ABN for the data provider as listed in Schedule A?</label>
                 <input class="input" type="text" v-model="agreement.provider_abn">
                 <p class="help is-danger" v-if="errors.provider_abn">{{ errors.provider_abn }}</p>
               </div>
@@ -225,7 +231,7 @@
               <h3 class="title is-5" id="data_section">Provided data description</h3>
 
               <div class="field">
-                <label class="label">12. What is the description of the provided data as listed in Schedule A? </label>
+                <label class="label">13. What is the description of the provided data as listed in Schedule A? </label>
                 <input class="input" type="text" v-model="agreement.data_description">
                 <p class="help is-danger" v-if="errors.data_description">{{ errors.data_description }}</p>
               </div>
@@ -235,30 +241,24 @@
               <h4 class="title is-6">The University of Queensland</h4>
 
               <div class="field">
-                <label class="label">13. What is the name of the UQ authorised signatory?</label>
-                <input class="input" type="text" v-model="agreement.uq_signatory">
-                <p class="help is-danger" v-if="errors.uq_signatory">{{ errors.uq_signatory }}</p>
-              </div>
-
-              <div class="field">
                 <label class="label">14. What date was the agreement signed by the UQ authorised signatory? </label>
                 <input class="input" type="date" v-model="agreement.uq_date_signed">
                 <p class="help is-danger" v-if="errors.uq_date_signed">{{ errors.uq_date_signed }}</p>
               </div>
 
               <div class="field">
-                <label class="label">15. What is the name of the witness to the UQ authorised signatory?</label>
+                <label class="label">15. What is the name of the UQ authorised signatory?</label>
+                <input class="input" type="text" v-model="agreement.uq_signatory">
+                <p class="help is-danger" v-if="errors.uq_signatory">{{ errors.uq_signatory }}</p>
+              </div>
+
+              <div class="field">
+                <label class="label">16. What is the name of the witness to the UQ authorised signatory?</label>
                 <input class="input" type="text" v-model="agreement.uq_witness">
                 <p class="help is-danger" v-if="errors.uq_witness">{{ errors.uq_witness }}</p>
               </div>
 
               <h4 class="title is-6">Data Provider</h4>
-
-              <div class="field">
-                <label class="label">16. What is the name of the authorised signatory for the data provider?</label>
-                <input class="input" type="text" v-model="agreement.provider_signatory">
-                <p class="help is-danger" v-if="errors.provider_signatory">{{ errors.provider_signatory }}</p>
-              </div>
 
               <div class="field">
                 <label class="label">17. What date was the agreement signed by the authorised signatory for the data provider?</label>
@@ -267,7 +267,13 @@
               </div>
 
               <div class="field">
-                <label class="label">18. What is the name of the witness to the authorised signatory for the data provider?</label>
+                <label class="label">18. What is the name of the authorised signatory for the data provider?</label>
+                <input class="input" type="text" v-model="agreement.provider_signatory">
+                <p class="help is-danger" v-if="errors.provider_signatory">{{ errors.provider_signatory }}</p>
+              </div>
+
+              <div class="field">
+                <label class="label">19. What is the name of the witness to the authorised signatory for the data provider?</label>
                 <input class="input" type="text" v-model="agreement.provider_witness">
                 <p class="help is-danger" v-if="errors.provider_witness">{{ errors.provider_witness }}</p>
               </div>
