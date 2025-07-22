@@ -246,7 +246,7 @@ class User(Base):
 class DataAgreement(Base):
     __tablename__ = 'data_agreement'
     __table_args__ = (
-        ForeignKeyConstraint(['last_edited_by'], ['user.id'], name='last_edited_by'),
+        ForeignKeyConstraint(['last_edited_by'], ['user.id'], name='fk_data_agreement_last_edited_by'),
         Index('last_edited_by_idx', 'last_edited_by')
     )
 
