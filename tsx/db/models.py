@@ -266,7 +266,7 @@ class DataAgreement(Base):
     provider_email: Mapped[Optional[str]] = mapped_column(String(255))
     provider_phone: Mapped[Optional[str]] = mapped_column(String(255))
     provider_postal_address: Mapped[Optional[str]] = mapped_column(String(255))
-    provider_abn: Mapped[Optional[str]] = mapped_column(String(32))
+    provider_abn: Mapped[Optional[str]] = mapped_column(String(255))
     data_description: Mapped[Optional[str]] = mapped_column(Text)
     provider_signatory: Mapped[Optional[str]] = mapped_column(String(255))
     provider_witness: Mapped[Optional[str]] = mapped_column(String(255))
