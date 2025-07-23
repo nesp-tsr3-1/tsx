@@ -359,6 +359,10 @@ export function updateDataAgreement(id, data) {
   return put('/documents/data_agreements/' + id, data)
 }
 
+export function deleteDataAgreement(id) {
+  return del('/documents/data_agreements/' + id)
+}
+
 export function documentStats() {
   return get('/documents/stats')
 }
