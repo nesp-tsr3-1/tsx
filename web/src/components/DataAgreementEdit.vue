@@ -95,8 +95,6 @@
                 </table>
               </div>
 
-              <hr>
-
               <p class="content">
                 <button type="button" class="button" @click="selectFile">Select file(s)…</button>
               </p>
@@ -337,9 +335,6 @@ export default {
       if(this.agreement.upload_uuid) {
         return api.uploadURL(this.agreement.upload_uuid)
       }
-    },
-    showUploadButton() {
-      return this.uploadState == 'no_upload' || this.uploadState == 'error'
     },
     lastEditDescription() {
       if(this.agreement?.last_edited && this.agreement?.last_edited_by) {

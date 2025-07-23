@@ -267,7 +267,7 @@ def create_or_update_data_agreement(agreement_id=None):
 			SELECT EXISTS (SELECT 1 FROM data_agreement WHERE id = :id)
 		"""), { "id": agreement_id })
 		if not exists:
-			return "Not found", 400
+			return "Not found", 404
 
 	body = request.json
 
