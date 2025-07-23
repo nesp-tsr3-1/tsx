@@ -157,6 +157,8 @@ def agreement_csv(agreement_id=None):
 		'DataAgreementID': agreement_id
 	}
 
+	data['files'] = '; '.join(file['filename'] for file in data['files'])
+
 	for field in form_fields:
 		csv_data[snake_to_capital_case(field.name)] = data.get(field.name, '')
 
