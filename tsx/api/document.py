@@ -212,6 +212,13 @@ def get_agreement_json(agreement_id):
 			WHERE data_agreement_file.data_agreement_id = data_agreement.id
 		) AS `files`
 		""")
+	select_clauses.append("""
+		(
+			SELECT JSON_ARRAYAGG(source_data_agreement.source_id)
+			FROM source_data_agreement
+			WHERE source_data_agreement.data_agreement_id = data_agreement.id
+		) AS `source_ids`
+		""")
 	fields_sql = ", ".join(select_clauses)
 	sql = "SELECT %s FROM data_agreement WHERE id = :id" % fields_sql
 	rows = list(db_session.execute(text(sql), { "id": agreement_id }))
@@ -222,6 +229,7 @@ def get_agreement_json(agreement_id):
 		data['has_expiry_date'] = data['expiry_date'] != None
 		data['has_embargo_date'] = data['embargo_date'] != None
 		data['files'] = json.loads(data['files'] or '[]')
+		data['source_ids'] = json.loads(data['source_ids'] or '[]')
 		return data
 	else:
 		return None
@@ -242,6 +250,38 @@ def get_data_agreement(agreement_id=None):
 		return jsonify(data)
 	else:
 		return "Not found", 404
+
+@bp.route('/documents/data_agreements/<int:agreement_id>', methods = ['DELETE'])
+def delete_data_agreement(agreement_id=None):
+	if agreement_id == None:
+		return "Not found", 404
+
+	user = get_user()
+
+	if not permitted(user, 'delete', 'data_agreement', agreement_id):
+		return "Not authorised", 401
+
+	[(exists, has_source)] = db_session.execute(text("""
+			SELECT
+				EXISTS (SELECT 1 FROM data_agreement WHERE id = :id),
+				EXISTS (SELECT 1 FROM source_data_agreement WHERE data_agreement_id = :id)
+		"""), { "id": agreement_id })
+	if not exists:
+		return "Not found", 404
+	if has_source:
+		return "Cannot delete data agreement that is linked to a source", 403
+
+	db_session.execute(text("""
+		DELETE FROM data_agreement_file WHERE data_agreement_id = :id
+		"""), { "id": agreement_id })
+
+	db_session.execute(text("""
+		DELETE FROM data_agreement WHERE id = :id
+		"""), { "id": agreement_id })
+
+	db_session.commit()
+
+	return "", 204
 
 @bp.route('/documents/data_agreements', methods = ['POST'])
 def create_data_agreement():

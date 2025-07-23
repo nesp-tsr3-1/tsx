@@ -278,17 +278,27 @@
 
               <hr>
 
-              <div class="buttons">
-                <button
-                  type="button"
-                  class="button is-primary"
-                  v-if="agreement.is_draft"
-                  @click="saveAndClose">Save Draft and Close
-                </button>
-                <button
-                  type="button"
-                  class="button is-primary"
-                  @click='submit'>{{ buttonLabel }}</button>
+              <div class="is-flex is-flex-direction-row is-justify-content-space-between">
+                <div class="buttons">
+                  <button
+                    type="button"
+                    class="button is-primary"
+                    v-if="agreement.is_draft"
+                    @click="saveAndClose">Save Draft and Close
+                  </button>
+                  <button
+                    type="button"
+                    class="button is-primary"
+                    @click='submit'>{{ buttonLabel }}</button>
+                </div>
+                <div class="buttons">
+                  <button
+                    type="button"
+                    class="button is-danger is-light"
+                    v-if="canDelete"
+                    @click="deleteAgreement">Delete Agreement
+                  </button>
+                </div>
               </div>
               <p class="help is-danger" v-if="submitError">{{submitError}}</p>
             </fieldset>
@@ -351,6 +361,9 @@ export default {
     },
     uploadingFiles() {
       return this.files.filter(f => f.state != 'uploaded')
+    },
+    canDelete() {
+      return !this.isNew && this.agreement?.source_ids.length == 0
     }
   },
   created() {
@@ -383,6 +396,16 @@ export default {
   methods: {
     submit() {
       this.save(false)
+    },
+    deleteAgreement() {
+      if(window.confirm("Are you sure you wish to delete this agreement?")) {
+        this.submitError = null;
+        api.deleteDataAgreement(this.dataAgreementId).then(() => {
+          this.$router.push({ path: '/documents/data_agreements' })
+        }).catch(error => {
+          this.submitError = "Failed to delete agreement"
+        })
+      }
     },
     saveAndClose() {
       this.agreement.is_draft = true
