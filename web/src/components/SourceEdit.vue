@@ -145,6 +145,7 @@
                         label="description"
                         value-prop="id"
                         />
+                      <p class="help is-danger" v-if="errors.data_agreement_ids">{{ errors.data_agreement_ids }}</p>
                     </div>
                   </div>
                 </div>
@@ -253,6 +254,10 @@ export default {
 
       if(source.monitoring_program === '__new__') {
         source.monitoring_program = this.new_monitoring_program
+      }
+
+      if(source.data_agreement_status != 'agreement_executed') {
+        source.data_agreement_ids = []
       }
 
       this.submitting = true

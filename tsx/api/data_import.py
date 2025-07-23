@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request, send_file, session, Response
-from tsx.util import next_path, local_iso_datetime
+from tsx.util import next_path, local_iso_datetime, Bunch
 from tsx.api.util import db_session, get_user, get_roles, get_executor
 from tsx.api.upload import get_upload_path, get_upload_name
 from tsx.importer import Importer
@@ -431,17 +431,21 @@ def create_or_update_source(source_id=None):
 
 
 	is_admin = 'Administrator' in get_roles(user)
-	if not is_admin:
-		# For non admin users, we need to strip any data agreement fields
+	update_data_agreements = is_admin
+
+	if update_data_agreements:
+		# We need to make sure data agreement is only set if status = agreement_executed
+		if 'data_agreement_status' in body and body['data_agreement_status'] != 'agreement_executed':
+			body['data_agreement_ids'] = []
+	else:
+		# Strip data agreement fields
 		for key in ['data_agreement_status', 'data_agreement_ids']:
 			if key in body:
 				del body[key]
-	else:
-		# Otherwise, we need to make sure data agreement is only set if status = agreement_executed
-		if 'data_agreement_status' in body and body['data_agreement_status'] != 'agreement_executed':
-			body['data_agreement_ids'] = []
 
-	errors = validate_fields(source_fields, body)
+	context = Bunch()
+	context.body = body
+	errors = validate_fields(source_fields, body, context)
 
 	if len(errors):
 		return jsonify(errors), 400
@@ -453,14 +457,14 @@ def create_or_update_source(source_id=None):
 	if action == 'create':
 		db_session.execute(text("""INSERT INTO user_source (user_id, source_id) VALUES (:user_id, :source_id)"""),
 				{ 'source_id': source.id, 'user_id': user.id })
-
-	# Update source_data_agreement table
-	db_session.execute(text("""DELETE FROM source_data_agreement WHERE source_id = :source_id"""), { 'source_id': source.id })
-	for data_agreement_id in body.get('data_agreement_ids', []):
-		db_session.execute(text("""INSERT INTO source_data_agreement(source_id, data_agreement_id) VALUES (:source_id, :data_agreement_id)"""), { 'source_id': source.id, 'data_agreement_id': data_agreement_id })
-
 	else:
 		remove_orphaned_monitoring_programs()
+
+	if update_data_agreements:
+		db_session.execute(text("""DELETE FROM source_data_agreement WHERE source_id = :source_id"""), { 'source_id': source.id })
+		for data_agreement_id in body.get('data_agreement_ids', []):
+			db_session.execute(text("""INSERT INTO source_data_agreement(source_id, data_agreement_id) VALUES (:source_id, :data_agreement_id)"""), { 'source_id': source.id, 'data_agreement_id': data_agreement_id })
+
 
 	db_session.commit()
 
@@ -594,6 +598,14 @@ def get_data_agreement_files(source_id):
 		AND data_agreement_file.data_agreement_id = source_data_agreement.data_agreement_id
 	"""), {"source_id": source_id}).fetchall()
 
+def validate_agreement_ids(value, field, context):
+	if context.body.get('data_agreement_status') == 'agreement_executed':
+		if len(value) == 0:
+			return "A data agreement is required"
+	else:
+		if len(value) > 0:
+			return "Should be empty when no agreement has been executed"
+
 source_fields = [
 	Field(name='description', title='Dataset description', validators=[validate_required, validate_max_chars(4096)]),
 	Field(name='details', title='Dataset details', validators=[validate_required, validate_max_chars(4096)]),
@@ -609,7 +621,7 @@ source_fields = [
 	Field(name='contact_phone', title='Phone number', validators=[validate_max_chars(32)]),
 
 	Field(name='data_agreement_status', title='Data sharing agreement status', validators=[]),
-	Field(name='data_agreement_ids', title='Data sharing agreement', validators=[])
+	Field(name='data_agreement_ids', title='Data sharing agreement', validators=[validate_agreement_ids])
 ]
 
 @bp.route('/imports', methods = ['POST'])
