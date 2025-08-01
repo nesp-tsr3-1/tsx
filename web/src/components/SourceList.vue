@@ -21,15 +21,33 @@
       <table :class="{clickable: clickableRows}" class="table is-fullwidth is-striped is-hoverable" v-if="filteredSources.length > 0">
         <thead>
           <tr>
-            <th v-on:click="sortBy('description')">Description {{sortIcon('description')}}</th>
-            <th v-on:click="sortBy('time_created')">Created {{sortIcon('time_created')}}</th>
-            <th v-if="showModified" v-on:click="sortBy('last_modified')">Modified {{sortIcon('last_modified')}}</th>
-            <th v-if="showStatus" v-on:click="sortBy('status')">Status {{sortIcon('status')}}</th>
-            <th v-if="showAgreement"
-              @click="sortBy('data_agreement_status_description')">  Agreement
-              {{sortIcon('data_agreement_status_description')}}
+            <th @click="sortBy('description')"
+              class="col-description">
+              Description {{sortIcon('description')}}
             </th>
-            <th v-if="actions">Manage</th>
+            <th @click="sortBy('time_created')"
+              class="col-time-created">
+              Created {{sortIcon('time_created')}}
+            </th>
+            <th v-if="showModified"
+              @click="sortBy('last_modified')"
+              class="col-last-modified">
+              Modified {{sortIcon('last_modified')}}
+            </th>
+            <th v-if="showStatus"
+              @click="sortBy('status')"
+              class="col-status">
+              Status {{sortIcon('status')}}
+            </th>
+            <th v-if="showAgreement"
+              @click="sortBy('data_agreement_status_description')"
+              class="col-agreement-status">
+              Agreement {{sortIcon('data_agreement_status_description')}}
+            </th>
+            <th v-if="actions"
+              class="col-actions">
+              Manage
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -231,12 +249,14 @@ export default {
   .table {
     table-layout: fixed;
   }
-  .table th:nth-child(2),
-  .table th:nth-child(3) {
+  .table th.col-status,
+  .table th.col-time-created,
+  .table th.col-last-modified,
+  .table th.col-actions {
     width: 8em;
   }
-  .table th:nth-child(4) {
-    width: 8em;
+  .table th.col-agreement-status {
+    width: 14em;
   }
   .table.clickable tbody tr {
     cursor: pointer;
