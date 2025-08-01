@@ -11,6 +11,17 @@ class Base(DeclarativeBase):
     pass
 
 
+class AcknowledgementLetter(Base):
+    __tablename__ = 'acknowledgement_letter'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    year: Mapped[int] = mapped_column(Integer)
+    upload_uuid: Mapped[str] = mapped_column(String(36))
+    filename: Mapped[str] = mapped_column(String(255))
+
+    recipient_user: Mapped[List['User']] = relationship('User', secondary='acknowledgement_letter_recipient')
+
+
 class DataAgreementStatus(Base):
     __tablename__ = 'data_agreement_status'
     __table_args__ = (
@@ -241,6 +252,16 @@ class User(Base):
     password_reset_code: Mapped[Optional[str]] = mapped_column(String(32))
     time_created: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
     last_modified: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+
+
+t_acknowledgement_letter_recipient = Table(
+    'acknowledgement_letter_recipient', Base.metadata,
+    Column('acknowledgement_letter_id', Integer, primary_key=True, nullable=False),
+    Column('recipient_user_id', Integer, primary_key=True, nullable=False),
+    ForeignKeyConstraint(['acknowledgement_letter_id'], ['acknowledgement_letter.id'], name='fk_acknowledgement_letter_recipient_acknowledgement_letter_id'),
+    ForeignKeyConstraint(['recipient_user_id'], ['user.id'], name='fk_acknowledgement_letter_recipient_recipient_user_id'),
+    Index('fk_acknowledgement_letter_recipient_recipient_user_id_idx', 'recipient_user_id')
+)
 
 
 class DataAgreement(Base):

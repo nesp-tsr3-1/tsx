@@ -83,4 +83,8 @@ def permitted(user, action, resource_type, resource_id=None):
 		if action in ('list'):
 			return True
 
+	if resource_type == 'acknowledgement_letter':
+		if action in ('list'):
+			return True
+
 	return False

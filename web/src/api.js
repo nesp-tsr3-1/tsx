@@ -363,6 +363,11 @@ export function deleteDataAgreement(id) {
   return del('/documents/data_agreements/' + id)
 }
 
+
+export function acknowledgementLetters(params) {
+  return get('/documents/acknowledgement_letters', params)
+}
+
 export function documentStats() {
   return get('/documents/stats')
 }

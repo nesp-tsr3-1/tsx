@@ -17,6 +17,7 @@ import CustodianFeedbackDataset from '../components/CustodianFeedbackDataset.vue
 import CustodianFeedbackForm from '../components/CustodianFeedbackForm.vue'
 import DataAgreementHome from '../components/DataAgreementHome.vue'
 import DataAgreementEdit from '../components/DataAgreementEdit.vue'
+import AcknowledgementLetterHome from '../components/AcknowledgementLetterHome.vue'
 import LocalSettings from '../components/LocalSettings.vue'
 import NotFound from '../components/NotFound.vue'
 import * as api from '../api'
@@ -133,6 +134,11 @@ const router = createRouter({
       path: '/documents/data_agreements/edit/:id',
       name: 'DataAgreementEdit',
       component: DataAgreementEdit
+    },
+    {
+      path: '/documents/acknowledgement_letters',
+      name: 'AcknowledgementLetterHome',
+      component: AcknowledgementLetterHome
     },
     {
       path: '/local_settings',

@@ -8,9 +8,20 @@
 
         <div class="tabs is-boxed">
           <ul>
-            <li class="is-active"><a>Data Sharing Agreements <span v-if="stats">&nbsp;({{stats.data_agreement_count}})</span>
-            </a></li>
-            <li><a>Acknowledgement Letters (TODO)</a></li>
+            <li class="is-active">
+              <router-link
+                :to="{ name: 'DataAgreementHome' }">
+                Data Sharing Agreements
+                <span v-if="stats">&nbsp;({{stats.data_agreement_count}})</span>
+              </router-link>
+            </li>
+            <li>
+              <router-link
+                :to="{ name: 'AcknowledgementLetterHome' }">
+                Acknowledgement Letters
+                <span v-if="stats">&nbsp;({{stats.acknowledgement_letter_count}})</span>
+              </router-link>
+            </li>
           </ul>
         </div>
 

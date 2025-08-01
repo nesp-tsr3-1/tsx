@@ -67,9 +67,48 @@ def data_agreements():
 		FROM data_agreement
 		WHERE %s
 		AND (:include_draft OR NOT is_draft)
-	""" % permission_clause), {
+	""" % data_agreement_permission_clause), {
 		'user_id': user.id,
 		'include_draft': include_draft
+	})
+
+	[(result,)] = rows
+	return Response(result or "[]", mimetype='application/json')
+
+@bp.route('/documents/acknowledgement_letters', methods = ['GET'])
+def acknowledgement_letters():
+	user = get_user()
+
+	if not permitted(user, 'list', 'acknowledgement_letter'):
+		return "Not authorised", 401
+
+	rows = db_session.execute(text("""
+		SELECT
+			JSON_ARRAYAGG(JSON_OBJECT(
+				'id', acknowledgement_letter.id,
+				'files', JSON_ARRAY(
+					JSON_OBJECT(
+						'filename', filename,
+						'upload_uuid', upload_uuid
+					)
+				),
+				'custodians', (
+					SELECT JSON_ARRAYAGG(
+						CONCAT(
+							COALESCE(CONCAT(user.first_name, " ", user.last_name, " "), ""),
+							COALESCE(CONCAT("<", user.email, ">"), "")
+						)
+					)
+					FROM acknowledgement_letter_recipient, user
+					WHERE acknowledgement_letter_recipient.acknowledgement_letter_id = acknowledgement_letter.id
+					AND user.id = acknowledgement_letter_recipient.recipient_user_id
+				),
+				'year', acknowledgement_letter.year
+			))
+		FROM acknowledgement_letter
+		WHERE %s
+	""" % acknowledgement_letter_permission_clause), {
+		'user_id': user.id
 	})
 
 	[(result,)] = rows
@@ -99,15 +138,25 @@ def document_stats():
 		SELECT COUNT(*)
 		FROM data_agreement
 		WHERE %s
-	""" % permission_clause), {
+	""" % data_agreement_permission_clause), {
 		'user_id': user.id
 	})
 
 	result['data_agreement_count'] = data_agreement_count
 
+	[(acknowledgement_letter_count,)] = db_session.execute(text("""
+		SELECT COUNT(*)
+		FROM acknowledgement_letter
+		WHERE %s
+	""" % acknowledgement_letter_permission_clause), {
+		'user_id': user.id
+	})
+
+	result['acknowledgement_letter_count'] = acknowledgement_letter_count
+
 	return jsonify(result)
 
-permission_clause = """
+data_agreement_permission_clause = """
 	(
 		EXISTS (
 			SELECT 1
@@ -124,6 +173,23 @@ permission_clause = """
 			WHERE user_source.user_id = :user_id
 			AND source_data_agreement.data_agreement_id = data_agreement.id
 			AND data_agreement_status.code = 'agreement_executed'
+		)
+	)
+"""
+
+acknowledgement_letter_permission_clause = """
+	(
+		EXISTS (
+			SELECT 1
+			FROM user_role, role
+			WHERE user_role.user_id = :user_id
+			AND user_role.role_id = role.id
+			AND role.description = 'Administrator'
+		) OR EXISTS (
+			SELECT 1
+			FROM acknowledgement_letter_recipient
+			WHERE acknowledgement_letter_recipient.recipient_user_id = :user_id
+			AND acknowledgement_letter_recipient.acknowledgement_letter_id = acknowledgement_letter.id
 		)
 	)
 """
