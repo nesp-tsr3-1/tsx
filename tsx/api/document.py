@@ -86,11 +86,15 @@ def acknowledgement_letters():
 		SELECT
 			JSON_ARRAYAGG(JSON_OBJECT(
 				'id', acknowledgement_letter.id,
-				'files', JSON_ARRAY(
-					JSON_OBJECT(
-						'filename', filename,
-						'upload_uuid', upload_uuid
+				'files', (
+					SELECT JSON_ARRAYAGG(
+						JSON_OBJECT(
+							'filename', filename,
+							'upload_uuid', upload_uuid
+						)
 					)
+					FROM acknowledgement_letter_file
+					WHERE acknowledgement_letter_file.acknowledgement_letter_id = acknowledgement_letter.id
 				),
 				'custodians', (
 					SELECT JSON_ARRAYAGG(

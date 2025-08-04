@@ -16,8 +16,6 @@ class AcknowledgementLetter(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     year: Mapped[int] = mapped_column(Integer)
-    upload_uuid: Mapped[str] = mapped_column(String(36))
-    filename: Mapped[str] = mapped_column(String(255))
 
     recipient_user: Mapped[List['User']] = relationship('User', secondary='acknowledgement_letter_recipient')
 
@@ -252,6 +250,19 @@ class User(Base):
     password_reset_code: Mapped[Optional[str]] = mapped_column(String(32))
     time_created: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
     last_modified: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+
+
+class AcknowledgementLetterFile(Base):
+    __tablename__ = 'acknowledgement_letter_file'
+    __table_args__ = (
+        ForeignKeyConstraint(['acknowledgement_letter_id'], ['acknowledgement_letter.id'], name='fk_acknowledgement_letter_file_acknowledgement_letter1'),
+    )
+
+    acknowledgement_letter_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    upload_uuid: Mapped[str] = mapped_column(String(36), primary_key=True)
+    filename: Mapped[Optional[str]] = mapped_column(String(255))
+
+    acknowledgement_letter: Mapped['AcknowledgementLetter'] = relationship('AcknowledgementLetter')
 
 
 t_acknowledgement_letter_recipient = Table(
