@@ -9,7 +9,7 @@
           <form>
             <fieldset>
               <div class="field">
-                <label><input class="checkbox" type="checkbox" v-model="features.documents"> Enable documents functionality</label>
+                <label><input disabled class="checkbox" type="checkbox" v-model="features.documents"> Enable documents functionality</label>
               </div>
             </fieldset>
           </form>

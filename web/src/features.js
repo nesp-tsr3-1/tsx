@@ -9,11 +9,12 @@ function getFeatureFlag(str) {
 
 class Features {
 	get documents() {
-		return getFeatureFlag("documents")
+		return true;
+		// return getFeatureFlag("documents")
 	}
 
 	set documents(x) {
-		setFeatureFlag("documents", x)
+		// setFeatureFlag("documents", x)
 	}
 }
 
