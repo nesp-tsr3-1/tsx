@@ -169,7 +169,7 @@
                   </div>
                 </div>
                 <button class="button block is-small" v-if="formData.admin_type == 'informal'" @click="() => showAdminTypeDialog = true">Switch to formal</button>
-                <div class="notification">For formal surveys, please add any “informal” comments to the relevant field(s) in this form. Please include your initials and the date when doing so</div>
+                <div class="notification">For formal surveys, please add any “informal” comments to the relevant field(s) in this form. Please include your initials and the date when doing so.</div>
                 <div class="modal" :class="{ 'is-active': showAdminTypeDialog }">
                   <div class="modal-background"></div>
                   <div class="modal-card">
