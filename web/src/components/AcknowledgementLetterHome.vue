@@ -25,8 +25,6 @@
           </ul>
         </div>
 
-        <hr>
-
         <div v-if="status == 'loading'">
             <p>
             Loading…
@@ -43,6 +41,12 @@
           <div v-if="letters.length == 0" class="columns">
             <p class="column content">No data acknowledgement letters to show.</p>
           </div>
+
+          <div class="columns">
+            <p class="column content">Please send an email to the TSX team at tsx@tern.org.au if you would like us to modify your formal acknowledgment letter(s) to include other recipients or custodians of these data.</p>
+          </div>
+
+          <hr>
 
           <div v-if="letters.length > 0" class="columns">
             <p class="column title is-6">Showing {{filteredLetters.length}} / {{letters.length}} letters</p>
