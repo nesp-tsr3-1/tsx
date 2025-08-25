@@ -600,10 +600,10 @@ def get_data_agreement_files(source_id):
 
 def validate_agreement_ids(value, field, context):
 	if context.body.get('data_agreement_status') == 'agreement_executed':
-		if len(value) == 0:
+		if (not value) or len(value) == 0:
 			return "A data agreement is required"
 	else:
-		if len(value) > 0:
+		if value and len(value) > 0:
 			return "Should be empty when no agreement has been executed"
 
 source_fields = [
