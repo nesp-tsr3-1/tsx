@@ -44,6 +44,9 @@ def write_csv(result, output):
     for row in result.fetchall():
         writer.writerow(row)
 
+@bp.route('/subset/filename', methods = ['GET'])
+def subset_filename_component():
+    return Response(filename_component_from_params(), mimetype="text/plain")
 
 @bp.route('/subset/raw_data', methods = ['GET'])
 def subset_raw_data():

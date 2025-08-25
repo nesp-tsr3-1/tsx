@@ -37,6 +37,19 @@ Chart.register(
 let solidFill = 'rgba(230,230,230,0.5)'
 let stripeFill = createDiagonalPattern('grey', 1, 4)
 
+// see: https://www.chartjs.org/docs/latest/configuration/canvas-background.html#color
+const backgroundColorPlugin = {
+  id: 'canvasBackgroundColor',
+  beforeDraw: (chart, args, options) => {
+    const {ctx} = chart;
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-over';
+    ctx.fillStyle = options.color || '#ffffff';
+    ctx.fillRect(0, 0, chart.width, chart.height);
+    ctx.restore();
+  }
+};
+
 export function plotTrend(data, dom, options) {
   let plotData = generateTrendPlotData(data, options)
 
@@ -45,11 +58,15 @@ export function plotTrend(data, dom, options) {
   let plot = new Chart(dom.getContext('2d'), {
     type: 'line',
     data: plotData,
+    plugins: [backgroundColorPlugin],
     options: {
       responsive: true,
       plugins: {
         legend: {
           display: false
+        },
+        canvasBackgroundColor: {
+          color: 'white'
         }
       },
       maintainAspectRatio: true,

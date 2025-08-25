@@ -279,6 +279,9 @@
     <p>
       <button type="button" class="button is-primary" @click="downloadTrend">Download Population Trend (CSV format)</button>
     </p>
+    <p>
+      <button type="button" class="button is-primary" @click="downloadTrendImage">Download Population Trend (PNG format)</button>
+    </p>
   </div>
   <div v-if="trendStatus == 'empty'" class="block">
     <p>Insufficient data available to generate a trend</p>
@@ -559,6 +562,16 @@ export default {
     },
     downloadTrend() {
       window.location = this.trendDownloadURL
+    },
+    downloadTrendImage() {
+      let params = this.buildDownloadParams()
+
+      api.dataSubsetFilenameComponent(params).then(filenameComponent => {
+        let a = document.createElement("a")
+        a.download = 'tsx-trend&' + filenameComponent + '.png'
+        a.href = this.$refs.plot.toDataURL("image/png")
+        a.click()
+      })
     },
     plotTrend(id, v) {
       api.dataSubsetTrend(id).then(data => {
