@@ -76,7 +76,8 @@ def get_sources():
 					AND user.id = user_source.user_id
 					AND user.email IS NOT NULL
 				),
-				'data_agreement_status_description', data_agreement_status.description
+				'data_agreement_status_description', data_agreement_status.description,
+				'data_agreement_status', data_agreement_status.code
 			))
 		FROM source
 		LEFT JOIN (SELECT source_id, max(data_import.id) AS data_import_id FROM data_import GROUP BY source_id) AS latest_import

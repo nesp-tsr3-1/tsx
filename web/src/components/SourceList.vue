@@ -14,10 +14,26 @@
       <p class="table is-fullwidth is-striped is-hoverable" v-if="sources.length == 0">
         No datasets to show.
       </p>
-      <div v-if="sources.length > 0" class="columns">
-        <p class="column title is-6">Showing {{filteredSources.length}} / {{sources.length}} datasets</p>
-        <input class="column input" type="text" placeholder="Search datasets" v-model="searchText">
-      </div>
+      <template v-if="sources.length > 0">
+        <div class="columns is-align-items-center">
+          <div class="column is-6 has-text-weight-bold">Showing {{filteredSources.length}} / {{sources.length}} datasets</div>
+          <div class="column is-6">
+            <input class="input" type="text" placeholder="Search datasets" v-model="searchText">
+          </div>
+        </div>
+        <div v-if="showAgreement"
+          class="is-flex is-justify-content-end is-align-items-center"
+          style="margin-bottom: 1em;">
+          <div class="select is-rounded">
+            <select v-model="dataAgreementStatusFilter">
+              <option :value="null">Any agreement status</option>
+              <template v-for="option in dataAgreementStatusOptions">
+                <option :value="option.code">{{option.description}}</option>
+              </template>
+            </select>
+          </div>
+        </div>
+      </template>
       <table :class="{clickable: clickableRows}" class="table is-fullwidth is-striped is-hoverable" v-if="filteredSources.length > 0">
         <thead>
           <tr>
@@ -105,7 +121,9 @@ export default {
       searchText: '',
       debouncedSearchText: '',
       showModified: false,
-      navigationsSinceBackButtonPressed: 2
+      navigationsSinceBackButtonPressed: 2,
+      dataAgreementStatusOptions: null,
+      dataAgreementStatusFilter: null
     }
   },
   created() {
@@ -114,6 +132,9 @@ export default {
       if(user.roles.includes('Administrator')) {
         this.showModified = true
       }
+    })
+    api.dataAgreementStatusOptions().then((x) => {
+      this.dataAgreementStatusOptions = x
     })
 
     // Work-around for detecting back button so we can preserve search/scroll state (see activated hook)
@@ -173,6 +194,7 @@ export default {
   },
   computed: {
     filteredSources() {
+      let matchingSources = this.sources
       let search = this.debouncedSearchText
 
       if(search) {
@@ -182,22 +204,27 @@ export default {
           return s.description.match(searchRegex) || (s.custodians && s.custodians.some(c => c.match(searchRegex)))
         }
 
-        let matchingSources = this.sources.filter(filterSource)
+        matchingSources = matchingSources.filter(filterSource)
         for(let source of matchingSources) {
           source.descriptionParts = matchParts(source.description, searchRegex)
           source.custodianParts = (source.custodians || [])
             .map(custodian => matchParts(custodian, searchRegex))
             .filter(parts => parts.length > 1)
         }
-        return matchingSources
       } else {
-
-        for(let source of this.sources) {
+        for(let source of matchingSources) {
           source.descriptionParts = [[source.description, ""]]
           source.custodianParts = []
         }
-        return this.sources
       }
+
+      let agreementStatus = this.dataAgreementStatusFilter
+      if(agreementStatus) {
+        matchingSources = matchingSources.filter(s =>
+          s.data_agreement_status == agreementStatus);
+      }
+
+      return matchingSources
     },
     sortedSources() {
       let key = this.sort.key
