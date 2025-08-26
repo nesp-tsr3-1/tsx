@@ -204,7 +204,7 @@
 
             <div class="field numbered" v-if="showField('citation_agree')">
               <label class="label required" v-if="notAdmin">Do you agree with the above suggested citation for your data? If no, please indicate how to correctly cite your data.</label>
-              <label class="label required" v-if="isAdmin">Does the custodian agree with the suggested citation? If no, what changes have they suggested to correctly cite their data?</label>
+              <label class="label" v-if="isAdmin">Does the custodian agree with the suggested citation? If no, what changes have they suggested to correctly cite their data?</label>
               <div class="control indent">
                 <div class="radio-list">
                   <label class="radio" v-for="option in options.yes_no">
@@ -219,7 +219,7 @@
 
             <div class="field numbered" v-if="showField('monitoring_for_trend')">
               <label class="label required" v-if="notAdmin">Has your monitoring program been explicitly designed to detect population trends over time? If no / unsure, please indicate the aims of your monitoring.</label>
-              <label class="label required" v-if="isAdmin">Is the monitoring program explicitly designed to detect population trends over time? If no or unsure, what are the aims of their monitoring?</label>
+              <label class="label" v-if="isAdmin">Is the monitoring program explicitly designed to detect population trends over time? If no or unsure, what are the aims of their monitoring?</label>
               <div class="control indent">
                 <div class="radio-list">
                   <label class="radio" v-for="option in options.yes_no_unsure">
@@ -234,7 +234,7 @@
 
             <div class="field numbered" v-if="showField('analyse_own_trends')">
               <label class="label required" v-if="notAdmin">Do you analyse your own data for trends? If no, please indicate why.</label>
-              <label class="label required" v-if="isAdmin">Does the custodian analyse their own data for trends? If no, please indicate why.</label>
+              <label class="label" v-if="isAdmin">Does the custodian analyse their own data for trends? If no, please indicate why.</label>
               <div class="control indent">
                 <div class="radio-list">
                   <label class="radio" v-for="option in options.yes_no">
@@ -249,7 +249,7 @@
 
             <div class="field numbered" v-if="showField('pop_1750')">
               <label class="label required" v-if="notAdmin">Can you estimate what percentage (%) of your species’ population existed in Australia at the start of your monitoring (assuming this was 100% in 1750)? <strong>This information is to help understand population baselines and determine whether the majority of a species' decline may have occurred prior to monitoring.</strong></label>
-              <label class="label required" v-if="isAdmin">What has the custodian estimated to be the percentage (%) of the species’ population that existed in Australia at the start of the monitoring (assuming this was 100% in 1750)?</label>
+              <label class="label" v-if="isAdmin">What has the custodian estimated to be the percentage (%) of the species’ population that existed in Australia at the start of the monitoring (assuming this was 100% in 1750)?</label>
               <div class="control indent">
                 <input class="input" :readonly="viewOnly" type="text" placeholder="Enter a percentage or 'Unsure'" v-model="formData.pop_1750">
                 <p class="help is-danger" v-if="fieldErrors.pop_1750">{{fieldErrors.pop_1750}}</p>
@@ -344,7 +344,7 @@
 
             <div class="field numbered">
               <label class="label required" v-if="notAdmin">Does the above data summary and plots appear representative of your dataset?</label>
-              <label class="label required" v-if="isAdmin">Does the custodian agree with the data summary? If no, what specifically do they disagree with?</label>
+              <label class="label" v-if="isAdmin">Does the custodian agree with the data summary? If no, what specifically do they disagree with?</label>
               <div class="control indent">
                 <div class="radio-list">
                   <label class="radio" v-for="option in options.yes_no">
@@ -359,7 +359,7 @@
 
             <div class="field numbered">
               <label class="label required" v-if="notAdmin">Do you agree with how your data were handled? If no, please suggest an alternative method of aggregation.</label>
-              <label class="label required" v-if="isAdmin">Does the custodian agree with how the data were processed? If no, what alternative method of aggregation have they suggested?</label>
+              <label class="label" v-if="isAdmin">Does the custodian agree with how the data were processed? If no, what alternative method of aggregation have they suggested?</label>
               <div class="control indent">
                 <div class="radio-list">
                   <label class="radio" v-for="option in options.yes_no_unsure">
@@ -447,7 +447,7 @@
 
             <div class="field numbered" v-if="showField('statistics_agree')">
               <label class="label required" v-if="notAdmin">Do the above statistics appear representative of your dataset?</label>
-              <label class="label required" v-if="isAdmin">Does the custodian agree with the data statistics (raw and aggregated)? If no, what specifically do they disagree with?</label>
+              <label class="label" v-if="isAdmin">Does the custodian agree with the data statistics (raw and aggregated)? If no, what specifically do they disagree with?</label>
               <div class="control indent">
                 <div class="radio-list">
                   <label class="radio" v-for="option in options.yes_no_unsure">
@@ -578,7 +578,7 @@
 
             <div class="field numbered">
               <label class="label required" v-if="notAdmin">Do you agree with the trend estimate? If no or unsure, please elaborate (include detail on trends for specific sites where relevant).</label>
-              <label class="label required" v-if="isAdmin">Does the custodian agree with the trend? If no or unsure, what specifically do they disagree with?</label>
+              <label class="label" v-if="isAdmin">Does the custodian agree with the trend? If no or unsure, what specifically do they disagree with?</label>
               <div class="control indent">
                 <div class="radio-list">
                   <label class="radio" v-for="option in options.yes_no_unsure">
@@ -593,7 +593,7 @@
 
             <div class="field numbered">
               <label class="label required" v-if="notAdmin">Looking at the trend for your data, what should be the reference year at which the index should start?</label>
-              <label class="label required" v-if="isAdmin">What reference year has the custodian suggested for their trend?</label>
+              <label class="label" v-if="isAdmin">What reference year has the custodian suggested for their trend?</label>
               <div class="control indent">
                 <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-model="formData.start_year">
                 <p class="help is-danger" v-if="fieldErrors.start_year">{{fieldErrors.start_year}}</p>
@@ -604,7 +604,7 @@
 
             <div class="field numbered">
               <label class="label required" v-if="notAdmin">Looking at the trend for your data, what should be the year at which the index should end?</label>
-              <label class="label required" v-if="isAdmin">What end year has the custodian suggested for their trend?</label>
+              <label class="label" v-if="isAdmin">What end year has the custodian suggested for their trend?</label>
               <div class="control indent">
                 <input class="input" :readonly="viewOnly" type="text" placeholder="Enter your answer" v-model="formData.end_year">
                 <p class="help is-danger" v-if="fieldErrors.end_year">{{fieldErrors.end_year}}</p>
@@ -639,7 +639,7 @@
                   <tr>
                     <td :rowspan="options.standardisation_of_method_effort.length + 1">
                       <div class="field numbered">
-                        <label class="label required">Standardisation of method effort</label>
+                        <label class="label" :class="{ required: !isAdmin }">Standardisation of method effort</label>
                         <p class="help is-danger" v-if="fieldErrors.standardisation_of_method_effort">{{fieldErrors.standardisation_of_method_effort}}</p>
                       </div>
                     </td>
@@ -657,7 +657,7 @@
                   <tr>
                     <td :rowspan="options.objective_of_monitoring.length + 1">
                       <div class="field numbered">
-                        <label class="label required">Objective of monitoring</label>
+                        <label class="label" :class="{ required: !isAdmin }">Objective of monitoring</label>
                         <p class="help is-danger" v-if="fieldErrors.objective_of_monitoring">{{fieldErrors.objective_of_monitoring}}</p>
                       </div>
                     </td>
@@ -675,7 +675,7 @@
                   <tr>
                     <td :rowspan="options.consistency_of_monitoring.length + 1">
                       <div class="field numbered">
-                        <label class="label required">Consistency of monitoring</label>
+                        <label class="label" :class="{ required: !isAdmin }">Consistency of monitoring</label>
                         <p class="help is-danger" v-if="fieldErrors.consistency_of_monitoring">{{fieldErrors.consistency_of_monitoring}}</p>
                       </div>
                     </td>
@@ -693,7 +693,7 @@
                   <tr>
                     <td :rowspan="options.monitoring_frequency_and_timing.length + 1">
                       <div class="field numbered">
-                        <label class="label required">Monitoring frequency and timing</label>
+                        <label class="label" :class="{ required: !isAdmin }">Monitoring frequency and timing</label>
                         <p class="help is-danger" v-if="fieldErrors.monitoring_frequency_and_timing">{{fieldErrors.monitoring_frequency_and_timing}}</p>
                       </div>
                     </td>
@@ -711,7 +711,7 @@
                   <tr>
                     <td :rowspan="options.absences_recorded.length + 1">
                       <div class="field numbered">
-                        <label class="label required">Were absences recorded systematically?</label>
+                        <label class="label" :class="{ required: !isAdmin }">Were absences recorded systematically?</label>
                         <p class="help is-danger" v-if="fieldErrors.absences_recorded">{{fieldErrors.absences_recorded}}</p>
                       </div>
                     </td>
@@ -763,7 +763,7 @@
               </div>
 
               <div class="field numbered">
-                <label class="label required">Has the custodian answered the optional questions about funding, logistics and governance?</label>
+                <label class="label">Has the custodian answered the optional questions about funding, logistics and governance?</label>
                 <div class="control indent">
                   <div class="radio-list">
                     <label class="radio" v-for="option in options.yes_no">
@@ -775,7 +775,7 @@
               </div>
 
               <div class="field numbered">
-                <label class="label required">Where the custodian has provided funding data, what value have they estimated as the total investment in the dataset to date (not counting in-kind support)?</label>
+                <label class="label">Where the custodian has provided funding data, what value have they estimated as the total investment in the dataset to date (not counting in-kind support)?</label>
                 <div class="control indent">
                   <input class="input" :readonly="viewOnly" type="text" placeholder="Enter value or type 'unsure'" v-model="formData.estimated_cost_dataset">
                   <p class="help is-danger" v-if="fieldErrors.estimated_cost_dataset">{{fieldErrors.estimated_cost_dataset}}</p>

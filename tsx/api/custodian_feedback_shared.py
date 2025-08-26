@@ -186,53 +186,53 @@ form_fields = [
 		name='admin_type'),
 	Field(
 		name='citation_agree',
-		validators=[val_required_for_submit, val_yn]),
+		validators=[val_required_integrated_only, val_yn]),
 	Field(
 		name='citation_agree_comments',
 		validators=[]),
 	Field(
 		name='monitoring_for_trend',
-		validators=[val_required_for_submit, val_ynu]),
+		validators=[val_required_integrated_only, val_ynu]),
 	Field(
 		name='monitoring_for_trend_comments'),
 	Field(
 		name='analyse_own_trends',
-		validators=[val_required_for_submit, val_yn]),
+		validators=[val_required_integrated_only, val_yn]),
 	Field(
 		name='analyse_own_trends_comments'),
 	Field(
 		name='pop_1750',
-		validators=[val_required_for_submit]),
+		validators=[val_required_integrated_only]),
 	Field(
 		name='pop_1750_comments'),
 	Field(
 		name='data_summary_agree',
-		validators=[val_required_for_submit, val_yn]),
+		validators=[val_required_integrated_only, val_yn]),
 	Field(
 		name='data_summary_agree_comments'),
 	Field(
 		name='processing_agree',
-		validators=[val_required_for_submit, val_ynu]),
+		validators=[val_required_integrated_only, val_ynu]),
 	Field(
 		name='processing_agree_comments'),
 	Field(
 		name='statistics_agree',
-		validators=[val_required_for_submit, val_ynu]),
+		validators=[val_required_integrated_only, val_ynu]),
 	Field(
 		name='statistics_agree_comments'),
 	Field(
 		name='trend_agree',
-		validators=[val_required_for_submit, val_ynu]),
+		validators=[val_required_integrated_only, val_ynu]),
 	Field(
 		name='trend_agree_comments'),
 	Field(
 		name='start_year',
-		validators=[val_required_for_submit]),
+		validators=[val_required_integrated_only]),
 	Field(
 		name='start_year_comments'),
 	Field(
 		name='end_year',
-		validators=[val_required_for_submit]),
+		validators=[val_required_integrated_only]),
 	Field(
 		name='end_year_comments'),
 	Field(
