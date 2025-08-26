@@ -1268,15 +1268,18 @@ export default {
     },
     canEdit() {
       return ['incomplete', 'draft', 'complete'].includes(this.form.feedback_status.code)
+    },
+    consistencyPlotVisible() {
+      return this.consistencyPlotAvailable && this.showSection('summary')
     }
   },
   watch: {
-    consistencyPlotAvailable(isAvailable) {
+    consistencyPlotVisible(isVisible) {
       let data = this.form?.stats?.monitoring_consistency
-      if(isAvailable && data) {
-        setTimeout(() => {
+      if(isVisible && data) {
+        this.$nextTick(() => {
           plotConsistency(data, this.$refs.consistencyPlot)
-        }, 1000)
+        });
       }
     },
     formData: {
