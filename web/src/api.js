@@ -224,6 +224,10 @@ export function dataSubsetTrend(id) {
   return get('/subset/trend/' + id)
 }
 
+export function dataSubsetTrendDiagnostics(id) {
+  return get('/subset/trend/' + id + '/diagnostics')
+}
+
 export function dataSubsetTrendDownloadURL(id) {
   return ROOT_URL + '/subset/trend/' + id + '?format=csv'
 }

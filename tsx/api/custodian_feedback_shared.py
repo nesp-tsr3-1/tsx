@@ -583,13 +583,19 @@ def update_dataset_stats(source_id, taxon_id, data_import_id):
 		'taxon_id': taxon_id
 	}
 
-	trend_path, lpi_path = subset.subset_generate_trend_sync(subset_params)
+	trend_path, lpi_path, diagnostics_path = subset.subset_generate_trend_sync(subset_params)
 
 	try:
 		with open(trend_path, 'r') as file:
 			trend_data = file.read()
 	except:
 		trend_data = None
+
+	try:
+		with open(diagnostics_path, 'r') as file:
+			trend_diagnostics = json.load(file)
+	except:
+		trend_diagnostics = None
 
 	# Generate monitoring consistency plot
 	stats = {
@@ -598,6 +604,7 @@ def update_dataset_stats(source_id, taxon_id, data_import_id):
 		'time_series_stats': time_series_stats(lpi_path),
 		'raw_data_stats': raw_data_stats(source_id, taxon_id),
 		'trend': trend_data,
+		'trend_diagnostics': trend_diagnostics,
 		'processing_summary': processing_summary(source_id, taxon_id),
 		'site_management_summary': site_management_summary(source_id, taxon_id)
 	}

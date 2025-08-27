@@ -715,9 +715,40 @@ def process_trend(trend_id):
         results_path = os.path.join(path, "data_infile_Results.txt")
         if os.path.exists(results_path):
             shutil.copy(results_path, os.path.join(path, "trend.txt"))
+
+        try:
+            with open(os.path.join(path, 'diagnostics.json'), 'w') as f:
+                diagnostics = read_trend_diagnostics(path)
+                json.dump(diagnostics, f)
+        except Exception as e:
+            print(e)
     finally:
         with lock:
             processing_trend_ids.remove(trend_id)
+
+def read_trend_diagnostics(path):
+    model_types = [
+        ('gam', 'PopProcessedGAM.txt'),
+        ('chain', 'PopProcessed_Chain.txt'),
+        ('none', 'PopNotProcessed.txt')
+    ]
+    model_counts = {}
+    total = 0
+    for model, filename in model_types:
+        try:
+            with open(os.path.join(path, 'lpi_temp', filename)) as f:
+                x = sum(line != '"1" 0\n' for line in f) - 1
+                model_counts[model] = x
+                total += x
+        except Exception as e:
+            print(e)
+            model_counts[model] = 0
+
+    model_counts['total'] = total
+
+    return {
+        'model_counts': model_counts
+    }
 
 @bp.route('/subset/trend', methods = ['POST'])
 def subset_generate_trend():
@@ -754,7 +785,11 @@ def subset_generate_trend_sync(subset_params):
     thread.join()
     work_dir = trend_work_dir(trend_id)
 
-    return os.path.join(work_dir, "trend.txt"), os.path.join(work_dir, "lpi.csv")
+    return (
+        os.path.join(work_dir, "trend.txt"),
+        os.path.join(work_dir, "lpi.csv"),
+        os.path.join(work_dir, "diagnostics.json")
+    )
 
 @bp.route('/subset/trend/<trend_id>/status')
 def subset_get_trend_status(trend_id):
@@ -800,5 +835,14 @@ def subset_get_trend(trend_id):
         else:
             return jsonify("Invalid format (Allowed formats: raw, csv)"), 400
 
+    else:
+        return "Not found", 404
+
+@bp.route('/subset/trend/<trend_id>/diagnostics')
+def subset_get_trend_diagnostics(trend_id):
+    path = os.path.join(trend_work_dir(trend_id), "diagnostics.json")
+    if os.path.exists(path):
+        with open(path, 'r') as file:
+            return Response(file.read(), mimetype="application/json")
     else:
         return "Not found", 404

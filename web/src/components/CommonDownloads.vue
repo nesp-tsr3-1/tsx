@@ -274,6 +274,9 @@
     <spinner size='small' style='display: inline-block;'></spinner>
   </div>
   <div v-if="trendStatus == 'ready'" class="content">
+    <p v-if="isAdmin">
+      {{trendDiagnosticsText}}
+    </p>
     <p style="font-style: italic;">The below trend graph shows the average change in populations compared to a baseline year. It shows a relative change and not population numbers themselves. At the reference year, the index gets an index score of one. A score of 1.2 would mean a 20% increase on average compared to the reference year, while a score of 0.8 would mean a 20% decrease on average compared to the reference year. The overall trend (mean value per year) is shown by the blue line (dashed for single species and solid for multiple species). The grey cloud indicates the uncertainty in the estimate as measured by the variability between all-time series in the dataset or data subset. This trend excludes one-off surveys and absent-only time series. Please note that this trend has been generated using the Living Planet Index methodology, which is designed for producing composite trends rather than single-species trends.</p>
     <canvas v-show="showPlot" ref="plot" style="height: 10em;"></canvas>
     <p>
@@ -293,7 +296,7 @@ import * as api from '../api.js'
 import Spinner from '../../node_modules/vue-simple-spinner/src/components/Spinner.vue'
 import Multiselect from '@vueform/multiselect'
 import HeatMap from './HeatMap.vue'
-import { plotTrend, generateTrendPlotData } from '../plotTrend.js'
+import { plotTrend, generateTrendPlotData, trendDiagnosticsText } from '../plotTrend.js'
 import { plotConsistency } from '../plotConsistency.js'
 import { Tippy } from 'vue-tippy'
 import { readTextFile, extractSpeciesIDsFromCSV, saveTextFile, generateSpeciesCSV } from '../util.js'
@@ -360,7 +363,9 @@ export default {
       heatmapData: [],
       trendReferenceYear: null,
       trendFinalYear: null,
-      consistencyPlotStatus: 'idle'
+      consistencyPlotStatus: 'idle',
+      trendDiagnosticsText: null,
+      user: null
     }
   },
   computed: {
@@ -398,6 +403,9 @@ export default {
       if(this.trendReferenceYear >= this.trendFinalYear) {
         return "Reference year must be earlier than final year"
       }
+    },
+    isAdmin: function() {
+      return this.user?.is_admin
     }
   },
   watch: {
@@ -437,6 +445,10 @@ export default {
   },
   created () {
     let initialisationPromises = []
+
+    api.currentUser().then((user) => {
+      this.user = user
+    })
 
     if(this.enableProgramFilter) {
       initialisationPromises.push(
@@ -534,6 +546,7 @@ export default {
         ...this.buildDownloadParams()
       }
       let v = this.changeCounter // used to detect if parameters are changed during trend generation
+      this.trendDiagnosticsText = null
       this.trendStatus = 'processing'
       api.dataSubsetGenerateTrend(params).then(x => {
         this.trendId = x.id
@@ -552,6 +565,7 @@ export default {
         if(x.status == 'ready') {
           this.trendDownloadURL = api.dataSubsetTrendDownloadURL(id)
           this.plotTrend(id, v)
+          this.updateTrendDiagnostics(id, v)
         } else if(x.status == 'processing') {
           setTimeout(() => this.checkTrendStatus(id, v), 3000)
         }
@@ -594,6 +608,15 @@ export default {
       }).catch(e => {
         console.log(e)
         this.trendStatus = 'error'
+      })
+    },
+    updateTrendDiagnostics(id, v) {
+      api.dataSubsetTrendDiagnostics(id).then(data => {
+        if(v != this.changeCounter) {
+          return
+        }
+
+        this.trendDiagnosticsText = trendDiagnosticsText(data)
       })
     },
     generateConsistencyPlot() {

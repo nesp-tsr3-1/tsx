@@ -199,3 +199,24 @@ export function generateTrendPlotData(data, options) {
 
   return plotData
 }
+
+export function trendDiagnosticsText(diagnosticsData) {
+  let parts = []
+  let gamCount = diagnosticsData.model_counts.gam
+  let chainCount = diagnosticsData.model_counts.chain
+  let totalCount = gamCount + chainCount
+
+  if(gamCount > 0) {
+    parts.push(`general additive model (${Math.round(gamCount * 100 / totalCount)}%)`)
+  }
+
+  if(chainCount > 0) {
+    parts.push(`log-linear interpolation (${Math.round(chainCount * 100 / totalCount)}%)`)
+  }
+
+  if(gamCount == 0 && chainCount == 0) {
+    parts.push("none")
+  }
+
+  return "Models used: " + parts.join(", ")
+}
