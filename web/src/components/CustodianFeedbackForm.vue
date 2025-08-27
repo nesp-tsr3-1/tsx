@@ -1469,7 +1469,7 @@ export default {
             this.canResetTrend = true
           })
         } else if(status.status == 'processing') {
-          setTimeout(() => this.checkTrend(id))
+          setTimeout(() => this.checkTrend(id), 2000)
         }
       }).catch(e => {
         console.log(e)
