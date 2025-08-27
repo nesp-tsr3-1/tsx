@@ -79,6 +79,7 @@
 <script>
 import * as api from '../api.js'
 import features from '../features.js'
+import { globalEventBus } from '../eventBus.js'
 
 export default {
   name: 'UserNav',
@@ -87,7 +88,8 @@ export default {
       status: 'loading',
       user: null,
       burgerActive: false,
-      features
+      features,
+      loginListener: null
     }
   },
   computed: {
@@ -102,17 +104,24 @@ export default {
     }
   },
   created () {
-    api.currentUser().then((user) => {
-      this.user = user
-      this.status = 'loaded'
-    }).catch((error) => {
-      console.log(error)
-      this.status = 'error'
-    })
+    this.loginListener = globalEventBus.addListener('login', () => this.refresh())
+    this.refresh()
+  },
+  unmounted() {
+    this.loginListener.remove()
   },
   methods: {
     toggleBurger() {
       this.burgerActive = !this.burgerActive
+    },
+    refresh() {
+      api.currentUser().then((user) => {
+        this.user = user
+        this.status = 'loaded'
+      }).catch((error) => {
+        console.log(error)
+        this.status = 'error'
+      })
     }
   }
 }

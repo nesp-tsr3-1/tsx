@@ -33,6 +33,7 @@
 
 <script>
 import * as api from '../api.js'
+import { globalEventBus } from '../eventBus.js'
 
 export default {
   name: 'Login',
@@ -54,6 +55,7 @@ export default {
       this.submitting = true
       api.login(this.email, this.password).then(response => {
         api.refreshCurrentUser()
+        globalEventBus.dispatchEvent('login', {})
         this.$router.replace(this.$route.query.after_login || '/source')
       }).catch(error => {
         if(error.xhr.status === 400) {
