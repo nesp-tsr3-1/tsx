@@ -565,7 +565,8 @@ def source_to_json(source):
 		if field.name == 'monitoring_program' and source.monitoring_program:
 			json['monitoring_program'] = source.monitoring_program.description
 		elif field.name == 'source_type':
-			json['source_type'] = source.source_type.description
+			if source.source_type:
+				json['source_type'] = source.source_type.description
 		elif field.name == 'data_agreement_status':
 			json['data_agreement_status'] = source.data_agreement_status.code
 		elif field.name == 'data_agreement_ids':
