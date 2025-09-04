@@ -13,8 +13,10 @@ export class EventBus {
     }
 
     this.listeners[eventName][id] = listener
+
+    let self = this
     return {
-      remove() { delete this.listeners[eventName][id] }
+      remove() { delete self.listeners[eventName][id] }
     }
   }
 
