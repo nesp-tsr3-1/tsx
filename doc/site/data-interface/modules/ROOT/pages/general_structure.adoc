@@ -24,6 +24,10 @@ A navigation header is present on all pages of the site, and contains the follow
 | All users
 | Link to xref:custodian_feedback.adoc[Custodian Feedback] page
 
+| Documents
+| All users
+| Link to xref:documents.adoc[Documents] page
+
 | Help
 | All users
 | Shows drop down with a link to the TSX website and a contact email address.

@@ -22,12 +22,15 @@ The table shows the following information for each dataset:
  * Date/Time Created
  * Date/Time Last Modified (Administrators only)
  * Latest Import Status
+ * Agreement Status (Administrators only)
 
 The table can be sorted on any column in ascending or descending order by clicking on the column heading.
 
+Clicking on any row of the table opens the <<Dataset Details>> page for that dataset.
+
 === Search Bar
 
-A search bar above the table allows datasets to be searched by description and custodian name. As text is entered into the search bar, the datasets table is automatically filtered to show only matching records. When the search text matches a custodian name or email address, the custodian name also appears along side the dataset. Text which matches the search text is higlighted in bold.
+A search bar above the table allows datasets to be searched by description and custodian name. As text is entered into the search bar, the table is filtered to show only matching records. When the search text matches a custodian name or email address, the custodian name also appears along side the dataset. Text which matches the search text is higlighted in bold.
 
 === Dataset Count
 
@@ -35,7 +38,7 @@ The interface displays the total number of datasets accessible by the user, and 
 
 === Create Dataset
 
-The "Create Dataset" button navigates to the Dataset Editing interface where a user can fill out dataset details in order to create a new dataset.
+The "Create Dataset" button navigates to the <<Dataset Editing>> interface where a user can fill out dataset details in order to create a new dataset.
 
 == Dataset Details
 
@@ -51,8 +54,10 @@ The first section displays the following dataset metadata:
  * Contact Information
  * Data Citation
  * Monitoring Program
+ * Source Type
+ * Agreement(s)
 
-An "Edit" button displayed at the top of the section navigates to the Dataset Editing page where these details can be updated by the user.
+An "Edit" button displayed at the top of the section navigates to the <<Dataset Editing>> page where these details can be updated by the user.
 
 === Dataset Summary
 
@@ -159,6 +164,8 @@ To prevent accidental deletion, users must tick a checkbox to confirm their deci
 
 The Dataset Editing interface is used for entering and updating dataset metadata and contact details.
 
+All fields are validated when the user attempts to submit the form, and any fields with errors are highlighted.
+
 === Metadata fields
 
 The following fields are all required:
@@ -168,6 +175,7 @@ The following fields are all required:
  * Data provider (plain text)
  * Author(s) (plain text)
  * Monitoring program (drop down list)
+ * Source type (radio buttons)
 
 The first four of these fields are assembled to form a data citation, which is displayed below them. The format for the data citation is:
 
@@ -177,6 +185,11 @@ The first four of these fields are assembled to form a data citation, which is d
 Any trailing full stops or spaces entered into the fields are automatically cleaned to avoid extraneous characters in the generated citation.
 
 The Monitoring program field is a drop down list of program names, defaulting to N/A. There is an option to add a new monitoring program name to the list. Adding a new option here makes it available to all other user for selection.
+
+The Source type field allows one of two values:
+
+ * Custodian (the data are provided as electronic primary data from a custodian)
+ * Paper report (the data are extracted from a published scientific paper or report)
 
 === Contact fields
 
@@ -188,4 +201,16 @@ These fields all fields required unless marked otherwise:
  * Email (plain text)
  * Phone number (optional, plain text)
 
-All fields are validated when the user attempts to submit the form, and any fields with errors are highlighted.
+=== Data sharing agreement (Admin only)
+
+A data sharing agreement status must be selected from the following options:
+
+ * No agreement in place
+ * Agreement in negotiation
+ * Pending UQ signature
+ * Agreement executed
+ * UQ-owned data
+ * Publicly available data
+ * Informal agreement in place
+
+If the *Agreement executed* option is selected, a multi-select drop down list allows the user to select one or more agreements that have been previously entered using the xref:documents.adoc#data-sharing-agreements[Data Sharing Agreements] page. At least one agreement must be selected.

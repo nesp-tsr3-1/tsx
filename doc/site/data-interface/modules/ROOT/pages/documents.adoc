@@ -1,0 +1,106 @@
+= Documents
+
+The documents section TSX data interface acts as a repository for official documents that are shared between the TSX team and data custodians. Two types of documentation are supported: data sharing agreements and acknowledgement letters.
+
+These documentation types are managed on separate pages. A pair of tabs allow the user to easily switch between these pages. Each tab displays the number of documents that the user has access to under that section.
+
+Administrator users have access to all documents. Other users only have access to:
+
+ * Acknowledgement letters that are addressed to them personally; and
+ * Data sharing agreements that have been executed for a dataset that they are a custodian of.
+
+== Data Sharing Agreements
+
+Page URL: https://tsx.org.au/data/documents/data_agreements
+
+=== Download Agreement Template
+
+The "Download Template Agreement" button downloads a data agreement template document that custodians can complete and then send to the TSX team.
+
+=== Upload New Agreement
+
+The "Upload New Agreement" button is available to Administrator users only. This button navigates to the <<New Agreement Details>> page.
+
+=== Table
+
+All data agreements which the user has acces to are listed in a table.
+
+The table shows the following information for each data agreement:
+
+ * Filename(s)
+ * Commencement Date
+ * Actions (Admin only)
+
+The filenames can be clicked to download the relevant PDF file. A single agreement may contain multiple files. A draft data sharing agreement may contain no files, in which case the table displays "(No files)".
+
+Draft data sharing agreements are indicated by a "Draft" tag located next to the list of filenames.
+
+The actions column contains the following buttons:
+
+ * "Edit" (or "Edit Draft")
+ * "Download (CSV)"
+
+The "Edit" button navigates to the <<Edit Agreement Details>> page.
+
+The "Download (CSV)" button downloads metadata for the data sharing agreement in the <<Metadata CSV format>>.
+
+=== Metadata CSV format
+
+The data sharing agreement metadata CSV format contains the following columns:
+
+ * DataAgreementID
+ * IsDraft
+ * Files
+ * AlaYes
+ * DcceewYes
+ * ConditionsRaw
+ * ConditionsSensitive
+ * HasExpiryDate
+ * ExpiryDate
+ * HasEmbargoDate
+ * EmbargoDate
+ * ProviderName
+ * ProviderPosition
+ * ProviderOrganisation
+ * ProviderEmail
+ * ProviderPhone
+ * ProviderPostalAddress
+ * ProviderAbn
+ * DataDescription
+ * ProviderSignatory
+ * ProviderWitness
+ * ProviderDateSigned
+ * UqSignatory
+ * UqWitness
+ * UqDateSigned
+
+=== Search Bar
+
+A search bar above the table allows data sharing agreements to be searched by:
+
+ * Filename
+ * Dataset name and ID
+ * Custodian name/email address
+
+As text is entered into the search bar, the table is filtered to show only matching records. When the search text matches a custodian or dataset, the custodian/dataset appears along side the filenames. Text which matches the search text is highlighted in bold.
+
+=== Data Sharing Agreement Count
+
+The interface displays the total number of data sharing agreements accessible by the user, and the number of agreements currently displayed based on the search criteria.
+
+== Edit Agreement Details
+
+TODO
+
+== New Agreement Details
+
+This page enables an Administrator user to upload a new data sharing agreement. It is identical to the <<Edit Agreement Details>> page, except that:
+
+ * The title of the page is "New Agreement Details"
+ * Instead of the "Update Agreement" button, there is a "Create Agreement" button
+
+== Acknowledgement Letters
+
+Page URL: https://tsx.org.au/data/documents/acknowledgement_letters
+
+TODO
