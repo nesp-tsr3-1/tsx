@@ -64,7 +64,7 @@
               <tr>
                 <th @click="sortBy('filenames')">Filename(s) {{sortIcon('filenames')}}</th>
                 <th @click="sortBy('commencement_date')">Commencement Date {{sortIcon('commencement_date')}}</th>
-                <th v-if="isAdmin">Action</th>
+                <th v-if="isAdmin">Actions</th>
               </tr>
             </thead>
             <tbody>
