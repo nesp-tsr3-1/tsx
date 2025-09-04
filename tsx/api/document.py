@@ -44,15 +44,17 @@ def data_agreements():
 				'custodians', (
 					SELECT JSON_ARRAYAGG(
 						CONCAT(
-							COALESCE(CONCAT(user.first_name, " ", user.last_name, " "), ""),
-							COALESCE(CONCAT("<", user.email, ">"), "")
+							COALESCE(CONCAT(first_name, " ", last_name, " "), ""),
+							COALESCE(CONCAT("<", email, ">"), "")
 						)
 					)
-					FROM source_data_agreement, source, user_source, user
-					WHERE source_data_agreement.data_agreement_id = data_agreement.id
-					AND source.id = source_data_agreement.source_id
-					AND user_source.source_id = source.id
-					AND user.id = user_source.user_id
+					FROM user WHERE id IN (
+						SELECT user_source.user_id
+						FROM source_data_agreement, source, user_source
+						WHERE source_data_agreement.data_agreement_id = data_agreement.id
+						AND source.id = source_data_agreement.source_id
+						AND user_source.source_id = source.id
+					)
 				),
 				'sources', (
 					SELECT JSON_ARRAYAGG(
