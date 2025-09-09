@@ -90,7 +90,150 @@ The interface displays the total number of data sharing agreements accessible by
 
 == Edit Agreement Details
 
-TODO
+=== Upload Document
+
+This section allows the user to add one or more PDF files to the agreement by clicking "Select file(s)". It is only possible to select PDF files; other file formats are not permitted.
+
+The filename of each uploaded file is listed, along with a "Remove file" button that removes the file. Clicking on the filename downloads the file.
+
+There is no limit to the number of files that can be added to an agreement, but at least one file must be present in order to create or update the agreement, unless it is a draft.
+
+=== Conditions to Data Sharing
+
+This section consists of the following fields:
+
+[cols="4,1,2"]
+|===
+| Label | Required (non-draft) | Field type/options
+
+| 1. Does the data provider permit data sharing with ALA?
+| Yes
+| Yes, No
+
+| 2. Does the data provider permit data sharing with DCCEEW?
+| Yes
+| Yes, No
+
+| 3. Please enter below the details of any additional conditions regarding raw data handling listed by the data provider.
+| Yes
+| Free text
+
+| 4. Please enter below the details of any additional conditions regarding sensitive data handling listed by the data provider.
+| Yes
+| Free text
+
+|5. Has the data provider included an expiry date for the agreement?
+| No
+| Yes, No
+
+| 6. Has the data provider included an embargo period on the publication of the aggregated de-identified data?
+| No
+| Yes, No
+
+|===
+
+=== Data Provider Details
+
+This section consists of the following fields:
+
+[cols="4,1,2"]
+|===
+| Label | Required (non-draft) | Field type/options
+
+
+| 7. What are the organisational details of the data provider as listed in Schedule A?
+| No
+| Free Text
+
+| 8. What is the name of the data provider as listed in Schedule A?
+| No
+| Free Text
+
+| 9. What are the position details of the data provider as listed in Schedule A?
+| No
+| Free Text
+
+3+| 10. What are the contact details of the data provider as listed in Schedule A?
+
+| Email address
+| No
+| Free Text
+
+| Phone number
+| No
+| Free Text
+
+| 11. What is the postal address details for the data provider as listed in Schedule A?
+| No
+| Free Text
+
+| 12. What is the ABN for the data provider as listed in Schedule A?
+| No
+| Free Text
+
+|===
+
+=== Provided Data Description
+
+This section consists of the following field:
+
+[cols="4,1,2"]
+|===
+| Label | Required (non-draft) | Field type/options
+
+| 13. What is the description of the provided data as listed in Schedule A?
+| No
+| Free Text
+|===
+
+
+=== Signatory Details
+
+This section consists of the following fields:
+
+[cols="4,1,2"]
+|===
+| Label | Required (non-draft) | Field type/options
+
+| 14. What date was the agreement signed by the UQ authorised signatory?
+| No
+| Date
+
+| 15. What is the name of the UQ authorised signatory?
+| No
+| Free Text
+
+| 16. What is the name of the witness to the UQ authorised signatory?
+| No
+| Free Text
+
+| 17. What date was the agreement signed by the authorised signatory for the data provider?
+| No
+| Date
+
+| 18. What is the name of the authorised signatory for the data provider?
+| No
+| Free Text
+
+| 19. What is the name of the witness to the authorised signatory for the data provider?
+| No
+| Free Text
+
+|===
+
+=== Action Buttons
+
+==== Save Draft and Close
+
+For agreements which are in the draft state, including newly entered agreements that have not been saved yet, a "Save Draft and Close" button is visible, which saves the current agreement while keeping it as a draft. The user is then redirected back to the <<Data Sharing Agreements>> page.
+
+==== Update Agreement
+
+Clicking this button saves the agreement and, if it is a draft agreement, moves it out of the draft state. The user is then redirected back to the <<Data Sharing Agreements>> page.
+
+==== Delete Agreement
+
+Clicking this button first displays a confirmation dialog asking the user if they are sure they wish to delete the agreement. If the user confirms this action, the agreement is deleted and the user is redirected back to the <<Data Sharing Agreements>> page.
 
 == New Agreement Details
 
@@ -103,4 +246,26 @@ This page enables an Administrator user to upload a new data sharing agreement. 
 
 Page URL: https://tsx.org.au/data/documents/acknowledgement_letters
 
-TODO
+=== Table
+
+All acknowledgement letters which the user has acces to are listed in a table.
+
+The table shows the following information for each data agreement:
+
+ * Filename(s)
+ * Year
+
+The filenames can be clicked to download the relevant PDF file. A single acknowledgement letter may contain multiple files - this is typically a case of multiple letters relating to the same dataset and year being grouped as a single "acknowledgement letter" as far as the TSX interface is concerned.
+
+=== Search Bar
+
+A search bar above the table allows acknowledgement letters to be searched by:
+
+ * Filename
+ * Recipient name/email address
+
+As text is entered into the search bar, the table is filtered to show only matching records. When the search text matches a recipient, the recipient name and email address appears along side the filenames. Text which matches the search text is highlighted in bold.
+
+=== Data Sharing Agreement Count
+
+The interface displays the total number of acknowledgement letters accessible by the user, and the number of letters currently displayed based on the search criteria.
