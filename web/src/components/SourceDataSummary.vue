@@ -12,68 +12,129 @@
     </div>
     <div v-if="status == 'loaded'">
       <div v-if="items.length == 0">
-        <p class="content">No records have been imported for this dataset.</p>
+        <p class="content">
+          No records have been imported for this dataset.
+        </p>
       </div>
       <div v-for="taxon in items">
-        <div :id="taxon.id"></div>
+        <div :id="taxon.id" />
         <div class="table-header">
-            <div class="table-header-title">
-              <em>{{taxon.scientific_name}}</em> <span v-if="taxon.common_name">({{firstCommonName(taxon)}})</span>
-            </div>
-            <ul class="table-header-links" v-if="showNavigationButtons">
-              <li v-if="true">
-                <a href="#summary_top" title="Top of dataset summary">
-                  <span class="icon" aria-label="top">
-                    <i class="fas fa-fast-backward" aria-hidden="true"></i>
-                  </span>
-                </a>
-              </li>
-              <li v-else>
-                <span class="icon" aria-label="top">
-                  <i class="fas fa-fast-backward" aria-hidden="true"></i>
+          <div class="table-header-title">
+            <em>{{ taxon.scientific_name }}</em> <span v-if="taxon.common_name">({{ firstCommonName(taxon) }})</span>
+          </div>
+          <ul
+            v-if="showNavigationButtons"
+            class="table-header-links"
+          >
+            <li v-if="true">
+              <a
+                href="#summary_top"
+                title="Top of dataset summary"
+              >
+                <span
+                  class="icon"
+                  aria-label="top"
+                >
+                  <i
+                    class="fas fa-fast-backward"
+                    aria-hidden="true"
+                  />
                 </span>
-              </li>
+              </a>
+            </li>
+            <li v-else>
+              <span
+                class="icon"
+                aria-label="top"
+              >
+                <i
+                  class="fas fa-fast-backward"
+                  aria-hidden="true"
+                />
+              </span>
+            </li>
 
-              <li v-if="taxon.prevId">
-                <a :href="'#' + taxon.prevId" title="Previous taxon">
-                  <span class="icon" aria-label="prev">
-                    <i class="fas fa-step-backward" aria-hidden="true"></i>
-                  </span>
-                </a>
-              </li>
-              <li v-else>
-                <span class="icon" aria-label="top" title="Previous taxon">
-                  <i class="fas fa-step-backward" aria-hidden="true"></i>
+            <li v-if="taxon.prevId">
+              <a
+                :href="'#' + taxon.prevId"
+                title="Previous taxon"
+              >
+                <span
+                  class="icon"
+                  aria-label="prev"
+                >
+                  <i
+                    class="fas fa-step-backward"
+                    aria-hidden="true"
+                  />
                 </span>
-              </li>
+              </a>
+            </li>
+            <li v-else>
+              <span
+                class="icon"
+                aria-label="top"
+                title="Previous taxon"
+              >
+                <i
+                  class="fas fa-step-backward"
+                  aria-hidden="true"
+                />
+              </span>
+            </li>
 
-              <li v-if="taxon.nextId">
-                <a :href="'#' + taxon.nextId">
-                  <span class="icon" aria-label="top" title="Next taxon">
-                    <i class="fas fa-step-forward" aria-hidden="true"></i>
-                  </span>
-                </a>
-              </li>
-              <li v-else>
-                <span class="icon" aria-label="top">
-                  <i class="fas fa-step-forward" aria-hidden="true"></i>
+            <li v-if="taxon.nextId">
+              <a :href="'#' + taxon.nextId">
+                <span
+                  class="icon"
+                  aria-label="top"
+                  title="Next taxon"
+                >
+                  <i
+                    class="fas fa-step-forward"
+                    aria-hidden="true"
+                  />
                 </span>
-              </li>
+              </a>
+            </li>
+            <li v-else>
+              <span
+                class="icon"
+                aria-label="top"
+              >
+                <i
+                  class="fas fa-step-forward"
+                  aria-hidden="true"
+                />
+              </span>
+            </li>
 
-              <li v-if="true">
-                <a href="#summary_bottom">
-                  <span class="icon" aria-label="top" title="Bottom of dataset summary">
-                    <i class="fas fa-fast-forward" aria-hidden="true"></i>
-                  </span>
-                </a>
-              </li>
-              <li v-else>
-                <span class="icon" aria-label="top">
-                  <i class="fas fa-fast-forward" aria-hidden="true"></i>
+            <li v-if="true">
+              <a href="#summary_bottom">
+                <span
+                  class="icon"
+                  aria-label="top"
+                  title="Bottom of dataset summary"
+                >
+                  <i
+                    class="fas fa-fast-forward"
+                    aria-hidden="true"
+                  />
                 </span>
-              </li>
-            </ul>
-
+              </a>
+            </li>
+            <li v-else>
+              <span
+                class="icon"
+                aria-label="top"
+              >
+                <i
+                  class="fas fa-fast-forward"
+                  aria-hidden="true"
+                />
+              </span>
+            </li>
+          </ul>
         </div>
         <table class="table is-fullwidth">
           <thead>
@@ -85,50 +146,102 @@
           </thead>
           <tbody>
             <tr v-for="t in taxon.ts">
-              <td>{{t.site_name}}</td>
-              <td>{{t.search_type}}</td>
-              <td>{{t.min_year}}–{{t.max_year}}</td>
+              <td>{{ t.site_name }}</td>
+              <td>{{ t.search_type }}</td>
+              <td>{{ t.min_year }}–{{ t.max_year }}</td>
             </tr>
           </tbody>
         </table>
       </div>
-      <div id="summary_bottom" v-if="showNavigationButtons">
+      <div
+        v-if="showNavigationButtons"
+        id="summary_bottom"
+      >
         <p><em>End of summary</em></p>
-        <ul class="table-header-links" v-if="showNavigationButtons">
+        <ul
+          v-if="showNavigationButtons"
+          class="table-header-links"
+        >
           <li>
-            <a href="#summary_top" title="Top of dataset summary">
-              <span class="icon" aria-label="top">
-                <i class="fas fa-fast-backward" aria-hidden="true"></i>
+            <a
+              href="#summary_top"
+              title="Top of dataset summary"
+            >
+              <span
+                class="icon"
+                aria-label="top"
+              >
+                <i
+                  class="fas fa-fast-backward"
+                  aria-hidden="true"
+                />
               </span>
             </a>
           </li>
 
           <li>
-            <a :href="'#' + lastTaxonId" title="Previous taxon">
-              <span class="icon" aria-label="prev">
-                <i class="fas fa-step-backward" aria-hidden="true"></i>
+            <a
+              :href="'#' + lastTaxonId"
+              title="Previous taxon"
+            >
+              <span
+                class="icon"
+                aria-label="prev"
+              >
+                <i
+                  class="fas fa-step-backward"
+                  aria-hidden="true"
+                />
               </span>
             </a>
           </li>
 
           <li>
-            <span class="icon" aria-label="top">
-              <i class="fas fa-step-forward" aria-hidden="true"></i>
+            <span
+              class="icon"
+              aria-label="top"
+            >
+              <i
+                class="fas fa-step-forward"
+                aria-hidden="true"
+              />
             </span>
           </li>
 
           <li>
-            <span class="icon" aria-label="top">
-              <i class="fas fa-fast-forward" aria-hidden="true"></i>
+            <span
+              class="icon"
+              aria-label="top"
+            >
+              <i
+                class="fas fa-fast-forward"
+                aria-hidden="true"
+              />
             </span>
           </li>
         </ul>
       </div>
-      <div class="expander" v-if="showExpand">
-        <button class="button is-light is-small" @click="expand">Show {{hiddenRowCount}} more rows</button>
+      <div
+        v-if="showExpand"
+        class="expander"
+      >
+        <button
+          class="button is-light is-small"
+          @click="expand"
+        >
+          Show {{ hiddenRowCount }} more rows
+        </button>
       </div>
-      <div class="expander" v-if="showCollapse">
-        <button class="button is-light is-small" @click="collapse">Collapse summary</button>
+      <div
+        v-if="showCollapse"
+        class="expander"
+      >
+        <button
+          class="button is-light is-small"
+          @click="collapse"
+        >
+          Collapse summary
+        </button>
       </div>
     </div>
   </div>
@@ -141,6 +254,9 @@ let rowLimit = 10
 
 export default {
   components: {
+  },
+  props: {
+    sourceId: Number
   },
   data () {
     return {
@@ -225,9 +341,6 @@ export default {
     firstCommonName(taxon) {
       return taxon.common_name.split(",")[0]
     }
-  },
-  props: {
-    sourceId: Number
   }
 }
 </script>

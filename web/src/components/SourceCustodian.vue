@@ -2,17 +2,30 @@
   <div class="column is-half">
     <div class="card">
       <div class="card-content">
-        <button class="delete" @click="deleteUser" style="position: absolute; top: 1.5rem; right: 1rem;"></button>
+        <button
+          class="delete"
+          style="position: absolute; top: 1.5rem; right: 1rem;"
+          @click="deleteUser"
+        />
         <div>
-          <span style="font-weight: bold">{{displayName}}</span>
+          <span style="font-weight: bold">{{ displayName }}</span>
         </div>
         <div style="overflow: hidden; text-overflow: ellipsis;">
-          <a :href="'mailto: ' + user.email" :title="user.email">{{user.email}}</a>
+          <a
+            :href="'mailto: ' + user.email"
+            :title="user.email"
+          >{{ user.email }}</a>
         </div>
-        <div v-if="!isRegistered" class="is-size-7">
+        <div
+          v-if="!isRegistered"
+          class="is-size-7"
+        >
           This user has not signed up for an account yet
         </div>
-        <div class="spinner" v-if="state == 'updating' || state == 'deleting'">
+        <div
+          v-if="state == 'updating' || state == 'deleting'"
+          class="spinner"
+        >
           One moment…
         </div>
       </div>
@@ -25,6 +38,10 @@ import * as api from '../api.js'
 
 export default {
   name: 'SourceCustodian',
+  props: {
+    user: Object,
+    sourceId: Number
+  },
   data() {
     return {
       state: 'init'
@@ -56,10 +73,6 @@ export default {
         this.error = 'Delete failed'
       })
     }
-  },
-  props: {
-    user: Object,
-    sourceId: Number
   }
 }
 </script>

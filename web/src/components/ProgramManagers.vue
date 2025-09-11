@@ -3,7 +3,7 @@
     <p>Program managers are users who can view and download the raw, time-series and trend data for all datasets associated with this program.</p>
 
     <p v-if="status == 'loading'">
-        Loading…
+      Loading…
     </p>
 
     <p v-if="status == 'error'">
@@ -12,27 +12,48 @@
 
     <div v-if="status == 'loaded'">
       <div class="columns is-multiline">
-        <div class="column is-half" v-for="manager in managers">
+        <div
+          v-for="manager in managers"
+          class="column is-half"
+        >
           <div class="card">
             <div class="card-content">
-              <button v-if="canEdit" class="delete" @click="deleteManager(manager)" style="position: absolute; top: 1.5rem; right: 1rem;"></button>
+              <button
+                v-if="canEdit"
+                class="delete"
+                style="position: absolute; top: 1.5rem; right: 1rem;"
+                @click="deleteManager(manager)"
+              />
               <div v-if="manager.first_name">
-                <span style="font-weight: bold">{{manager.first_name + ' ' + manager.last_name}}</span>
+                <span style="font-weight: bold">{{ manager.first_name + ' ' + manager.last_name }}</span>
               </div>
               <div style="overflow: hidden; text-overflow: ellipsis;">
-                <a :href="'mailto: ' + manager.email" :title="manager.email">{{manager.email}}</a>
+                <a
+                  :href="'mailto: ' + manager.email"
+                  :title="manager.email"
+                >{{ manager.email }}</a>
               </div>
-              <div v-if="!manager.first_name" class="is-size-7">
+              <div
+                v-if="!manager.first_name"
+                class="is-size-7"
+              >
                 This user has not signed up for an account yet
               </div>
             </div>
           </div>
         </div>
       </div>
-      <p v-if="managers.length === 0" class="content" style="font-weight: bold;">
+      <p
+        v-if="managers.length === 0"
+        class="content"
+        style="font-weight: bold;"
+      >
         This program currently has no managers.
       </p>
-      <p v-if="!canEdit" style="font-style: italic;">
+      <p
+        v-if="!canEdit"
+        style="font-style: italic;"
+      >
         Please contact a member of the Threatened Species Index team at <a href="mailto:tsx@uq.edu.au">tsx@uq.edu.au</a> if you wish to add or remove a program manager for this program.
       </p>
 
@@ -40,19 +61,32 @@
       <fieldset v-if="canEdit">
         <div class="field has-addons">
           <div class="control">
-            <input class="input" style="width: 15em" type="text"
-              placeholder="Program manager email address"
+            <input
               v-model="newManagerEmail"
-              v-on:keyup.enter="addManager">
+              class="input"
+              style="width: 15em"
+              type="text"
+              placeholder="Program manager email address"
+              @keyup.enter="addManager"
+            >
           </div>
           <div class="control">
-            <button class="button is-info" :disabled="!enableSubmit" @click="addManager">Add Manager</button>
+            <button
+              class="button is-info"
+              :disabled="!enableSubmit"
+              @click="addManager"
+            >
+              Add Manager
+            </button>
           </div>
         </div>
-        <p v-if="submitStatus === 'error' && submitErrorMessage" class="help is-danger">{{submitErrorMessage}}</p>
+        <p
+          v-if="submitStatus === 'error' && submitErrorMessage"
+          class="help is-danger"
+        >
+          {{ submitErrorMessage }}
+        </p>
       </fieldset>
-
-
     </div>
   </div>
 </template>
@@ -62,6 +96,10 @@ import * as api from '../api.js'
 
 export default {
   name: 'ProgramManagers',
+  props: {
+    programId: Number,
+    canEdit: Boolean
+  },
   data () {
     return {
       managers: [],
@@ -118,10 +156,6 @@ export default {
         })
       }
     }
-  },
-  props: {
-    programId: Number,
-    canEdit: Boolean
   }
 }
 </script>

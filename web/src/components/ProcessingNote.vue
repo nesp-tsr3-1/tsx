@@ -1,36 +1,79 @@
 <template>
   <div class="columns">
     <div class="column">
-      <div class="spinner" v-if="state == 'updating' || state == 'deleting'">
+      <div
+        v-if="state == 'updating' || state == 'deleting'"
+        class="spinner"
+      >
         One moment…
       </div>
-      <div class="card" v-if="state == 'init'">
+      <div
+        v-if="state == 'init'"
+        class="card"
+      >
         <header class="card-header">
-          <p class="card-header-title">{{note.first_name}} {{note.last_name}}
-            <span style="font-weight: normal; margin-left: 1em;">{{formatDateTime(note.time_created)}}</span>
+          <p class="card-header-title">
+            {{ note.first_name }} {{ note.last_name }}
+            <span style="font-weight: normal; margin-left: 1em;">{{ formatDateTime(note.time_created) }}</span>
           </p>
-          <div class="card-header-icon" v-if="note.editable">
-            <span class="icon link" aria-label="edit" @click="editNote">
-              <i class="fas fa-edit" aria-hidden="true"></i>
+          <div
+            v-if="note.editable"
+            class="card-header-icon"
+          >
+            <span
+              class="icon link"
+              aria-label="edit"
+              @click="editNote"
+            >
+              <i
+                class="fas fa-edit"
+                aria-hidden="true"
+              />
             </span>
-            <span class="icon" aria-label="delete" @click="deleteNote">
-              <i class="fas fa-trash" aria-hidden="true"></i>
+            <span
+              class="icon"
+              aria-label="delete"
+              @click="deleteNote"
+            >
+              <i
+                class="fas fa-trash"
+                aria-hidden="true"
+              />
             </span>
           </div>
         </header>
         <div class="card-content">
-          <p style="white-space: pre-wrap;">{{note.notes}}</p>
+          <p style="white-space: pre-wrap;">
+            {{ note.notes }}
+          </p>
         </div>
       </div>
 
-      <fieldset :disabled="state == 'updating'" v-if="state == 'editing' || state == 'updating'">
+      <fieldset
+        v-if="state == 'editing' || state == 'updating'"
+        :disabled="state == 'updating'"
+      >
         <div class="field">
           <div class="control">
-            <textarea class="textarea hasContent" v-model="newNotes" ref="notesField"></textarea>
+            <textarea
+              ref="notesField"
+              v-model="newNotes"
+              class="textarea hasContent"
+            />
           </div>
         </div>
-        <button class="button is-primary" @click="updateNote">Update</button>
-        <button class="button" @click="cancelEditNote">Cancel</button>
+        <button
+          class="button is-primary"
+          @click="updateNote"
+        >
+          Update
+        </button>
+        <button
+          class="button"
+          @click="cancelEditNote"
+        >
+          Cancel
+        </button>
       </fieldset>
     </div>
   </div>
@@ -40,6 +83,9 @@
 import * as api from '../api.js'
 
 export default {
+  props: {
+    note: Object
+  },
   data() {
     return {
       state: 'init',
@@ -88,9 +134,6 @@ export default {
       let date = new Date(Date.parse(str))
       return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
     }
-  },
-  props: {
-    note: Object
   }
 }
 </script>

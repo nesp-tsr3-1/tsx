@@ -4,7 +4,11 @@
       <div v-if="resetSucceeded">
         <div style="margin-bottom: 1em; text-align: center;">
           <p>Your password has been successfully reset.</p>
-          <p><router-link to="/login">Click here to login.</router-link></p>
+          <p>
+            <router-link to="/login">
+              Click here to login.
+            </router-link>
+          </p>
         </div>
       </div>
 
@@ -13,25 +17,61 @@
         <div style="margin-bottom: 1em; text-align: center;">
           <p>Please enter your new password.</p>
         </div>
-        <form v-on:submit.prevent="resetPassword">
-          <fieldset v-bind:disabled="submitting">
+        <form @submit.prevent="resetPassword">
+          <fieldset :disabled="submitting">
             <div class="field">
               <label class="has-text-dark">Password</label>
-              <input class="input" type="password" name="password" v-model="password" v-autofocus>
-              <p class="help is-danger" v-if="errors.password">{{ errors.password }}</p>
+              <input
+                v-model="password"
+                v-autofocus
+                class="input"
+                type="password"
+                name="password"
+              >
+              <p
+                v-if="errors.password"
+                class="help is-danger"
+              >
+                {{ errors.password }}
+              </p>
             </div>
             <div class="field">
               <label class="has-text-dark">Confirm password</label>
-              <input class="input" type="password" name="confirm_password" v-model="confirm_password">
-              <p class="help is-danger" v-if="errors.confirm_password">{{ errors.confirm_password }}</p>
+              <input
+                v-model="confirm_password"
+                class="input"
+                type="password"
+                name="confirm_password"
+              >
+              <p
+                v-if="errors.confirm_password"
+                class="help is-danger"
+              >
+                {{ errors.confirm_password }}
+              </p>
             </div>
-            <button class="button is-primary" style="width: 100%; margin: 0.5em 0;" v-bind:disabled="!passwordsMatch" v-on:click="resetPassword">Set Password</button>
+            <button
+              class="button is-primary"
+              style="width: 100%; margin: 0.5em 0;"
+              :disabled="!passwordsMatch"
+              @click="resetPassword"
+            >
+              Set Password
+            </button>
 
-            <p v-if="errors.invalid_code" style="color: red;">
+            <p
+              v-if="errors.invalid_code"
+              style="color: red;"
+            >
               Invalid reset code (expired or already used).
-              <router-link to="/reset_password">Request another password reset.</router-link>
+              <router-link to="/reset_password">
+                Request another password reset.
+              </router-link>
             </p>
-            <p v-if="errors.server_error" style="color: red;">
+            <p
+              v-if="errors.server_error"
+              style="color: red;"
+            >
               Something went wrong. Please try again later.
             </p>
           </fieldset>
@@ -43,16 +83,36 @@
         <div style="margin-bottom: 1em; text-align: center;">
           <p>Please enter your email address.</p>
         </div>
-        <form v-on:submit.prevent="requestPasswordReset">
-          <fieldset v-bind:disabled="submitting">
+        <form @submit.prevent="requestPasswordReset">
+          <fieldset :disabled="submitting">
             <div class="field">
               <label class="has-text-dark">Email address</label>
-              <input class="input" type="text" placeholder="user@example.com" v-model="email" v-autofocus>
-              <p class="help is-danger" v-if="errors.email">{{ errors.email }}</p>
+              <input
+                v-model="email"
+                v-autofocus
+                class="input"
+                type="text"
+                placeholder="user@example.com"
+              >
+              <p
+                v-if="errors.email"
+                class="help is-danger"
+              >
+                {{ errors.email }}
+              </p>
             </div>
-            <button class="button is-primary" style="width: 100%; margin: 0.5em 0;" v-on:click="requestPasswordReset">Request Password Reset</button>
+            <button
+              class="button is-primary"
+              style="width: 100%; margin: 0.5em 0;"
+              @click="requestPasswordReset"
+            >
+              Request Password Reset
+            </button>
 
-            <p v-if="errors.server_error" style="color: red;">
+            <p
+              v-if="errors.server_error"
+              style="color: red;"
+            >
               Something went wrong. Please try again later.
             </p>
           </fieldset>
@@ -60,7 +120,7 @@
       </div>
       <div v-else="resetEmailSent">
         <div style="margin-bottom: 1em; text-align: center;">
-          <p>An email containing instructions to reset your password has been sent to {{email}}.</p>
+          <p>An email containing instructions to reset your password has been sent to {{ email }}.</p>
         </div>
       </div>
     </div>
@@ -84,15 +144,15 @@ export default {
       errors: {}
     }
   },
+  computed: {
+    passwordsMatch: function() {
+      return this.password === this.confirm_password
+    }
+  },
   watch: {
     '$route': function(val) {
       this.code = val.query.code
       this.errors = {}
-    }
-  },
-  computed: {
-    passwordsMatch: function() {
-      return this.password === this.confirm_password
     }
   },
   methods: {

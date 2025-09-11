@@ -1,10 +1,28 @@
 <template>
   <div :class="classes">
-    <SelectField v-if="fieldType == 'select'" :field="field" v-model:value='fieldValue'></SelectField>
-    <SearchableSelectField v-else-if="fieldType == 'searchable-select'" :field="field" v-model:value='fieldValue'></SearchableSelectField>
-    <RadioField v-else-if="fieldType == 'radio'" :field="field" v-model:value='fieldValue'></RadioField>
-    <ButtonRadioField v-else-if="fieldType == 'button-radio'" :field="field" v-model:value='fieldValue'></ButtonRadioField>
-    <div v-else>(Unknown field type)</div>
+    <SelectField
+      v-if="fieldType == 'select'"
+      v-model:value="fieldValue"
+      :field="field"
+    />
+    <SearchableSelectField
+      v-else-if="fieldType == 'searchable-select'"
+      v-model:value="fieldValue"
+      :field="field"
+    />
+    <RadioField
+      v-else-if="fieldType == 'radio'"
+      v-model:value="fieldValue"
+      :field="field"
+    />
+    <ButtonRadioField
+      v-else-if="fieldType == 'button-radio'"
+      v-model:value="fieldValue"
+      :field="field"
+    />
+    <div v-else>
+      (Unknown field type)
+    </div>
   </div>
 </template>
 
@@ -23,6 +41,11 @@ export default {
     ButtonRadioField,
     SearchableSelectField
   },
+  props: {
+    field: Object,
+    value: null
+  },
+  emits: ['update:value'],
   data () {
     return {
 
@@ -51,12 +74,7 @@ export default {
         this.$emit('update:value', value)
       }
     }
-  },
-  props: {
-    field: Object,
-    value: null
-  },
-  emits: ['update:value']
+  }
 }
 </script>
 

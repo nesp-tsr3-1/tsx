@@ -1,16 +1,30 @@
 <template>
   <div class="field">
-    <label class="label">{{field.label}}</label>
+    <label class="label">{{ field.label }}</label>
     <div v-for="option in field.options">
       <label>
-        <input type="radio" :name="field.name" :value="option.value" :disabled="option.disabled" v-model="fieldValue"> {{option.label}}
-          <tippy class="info-icon icon" arrow interactive placement="right" v-if="option.help">
-            <template #default><i class="far fa-question-circle"></i></template>
-            <template #content>
-              <div class="popup-content" v-html="option.help">
-              </div>
-            </template>
-          </tippy>
+        <input
+          v-model="fieldValue"
+          type="radio"
+          :name="field.name"
+          :value="option.value"
+          :disabled="option.disabled"
+        > {{ option.label }}
+        <tippy
+          v-if="option.help"
+          class="info-icon icon"
+          arrow
+          interactive
+          placement="right"
+        >
+          <template #default><i class="far fa-question-circle" /></template>
+          <template #content>
+            <div
+              class="popup-content"
+              v-html="option.help"
+            />
+          </template>
+        </tippy>
       </label>
     </div>
   </div>
@@ -24,6 +38,10 @@ export default {
   name: 'RadioField',
   components: {
     Tippy
+  },
+  props: {
+    field: Object,
+    value: null
   },
   data () {
     return {
@@ -44,10 +62,6 @@ export default {
 
   },
   methods: {
-  },
-  props: {
-    field: Object,
-    value: null
   }
 }
 </script>

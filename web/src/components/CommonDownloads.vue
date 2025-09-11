@@ -1,50 +1,101 @@
 <template>
-  <slot name="criteria-title"></slot>
-  <fieldset class="block" :disabled="submitting" :class="{ sideborder: sourceId }">
-    <div class="field" v-if="enableStateFilter">
+  <slot name="criteria-title" />
+  <fieldset
+    class="block"
+    :disabled="submitting"
+    :class="{ sideborder: sourceId }"
+  >
+    <div
+      v-if="enableStateFilter"
+      class="field"
+    >
       <label class="label">State/Territory</label>
       <div class="control">
         <div class="select">
           <select v-model="criteria.state">
-            <option :value="null" selected>All States and Territories</option>
-            <option v-for="s in options.state" :value="s">
+            <option
+              :value="null"
+              selected
+            >
+              All States and Territories
+            </option>
+            <option
+              v-for="s in options.state"
+              :value="s"
+            >
               {{ s }}
             </option>
           </select>
         </div>
       </div>
     </div>
-    <div class="field" v-if="enableProgramFilter">
+    <div
+      v-if="enableProgramFilter"
+      class="field"
+    >
       <label class="label">Programs</label>
       <div class="control">
         <div v-for="program in options.monitoringPrograms">
-          <label><input type="checkbox" :value="program" v-model="criteria.monitoringPrograms" :disabled="isProgramDisabled(program)"> {{program.description}}</label>
+          <label><input
+            v-model="criteria.monitoringPrograms"
+            type="checkbox"
+            :value="program"
+            :disabled="isProgramDisabled(program)"
+          > {{ program.description }}</label>
         </div>
-        <p style="margin-top: 1em; font-style: italic;" v-if="criteria.monitoringPrograms.length == 0">
+        <p
+          v-if="criteria.monitoringPrograms.length == 0"
+          style="margin-top: 1em; font-style: italic;"
+        >
           At least one program must be selected
         </p>
       </div>
     </div>
-    <div class="field" v-if="enableTaxonomicGroupFilter">
+    <div
+      v-if="enableTaxonomicGroupFilter"
+      class="field"
+    >
       <label class="label">Taxonomic Group</label>
       <div class="control">
         <div class="select">
           <select v-model="criteria.taxonomicGroup">
-            <option :value="null" selected>All</option>
-            <option v-for="s in options.taxonomicGroup" :value="s">
+            <option
+              :value="null"
+              selected
+            >
+              All
+            </option>
+            <option
+              v-for="s in options.taxonomicGroup"
+              :value="s"
+            >
               {{ s }}
             </option>
           </select>
         </div>
       </div>
     </div>
-    <div class="field" v-if="enableTaxonStatusFilter">
+    <div
+      v-if="enableTaxonStatusFilter"
+      class="field"
+    >
       <label class="label">Taxon Status</label>
-      <div class="control" style="margin-bottom: 1em;">
+      <div
+        class="control"
+        style="margin-bottom: 1em;"
+      >
         <div class="select">
           <select v-model="criteria.statusAuthority">
-            <option :value="null" selected>Select authority…</option>
-            <option v-for="s in options.statusAuthority" :value="s">
+            <option
+              :value="null"
+              selected
+            >
+              Select authority…
+            </option>
+            <option
+              v-for="s in options.statusAuthority"
+              :value="s"
+            >
               {{ s.name }}
             </option>
           </select>
@@ -52,58 +103,100 @@
       </div>
       <div class="control">
         <div v-for="status in options.taxonStatus">
-          <label><input type="checkbox" :value="status" v-model="criteria.taxonStatus" :disabled="criteria.statusAuthority == null"> {{status.name}}</label>
+          <label><input
+            v-model="criteria.taxonStatus"
+            type="checkbox"
+            :value="status"
+            :disabled="criteria.statusAuthority == null"
+          > {{ status.name }}</label>
         </div>
       </div>
     </div>
     <div class="field">
       <label class="label">Species</label>
       <div class="control">
-      <Multiselect
-        mode="multiple"
-        v-model="criteria.species"
-        :options="querySpecies"
-        :delay="500"
-        :searchable="true"
-        :close-on-select="false"
-        :filter-results="false"
-        no-options-text="No species found"
-        placeholder="All species"
-        label="label"
-        value-prop="id"
-        @open="(select) => select.refreshOptions()"
+        <Multiselect
+          v-model="criteria.species"
+          mode="multiple"
+          :options="querySpecies"
+          :delay="500"
+          :searchable="true"
+          :close-on-select="false"
+          :filter-results="false"
+          no-options-text="No species found"
+          placeholder="All species"
+          label="label"
+          value-prop="id"
+          @open="(select) => select.refreshOptions()"
         />
       </div>
       <div style="border-left: 2px solid #eee; padding-left: 1em;">
-        <div class="buttons" style="margin-top: 1em;">
-          <button class="button is-small is-light" @click="importSpeciesList">Import List</button>
-          <button v-if="criteria.species.length" class="button is-small is-light" @click="exportSpeciesList">Export List</button>
-          <tippy class="info-icon icon" arrow interactive placement="right" style="margin-bottom: 0.5rem;">
-            <template #default><i class="far fa-question-circle"></i></template>
+        <div
+          class="buttons"
+          style="margin-top: 1em;"
+        >
+          <button
+            class="button is-small is-light"
+            @click="importSpeciesList"
+          >
+            Import List
+          </button>
+          <button
+            v-if="criteria.species.length"
+            class="button is-small is-light"
+            @click="exportSpeciesList"
+          >
+            Export List
+          </button>
+          <tippy
+            class="info-icon icon"
+            arrow
+            interactive
+            placement="right"
+            style="margin-bottom: 0.5rem;"
+          >
+            <template #default>
+              <i class="far fa-question-circle" />
+            </template>
             <template #content>
               <div class="popup-content content has-text-white">
-                  <p>A list of selected species can be imported from a file in CSV format.</p>
-                  <p>The file must contain a column named <em>TaxonID</em> listing the taxon ID of each species.</p>
-                  <p>A full list of taxon IDs can be found in the <a href="https://tsx.org.au/files/TaxonList.xlsx" download>Taxon List</a>.</p>
+                <p>A list of selected species can be imported from a file in CSV format.</p>
+                <p>The file must contain a column named <em>TaxonID</em> listing the taxon ID of each species.</p>
+                <p>
+                  A full list of taxon IDs can be found in the <a
+                    href="https://tsx.org.au/files/TaxonList.xlsx"
+                    download
+                  >Taxon List</a>.
+                </p>
               </div>
             </template>
           </tippy>
         </div>
-        <table style="border: 1px solid #ccc;" class="table is-narrow" v-if="criteria.species.length">
+        <table
+          v-if="criteria.species.length"
+          style="border: 1px solid #ccc;"
+          class="table is-narrow"
+        >
           <thead>
             <tr>
               <th>Common name</th>
               <th>Scientific name</th>
               <th>Taxon ID</th>
-              <th></th>
+              <th />
             </tr>
           </thead>
           <tbody>
             <tr v-for="speciesId in criteria.species">
-              <td>{{speciesById(speciesId).common_name}}</td>
-              <td>{{speciesById(speciesId).scientific_name}}</td>
-              <td>{{speciesId}}</td>
-              <td><button class="delete is-small" style="margin-top: 4px" @click="deselectSpecies(speciesId)"></button></td>
+              <td>{{ speciesById(speciesId).common_name }}</td>
+              <td>{{ speciesById(speciesId).scientific_name }}</td>
+              <td>{{ speciesId }}</td>
+              <td>
+                <button
+                  class="delete is-small"
+                  style="margin-top: 4px"
+                  @click="deselectSpecies(speciesId)"
+                />
+              </td>
             </tr>
           </tbody>
         </table>
@@ -114,8 +207,8 @@
       <label class="label">Sites</label>
       <div class="control">
         <Multiselect
-          mode="multiple"
           v-model="criteria.sites"
+          mode="multiple"
           :options="querySites"
           :delay="500"
           :searchable="true"
@@ -126,35 +219,57 @@
           label="name"
           value-prop="id"
           @open="(select) => select.refreshOptions()"
-          />
+        />
       </div>
       <div style="border-left: 2px solid #eee; padding-left: 1em; margin-top: 1em">
-        <table style="border: 1px solid #ccc;" class="table is-narrow" v-if="criteria.sites.length">
+        <table
+          v-if="criteria.sites.length"
+          style="border: 1px solid #ccc;"
+          class="table is-narrow"
+        >
           <thead>
             <tr>
               <th>Site name</th>
               <th>Site ID</th>
-              <th></th>
+              <th />
             </tr>
           </thead>
           <tbody>
             <tr v-for="siteInfo in criteria.sites">
-              <td>{{siteInfo.split(',')[1]}}</td>
-              <td>{{siteInfo.split(',')[0]}}</td>
-              <td><button class="delete is-small" style="margin-top: 4px" @click="deselectSite(siteInfo)"></button></td>
+              <td>{{ siteInfo.split(',')[1] }}</td>
+              <td>{{ siteInfo.split(',')[0] }}</td>
+              <td>
+                <button
+                  class="delete is-small"
+                  style="margin-top: 4px"
+                  @click="deselectSite(siteInfo)"
+                />
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
 
-    <div class="field" v-if="enableManagementFilter">
+    <div
+      v-if="enableManagementFilter"
+      class="field"
+    >
       <label class="label">Management
-        <tippy class="info-icon icon" arrow interactive placement="right" style="margin-bottom: 0.5rem;">
-          <template #default><i class="far fa-question-circle"></i></template>
+        <tippy
+          class="info-icon icon"
+          arrow
+          interactive
+          placement="right"
+          style="margin-bottom: 0.5rem;"
+        >
+          <template #default><i class="far fa-question-circle" /></template>
           <template #content>
-            <div class="popup-content content has-text-white" style="font-weight: normal;">
-                <p>The ‘No known management’ filtering option includes sites that fall into the ‘No management’ and ‘Unknown’ categories from the TSX data import template.</p>
+            <div
+              class="popup-content content has-text-white"
+              style="font-weight: normal;"
+            >
+              <p>The ‘No known management’ filtering option includes sites that fall into the ‘No management’ and ‘Unknown’ categories from the TSX data import template.</p>
             </div>
           </template>
         </tippy>
@@ -162,7 +277,12 @@
       <div class="control">
         <div class="select">
           <select v-model="criteria.management">
-            <option :value="null" selected>All sites (managed & unmanaged)</option>
+            <option
+              :value="null"
+              selected
+            >
+              All sites (managed & unmanaged)
+            </option>
             <option>Actively managed</option>
             <option>No known management</option>
           </select>
@@ -170,61 +290,109 @@
       </div>
     </div>
   </fieldset>
-  <div class="notification" v-if="stats">
+  <div
+    v-if="stats"
+    class="notification"
+  >
     Selected data subset contains
-      {{formatQuantity(stats.sighting_count, "individual survey count")}},
-      {{formatQuantity(stats.taxon_count, "taxon", "taxa")}},
-      {{formatQuantity(stats.source_count, "dataset")}} and approx.
-      {{formatQuantity(stats.time_series_count, "time series", "time series")}}.
+    {{ formatQuantity(stats.sighting_count, "individual survey count") }},
+    {{ formatQuantity(stats.taxon_count, "taxon", "taxa") }},
+    {{ formatQuantity(stats.source_count, "dataset") }} and approx.
+    {{ formatQuantity(stats.time_series_count, "time series", "time series") }}.
   </div>
-  <div v-else class="notification" >
-      Loading...
-      <spinner size='small' style='display: inline-block;'></spinner>
+  <div
+    v-else
+    class="notification"
+  >
+    Loading...
+    <spinner
+      size="small"
+      style="display: inline-block;"
+    />
   </div>
 
-  <div v-if="enableMap" class="block" style="width: 100%; max-width: 640px; height: 480px; display: block; background: #eee;">
-    <HeatMap :heatmap-data="heatmapData" :loading="heatmapLoading"></HeatMap>
+  <div
+    v-if="enableMap"
+    class="block"
+    style="width: 100%; max-width: 640px; height: 480px; display: block; background: #eee;"
+  >
+    <HeatMap
+      :heatmap-data="heatmapData"
+      :loading="heatmapLoading"
+    />
   </div>
 
-  <slot name="downloads-title"></slot>
+  <slot name="downloads-title" />
 
   <div class="block">
-    <button type="button" class="button is-primary"
+    <button
+      type="button"
+      class="button is-primary"
+      :disabled="!enableDownload"
       @click="downloadRawData"
-      :disabled="!enableDownload">Download Raw Data (CSV format)</button>
+    >
+      Download Raw Data (CSV format)
+    </button>
   </div>
   <div class="block">
-    <button type="button" class="button is-primary"
+    <button
+      type="button"
+      class="button is-primary"
+      :disabled="!enableDownload"
       @click="downloadTimeSeries"
-      :disabled="!enableDownload">Download Time Series (CSV format)</button>
+    >
+      Download Time Series (CSV format)
+    </button>
   </div>
 
 
   <div class="block">
-    <button type="button" class="button is-primary"
+    <button
+      type="button"
+      class="button is-primary"
+      :disabled="!enableDownload && consistencyPlotStatus != 'processing'"
       @click="generateConsistencyPlot"
-      :disabled="!enableDownload && consistencyPlotStatus != 'processing'">Generate Monitoring Consistency Plot</button>
+    >
+      Generate Monitoring Consistency Plot
+    </button>
   </div>
   <div v-if="consistencyPlotStatus == 'processing'">
-    <spinner size='small'></spinner>
+    <spinner size="small" />
   </div>
-  <div v-if="consistencyPlotStatus == 'ready'" class="content">
+  <div
+    v-if="consistencyPlotStatus == 'ready'"
+    class="content"
+  >
     <p style="font-style: italic;">
       The below dot plot shows the distribution of surveys at unique sites. Each row represents a time series in the dataset or data subset where a species/subspecies was monitored with a consistent method and unit of measurement at a single site over time. The maximum number of time-series included in this plot is 50.
     </p>
-    <canvas ref="consistencyPlot" style="height: 25em; max-height: 25em;"></canvas>
+    <canvas
+      ref="consistencyPlot"
+      style="height: 25em; max-height: 25em;"
+    />
     <p>
-      <button type="button" class="button is-primary" @click="downloadConsistency">Download Monitoring Consistency Plot (CSV format)</button>
+      <button
+        type="button"
+        class="button is-primary"
+        @click="downloadConsistency"
+      >
+        Download Monitoring Consistency Plot (CSV format)
+      </button>
     </p>
   </div>
-  <div v-if="consistencyPlotStatus == 'error'" class="content">
+  <div
+    v-if="consistencyPlotStatus == 'error'"
+    class="content"
+  >
     <p>An error occurred while generating the monitoring consistency plot.</p>
   </div>
 
   <hr>
 
   <div class="block">
-    <h4 class="title is-6">Population Trend</h4>
+    <h4 class="title is-6">
+      Population Trend
+    </h4>
     <div class="sideborder block">
       <div class="field is-horizontal">
         <div class="field-label is-normal">
@@ -233,8 +401,14 @@
         <div class="field-body">
           <div class="control">
             <div class="select">
-              <select v-model="trendReferenceYear" :disabled="!enableTrendParams">
-                <option v-for="year in availableYears" :value="year">
+              <select
+                v-model="trendReferenceYear"
+                :disabled="!enableTrendParams"
+              >
+                <option
+                  v-for="year in availableYears"
+                  :value="year"
+                >
                   {{ year }}
                 </option>
               </select>
@@ -249,8 +423,14 @@
         <div class="field-body">
           <div class="control">
             <div class="select">
-              <select v-model="trendFinalYear" :disabled="!enableTrendParams">
-                <option v-for="year in availableYears" :value="year">
+              <select
+                v-model="trendFinalYear"
+                :disabled="!enableTrendParams"
+              >
+                <option
+                  v-for="year in availableYears"
+                  :value="year"
+                >
                   {{ year }}
                 </option>
               </select>
@@ -258,35 +438,80 @@
           </div>
         </div>
       </div>
-      <p class="help is-danger block" v-if="trendParamsError">{{trendParamsError}}</p>
+      <p
+        v-if="trendParamsError"
+        class="help is-danger block"
+      >
+        {{ trendParamsError }}
+      </p>
     </div>
   </div>
 
   <div class="block">
-    <button type="button" class="button is-primary"
+    <button
+      type="button"
+      class="button is-primary"
+      :disabled="!enableGenerateTrend"
       @click="generateTrend"
-      :disabled="!enableGenerateTrend">Generate Population Trend</button>
-    <p class="help is-danger block" v-if="trendStatus == 'error'">An error occurred while generating the trend.</p>
+    >
+      Generate Population Trend
+    </button>
+    <p
+      v-if="trendStatus == 'error'"
+      class="help is-danger block"
+    >
+      An error occurred while generating the trend.
+    </p>
   </div>
 
-  <div v-if="trendStatus == 'processing'" class="block">
+  <div
+    v-if="trendStatus == 'processing'"
+    class="block"
+  >
     Please wait while the population trend is generated. This may take several minutes.
-    <spinner size='small' style='display: inline-block;'></spinner>
+    <spinner
+      size="small"
+      style="display: inline-block;"
+    />
   </div>
-  <div v-if="trendStatus == 'ready'" class="content">
+  <div
+    v-if="trendStatus == 'ready'"
+    class="content"
+  >
     <p v-if="isAdmin">
-      {{trendDiagnosticsText}}
+      {{ trendDiagnosticsText }}
     </p>
-    <p style="font-style: italic;">The below trend graph shows the average change in populations compared to a baseline year. It shows a relative change and not population numbers themselves. At the reference year, the index gets an index score of one. A score of 1.2 would mean a 20% increase on average compared to the reference year, while a score of 0.8 would mean a 20% decrease on average compared to the reference year. The overall trend (mean value per year) is shown by the blue line (dashed for single species and solid for multiple species). The grey cloud indicates the uncertainty in the estimate as measured by the variability between all-time series in the dataset or data subset. This trend excludes one-off surveys and absent-only time series. Please note that this trend has been generated using the Living Planet Index methodology, which is designed for producing composite trends rather than single-species trends.</p>
-    <canvas v-show="showPlot" ref="plot" style="height: 10em;"></canvas>
+    <p style="font-style: italic;">
+      The below trend graph shows the average change in populations compared to a baseline year. It shows a relative change and not population numbers themselves. At the reference year, the index gets an index score of one. A score of 1.2 would mean a 20% increase on average compared to the reference year, while a score of 0.8 would mean a 20% decrease on average compared to the reference year. The overall trend (mean value per year) is shown by the blue line (dashed for single species and solid for multiple species). The grey cloud indicates the uncertainty in the estimate as measured by the variability between all-time series in the dataset or data subset. This trend excludes one-off surveys and absent-only time series. Please note that this trend has been generated using the Living Planet Index methodology, which is designed for producing composite trends rather than single-species trends.
+    </p>
+    <canvas
+      v-show="showPlot"
+      ref="plot"
+      style="height: 10em;"
+    />
     <p>
-      <button type="button" class="button is-primary" @click="downloadTrend">Download Population Trend (CSV format)</button>
+      <button
+        type="button"
+        class="button is-primary"
+        @click="downloadTrend"
+      >
+        Download Population Trend (CSV format)
+      </button>
     </p>
     <p>
-      <button type="button" class="button is-primary" @click="downloadTrendImage">Download Population Trend (PNG format)</button>
+      <button
+        type="button"
+        class="button is-primary"
+        @click="downloadTrendImage"
+      >
+        Download Population Trend (PNG format)
+      </button>
     </p>
   </div>
-  <div v-if="trendStatus == 'empty'" class="block">
+  <div
+    v-if="trendStatus == 'empty'"
+    class="block"
+  >
     <p>Insufficient data available to generate a trend</p>
   </div>
 </template>
@@ -309,6 +534,15 @@ export default {
     Multiselect,
     Tippy,
     HeatMap
+  },
+  props: {
+    sourceId: Number,
+    enableProgramFilter: Boolean,
+    enableStateFilter: Boolean,
+    enableManagementFilter: Boolean,
+    enableTaxonomicGroupFilter: Boolean,
+    enableMap: Boolean,
+    enableTaxonStatusFilter: Boolean
   },
   data () {
     return {
@@ -755,15 +989,6 @@ export default {
         })
       }
     }
-  },
-  props: {
-    sourceId: Number,
-    enableProgramFilter: Boolean,
-    enableStateFilter: Boolean,
-    enableManagementFilter: Boolean,
-    enableTaxonomicGroupFilter: Boolean,
-    enableMap: Boolean,
-    enableTaxonStatusFilter: Boolean
   }
 }
 

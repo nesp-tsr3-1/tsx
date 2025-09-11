@@ -1,56 +1,95 @@
 <template>
-  <nav class="navbar" v-if="user">
+  <nav
+    v-if="user"
+    class="navbar"
+  >
     <div class="navbar-brand">
-      <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="userNav" @click="toggleBurger" :class="{ 'is-active': burgerActive }">
-        <span aria-hidden="true"></span>
-        <span aria-hidden="true"></span>
-        <span aria-hidden="true"></span>
+      <a
+        role="button"
+        class="navbar-burger"
+        aria-label="menu"
+        aria-expanded="false"
+        data-target="userNav"
+        :class="{ 'is-active': burgerActive }"
+        @click="toggleBurger"
+      >
+        <span aria-hidden="true" />
+        <span aria-hidden="true" />
+        <span aria-hidden="true" />
       </a>
     </div>
-    <div id="userNav" class="navbar-menu" :class="{ 'is-active': burgerActive }">
-      <div class="navbar-start"></div>
+    <div
+      id="userNav"
+      class="navbar-menu"
+      :class="{ 'is-active': burgerActive }"
+    >
+      <div class="navbar-start" />
       <div class="navbar-end">
         <router-link
           class="navbar-item"
-          :to="{ name: 'SourceHome' }">Datasets</router-link>
+          :to="{ name: 'SourceHome' }"
+        >
+          Datasets
+        </router-link>
         <router-link
-          class="navbar-item"
           v-if="canManageUsers"
-          :to="{ name: 'UserManage' }">Manage Users</router-link>
-        <router-link
           class="navbar-item"
+          :to="{ name: 'UserManage' }"
+        >
+          Manage Users
+        </router-link>
+        <router-link
           v-if="isProgramManager"
-          :to="{ name: 'DataSubsetDownloads' }">Downloads</router-link>
+          class="navbar-item"
+          :to="{ name: 'DataSubsetDownloads' }"
+        >
+          Downloads
+        </router-link>
         <router-link
           class="navbar-item"
-          :to="{ name: 'CustodianFeedbackHome' }">Feedback</router-link>
+          :to="{ name: 'CustodianFeedbackHome' }"
+        >
+          Feedback
+        </router-link>
         <router-link
           v-if="features.documents"
           class="navbar-item"
-          :to="{ name: 'DataAgreementHome' }">Documents</router-link>
+          :to="{ name: 'DataAgreementHome' }"
+        >
+          Documents
+        </router-link>
 
         <div class="navbar-item has-dropdown is-hoverable">
           <a class="navbar-link is-arrowless">
             <div class="button is-dark is-rounded">
               <span class="icon">
-                <i class="far fa-question-circle"></i>
+                <i class="far fa-question-circle" />
               </span>
               <span>Help</span>
             </div>
           </a>
 
           <div class="navbar-dropdown">
-            <div class="navbar-item" style="white-space: initial; width: 18em;">
+            <div
+              class="navbar-item"
+              style="white-space: initial; width: 18em;"
+            >
               <p>
                 You can access our training
                 manual and step-by-step
                 video guides on how to use
                 the TSX data management
                 interface on our
-                <a href="https://tsx.org.au/tsx-resources" target="_blank">TSX Resources page.</a>
+                <a
+                  href="https://tsx.org.au/tsx-resources"
+                  target="_blank"
+                >TSX Resources page.</a>
               </p>
             </div>
-            <div class="navbar-item" style="white-space: initial; width: 18em;">
+            <div
+              class="navbar-item"
+              style="white-space: initial; width: 18em;"
+            >
               <p>
                 Can’t find what you’re
                 looking for? You can
@@ -63,16 +102,19 @@
         </div>
 
         <router-link
-              class="navbar-item"
-              :to="{ name: 'Logout' }">Logout</router-link>
+          class="navbar-item"
+          :to="{ name: 'Logout' }"
+        >
+          Logout
+        </router-link>
 
 
         <span
           class="navbar-item"
-          style="color: #888">{{user.first_name}} {{user.last_name}}</span>
+          style="color: #888"
+        >{{ user.first_name }} {{ user.last_name }}</span>
       </div>
     </div>
-
   </nav>
 </template>
 

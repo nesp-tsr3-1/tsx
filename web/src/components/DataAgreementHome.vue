@@ -2,43 +2,63 @@
   <div class="section">
     <div class="columns">
       <div class="column is-8 is-offset-2">
-        <user-nav></user-nav>
+        <user-nav />
 
-        <h2 class="title">Documents</h2>
+        <h2 class="title">
+          Documents
+        </h2>
 
         <div class="tabs is-boxed">
           <ul>
             <li class="is-active">
               <router-link
-                :to="{ name: 'DataAgreementHome' }">
+                :to="{ name: 'DataAgreementHome' }"
+              >
                 Data Sharing Agreements
-                <span v-if="stats">&nbsp;({{stats.data_agreement_count}})</span>
+                <span v-if="stats">&nbsp;({{ stats.data_agreement_count }})</span>
               </router-link>
             </li>
             <li>
               <router-link
-                :to="{ name: 'AcknowledgementLetterHome' }">
+                :to="{ name: 'AcknowledgementLetterHome' }"
+              >
                 Acknowledgement Letters
-                <span v-if="stats">&nbsp;({{stats.acknowledgement_letter_count}})</span>
+                <span v-if="stats">&nbsp;({{ stats.acknowledgement_letter_count }})</span>
               </router-link>
             </li>
           </ul>
         </div>
 
         <div class="buttons">
-          <button class="button is-primary" @click="downloadAgreementTemplate">Download Agreement Template</button>
-          <button class="button is-primary" @click="createNewAgreement" v-if="isAdmin">Upload New Agreement</button>
+          <button
+            class="button is-primary"
+            @click="downloadAgreementTemplate"
+          >
+            Download Agreement Template
+          </button>
+          <button
+            v-if="isAdmin"
+            class="button is-primary"
+            @click="createNewAgreement"
+          >
+            Upload New Agreement
+          </button>
         </div>
 
-        <p class="content">If you would like to enter into a new data sharing agreement, please download the agreement template above, complete it, and send it to the TSX team at tsx@tern.org.au.</p>
-        <div class="notification is-info is-light" v-if="awaitingSignatureBanner">
-          {{awaitingSignatureBanner}}
+        <p class="content">
+          If you would like to enter into a new data sharing agreement, please download the agreement template above, complete it, and send it to the TSX team at tsx@tern.org.au.
+        </p>
+        <div
+          v-if="awaitingSignatureBanner"
+          class="notification is-info is-light"
+        >
+          {{ awaitingSignatureBanner }}
         </div>
 
         <hr>
 
         <div v-if="status == 'loading'">
-            <p>
+          <p>
             Loading…
           </p>
         </div>
@@ -50,21 +70,45 @@
         </div>
 
         <div v-if="status == 'loaded'">
-          <div v-if="agreements.length == 0" class="columns">
-            <p class="column content">No data sharing agreements to show.</p>
+          <div
+            v-if="agreements.length == 0"
+            class="columns"
+          >
+            <p class="column content">
+              No data sharing agreements to show.
+            </p>
           </div>
 
-          <div v-if="agreements.length > 0" class="columns">
-            <p class="column title is-6">Showing {{filteredAgreements.length}} / {{agreements.length}} agreements</p>
-            <input class="column input" type="text" placeholder="Search agreements" v-model="searchText">
+          <div
+            v-if="agreements.length > 0"
+            class="columns"
+          >
+            <p class="column title is-6">
+              Showing {{ filteredAgreements.length }} / {{ agreements.length }} agreements
+            </p>
+            <input
+              v-model="searchText"
+              class="column input"
+              type="text"
+              placeholder="Search agreements"
+            >
           </div>
 
-          <table class="table is-fullwidth is-striped is-hoverable" v-if="filteredAgreements.length > 0">
+          <table
+            v-if="filteredAgreements.length > 0"
+            class="table is-fullwidth is-striped is-hoverable"
+          >
             <thead>
               <tr>
-                <th @click="sortBy('filenames')">Filename(s) {{sortIcon('filenames')}}</th>
-                <th @click="sortBy('commencement_date')">Commencement Date {{sortIcon('commencement_date')}}</th>
-                <th v-if="isAdmin">Actions</th>
+                <th @click="sortBy('filenames')">
+                  Filename(s) {{ sortIcon('filenames') }}
+                </th>
+                <th @click="sortBy('commencement_date')">
+                  Commencement Date {{ sortIcon('commencement_date') }}
+                </th>
+                <th v-if="isAdmin">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -73,8 +117,8 @@
                   <div v-for="file in agreement.files">
                     <a :href="fileURL(file)">
                       <template v-for="[nonMatch, match] in file.filenameParts">
-                        <span style="white-space: pre-wrap;">{{nonMatch}}</span>
-                        <b style="white-space: pre-wrap;">{{match}}</b>
+                        <span style="white-space: pre-wrap;">{{ nonMatch }}</span>
+                        <b style="white-space: pre-wrap;">{{ match }}</b>
                       </template>
                     </a>
                   </div>
@@ -83,33 +127,53 @@
                   </div>
 
                   <div style="display: flex;gap: 0.5em;">
-                    <span v-for="parts in agreement.custodianParts" class="tag is-info is-light">
+                    <span
+                      v-for="parts in agreement.custodianParts"
+                      class="tag is-info is-light"
+                    >
                       <template v-for="[nonMatch, match] in parts">
-                        <span style="white-space: pre-wrap;">{{nonMatch}}</span>
-                        <b style="white-space: pre-wrap;">{{match}}</b>
+                        <span style="white-space: pre-wrap;">{{ nonMatch }}</span>
+                        <b style="white-space: pre-wrap;">{{ match }}</b>
                       </template>
                     </span>
-                    <span v-for="parts in agreement.sourceParts" class="tag is-success is-light">
+                    <span
+                      v-for="parts in agreement.sourceParts"
+                      class="tag is-success is-light"
+                    >
                       <template v-for="[nonMatch, match] in parts">
-                        <span style="white-space: pre-wrap;">{{nonMatch}}</span>
-                        <b style="white-space: pre-wrap;">{{match}}</b>
+                        <span style="white-space: pre-wrap;">{{ nonMatch }}</span>
+                        <b style="white-space: pre-wrap;">{{ match }}</b>
                       </template>
                     </span>
                   </div>
-                  <span class="tag is-warning" v-if="agreement.is_draft">Draft</span>
+                  <span
+                    v-if="agreement.is_draft"
+                    class="tag is-warning"
+                  >Draft</span>
                 </td>
-                <td>{{formatDate(agreement.commencement_date)}}</td>
+                <td>{{ formatDate(agreement.commencement_date) }}</td>
                 <td v-if="isAdmin">
                   <div class="buttons">
                     <button
                       v-if="!agreement.is_draft"
                       class="button is-small is-primary"
-                      @click='() => edit(agreement)'>Edit</button>
+                      @click="() => edit(agreement)"
+                    >
+                      Edit
+                    </button>
                     <button
                       v-if="agreement.is_draft"
                       class="button is-small is-dark"
-                      @click='() => edit(agreement)'>Edit draft</button>
-                    <a class="button is-small" target="_blank" :href="downloadURL(agreement)" v-if="downloadURL(agreement)">Download (CSV)</a>
+                      @click="() => edit(agreement)"
+                    >
+                      Edit draft
+                    </button>
+                    <a
+                      v-if="downloadURL(agreement)"
+                      class="button is-small"
+                      target="_blank"
+                      :href="downloadURL(agreement)"
+                    >Download (CSV)</a>
                   </div>
                 </td>
               </tr>
@@ -201,6 +265,17 @@ export default {
       }
     }
   },
+  created () {
+    api.isLoggedIn().then(isLoggedIn => {
+      if(!isLoggedIn) {
+        this.$router.replace({ path: '/login', query: { after_login: this.$route.path } })
+      }
+    })
+    api.currentUser().then(currentUser => {
+      this.currentUser = currentUser
+    })
+    this.refresh()
+  },
   methods: {
     refresh() {
       this.status = 'loading'
@@ -258,17 +333,6 @@ export default {
       }
     },
     formatDate
-  },
-  created () {
-    api.isLoggedIn().then(isLoggedIn => {
-      if(!isLoggedIn) {
-        this.$router.replace({ path: '/login', query: { after_login: this.$route.path } })
-      }
-    })
-    api.currentUser().then(currentUser => {
-      this.currentUser = currentUser
-    })
-    this.refresh()
   },
   watch: {
     searchText: debounce(function(searchText) {

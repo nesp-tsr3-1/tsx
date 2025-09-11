@@ -3,9 +3,12 @@
     :source-id="sourceId"
     :enable-state-filter="false"
     :enable-program-filter="false"
-    :enable-management-filter="true">
+    :enable-management-filter="true"
+  >
     <template #criteria-title>
-      <h3 class="title is-6">Filtering criteria for downloads and trends</h3>
+      <h3 class="title is-6">
+        Filtering criteria for downloads and trends
+      </h3>
     </template>
   </CommonDownloads>
 </template>

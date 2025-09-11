@@ -3,38 +3,77 @@
     <div class="container is-widescreen">
       <div class="columns">
         <div class="column is-offset-2 is-8">
-          <user-nav></user-nav>
+          <user-nav />
         </div>
       </div>
       <div class="columns">
         <div class="column is-offset-2 is-8">
-          <h2 class="title is-3">{{ title }}</h2>
+          <h2 class="title is-3">
+            {{ title }}
+          </h2>
           <form>
-            <fieldset v-bind:disabled="submitting">
+            <fieldset :disabled="submitting">
               <div class="field">
                 <label class="label">Program name</label>
                 <div class="control">
-                  <input class="input" type="text" name="description" v-model="description" autofocus>
+                  <input
+                    v-model="description"
+                    class="input"
+                    type="text"
+                    name="description"
+                    autofocus
+                  >
                 </div>
-                <p class="help is-danger" v-if="errors.description">{{ errors.description }}</p>
+                <p
+                  v-if="errors.description"
+                  class="help is-danger"
+                >
+                  {{ errors.description }}
+                </p>
               </div>
               <div class="field">
                 <label class="label">Program summary</label>
                 <div class="control">
-                  <textarea class="textarea" name="summary" v-model="summary"></textarea>
+                  <textarea
+                    v-model="summary"
+                    class="textarea"
+                    name="summary"
+                  />
                 </div>
-                <p class="help is-danger" v-if="errors.summary">{{ errors.summary }}</p>
+                <p
+                  v-if="errors.summary"
+                  class="help is-danger"
+                >
+                  {{ errors.summary }}
+                </p>
               </div>
               <div class="field">
                 <label class="label">Program lead</label>
                 <div class="control">
-                  <input class="input" type="text" name="lead" v-model="lead">
+                  <input
+                    v-model="lead"
+                    class="input"
+                    type="text"
+                    name="lead"
+                  >
                 </div>
-                <p class="help is-danger" v-if="errors.lead">{{ errors.lead }}</p>
+                <p
+                  v-if="errors.lead"
+                  class="help is-danger"
+                >
+                  {{ errors.lead }}
+                </p>
               </div>
 
 
-              <button type="button" class="button is-primary" v-on:click='submit' style="margin: 0.5em 0;">{{ buttonLabel }}</button>
+              <button
+                type="button"
+                class="button is-primary"
+                style="margin: 0.5em 0;"
+                @click="submit"
+              >
+                {{ buttonLabel }}
+              </button>
             </fieldset>
           </form>
         </div>

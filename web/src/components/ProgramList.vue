@@ -11,30 +11,54 @@
       </p>
     </div>
     <div v-if="status == 'loaded'">
-      <p class="table is-fullwidth is-striped is-hoverable" v-if="programs.length == 0">
+      <p
+        v-if="programs.length == 0"
+        class="table is-fullwidth is-striped is-hoverable"
+      >
         No programs to show.
       </p>
-      <div v-if="programs.length > 0" class="columns">
-        <p class="column title is-6">Showing {{filteredPrograms.length}} / {{programs.length}} programs</p>
-        <input class="column input" type="text" placeholder="Search programs" v-model="searchText">
+      <div
+        v-if="programs.length > 0"
+        class="columns"
+      >
+        <p class="column title is-6">
+          Showing {{ filteredPrograms.length }} / {{ programs.length }} programs
+        </p>
+        <input
+          v-model="searchText"
+          class="column input"
+          type="text"
+          placeholder="Search programs"
+        >
       </div>
-      <table class="table is-fullwidth is-striped is-hoverable" v-if="filteredPrograms.length > 0">
+      <table
+        v-if="filteredPrograms.length > 0"
+        class="table is-fullwidth is-striped is-hoverable"
+      >
         <thead>
           <tr>
-            <th v-on:click="sortBy('description')">Program {{sortIcon('description')}}</th>
-            <th v-on:click="sortBy('source_count')">Datasets {{sortIcon('source_count')}}</th>
+            <th @click="sortBy('description')">
+              Program {{ sortIcon('description') }}
+            </th>
+            <th @click="sortBy('source_count')">
+              Datasets {{ sortIcon('source_count') }}
+            </th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="i in sortedPrograms" v-on:click='$router.push("/program/" + i.id)'>
-            <td :title="i.description">{{i.description}}</td>
-            <td>{{i.source_count.toLocaleString()}}</td>
+          <tr
+            v-for="i in sortedPrograms"
+            @click="$router.push(&quot;/program/&quot; + i.id)"
+          >
+            <td :title="i.description">
+              {{ i.description }}
+            </td>
+            <td>{{ i.source_count.toLocaleString() }}</td>
           </tr>
         </tbody>
       </table>
     </div>
   </div>
-
 </template>
 
 <script>
@@ -67,6 +91,20 @@ export default {
       debouncedSearchText: ''
     }
   },
+  computed: {
+    filteredPrograms() {
+      let search = normalize(this.debouncedSearchText)
+      return search ? this.programs.filter(s => normalize(s.description).indexOf(search) != -1) : this.programs
+    },
+    sortedPrograms() {
+      let key = this.sort.key
+      let result = this.filteredPrograms.slice().sort((a, b) => compare(a[key], b[key]))
+      if(!this.sort.asc) {
+        result.reverse()
+      }
+      return result
+    }
+  },
   created() {
     api.monitoringPrograms().then((programs) => {
       this.programs = programs
@@ -94,20 +132,6 @@ export default {
           asc: true
         }
       }
-    }
-  },
-  computed: {
-    filteredPrograms() {
-      let search = normalize(this.debouncedSearchText)
-      return search ? this.programs.filter(s => normalize(s.description).indexOf(search) != -1) : this.programs
-    },
-    sortedPrograms() {
-      let key = this.sort.key
-      let result = this.filteredPrograms.slice().sort((a, b) => compare(a[key], b[key]))
-      if(!this.sort.asc) {
-        result.reverse()
-      }
-      return result
     }
   },
   watch: {

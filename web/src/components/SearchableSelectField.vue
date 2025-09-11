@@ -1,17 +1,23 @@
 <template>
   <!-- TODO: merge this with SelectField -->
-  <div class="field" style="color: #333">
-    <label class="label">{{field.label}}</label>
-    <div class="is-fullwidth" ref="field">
+  <div
+    class="field"
+    style="color: #333"
+  >
+    <label class="label">{{ field.label }}</label>
+    <div
+      ref="field"
+      class="is-fullwidth"
+    >
       <Multiselect
-        v-tippy="tooltip"
         v-model="fieldValue"
+        v-tippy="tooltip"
         :options="options"
         :searchable="true"
         placeholder="Select…"
         label="label"
         value-prop="value"
-        />
+      />
     </div>
   </div>
 </template>
@@ -29,6 +35,10 @@ export default {
   },
   directives: {
     tippy: directive
+  },
+  props: {
+    field: Object,
+    value: null
   },
   data () {
     return {}
@@ -61,10 +71,6 @@ export default {
   created () {
   },
   methods: {
-  },
-  props: {
-    field: Object,
-    value: null
   }
 }
 </script>

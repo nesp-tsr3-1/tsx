@@ -11,40 +11,77 @@
       </p>
     </div>
     <div v-if="status == 'loaded'">
-      <p class="table is-fullwidth is-striped is-hoverable" v-if="imports.length == 0">
+      <p
+        v-if="imports.length == 0"
+        class="table is-fullwidth is-striped is-hoverable"
+      >
         None
       </p>
-      <table class="table is-fullwidth is-striped is-hoverable" v-if="imports.length > 0">
+      <table
+        v-if="imports.length > 0"
+        class="table is-fullwidth is-striped is-hoverable"
+      >
         <thead>
           <tr>
             <th>Filename</th>
             <th>Status</th>
             <th>Uploaded</th>
-            <th style="width: 4em;"></th>
+            <th style="width: 4em;" />
           </tr>
         </thead>
         <tbody>
           <tr v-for="i in imports">
-            <td :title="i.filename"><span class="tag is-danger" style="margin-right: 0.5em" v-if="i.data_type === 2">Type 2</span><a v-bind:href="importUrl(i)">{{i.filename}}</a>
+            <td :title="i.filename">
+              <span
+                v-if="i.data_type === 2"
+                class="tag is-danger"
+                style="margin-right: 0.5em"
+              >Type 2</span><a :href="importUrl(i)">{{ i.filename }}</a>
               <br>
-              <span class="most-recent-import-message" v-if="isMostRecentImport(i)">Most recent import – to update your dataset, download this file and add your new data.</span>
+              <span
+                v-if="isMostRecentImport(i)"
+                class="most-recent-import-message"
+              >Most recent import – to update your dataset, download this file and add your new data.</span>
             </td>
             <td>
-              {{humanizeStatus(i.status)}}
-              <a v-bind:href="importLogUrl(i)" target="_blank">(log)</a>
-              <button class="button is-small" v-if='canApproveImport(i)' v-on:click='function() { approveImport(i) }' v-bind:class="{ 'is-loading': i.isApproving }">Approve</button>
+              {{ humanizeStatus(i.status) }}
+              <a
+                :href="importLogUrl(i)"
+                target="_blank"
+              >(log)</a>
+              <button
+                v-if="canApproveImport(i)"
+                class="button is-small"
+                :class="{ 'is-loading': i.isApproving }"
+                @click="function() { approveImport(i) }"
+              >
+                Approve
+              </button>
             </td>
-            <td>{{formatDateTime(i.time_created)}} by {{i.user}}</td>
+            <td>{{ formatDateTime(i.time_created) }} by {{ i.user }}</td>
             <td class="visibility">
-              <button v-if="canShowImport(i)" @click="showImport(i)" title="Hidden from custodians" :disabled="i.isUpdatingVisibility"><img src="../assets/icons/visibility_off.svg"></button>
-              <button v-if="canHideImport(i)" @click="hideImport(i)"  title="Visible to custodians" :disabled="i.isUpdatingVisibility"><img src="../assets/icons/visibility.svg"></button>
+              <button
+                v-if="canShowImport(i)"
+                title="Hidden from custodians"
+                :disabled="i.isUpdatingVisibility"
+                @click="showImport(i)"
+              >
+                <img src="../assets/icons/visibility_off.svg">
+              </button>
+              <button
+                v-if="canHideImport(i)"
+                title="Visible to custodians"
+                :disabled="i.isUpdatingVisibility"
+                @click="hideImport(i)"
+              >
+                <img src="../assets/icons/visibility.svg">
+              </button>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
   </div>
-
 </template>
 
 <script>
@@ -53,6 +90,9 @@ import { humanizeStatus, formatDateTime } from '../util.js'
 
 export default {
   name: 'ImportList',
+  props: {
+    sourceId: Number
+  },
   data () {
     var data = {
       imports: [],
@@ -146,9 +186,6 @@ export default {
     },
     humanizeStatus,
     formatDateTime
-  },
-  props: {
-    sourceId: Number
   }
 }
 </script>

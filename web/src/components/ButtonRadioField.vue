@@ -1,13 +1,20 @@
 <template>
   <!-- <div class="field">
     <label class="label">{{field.label}}</label> -->
-    <div class="buttons has-addons inline" style="flex-wrap: nowrap;">
-      <button v-for="option in field.options"
-        class="button is-small"
-        :class="buttonClasses(option)"
-        :disabled="option.disabled"
-        @click="select(option)">{{option.label}}</button>
-    </div>
+  <div
+    class="buttons has-addons inline"
+    style="flex-wrap: nowrap;"
+  >
+    <button
+      v-for="option in field.options"
+      class="button is-small"
+      :class="buttonClasses(option)"
+      :disabled="option.disabled"
+      @click="select(option)"
+    >
+      {{ option.label }}
+    </button>
+  </div>
   <!-- </div> -->
 </template>
 
@@ -16,6 +23,10 @@ import * as api from '../api.js'
 
 export default {
   name: 'ButtonRadioField',
+  props: {
+    field: Object,
+    value: null
+  },
   data () {
     return {
     }
@@ -42,10 +53,6 @@ export default {
         "is-selected": this.fieldValue == option.value,
       }
     }
-  },
-  props: {
-    field: Object,
-    value: null
   }
 }
 </script>

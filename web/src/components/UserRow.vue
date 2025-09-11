@@ -1,21 +1,32 @@
 <template>
   <tr>
-    <td>{{user.first_name}} {{user.last_name}}</td>
-    <td>{{user.email}}</td>
+    <td>{{ user.first_name }} {{ user.last_name }}</td>
+    <td>{{ user.email }}</td>
     <td>
-      <fieldset v-bind:disabled="isLoading">
-        <div class="select" v-bind:class="{ 'is-loading': isLoading }">
+      <fieldset :disabled="isLoading">
+        <div
+          class="select"
+          :class="{ 'is-loading': isLoading }"
+        >
           <select v-model="clientRole">
             <option>Administrator</option>
             <option>Program manager</option>
             <option>Custodian</option>
           </select>
         </div>
-        <p v-if="isError" class="help is-danger">Failed to update role</p>
+        <p
+          v-if="isError"
+          class="help is-danger"
+        >
+          Failed to update role
+        </p>
         <div v-if="clientRole === 'Program manager'">
-        	<div v-for="program in clientPrograms">
-        		<label><input type="checkbox" v-model="program.selected"> {{program.description}}</label>
-        	</div>
+          <div v-for="program in clientPrograms">
+            <label><input
+              v-model="program.selected"
+              type="checkbox"
+            > {{ program.description }}</label>
+          </div>
         </div>
       </fieldset>
     </td>
@@ -28,6 +39,10 @@ import * as api from '../api.js'
 
 export default {
   name: 'UserRow',
+  props: {
+    user: Object,
+    monitoringPrograms: Array
+  },
   data () {
     var currentRole = this.user.role
     return {
@@ -45,29 +60,6 @@ export default {
     isLoading: function() {
       return this.state === 'loading'
     }
-  },
-  created: function() {
-  	this.loadPrograms()
-  },
-  methods: {
-  	loadPrograms: function() {
-  		if(this.clientRole == 'Program manager') {
-  			api.programsManagedBy(this.user.id).then(x => {
-  				this.serverPrograms = this.programModels(x)
-  				this.clientPrograms = this.programModels(x)
-  			})
-  		} else {
-  			this.serverPrograms = this.programModels([])
-  			this.clientPrograms = this.programModels([])
-  		}
-  	},
-  	programModels: function(selectedPrograms) {
-			return this.monitoringPrograms.map(p => ({
-				id: p.id,
-				description: p.description,
-				selected: selectedPrograms.filter(p2 => p.id === p2.id).length > 0
-			}))
-  	}
   },
   watch: {
     clientRole(role) {
@@ -119,9 +111,28 @@ export default {
 	    deep: true
 	  }
   },
-  props: {
-    user: Object,
-    monitoringPrograms: Array
+  created: function() {
+  	this.loadPrograms()
+  },
+  methods: {
+  	loadPrograms: function() {
+  		if(this.clientRole == 'Program manager') {
+  			api.programsManagedBy(this.user.id).then(x => {
+  				this.serverPrograms = this.programModels(x)
+  				this.clientPrograms = this.programModels(x)
+  			})
+  		} else {
+  			this.serverPrograms = this.programModels([])
+  			this.clientPrograms = this.programModels([])
+  		}
+  	},
+  	programModels: function(selectedPrograms) {
+			return this.monitoringPrograms.map(p => ({
+				id: p.id,
+				description: p.description,
+				selected: selectedPrograms.filter(p2 => p.id === p2.id).length > 0
+			}))
+  	}
   }
 }
 </script>

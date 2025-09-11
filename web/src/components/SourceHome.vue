@@ -3,31 +3,46 @@
     <div class="container source-home">
       <div class="columns">
         <div class="column">
-          <user-nav></user-nav>
-          <h2 class="title">Datasets</h2>
+          <user-nav />
+          <h2 class="title">
+            Datasets
+          </h2>
 
-          <div v-if="state === 'loading'">Loading...</div>
+          <div v-if="state === 'loading'">
+            Loading...
+          </div>
 
-          <div v-if="state === 'error'">Something went wrong. Please try again later.</div>
+          <div v-if="state === 'error'">
+            Something went wrong. Please try again later.
+          </div>
 
-          <div v-if="state === 'noAccess'" class="content">
+          <div
+            v-if="state === 'noAccess'"
+            class="content"
+          >
             <p>Thank you for signing up for a TSX web account.</p>
 
             <p>Before you can upload data, a TSX administrator first needs to grant access to your account. Please contact tsx@uq.edu.au to request access or for further information.</p>
           </div>
 
           <div v-if="state === 'loaded'">
-            <router-link to="/datasets/edit/new" tag="button" class="button is-primary">Create New Dataset</router-link>
+            <router-link
+              to="/datasets/edit/new"
+              tag="button"
+              class="button is-primary"
+            >
+              Create New Dataset
+            </router-link>
             <hr>
             <source-list
-              @click-source='handleSourceClick'
-              :show-agreement='showAgreement'></source-list>
+              :show-agreement="showAgreement"
+              @click-source="handleSourceClick"
+            />
           </div>
         </div>
       </div>
     </div>
   </div>
-
 </template>
 
 <script>
@@ -47,18 +62,6 @@ export default {
       error: null
     }
   },
-  created() {
-    this.reload()
-  },
-  watch: {
-    $route (to, from) {
-      // This fixes a problem caused by KeepAlive when attempting to access the page and being redirected to login
-      // This ensures that after logging in and returning to this page, we attempt to reload the current user
-      if(to.name == 'SourceHome' && this.error) {
-        this.reload()
-      }
-    }
-  },
   computed: {
     state() {
       if(this.error) {
@@ -74,6 +77,18 @@ export default {
     showAgreement() {
       return features.documents
     }
+  },
+  watch: {
+    $route (to, from) {
+      // This fixes a problem caused by KeepAlive when attempting to access the page and being redirected to login
+      // This ensures that after logging in and returning to this page, we attempt to reload the current user
+      if(to.name == 'SourceHome' && this.error) {
+        this.reload()
+      }
+    }
+  },
+  created() {
+    this.reload()
   },
   methods: {
     handleSourceClick(source, evt) {

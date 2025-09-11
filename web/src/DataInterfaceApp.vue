@@ -13,7 +13,7 @@
 import "tippy.js/dist/tippy.css"
 
 export default {
-  name: 'app'
+  name: 'App'
 }
 </script>
 

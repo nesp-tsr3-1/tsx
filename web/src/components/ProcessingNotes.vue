@@ -11,29 +11,39 @@
       </p>
     </div>
     <div v-if="status == 'loaded'">
-      <note-row v-for="note in notes"
-        v-bind:key="note.id"
-        v-bind:note="note"
-        @deleted="refreshNotes">
-      </note-row>
-      <p v-if="notes.length === 0" class="content">
+      <note-row
+        v-for="note in notes"
+        :key="note.id"
+        :note="note"
+        @deleted="refreshNotes"
+      />
+      <p
+        v-if="notes.length === 0"
+        class="content"
+      >
         No notes have been recorded for this dataset.
       </p>
       <div class="field">
         <div class="control">
           <textarea
+            v-model="newNotes"
             class="textarea"
             placeholder="Add notes about how this data was processed before uploading to the TSX web interface."
             rows="2"
-            v-model="newNotes"
-            v-bind:class="{ hasContent: newNotes.trim().length > 0 }"
+            :class="{ hasContent: newNotes.trim().length > 0 }"
             @focus="notesFocused = true"
-            @blur="notesFocused = false">
-          </textarea>
+            @blur="notesFocused = false"
+          />
         </div>
       </div>
-      <button class="button is-primary" v-if="showSubmit" :disabled="!enableSubmit" @click="submitNotes">Submit</button>
-
+      <button
+        v-if="showSubmit"
+        class="button is-primary"
+        :disabled="!enableSubmit"
+        @click="submitNotes"
+      >
+        Submit
+      </button>
     </div>
   </div>
 </template>
@@ -46,6 +56,9 @@ import Note from './ProcessingNote.vue'
 export default {
   components: {
     'note-row': Note
+  },
+  props: {
+    sourceId: Number
   },
   data () {
     return {
@@ -89,9 +102,6 @@ export default {
         this.submitStatus = 'error'
       })
     }
-  },
-  props: {
-    sourceId: Number
   }
 }
 </script>

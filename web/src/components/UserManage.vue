@@ -3,10 +3,21 @@
     <div class="container">
       <div class="columns">
         <div class="column is-8 is-offset-2">
-          <user-nav></user-nav>
-          <h2 class="title">Users</h2>
-          <input class="input column is-6" type="text" placeholder="Search name or email" style="margin-bottom: 1em;" v-model="searchText">
-          <table class="table" style="width: 100%">
+          <user-nav />
+          <h2 class="title">
+            Users
+          </h2>
+          <input
+            v-model="searchText"
+            class="input column is-6"
+            type="text"
+            placeholder="Search name or email"
+            style="margin-bottom: 1em;"
+          >
+          <table
+            class="table"
+            style="width: 100%"
+          >
             <thead>
               <tr>
                 <th>Name</th>
@@ -15,7 +26,12 @@
               </tr>
             </thead>
             <tbody>
-              <user-row v-for="user in users" v-bind:key="user.id" v-bind:user="user" :monitoringPrograms="monitoringPrograms"></user-row>
+              <user-row
+                v-for="user in users"
+                :key="user.id"
+                :user="user"
+                :monitoring-programs="monitoringPrograms"
+              />
             </tbody>
           </table>
         </div>

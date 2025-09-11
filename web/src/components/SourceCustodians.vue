@@ -12,25 +12,37 @@
     </div>
     <div v-if="status == 'loaded'">
       <div class="columns is-multiline">
-        <user-row v-for="user in users"
-          v-bind:key="user.id"
-          v-bind:user="user"
-          v-bind:sourceId="sourceId"
-          @deleted="refresh">
+        <user-row
+          v-for="user in users"
+          :key="user.id"
+          :user="user"
+          :source-id="sourceId"
+          @deleted="refresh"
+        >
           <div class="column is-half">
             <div class="card">
               <div class="card-content">
-                <button class="delete" @click="deleteUser" style="position: absolute; top: 1.5rem; right: 1rem;"></button>
+                <button
+                  class="delete"
+                  style="position: absolute; top: 1.5rem; right: 1rem;"
+                  @click="deleteUser"
+                />
                 <div>
-                  <span style="font-weight: bold">{{displayName}}</span>
+                  <span style="font-weight: bold">{{ displayName }}</span>
                 </div>
                 <div>
-                  <a v-bind:href="'mailto: ' + user.email">{{user.email}}</a>
+                  <a :href="'mailto: ' + user.email">{{ user.email }}</a>
                 </div>
-                <div v-if="!isRegistered" class="is-size-7">
+                <div
+                  v-if="!isRegistered"
+                  class="is-size-7"
+                >
                   This user has not signed up for an account yet
                 </div>
-                <div class="spinner" v-if="state == 'updating' || state == 'deleting'">
+                <div
+                  v-if="state == 'updating' || state == 'deleting'"
+                  class="spinner"
+                >
                   One moment…
                 </div>
               </div>
@@ -38,27 +50,44 @@
           </div>
         </user-row>
       </div>
-      <p v-if="users.length === 0" class="content">
+      <p
+        v-if="users.length === 0"
+        class="content"
+      >
         This dataset currently has no custodians.
       </p>
 
       <fieldset>
         <div class="field has-addons">
           <div class="control">
-            <input class="input" style="width: 15em" type="text"
-              placeholder="Custodian email address"
+            <input
               v-model="newCustodianEmail"
+              class="input"
+              style="width: 15em"
+              type="text"
+              placeholder="Custodian email address"
               @focus="newCustodianEmailFocused = true"
               @blur="newCustodianEmailFocused = false"
-              v-on:keyup.enter="addUser">
+              @keyup.enter="addUser"
+            >
           </div>
           <div class="control">
-            <button class="button is-info" :disabled="!enableSubmit" @click="addUser">Add Custodian</button>
+            <button
+              class="button is-info"
+              :disabled="!enableSubmit"
+              @click="addUser"
+            >
+              Add Custodian
+            </button>
           </div>
         </div>
-        <p v-if="submitStatus === 'error' && submitErrorMessage" class="help is-danger">{{submitErrorMessage}}</p>
+        <p
+          v-if="submitStatus === 'error' && submitErrorMessage"
+          class="help is-danger"
+        >
+          {{ submitErrorMessage }}
+        </p>
       </fieldset>
-
     </div>
   </div>
 </template>
@@ -71,6 +100,9 @@ export default {
   name: 'SourceCustodians',
   components: {
     'user-row': SourceCustodian
+  },
+  props: {
+    sourceId: Number
   },
   data () {
     return {
@@ -118,9 +150,6 @@ export default {
         this.submitStatus = 'error'
       })
     }
-  },
-  props: {
-    sourceId: Number
   }
 }
 </script>

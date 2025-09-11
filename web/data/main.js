@@ -9,5 +9,5 @@ import UserNav from '../src/components/UserNav.vue'
 const app = createApp(App)
 app.use(router)
 app.directive('autofocus', autofocus)
-app.component('user-nav', UserNav)
+app.component('UserNav', UserNav)
 app.mount('#app')

@@ -2,31 +2,35 @@
   <div class="section">
     <div class="columns">
       <div class="column is-8 is-offset-2">
-        <user-nav></user-nav>
+        <user-nav />
 
-        <h2 class="title">Documents</h2>
+        <h2 class="title">
+          Documents
+        </h2>
 
         <div class="tabs is-boxed">
           <ul>
             <li>
               <router-link
-                :to="{ name: 'DataAgreementHome' }">
+                :to="{ name: 'DataAgreementHome' }"
+              >
                 Data Sharing Agreements
-                <span v-if="stats">&nbsp;({{stats.data_agreement_count}})</span>
+                <span v-if="stats">&nbsp;({{ stats.data_agreement_count }})</span>
               </router-link>
             </li>
             <li class="is-active">
               <router-link
-                :to="{ name: 'AcknowledgementLetterHome' }">
+                :to="{ name: 'AcknowledgementLetterHome' }"
+              >
                 Acknowledgement Letters
-                <span v-if="stats">&nbsp;({{stats.acknowledgement_letter_count}})</span>
+                <span v-if="stats">&nbsp;({{ stats.acknowledgement_letter_count }})</span>
               </router-link>
             </li>
           </ul>
         </div>
 
         <div v-if="status == 'loading'">
-            <p>
+          <p>
             Loading…
           </p>
         </div>
@@ -38,26 +42,50 @@
         </div>
 
         <div v-if="status == 'loaded'">
-          <div v-if="letters.length == 0" class="columns">
-            <p class="column content">No data acknowledgement letters to show.</p>
+          <div
+            v-if="letters.length == 0"
+            class="columns"
+          >
+            <p class="column content">
+              No data acknowledgement letters to show.
+            </p>
           </div>
 
           <div class="columns">
-            <p class="column content">Please send an email to the TSX team at tsx@tern.org.au if you would like us to modify your formal acknowledgment letter(s) to include other recipients or custodians of these data.</p>
+            <p class="column content">
+              Please send an email to the TSX team at tsx@tern.org.au if you would like us to modify your formal acknowledgment letter(s) to include other recipients or custodians of these data.
+            </p>
           </div>
 
           <hr>
 
-          <div v-if="letters.length > 0" class="columns">
-            <p class="column title is-6">Showing {{filteredLetters.length}} / {{letters.length}} letters</p>
-            <input class="column input" type="text" placeholder="Search acknowledgement letters" v-model="searchText">
+          <div
+            v-if="letters.length > 0"
+            class="columns"
+          >
+            <p class="column title is-6">
+              Showing {{ filteredLetters.length }} / {{ letters.length }} letters
+            </p>
+            <input
+              v-model="searchText"
+              class="column input"
+              type="text"
+              placeholder="Search acknowledgement letters"
+            >
           </div>
 
-          <table class="table is-fullwidth is-striped is-hoverable" v-if="filteredLetters.length > 0">
+          <table
+            v-if="filteredLetters.length > 0"
+            class="table is-fullwidth is-striped is-hoverable"
+          >
             <thead>
               <tr>
-                <th @click="sortBy('filenames')">Filename(s) {{sortIcon('filenames')}}</th>
-                <th @click="sortBy('year')">Year {{sortIcon('year')}}</th>
+                <th @click="sortBy('filenames')">
+                  Filename(s) {{ sortIcon('filenames') }}
+                </th>
+                <th @click="sortBy('year')">
+                  Year {{ sortIcon('year') }}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -66,8 +94,8 @@
                   <div v-for="file in letter.files">
                     <a :href="fileURL(file)">
                       <template v-for="[nonMatch, match] in file.filenameParts">
-                        <span style="white-space: pre-wrap;">{{nonMatch}}</span>
-                        <b style="white-space: pre-wrap;">{{match}}</b>
+                        <span style="white-space: pre-wrap;">{{ nonMatch }}</span>
+                        <b style="white-space: pre-wrap;">{{ match }}</b>
                       </template>
                     </a>
                   </div>
@@ -76,15 +104,18 @@
                   </div>
 
                   <div style="display: flex;gap: 0.5em;">
-                    <span v-for="parts in letter.custodianParts" class="tag is-info is-light">
+                    <span
+                      v-for="parts in letter.custodianParts"
+                      class="tag is-info is-light"
+                    >
                       <template v-for="[nonMatch, match] in parts">
-                        <span style="white-space: pre-wrap;">{{nonMatch}}</span>
-                        <b style="white-space: pre-wrap;">{{match}}</b>
+                        <span style="white-space: pre-wrap;">{{ nonMatch }}</span>
+                        <b style="white-space: pre-wrap;">{{ match }}</b>
                       </template>
                     </span>
                   </div>
                 </td>
-                <td>{{letter.year}}</td>
+                <td>{{ letter.year }}</td>
               </tr>
             </tbody>
           </table>
@@ -169,6 +200,17 @@ export default {
       return this.currentUser?.roles?.includes('Administrator') === true
     }
   },
+  created () {
+    api.isLoggedIn().then(isLoggedIn => {
+      if(!isLoggedIn) {
+        this.$router.replace({ path: '/login', query: { after_login: this.$route.path } })
+      }
+    })
+    api.currentUser().then(currentUser => {
+      this.currentUser = currentUser
+    })
+    this.refresh()
+  },
   methods: {
     refresh() {
       this.status = 'loading'
@@ -213,17 +255,6 @@ export default {
         }
       }
     }
-  },
-  created () {
-    api.isLoggedIn().then(isLoggedIn => {
-      if(!isLoggedIn) {
-        this.$router.replace({ path: '/login', query: { after_login: this.$route.path } })
-      }
-    })
-    api.currentUser().then(currentUser => {
-      this.currentUser = currentUser
-    })
-    this.refresh()
   },
   watch: {
     searchText: debounce(function(searchText) {

@@ -1,66 +1,133 @@
 <template>
-  <div class="section is-dark" style="padding-bottom: 1em;">
+  <div
+    class="section is-dark"
+    style="padding-bottom: 1em;"
+  >
     <div class="container is-widescreen">
-
-  <div class="content">
-    <div class="tile is-ancestor">
-      <div class="tile is-2 is-parent">
-        <div class="tile is-child">
-          <div class="field">
-            <Field v-if="queryTypeField" :field="queryTypeField" v-model:value="fieldValues.type"></Field>
-          </div>
-          <hr>
-          <div class="content" style="display: flex; justify-content: space-between; margin-bottom: 0;">
-            <h4 class="is-title has-text-white">Filters</h4>
-            <button class='button is-primary is-small' @click='reset' style="position: relative; top: -0.3em;">Reset</button>
-          </div>
-          <p class="content is-size-7">Only selections with adequate data are shown.</p>
-
-          <div style="margin-bottom: 1em">
-            <template v-for="field in sidebarFields">
-              <Field v-if="!field.disabled" :field="field" v-model:value="fieldValues[field.name]" style="margin-bottom: 0.8em;"></Field>
-            </template>
-          </div>
-
-          <p class="content is-size-7" v-if="fieldValues && fieldValues.type == 'individual'">NOTE: The LPI method was not designed for single-species trends. These trends vary greatly in reliability, with some having very sparse underlying data.</p>
-          <hr>
-
-          <div v-if="!noData">
-            <div class="dropdown is-hoverable">
-              <div class="dropdown-trigger">
-                <button class="button is-primary" aria-haspopup="true" area-controls="dropdown-menu">
-                  <span>Download</span>
-                  <span class="icon is-small">
-                    <i class="fas fa-angle-down" aria-hidden="true"></i>
-                  </span>
+      <div class="content">
+        <div class="tile is-ancestor">
+          <div class="tile is-2 is-parent">
+            <div class="tile is-child">
+              <div class="field">
+                <Field
+                  v-if="queryTypeField"
+                  v-model:value="fieldValues.type"
+                  :field="queryTypeField"
+                />
+              </div>
+              <hr>
+              <div
+                class="content"
+                style="display: flex; justify-content: space-between; margin-bottom: 0;"
+              >
+                <h4 class="is-title has-text-white">
+                  Filters
+                </h4>
+                <button
+                  class="button is-primary is-small"
+                  style="position: relative; top: -0.3em;"
+                  @click="reset"
+                >
+                  Reset
                 </button>
               </div>
-              <div class="dropdown-menu">
-                <div class="dropdown-content">
-                  <div class="dropdown-item is-clickable hover-highlight" @click='downloadCSV'>Time series (CSV)</div>
-                  <div class="dropdown-item is-clickable hover-highlight" @click='downloadTrend'>Trend (CSV)</div>
-                  <div class="dropdown-item is-clickable hover-highlight" @click='viewDataSummary'>Data summary</div>
+              <p class="content is-size-7">
+                Only selections with adequate data are shown.
+              </p>
+
+              <div style="margin-bottom: 1em">
+                <template v-for="field in sidebarFields">
+                  <Field
+                    v-if="!field.disabled"
+                    v-model:value="fieldValues[field.name]"
+                    :field="field"
+                    style="margin-bottom: 0.8em;"
+                  />
+                </template>
+              </div>
+
+              <p
+                v-if="fieldValues && fieldValues.type == 'individual'"
+                class="content is-size-7"
+              >
+                NOTE: The LPI method was not designed for single-species trends. These trends vary greatly in reliability, with some having very sparse underlying data.
+              </p>
+              <hr>
+
+              <div v-if="!noData">
+                <div class="dropdown is-hoverable">
+                  <div class="dropdown-trigger">
+                    <button
+                      class="button is-primary"
+                      aria-haspopup="true"
+                      area-controls="dropdown-menu"
+                    >
+                      <span>Download</span>
+                      <span class="icon is-small">
+                        <i
+                          class="fas fa-angle-down"
+                          aria-hidden="true"
+                        />
+                      </span>
+                    </button>
+                  </div>
+                  <div class="dropdown-menu">
+                    <div class="dropdown-content">
+                      <div
+                        class="dropdown-item is-clickable hover-highlight"
+                        @click="downloadCSV"
+                      >
+                        Time series (CSV)
+                      </div>
+                      <div
+                        class="dropdown-item is-clickable hover-highlight"
+                        @click="downloadTrend"
+                      >
+                        Trend (CSV)
+                      </div>
+                      <div
+                        class="dropdown-item is-clickable hover-highlight"
+                        @click="viewDataSummary"
+                      >
+                        Data summary
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div class="modal is-active" v-show='loadingData && !showFullMap'>
-        <div class="modal-background" style="background: rgba(0,0,0,0.2)"></div>
-        <div class="modal-card">
-          <section class="modal-card-body">
-            <spinner size='large' message='Loading data....'></spinner>
-          </section>
-        </div>
-      </div>
+          <div
+            v-show="loadingData && !showFullMap"
+            class="modal is-active"
+          >
+            <div
+              class="modal-background"
+              style="background: rgba(0,0,0,0.2)"
+            />
+            <div class="modal-card">
+              <section class="modal-card-body">
+                <spinner
+                  size="large"
+                  message="Loading data...."
+                />
+              </section>
+            </div>
+          </div>
 
-      <div class="tile is-vertical" v-show="!noData">
-        <div class="tile is-block-tablet is-flex-widescreen">
-          <div class="tile is-parent is-vertical" v-show="!showFullMap">
-            <div class="tile is-child card">
-              <div style="
+          <div
+            v-show="!noData"
+            class="tile is-vertical"
+          >
+            <div class="tile is-block-tablet is-flex-widescreen">
+              <div
+                v-show="!showFullMap"
+                class="tile is-parent is-vertical"
+              >
+                <div class="tile is-child card">
+                  <div
+                    style="
                 display: flex;
                 flex-wrap: nowrap;
                 gap: 1em;
@@ -68,125 +135,223 @@
                 margin-right: 2.5em;
                 align-items: center;
                 margin-bottom: 0.8em;
-                "><h4 class="has-text-black" style="
+                "
+                  >
+                    <h4
+                      class="has-text-black"
+                      style="
                   white-space:nowrap;
                   margin-bottom: 0;
-                  ">Main index</h4>
-                <div v-if="referenceYearField" style="
+                  "
+                    >
+                      Main index
+                    </h4>
+                    <div
+                      v-if="referenceYearField"
+                      style="
                   display: flex;
                   flex-wrap: nowrap;
                   gap: 0.5em;
-                  align-items: center;">
-                  <div class="is-content refyear-label" style="font-size: 0.8rem">Reference year</div>
-                  <Field :field="referenceYearField" v-model:value="fieldValues.refyear"></Field>
-
+                  align-items: center;"
+                    >
+                      <div
+                        class="is-content refyear-label"
+                        style="font-size: 0.8rem"
+                      >
+                        Reference year
+                      </div>
+                      <Field
+                        v-model:value="fieldValues.refyear"
+                        :field="referenceYearField"
+                      />
+                    </div>
+                  </div>
+                  <tippy
+                    class="info-icon icon"
+                    arrow
+                    interactive
+                    placement="left"
+                  >
+                    <template #default>
+                      <i class="far fa-question-circle" />
+                    </template>
+                    <template #content>
+                      <div class="popup-content">
+                        <p>The index shows the average change in populations compared to a base year. It shows a relative change and not population numbers themselves. At the reference year, the index gets an index score of one. A score of 1.2 would mean a 20% increase on average compared to the reference year, while a score of 0.8 would mean a 20% decrease on average compared to the reference year.</p>
+                        <p>Check this index:</p>
+                        <ol>
+                          <li>Look at <b>Spatial representativeness</b> map to see how much data there are and where these data come from.</li>
+                          <li>Look at <b>Monitoring consistency</b> to see how consistently each monitoring location was visited over time.</li>
+                          <li>Go to <b>Time series and species accumulation</b> plot to see how many time series and species/subspecies were used to calculate this index in each year</li>
+                          <li>Adjust the <b>Reference year</b> to let the index start at a year with more data</li>
+                          <li>Go to <b>Data Summary</b> to see which species/subspecies were included in this index</li>
+                          <li>Go to <b>Download CSV</b> to get the aggregated data used to calculate this index.</li>
+                        </ol>
+                        <p>
+                          The three-year lag in the index is implemented due to a downturn in data availability closer to the release year of the index. To read more about this, please see the pop-up info box for the ‘Number of time series and species per year’ plot in the bottom right of this tool.
+                        </p>
+                      </div>
+                    </template>
+                  </tippy>
+                  <div
+                    v-show="!noLPI"
+                    class="plot-container"
+                  >
+                    <canvas ref="lpiplot" />
+                  </div>
+                  <div
+                    v-show="noLPI"
+                    class="has-text-black"
+                  >
+                    <p>No index available – less than 3 taxa present at all possible reference years.</p>
+                  </div>
+                </div>
+                <div class="tile is-child card">
+                  <h4 class="has-text-black">
+                    Monitoring consistency
+                  </h4>
+                  <tippy
+                    class="info-icon icon"
+                    arrow
+                    interactive
+                    placement="left"
+                  >
+                    <template #default>
+                      <i class="far fa-question-circle" />
+                    </template>
+                    <template #content>
+                      <div class="popup-content">
+                        This dot plot shows the particular years for which monitoring data were available, from a random 50 site sample of the whole dataset (or data subset). Each row represents a time series where a species/subspecies was monitored with a consistent method at a single site. The dots represent count values for the metric used to quantify the species/subspecies while zeros indicate absences (non-detections) of those species at the site.
+                      </div>
+                    </template>
+                  </tippy>
+                  <div class="plot-container">
+                    <canvas ref="dotplot" />
+                  </div>
                 </div>
               </div>
-              <tippy class="info-icon icon" arrow interactive placement="left">
-                <template #default><i class="far fa-question-circle"></i></template>
-                <template #content>
-                  <div class="popup-content">
-                      <p>The index shows the average change in populations compared to a base year. It shows a relative change and not population numbers themselves. At the reference year, the index gets an index score of one. A score of 1.2 would mean a 20% increase on average compared to the reference year, while a score of 0.8 would mean a 20% decrease on average compared to the reference year.</p>
-                      <p>Check this index:</p>
-                      <ol>
-                        <li>Look at <b>Spatial representativeness</b> map to see how much data there are and where these data come from.</li>
-                        <li>Look at <b>Monitoring consistency</b> to see how consistently each monitoring location was visited over time.</li>
-                        <li>Go to <b>Time series and species accumulation</b> plot to see how many time series and species/subspecies were used to calculate this index in each year</li>
-                        <li>Adjust the <b>Reference year</b> to let the index start at a year with more data</li>
-                        <li>Go to <b>Data Summary</b> to see which species/subspecies were included in this index</li>
-                        <li>Go to <b>Download CSV</b> to get the aggregated data used to calculate this index.</li>
-                      </ol>
-                      <p>
-                        The three-year lag in the index is implemented due to a downturn in data availability closer to the release year of the index. To read more about this, please see the pop-up info box for the ‘Number of time series and species per year’ plot in the bottom right of this tool.
-                      </p>
+              <div class="tile is-parent is-vertical">
+                <div class="tile is-child card map-tile">
+                  <h4 class="has-text-black">
+                    Spatial representativeness
+                  </h4>
+                  <tippy
+                    class="info-icon icon"
+                    arrow
+                    interactive
+                    placement="left"
+                  >
+                    <template #default>
+                      <i class="far fa-question-circle" />
+                    </template>
+                    <template #content>
+                      <div class="popup-content">
+                        The spatial representativeness map shows where the monitoring data used to calculate a particular index was recorded in Australia. Sites are buffered to obscure precise locations.
+                      </div>
+                    </template>
+                  </tippy>
+                  <div
+                    id="intensityplot"
+                    ref="intensityplot"
+                    class="heatmap-div"
+                  />
+                  <spinner
+                    v-show="loadingMap"
+                    size="medium"
+                    class="heatmap-spinner"
+                  />
+                </div>
+                <div
+                  v-show="!showFullMap"
+                  class="tile is-child card"
+                >
+                  <h4 class="has-text-black">
+                    Number of time series and species per year
+                  </h4>
+                  <tippy
+                    class="info-icon icon"
+                    arrow
+                    interactive
+                    placement="left"
+                  >
+                    <template #default>
+                      <i class="far fa-question-circle" />
+                    </template>
+                    <template #content>
+                      <div class="popup-content">
+                        This plot shows the number of species/subspecies (in blue) and the number of time series (in green) available in each year to calculate the index. The number of species and time series will always decline closer to the final year, given the lag in integration of datasets into the index (resulting primarily from the lag in the availability of data, given that it takes time for data providers to collate and submit, or takes time for the TSX team to identify data in the literature). This downturn in data availability closer to the release year is the reason that a 3-year lag is implemented in trend calculation, as data quality is poorer closer to the release year.
+                      </div>
+                    </template>
+                  </tippy>
+                  <div class="plot-container">
+                    <canvas ref="sumplot" />
                   </div>
-                </template>
-              </tippy>
-              <div class="plot-container" v-show="!noLPI">
-                <canvas ref='lpiplot'></canvas>
-              </div>
-              <div class="has-text-black" v-show="noLPI">
-                <p>No index available – less than 3 taxa present at all possible reference years.</p>
-              </div>
-            </div>
-            <div class="tile is-child card">
-              <h4 class="has-text-black">Monitoring consistency</h4>
-              <tippy class="info-icon icon" arrow interactive placement="left">
-                <template #default><i class="far fa-question-circle"></i></template>
-                <template #content>
-                  <div class="popup-content">
-                    This dot plot shows the particular years for which monitoring data were available, from a random 50 site sample of the whole dataset (or data subset). Each row represents a time series where a species/subspecies was monitored with a consistent method at a single site. The dots represent count values for the metric used to quantify the species/subspecies while zeros indicate absences (non-detections) of those species at the site.
-                  </div>
-                </template>
-              </tippy>
-              <div class="plot-container">
-                <canvas ref='dotplot'></canvas>
+                </div>
               </div>
             </div>
           </div>
-          <div class="tile is-parent is-vertical">
-            <div class="tile is-child card map-tile">
-              <h4 class="has-text-black">Spatial representativeness</h4>
-              <tippy class="info-icon icon" arrow interactive placement="left">
-                <template #default><i class="far fa-question-circle"></i></template>
-                <template #content>
-                  <div class="popup-content">
-                    The spatial representativeness map shows where the monitoring data used to calculate a particular index was recorded in Australia. Sites are buffered to obscure precise locations.
-                  </div>
-                </template>
-              </tippy>
-              <div id='intensityplot' ref='intensityplot' class='heatmap-div'></div>
-              <spinner size='medium' v-show='loadingMap' class='heatmap-spinner'></spinner>
-            </div>
-            <div class="tile is-child card" v-show="!showFullMap">
-              <h4 class="has-text-black">Number of time series and species per year</h4>
-              <tippy class="info-icon icon" arrow interactive placement="left">
-                <template #default><i class="far fa-question-circle"></i></template>
-                <template #content>
-                  <div class="popup-content">
-                    This plot shows the number of species/subspecies (in blue) and the number of time series (in green) available in each year to calculate the index. The number of species and time series will always decline closer to the final year, given the lag in integration of datasets into the index (resulting primarily from the lag in the availability of data, given that it takes time for data providers to collate and submit, or takes time for the TSX team to identify data in the literature). This downturn in data availability closer to the release year is the reason that a 3-year lag is implemented in trend calculation, as data quality is poorer closer to the release year.
-                  </div>
-                </template>
-              </tippy>
-              <div class="plot-container">
-                <canvas ref='sumplot'></canvas>
-              </div>
-            </div>
 
+          <div
+            v-show="noData"
+            class="tile is-child"
+          >
+            <p style="margin: 0.8em">
+              {{ noDataMessage() }}
+            </p>
+          </div>
+        </div>
+
+        <div class="content">
+          <a
+            class="has-text-white"
+            style="text-decoration: underline;"
+            href="https://tsx.org.au/terms-of-use/"
+            target="_blank"
+          >Terms of Use</a>
+        </div>
+
+        <!-- warning dialog -->
+        <div
+          v-show="!hasAcceptedWarning"
+          class="modal is-active"
+        >
+          <div class="modal-background" />
+          <div class="modal-card">
+            <header class="modal-card-head">
+              <span class="modal-card-title">Caution</span>
+            </header>
+            <section
+              class="modal-card-body"
+              style="color:black"
+            >
+              <p>The trends produced by this tool vary in their reliability. While the TSX team implements rigorous data quality standards, a trend is ultimately only as good as the underlying data.</p>
+              <p>We have developed diagnostic tools to help assess the reliability of each trend.</p>
+              <p>
+                <a
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  href="https://tsx.org.au/visualising-the-index/how-good/"
+                >(Click here for more details on how to assess reliability of trends)</a>
+              </p>
+              <p>By using this tool you acknowledge the preliminary nature of these trends and the precautions regarding trend generation and reliability.</p>
+            </section>
+            <footer class="modal-card-foot">
+              <button
+                class="button"
+                @click="acceptWarning"
+              >
+                I Accept
+              </button>
+              <button
+                class="button"
+                @click="goBack"
+              >
+                Cancel
+              </button>
+            </footer>
           </div>
         </div>
       </div>
-
-      <div class="tile is-child" v-show="noData">
-        <p style="margin: 0.8em">{{noDataMessage()}}</p>
-      </div>
-    </div>
-
-    <div class="content">
-      <a class="has-text-white" style="text-decoration: underline;" href="https://tsx.org.au/terms-of-use/" target="_blank">Terms of Use</a>
-    </div>
-
-    <!-- warning dialog -->
-    <div class="modal is-active" v-show="!hasAcceptedWarning">
-      <div class="modal-background"></div>
-      <div class="modal-card">
-        <header class="modal-card-head">
-          <span class="modal-card-title">Caution</span>
-        </header>
-        <section class="modal-card-body" style="color:black">
-          <p>The trends produced by this tool vary in their reliability. While the TSX team implements rigorous data quality standards, a trend is ultimately only as good as the underlying data.</p>
-          <p>We have developed diagnostic tools to help assess the reliability of each trend.</p>
-          <p><a target="_blank" rel="noopener noreferrer" href="https://tsx.org.au/visualising-the-index/how-good/">(Click here for more details on how to assess reliability of trends)</a></p>
-          <p>By using this tool you acknowledge the preliminary nature of these trends and the precautions regarding trend generation and reliability.</p>
-        </section>
-        <footer class="modal-card-foot">
-          <button class="button" v-on:click='acceptWarning'>I Accept</button>
-          <button class="button" v-on:click='goBack'>Cancel</button>
-        </footer>
-      </div>
-    </div>
-  </div>
-
     </div>
   </div>
 </template>
@@ -272,6 +437,49 @@ export default {
 
     return data
   },
+  computed: {
+    sidebarFields() {
+      return this.fields.filter(f => f.name != 'refyear' && f.name != 'type')
+    },
+    queryTypeField() {
+      return this.fields.find(f => f.name == 'type')
+    },
+    referenceYearField() {
+      return this.fields.find(f => f.name == 'refyear')
+    },
+    filterQueryString() {
+      var params = this.latestFieldValuesFromServer()
+      delete params.dataset
+      return Object.entries(params).map(x => x[0] + '=' + encodeURIComponent(x[1])).join("&")
+    },
+    filterFilenamePart() {
+      var name = decodeURIComponent(this.filterQueryString).replace(/[<>:"/\\|?*]/g, '-')
+      if(dataset) {
+        name = "dataset=" + dataset + "&" + name
+      }
+      return name
+    },
+    downloadTrendURL() {
+      return api.trendURL(this.dataParams)
+    }
+  },
+  watch: {
+    fieldValues: {
+      handler(val, oldVal) {
+        if(oldVal == null || !deepEquals(val, this.latestFieldValuesFromServer())) {
+          this.updateFields()
+        }
+      },
+      deep: true
+    },
+    filterQueryString(val) {
+      var url = window.location.pathname
+      if(val) {
+        url += '?' + val
+      }
+      history.replaceState(null, '', url)
+    }
+  },
   created () {
   },
   mounted () {
@@ -333,49 +541,6 @@ export default {
     }, 2000)
 
     this.updateFromQueryString()
-  },
-  watch: {
-    fieldValues: {
-      handler(val, oldVal) {
-        if(oldVal == null || !deepEquals(val, this.latestFieldValuesFromServer())) {
-          this.updateFields()
-        }
-      },
-      deep: true
-    },
-    filterQueryString(val) {
-      var url = window.location.pathname
-      if(val) {
-        url += '?' + val
-      }
-      history.replaceState(null, '', url)
-    }
-  },
-  computed: {
-    sidebarFields() {
-      return this.fields.filter(f => f.name != 'refyear' && f.name != 'type')
-    },
-    queryTypeField() {
-      return this.fields.find(f => f.name == 'type')
-    },
-    referenceYearField() {
-      return this.fields.find(f => f.name == 'refyear')
-    },
-    filterQueryString() {
-      var params = this.latestFieldValuesFromServer()
-      delete params.dataset
-      return Object.entries(params).map(x => x[0] + '=' + encodeURIComponent(x[1])).join("&")
-    },
-    filterFilenamePart() {
-      var name = decodeURIComponent(this.filterQueryString).replace(/[<>:"/\\|?*]/g, '-')
-      if(dataset) {
-        name = "dataset=" + dataset + "&" + name
-      }
-      return name
-    },
-    downloadTrendURL() {
-      return api.trendURL(this.dataParams)
-    }
   },
   methods: {
     reset() {

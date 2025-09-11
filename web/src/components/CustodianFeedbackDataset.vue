@@ -3,7 +3,7 @@
     <div class="container feedback-home">
       <div class="columns">
         <div class="column is-12 is-offset-0">
-          <user-nav></user-nav>
+          <user-nav />
           <div v-if="status == 'loading'">
             <p>
               Loading…
@@ -16,26 +16,39 @@
           </div>
 
           <div v-if="status === 'loaded'">
-            <h2 class="title">{{taxonDataset.taxon.scientific_name}}</h2>
+            <h2 class="title">
+              {{ taxonDataset.taxon.scientific_name }}
+            </h2>
             <p class="content">
-              <span class="tag is-large">{{taxonDataset.id}}</span>
+              <span class="tag is-large">{{ taxonDataset.id }}</span>
             </p>
             <hr>
 
             <p class="content">
               The forms below are based on your dataset
-              <router-link :to="{ name: 'SourceView', params: { id: taxonDataset.source.id }}">{{taxonDataset.source.description}}</router-link></p>
-            <p v-if="!taxonDataset.data_present" class="notification is-warning">
+              <router-link :to="{ name: 'SourceView', params: { id: taxonDataset.source.id }}">
+                {{ taxonDataset.source.description }}
+              </router-link>
+            </p>
+            <p
+              v-if="!taxonDataset.data_present"
+              class="notification is-warning"
+            >
               The most recent data import for this dataset does not contain any records with this taxon.
             </p>
 
-            <h3 class="title">Form History</h3>
+            <h3 class="title">
+              Form History
+            </h3>
 
-            <table class='table is-fullwidth is-striped is-hoverable' v-if="taxonDataset.forms.length > 0">
+            <table
+              v-if="taxonDataset.forms.length > 0"
+              class="table is-fullwidth is-striped is-hoverable"
+            >
               <thead>
                 <tr>
                   <th>Form</th>
-                  <th></th>
+                  <th />
                   <th>Created</th>
                   <th>Modified</th>
                   <th>Status</th>
@@ -46,23 +59,40 @@
               <tbody>
                 <tr v-for="form in taxonDataset.forms">
                   <td>
-                    {{taxonDataset.taxon.scientific_name}}
-                    <span class='tag'>{{taxonDataset.id}}</span>
+                    {{ taxonDataset.taxon.scientific_name }}
+                    <span class="tag">{{ taxonDataset.id }}</span>
                   </td>
                   <td>
                     <div class="buttons">
-                      <router-link v-if="canEdit(form)"
-                        :to="{ name: 'EditCustodianFeedbackForm', params: { id: form.id }}" tag="button" class="button is-dark is-small" >{{editButtonLabel(form)}}</router-link>
-                      <router-link v-if="canView(form)"
-                        :to="{ name: 'ViewCustodianFeedbackForm', params: { id: form.id }}" tag="button" class="button is-dark is-small" >View</router-link>
+                      <router-link
+                        v-if="canEdit(form)"
+                        :to="{ name: 'EditCustodianFeedbackForm', params: { id: form.id }}"
+                        tag="button"
+                        class="button is-dark is-small"
+                      >
+                        {{ editButtonLabel(form) }}
+                      </router-link>
+                      <router-link
+                        v-if="canView(form)"
+                        :to="{ name: 'ViewCustodianFeedbackForm', params: { id: form.id }}"
+                        tag="button"
+                        class="button is-dark is-small"
+                      >
+                        View
+                      </router-link>
                     </div>
                   </td>
-                  <td>{{formatDateTime(form.time_created)}}</td>
-                  <td>{{formatDateTime(form.last_modified)}}</td>
-                  <td>{{form.feedback_status.description}}</td>
-                  <td>{{form.feedback_type.description}}</td>
+                  <td>{{ formatDateTime(form.time_created) }}</td>
+                  <td>{{ formatDateTime(form.last_modified) }}</td>
+                  <td>{{ form.feedback_status.description }}</td>
+                  <td>{{ form.feedback_type.description }}</td>
                   <td>
-                    <a class="button is-small" target="_blank" v-if="downloadURL(form)" :href="downloadURL(form)">{{downloadLabel(form)}}</a>
+                    <a
+                      v-if="downloadURL(form)"
+                      class="button is-small"
+                      target="_blank"
+                      :href="downloadURL(form)"
+                    >{{ downloadLabel(form) }}</a>
                   </td>
                 </tr>
               </tbody>
@@ -72,7 +102,6 @@
       </div>
     </div>
   </div>
-
 </template>
 
 <script>
@@ -89,6 +118,11 @@ export default {
       taxonDataset: null
     }
   },
+  computed: {
+  },
+  watch: {
+
+  },
   created() {
     this.refresh()
     api.isLoggedIn().then(isLoggedIn => {
@@ -102,11 +136,6 @@ export default {
     }).catch(error => {
       this.error = error
     })
-  },
-  computed: {
-  },
-  watch: {
-
   },
   methods: {
     refresh() {

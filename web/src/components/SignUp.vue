@@ -1,41 +1,114 @@
 <template>
   <div class="section">
     <div class="container is-widescreen sign-up">
-      <h3 class="title is-4">New Account</h3>
+      <h3 class="title is-4">
+        New Account
+      </h3>
       <form>
-        <fieldset v-bind:disabled="submitting">
+        <fieldset :disabled="submitting">
           <div class="field">
             <label>First name</label>
-            <input class="input" type="text" name="first_name" v-model="first_name" autofocus>
-            <p class="help is-warning" v-if="errors.first_name">{{ errors.first_name }}</p>
+            <input
+              v-model="first_name"
+              class="input"
+              type="text"
+              name="first_name"
+              autofocus
+            >
+            <p
+              v-if="errors.first_name"
+              class="help is-warning"
+            >
+              {{ errors.first_name }}
+            </p>
           </div>
           <div class="field">
             <label>Last name</label>
-            <input class="input" type="text" name="last_name" v-model="last_name">
-            <p class="help is-warning" v-if="errors.last_name">{{ errors.last_name }}</p>
+            <input
+              v-model="last_name"
+              class="input"
+              type="text"
+              name="last_name"
+            >
+            <p
+              v-if="errors.last_name"
+              class="help is-warning"
+            >
+              {{ errors.last_name }}
+            </p>
           </div>
           <div class="field">
             <label>Email address</label>
-            <input class="input" type="text" name="email" placeholder="e.g. user@example.com" v-model="email">
-            <p class="help is-warning" v-if="errors.email">{{ errors.email }}</p>
+            <input
+              v-model="email"
+              class="input"
+              type="text"
+              name="email"
+              placeholder="e.g. user@example.com"
+            >
+            <p
+              v-if="errors.email"
+              class="help is-warning"
+            >
+              {{ errors.email }}
+            </p>
           </div>
           <div class="field">
             <label>Contact phone number (optional)</label>
-            <input class="input" type="text" name="phone_number" placeholder="e.g. (01) 2345 6789, 0412 345 678" v-model="phone_number">
-            <p class="help is-warning" v-if="errors.phone_number">{{ errors.phone_number }}</p>
+            <input
+              v-model="phone_number"
+              class="input"
+              type="text"
+              name="phone_number"
+              placeholder="e.g. (01) 2345 6789, 0412 345 678"
+            >
+            <p
+              v-if="errors.phone_number"
+              class="help is-warning"
+            >
+              {{ errors.phone_number }}
+            </p>
           </div>
           <hr>
           <div class="field">
             <label>Password</label>
-            <input class="input" type="password" name="password" v-model="password">
-            <p class="help is-warning" v-if="errors.password">{{ errors.password }}</p>
+            <input
+              v-model="password"
+              class="input"
+              type="password"
+              name="password"
+            >
+            <p
+              v-if="errors.password"
+              class="help is-warning"
+            >
+              {{ errors.password }}
+            </p>
           </div>
           <div class="field">
             <label>Confirm password</label>
-            <input class="input" type="password" name="confirm_password" v-model="confirm_password" v-on:keyup.enter="signUp">
-            <p class="help is-warning" v-if="errors.confirm_password">{{ errors.confirm_password }}</p>
+            <input
+              v-model="confirm_password"
+              class="input"
+              type="password"
+              name="confirm_password"
+              @keyup.enter="signUp"
+            >
+            <p
+              v-if="errors.confirm_password"
+              class="help is-warning"
+            >
+              {{ errors.confirm_password }}
+            </p>
           </div>
-          <button type="button" class="button is-primary" v-on:click='signUp' style="margin: 0.5em 0;">{{ buttonLabel }}</button>
+          <button
+            type="button"
+            class="button is-primary"
+            style="margin: 0.5em 0;"
+            @click="signUp"
+          >
+            {{ buttonLabel }}
+          </button>
         </fieldset>
       </form>
     </div>

@@ -1,17 +1,25 @@
 <template>
-  <div style="width: 100%;
+  <div
+    style="width: 100%;
               height: 100%;
-              position: relative;">
-    <div ref="map" style="width: 100%; height: 100%; flex: none; position: absolute;"></div>
-    <div v-if="loading" style="width: 100%;
+              position: relative;"
+  >
+    <div
+      ref="map"
+      style="width: 100%; height: 100%; flex: none; position: absolute;"
+    />
+    <div
+      v-if="loading"
+      style="width: 100%;
               height: 100%;
               display: flex;
               justify-content: center;
               align-items: center;
               background: rgba(0,0,0,0.3);
               position: relative;
-              z-index: 10000">
-      <Spinner/>
+              z-index: 10000"
+    >
+      <Spinner />
     </div>
   </div>
 </template>
@@ -26,6 +34,7 @@ export default {
   components: {
     Spinner
   },
+  props: ['heatmapData', 'loading'],
   data () {
     return {
       map: null,
@@ -80,8 +89,7 @@ export default {
         }
       }
     }
-  },
-  props: ['heatmapData', 'loading']
+  }
 }
 </script>
 

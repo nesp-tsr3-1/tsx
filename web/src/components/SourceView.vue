@@ -1,13 +1,21 @@
 <template>
   <div class="section">
-    <div class="container is-widescreen source-view" v-if="source">
+    <div
+      v-if="source"
+      class="container is-widescreen source-view"
+    >
       <div class="columns">
         <div class="column is-8 is-offset-2">
-          <user-nav></user-nav>
+          <user-nav />
 
-          <h2 class="title">{{ source.description }}</h2>
+          <h2 class="title">
+            {{ source.description }}
+          </h2>
 
-          <div class="notification is-danger is-light" v-if="showNoDataAgreementMessage">
+          <div
+            v-if="showNoDataAgreementMessage"
+            class="notification is-danger is-light"
+          >
             Note: There is currently no data sharing agreement in place for this dataset.
           </div>
 
@@ -15,7 +23,13 @@
 
           <h4 class="title is-4">
             Dataset Details
-            <router-link :to="{ name: 'SourceEdit', params: { id: sourceId }}" tag="button" class="button is-small">Edit</router-link>
+            <router-link
+              :to="{ name: 'SourceEdit', params: { id: sourceId }}"
+              tag="button"
+              class="button is-small"
+            >
+              Edit
+            </router-link>
           </h4>
 
           <div class="columns is-multiline dataset-details">
@@ -45,7 +59,10 @@
                   {{ source.contact_email }}<br>
                   {{ source.contact_phone }}
                 </div>
-                <div style="font-style: italic" v-else>
+                <div
+                  v-else
+                  style="font-style: italic"
+                >
                   None
                 </div>
               </div>
@@ -67,7 +84,7 @@
                 <h4>Agreement(s)</h4>
                 {{ source.data_agreement_status_long_description }}
                 <div v-for="file in source.data_agreement_files">
-                  <a :href="uploadURL(file.upload_uuid)">{{file.filename}}</a>
+                  <a :href="uploadURL(file.upload_uuid)">{{ file.filename }}</a>
                 </div>
               </div>
             </div>
@@ -75,22 +92,30 @@
 
           <hr>
 
-          <h4 class="title is-4" id="summary_top">
+          <h4
+            id="summary_top"
+            class="title is-4"
+          >
             Dataset Summary
           </h4>
 
-          <source-data-summary v-bind:sourceId="sourceId" ref="dataSummary"></source-data-summary>
+          <source-data-summary
+            ref="dataSummary"
+            :source-id="sourceId"
+          />
 
           <div v-if="manageCustodiansPermitted">
             <hr>
 
             <div class="columns">
               <div class="column">
-                <h4 class="title is-4">Custodians</h4>
+                <h4 class="title is-4">
+                  Custodians
+                </h4>
                 <p class="content">
                   Custodians are users who have access to import data and edit details for this dataset.
                 </p>
-                <source-custodians v-bind:sourceId="sourceId"></source-custodians>
+                <source-custodians :source-id="sourceId" />
               </div>
             </div>
           </div>
@@ -100,15 +125,25 @@
 
             <div class="columns">
               <div class="column">
-                <h4 class="title is-4">Downloads</h4>
+                <h4 class="title is-4">
+                  Downloads
+                </h4>
                 <div>
-                  <a href="/data/TSX%20Dataset%20Downloads%20Factsheet.pdf" class="button is-dark" target="_blank" style="margin: 0.5em 0;">
+                  <a
+                    href="/data/TSX%20Dataset%20Downloads%20Factsheet.pdf"
+                    class="button is-dark"
+                    target="_blank"
+                    style="margin: 0.5em 0;"
+                  >
                     TSX Dataset Downloads Factsheet
                   </a>
                 </div>
                 <hr>
 
-                <source-downloads :sourceId="sourceId" :enableMap="true"></source-downloads>
+                <source-downloads
+                  :source-id="sourceId"
+                  :enable-map="true"
+                />
               </div>
             </div>
           </div>
@@ -118,9 +153,11 @@
 
             <div class="columns">
               <div class="column">
-                <h4 class="title is-4">Data Processing Notes</h4>
+                <h4 class="title is-4">
+                  Data Processing Notes
+                </h4>
 
-                <processing-notes v-bind:sourceId="sourceId"></processing-notes>
+                <processing-notes :source-id="sourceId" />
               </div>
             </div>
 
@@ -128,9 +165,14 @@
 
             <div class="columns">
               <div class="column">
-                <h4 class="title is-4">Import History</h4>
+                <h4 class="title is-4">
+                  Import History
+                </h4>
 
-                <import-list v-bind:sourceId="sourceId" ref="importList"></import-list>
+                <import-list
+                  ref="importList"
+                  :source-id="sourceId"
+                />
               </div>
             </div>
 
@@ -138,17 +180,24 @@
 
             <div class="columns">
               <div class="column">
-                <h4 class="title is-4">Import Data</h4>
+                <h4 class="title is-4">
+                  Import Data
+                </h4>
               </div>
             </div>
 
-            <import-data v-bind:sourceId="sourceId" v-on:data-import-updated="handleDataImportUpdated"></import-data>
+            <import-data
+              :source-id="sourceId"
+              @data-import-updated="handleDataImportUpdated"
+            />
           </div>
 
           <div v-if="deletePermitted">
             <hr>
 
-            <h4 class="title is-6">Delete Dataset</h4>
+            <h4 class="title is-6">
+              Delete Dataset
+            </h4>
             <p class="content">
               Deleting this dataset will remove it from the index and cannot be undone. All previously imported data, processing notes, and associated custodian feedback form data will be deleted.
             </p>
@@ -156,12 +205,21 @@
               If you wish to update your dataset, simply import an new file using the 'Import Data' section above.
             </p>
             <div class="field">
-              <input type="checkbox" id="checkbox" v-model="enableDelete">
+              <input
+                id="checkbox"
+                v-model="enableDelete"
+                type="checkbox"
+              >
               <label for="checkbox"> I understand and wish to delete this dataset</label>
             </div>
-            <button class='button is-danger' :disabled="!enableDelete" v-on:click='deleteSource'>Delete this dataset</button>
+            <button
+              class="button is-danger"
+              :disabled="!enableDelete"
+              @click="deleteSource"
+            >
+              Delete this dataset
+            </button>
           </div>
-
         </div>
       </div>
     </div>
@@ -229,6 +287,17 @@ export default {
       return this.documentsEnabled && this.source.show_no_agreement_message
     }
   },
+  created () {
+    api.isLoggedIn().then(isLoggedIn => {
+      if(!isLoggedIn) {
+        this.$router.replace({ path: '/login', query: { after_login: this.$route.path } })
+      }
+    })
+    api.dataSource(this.sourceId).then(source => {
+      this.source = source
+      this.showDownloads = source.has_t1_data
+    })
+  },
   methods: {
     deleteSource() {
       api.deleteDataSource(this.sourceId).then(() => {
@@ -246,17 +315,6 @@ export default {
       })
     },
     uploadURL: api.uploadURL
-  },
-  created () {
-    api.isLoggedIn().then(isLoggedIn => {
-      if(!isLoggedIn) {
-        this.$router.replace({ path: '/login', query: { after_login: this.$route.path } })
-      }
-    })
-    api.dataSource(this.sourceId).then(source => {
-      this.source = source
-      this.showDownloads = source.has_t1_data
-    })
   }
 }
 </script>

@@ -3,76 +3,137 @@
 -->
 <template>
   <div class="import-edit content">
-    <div class="field" v-if="canEdit">
+    <div
+      v-if="canEdit"
+      class="field"
+    >
       <label class="label">Data type</label>
       <div class="select">
         <select v-model="dataType">
-          <option v-bind:value="1">Type 1</option>
-          <option v-bind:value="2">Type 2/3 (Advanced)</option>
+          <option :value="1">
+            Type 1
+          </option>
+          <option :value="2">
+            Type 2/3 (Advanced)
+          </option>
         </select>
       </div>
     </div>
 
     <div class="field">
       <label class="label">Data file</label>
-      <div v-if='status == "init"'>
+      <div v-if="status == &quot;init&quot;">
         <p>
-          <button class='button' v-on:click='selectFile'>Select file</button>
+          <button
+            class="button"
+            @click="selectFile"
+          >
+            Select file
+          </button>
         </p>
-        <p class="notification is-warning is-light"><strong>Important:</strong> Before updating your dataset, please ensure that all draft custodian feedback forms have been submitted. Importing new data will reset and permanently remove all drafted responses in the most recent form. All previously completed forms will also be archived.</p>
-        <p class="notification is-info is-light"><strong>Tip:</strong> The import will run faster if records belonging to the same survey and site are grouped into contiguous rows instead of scattered throughout the file.</p>
+        <p class="notification is-warning is-light">
+          <strong>Important:</strong> Before updating your dataset, please ensure that all draft custodian feedback forms have been submitted. Importing new data will reset and permanently remove all drafted responses in the most recent form. All previously completed forms will also be archived.
+        </p>
+        <p class="notification is-info is-light">
+          <strong>Tip:</strong> The import will run faster if records belonging to the same survey and site are grouped into contiguous rows instead of scattered throughout the file.
+        </p>
       </div>
 
-      <p v-if='uploading'>
+      <p v-if="uploading">
         Uploading
-        <progress class="progress is-primary is-small" v-bind:value='uploadProgress' max="100">{{uploadProgress}}%</progress>
+        <progress
+          class="progress is-primary is-small"
+          :value="uploadProgress"
+          max="100"
+        >
+          {{ uploadProgress }}%
+        </progress>
       </p>
 
-      <p v-if='fileURL && filename && !uploading'>
-        File uploaded: <a v-bind:href='fileURL'>{{filename}}</a>
+      <p v-if="fileURL && filename && !uploading">
+        File uploaded: <a :href="fileURL">{{ filename }}</a>
       </p>
     </div>
 
-    <div v-if='processing'>
+    <div v-if="processing">
       <p>
-        Processing {{progressString}}
-        <progress class="progress is-primary is-small" v-bind:value='processingProgress' max="100">{{processingProgress}}%</progress>
+        Processing {{ progressString }}
+        <progress
+          class="progress is-primary is-small"
+          :value="processingProgress"
+          max="100"
+        >
+          {{ processingProgress }}%
+        </progress>
       </p>
     </div>
 
-    <div v-if='status == "checked_ok"' class='notification is-success'>
+    <div
+      v-if="status == &quot;checked_ok&quot;"
+      class="notification is-success"
+    >
       👍 Looks good! No errors detected. Please review the log below before importing the data.
     </div>
 
-    <p v-if='status == "checked_ok"'>
-      <button class='button is-primary' v-on:click='importData'>Finish importing data</button>
-      <button class='button' v-on:click='selectFile'>Upload an edited file</button>
+    <p v-if="status == &quot;checked_ok&quot;">
+      <button
+        class="button is-primary"
+        @click="importData"
+      >
+        Finish importing data
+      </button>
+      <button
+        class="button"
+        @click="selectFile"
+      >
+        Upload an edited file
+      </button>
     </p>
 
-    <div v-if='status == "checked_error"' class='notification is-warning'>
+    <div
+      v-if="status == &quot;checked_error&quot;"
+      class="notification is-warning"
+    >
       ⚠️ Some issues were detected in the uploaded file. Please check the log below and then upload a new version for checking.
     </div>
 
-    <div v-if='status == "import_error"' class='notification is-warning'>
+    <div
+      v-if="status == &quot;import_error&quot;"
+      class="notification is-warning"
+    >
       ⚠️ Something went wrong while importing data. Please check the log below.
     </div>
 
-    <p v-if='status == "checked_error" || status == "import_error"'>
-      <button class='button' v-on:click='selectFile'>Upload an edited file</button>
+    <p v-if="status == &quot;checked_error&quot; || status == &quot;import_error&quot;">
+      <button
+        class="button"
+        @click="selectFile"
+      >
+        Upload an edited file
+      </button>
     </p>
 
-    <div v-if='status == "approved" || status == "imported"' class='notification is-success'>
-        🎉 All data has been imported without errors. See full import log below.
+    <div
+      v-if="status == &quot;approved&quot; || status == &quot;imported&quot;"
+      class="notification is-success"
+    >
+      🎉 All data has been imported without errors. See full import log below.
     </div>
 
-    <div v-if='processingComplete' class="log">
+    <div
+      v-if="processingComplete"
+      class="log"
+    >
       <h5>Import log</h5>
-      <code v-for='log in importLogs' v-bind:class='log.level' style='display: block'>
-        {{log.message}}
+      <code
+        v-for="log in importLogs"
+        :class="log.level"
+        style="display: block"
+      >
+        {{ log.message }}
       </code>
     </div>
   </div>
-
 </template>
 
 <script>
@@ -81,6 +142,9 @@ import * as util from '../util.js'
 
 export default {
   name: 'ImportData',
+  props: {
+    sourceId: Number
+  },
   data () {
     return {
       uploading: false,
@@ -235,9 +299,6 @@ export default {
         })
       }
     }
-  },
-  props: {
-    sourceId: Number
   }
 }
 

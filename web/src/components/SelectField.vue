@@ -1,9 +1,18 @@
 <template>
   <div class="field">
-    <label class="label">{{field.label}}</label>
+    <label class="label">{{ field.label }}</label>
     <div class="select is-fullwidth">
-      <select v-model="fieldValue" :disabled="field.disabled">
-        <option v-for="option in field.options" :value="option.value" :disabled="option.disabled">{{option.label}}</option>
+      <select
+        v-model="fieldValue"
+        :disabled="field.disabled"
+      >
+        <option
+          v-for="option in field.options"
+          :value="option.value"
+          :disabled="option.disabled"
+        >
+          {{ option.label }}
+        </option>
       </select>
     </div>
   </div>
@@ -14,6 +23,10 @@ import * as api from '../api.js'
 
 export default {
   name: 'SelectField',
+  props: {
+    field: Object,
+    value: null
+  },
   data () {
     return {
     }
@@ -32,10 +45,6 @@ export default {
 
   },
   methods: {
-  },
-  props: {
-    field: Object,
-    value: null
   }
 }
 </script>
