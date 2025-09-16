@@ -9,7 +9,7 @@
           <div class="tile is-2 is-parent">
             <div class="tile is-child">
               <div class="field">
-                <Field
+                <GenericField
                   v-if="queryTypeField"
                   v-model:value="fieldValues.type"
                   :field="queryTypeField"
@@ -40,7 +40,7 @@
                   v-for="field in sidebarFields"
                   :key="field.name"
                 >
-                  <Field
+                  <GenericField
                     v-if="!field.disabled"
                     v-model:value="fieldValues[field.name]"
                     :field="field"
@@ -163,7 +163,7 @@
                       >
                         Reference year
                       </div>
-                      <Field
+                      <GenericField
                         v-model:value="fieldValues.refyear"
                         :field="referenceYearField"
                       />
@@ -401,7 +401,7 @@ import HeatmapOverlay from 'heatmap.js/plugins/leaflet-heatmap/leaflet-heatmap.j
 import 'leaflet-easybutton/src/easy-button.js'
 import { min, max, pluck, uniq, parseParams, encodeParams, deepEquals, saveTextFile } from '../util.js'
 import { Tippy } from 'vue-tippy'
-import Field from './Field.vue'
+import GenericField from './GenericField.vue'
 import { generateTrendPlotData, plotTrend } from '../plotTrend.js'
 
 const dataset = 'test'
@@ -412,7 +412,7 @@ export default {
   components: {
     Spinner,
     Tippy,
-    Field
+    GenericField
   },
   data () {
     var data = {

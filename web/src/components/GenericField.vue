@@ -34,7 +34,7 @@ import RadioField from "./RadioField.vue"
 import ButtonRadioField from "./ButtonRadioField.vue"
 
 export default {
-  name: 'Field',
+  name: 'GenericField',
   components: {
     SelectField,
     RadioField,

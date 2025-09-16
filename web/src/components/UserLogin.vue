@@ -78,7 +78,7 @@ import * as api from '../api.js'
 import { globalEventBus } from '../eventBus.js'
 
 export default {
-  name: 'Login',
+  name: 'UserLogin',
   data () {
     return {
       submitting: false,

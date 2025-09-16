@@ -7,7 +7,7 @@ import ProgramManage from '../components/ProgramManage.vue'
 import ProgramEdit from '../components/ProgramEdit.vue'
 import ProgramView from '../components/ProgramView.vue'
 import TSX from '../components/TSX.vue'
-import Login from '../components/Login.vue'
+import UserLogin from '../components/UserLogin.vue'
 import SignUp from '../components/SignUp.vue'
 import ResetPassword from '../components/ResetPassword.vue'
 import DataSubsetDownloads from '../components/DataSubsetDownloads.vue'
@@ -37,8 +37,8 @@ const router = createRouter({
     },
     {
       path: '/login',
-      name: 'Login',
-      component: Login
+      name: 'UserLogin',
+      component: UserLogin
     },
     {
       path: '/signup',
