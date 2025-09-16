@@ -58,7 +58,10 @@ export default {
     'note-row': Note
   },
   props: {
-    sourceId: Number
+    sourceId: {
+      type: Number,
+      required: true
+    }
   },
   data () {
     return {

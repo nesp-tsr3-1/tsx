@@ -36,7 +36,10 @@
               </p>
 
               <div style="margin-bottom: 1em">
-                <template v-for="field in sidebarFields">
+                <template
+                  v-for="field in sidebarFields"
+                  :key="field.name"
+                >
                   <Field
                     v-if="!field.disabled"
                     v-model:value="fieldValues[field.name]"

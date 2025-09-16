@@ -20,10 +20,11 @@
               All States and Territories
             </option>
             <option
-              v-for="s in options.state"
-              :value="s"
+              v-for="state in options.state"
+              :key="state"
+              :value="state"
             >
-              {{ s }}
+              {{ state }}
             </option>
           </select>
         </div>
@@ -35,7 +36,10 @@
     >
       <label class="label">Programs</label>
       <div class="control">
-        <div v-for="program in options.monitoringPrograms">
+        <div
+          v-for="program in options.monitoringPrograms"
+          :key="program.id"
+        >
           <label><input
             v-model="criteria.monitoringPrograms"
             type="checkbox"
@@ -66,10 +70,11 @@
               All
             </option>
             <option
-              v-for="s in options.taxonomicGroup"
-              :value="s"
+              v-for="group in options.taxonomicGroup"
+              :key="group"
+              :value="group"
             >
-              {{ s }}
+              {{ group }}
             </option>
           </select>
         </div>
@@ -93,22 +98,26 @@
               Select authority…
             </option>
             <option
-              v-for="s in options.statusAuthority"
-              :value="s"
+              v-for="authority in options.statusAuthority"
+              :key="authority.id"
+              :value="authority"
             >
-              {{ s.name }}
+              {{ authority.name }}
             </option>
           </select>
         </div>
       </div>
       <div class="control">
-        <div v-for="status in options.taxonStatus">
+        <div
+          v-for="taxonStatus in options.taxonStatus"
+          :key="taxonStatus.id"
+        >
           <label><input
             v-model="criteria.taxonStatus"
             type="checkbox"
-            :value="status"
+            :value="taxonStatus"
             :disabled="criteria.statusAuthority == null"
-          > {{ status.name }}</label>
+          > {{ taxonStatus.name }}</label>
         </div>
       </div>
     </div>
@@ -186,7 +195,10 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="speciesId in criteria.species">
+            <tr
+              v-for="speciesId in criteria.species"
+              :key="speciesId"
+            >
               <td>{{ speciesById(speciesId).common_name }}</td>
               <td>{{ speciesById(speciesId).scientific_name }}</td>
               <td>{{ speciesId }}</td>
@@ -235,7 +247,10 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="siteInfo in criteria.sites">
+            <tr
+              v-for="(siteInfo, index) in criteria.sites"
+              :key="index"
+            >
               <td>{{ siteInfo.split(',')[1] }}</td>
               <td>{{ siteInfo.split(',')[0] }}</td>
               <td>
@@ -407,6 +422,7 @@
               >
                 <option
                   v-for="year in availableYears"
+                  :key="year"
                   :value="year"
                 >
                   {{ year }}
@@ -429,6 +445,7 @@
               >
                 <option
                   v-for="year in availableYears"
+                  :key="year"
                   :value="year"
                 >
                   {{ year }}
@@ -536,7 +553,10 @@ export default {
     HeatMap
   },
   props: {
-    sourceId: Number,
+    sourceId: {
+      type: Number,
+      default: null
+    },
     enableProgramFilter: Boolean,
     enableStateFilter: Boolean,
     enableManagementFilter: Boolean,
@@ -637,6 +657,7 @@ export default {
       if(this.trendReferenceYear >= this.trendFinalYear) {
         return "Reference year must be earlier than final year"
       }
+      return undefined;
     },
     isAdmin: function() {
       return this.user?.is_admin

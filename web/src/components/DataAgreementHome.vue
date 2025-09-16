@@ -112,11 +112,20 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="agreement in sortedAgreements">
+              <tr
+                v-for="agreement in sortedAgreements"
+                :key="agreement.id"
+              >
                 <td :title="agreement.filenames">
-                  <div v-for="file in agreement.files">
+                  <div
+                    v-for="file in agreement.files"
+                    :key="file.upload_uuid"
+                  >
                     <a :href="fileURL(file)">
-                      <template v-for="[nonMatch, match] in file.filenameParts">
+                      <template
+                        v-for="([nonMatch, match], index) in file.filenameParts"
+                        :key="index"
+                      >
                         <span style="white-space: pre-wrap;">{{ nonMatch }}</span>
                         <b style="white-space: pre-wrap;">{{ match }}</b>
                       </template>
@@ -128,19 +137,27 @@
 
                   <div style="display: flex;gap: 0.5em;">
                     <span
-                      v-for="parts in agreement.custodianParts"
+                      v-for="(parts, partsIndex) in agreement.custodianParts"
+                      :key="partsIndex"
                       class="tag is-info is-light"
                     >
-                      <template v-for="[nonMatch, match] in parts">
+                      <template
+                        v-for="([nonMatch, match], index) in parts"
+                        :key="index"
+                      >
                         <span style="white-space: pre-wrap;">{{ nonMatch }}</span>
                         <b style="white-space: pre-wrap;">{{ match }}</b>
                       </template>
                     </span>
                     <span
-                      v-for="parts in agreement.sourceParts"
+                      v-for="(parts, partsIndex) in agreement.sourceParts"
+                      :key="partsIndex"
                       class="tag is-success is-light"
                     >
-                      <template v-for="[nonMatch, match] in parts">
+                      <template
+                        v-for="([nonMatch, match], index) in parts"
+                        :key="index"
+                      >
                         <span style="white-space: pre-wrap;">{{ nonMatch }}</span>
                         <b style="white-space: pre-wrap;">{{ match }}</b>
                       </template>
@@ -263,7 +280,13 @@ export default {
           return "Note: There is one data sharing agreement waiting to be signed by UQ."
         }
       }
+      return undefined;
     }
+  },
+  watch: {
+    searchText: debounce(function(searchText) {
+      this.debouncedSearchText = searchText
+    }, 500)
   },
   created () {
     api.isLoggedIn().then(isLoggedIn => {
@@ -333,11 +356,6 @@ export default {
       }
     },
     formatDate
-  },
-  watch: {
-    searchText: debounce(function(searchText) {
-      this.debouncedSearchText = searchText
-    }, 500)
   }
 }
 </script>

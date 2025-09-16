@@ -26,12 +26,10 @@
           </div>
 
           <div v-if="state === 'loaded'">
-            <router-link
-              to="/datasets/edit/new"
-              tag="button"
-              class="button is-primary"
-            >
-              Create New Dataset
+            <router-link to="/datasets/edit/new">
+              <button class="button is-primary">
+                Create New Dataset
+              </button>
             </router-link>
             <hr>
             <source-list

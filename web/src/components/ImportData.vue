@@ -126,7 +126,8 @@
     >
       <h5>Import log</h5>
       <code
-        v-for="log in importLogs"
+        v-for="[index, log] in importLogs.entries()"
+        :key="index"
         :class="log.level"
         style="display: block"
       >
@@ -143,8 +144,12 @@ import * as util from '../util.js'
 export default {
   name: 'ImportData',
   props: {
-    sourceId: Number
+    sourceId: {
+      type: Number,
+      required: true
+    }
   },
+  emits: ["data-import-updated"],
   data () {
     return {
       uploading: false,
@@ -177,6 +182,8 @@ export default {
     fileURL: function() {
       if(this.fileUUID) {
         return api.uploadURL(this.fileUUID)
+      } else {
+        return undefined
       }
     },
     title: function() {

@@ -18,10 +18,10 @@
             Program Details
             <router-link
               :to="{ name: 'ProgramEdit', params: { id: programId }}"
-              tag="button"
-              class="button is-small"
             >
-              Edit
+              <button class="button is-small">
+                Edit
+              </button>
             </router-link>
           </h4>
 
@@ -132,7 +132,6 @@
 
 <script>
 import * as api from '../api.js'
-import Spinner from '../../node_modules/vue-simple-spinner/src/components/Spinner.vue'
 import SourceList from './SourceList.vue'
 import ProgramManagers from './ProgramManagers.vue'
 import { plotTrend } from '../plotTrend'
@@ -140,7 +139,6 @@ import { plotTrend } from '../plotTrend'
 export default {
   name: 'ProgramView',
   components: {
-    'spinner': Spinner,
     'source-list': SourceList,
     'program-managers': ProgramManagers
   },

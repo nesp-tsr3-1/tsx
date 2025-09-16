@@ -89,11 +89,20 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="letter in sortedLetters">
+              <tr
+                v-for="letter in sortedLetters"
+                :key="letter.id"
+              >
                 <td :title="letter.filenames">
-                  <div v-for="file in letter.files">
+                  <div
+                    v-for="file in letter.files"
+                    :key="file.upload_uuid"
+                  >
                     <a :href="fileURL(file)">
-                      <template v-for="[nonMatch, match] in file.filenameParts">
+                      <template
+                        v-for="([nonMatch, match], index) in file.filenameParts"
+                        :key="index"
+                      >
                         <span style="white-space: pre-wrap;">{{ nonMatch }}</span>
                         <b style="white-space: pre-wrap;">{{ match }}</b>
                       </template>
@@ -105,10 +114,14 @@
 
                   <div style="display: flex;gap: 0.5em;">
                     <span
-                      v-for="parts in letter.custodianParts"
+                      v-for="(parts, partsIndex) in letter.custodianParts"
+                      :key="partsIndex"
                       class="tag is-info is-light"
                     >
-                      <template v-for="[nonMatch, match] in parts">
+                      <template
+                        v-for="([nonMatch, match], index) in parts"
+                        :key="index"
+                      >
                         <span style="white-space: pre-wrap;">{{ nonMatch }}</span>
                         <b style="white-space: pre-wrap;">{{ match }}</b>
                       </template>
@@ -200,6 +213,11 @@ export default {
       return this.currentUser?.roles?.includes('Administrator') === true
     }
   },
+  watch: {
+    searchText: debounce(function(searchText) {
+      this.debouncedSearchText = searchText
+    }, 500)
+  },
   created () {
     api.isLoggedIn().then(isLoggedIn => {
       if(!isLoggedIn) {
@@ -255,11 +273,6 @@ export default {
         }
       }
     }
-  },
-  watch: {
-    searchText: debounce(function(searchText) {
-      this.debouncedSearchText = searchText
-    }, 500)
   }
 }
 </script>

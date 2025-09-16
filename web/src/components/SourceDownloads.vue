@@ -22,7 +22,10 @@ export default {
     CommonDownloads
   },
   props: {
-    sourceId: Number
+    sourceId: {
+      type: Number,
+      required: true
+    }
   }
 }
 </script>

@@ -78,11 +78,15 @@
               <tbody>
                 <tr
                   v-for="taxonDataset in sortedTaxonDatasets"
+                  :key="taxonDataset.id"
                   @click="handleDatasetClick(taxonDataset, $event)"
                 >
                   <td>
                     <span class="tag">
-                      <template v-for="[nonMatch, match] in taxonDataset.idParts">
+                      <template
+                        v-for="([nonMatch, match], index) in taxonDataset.idParts"
+                        :key="index"
+                      >
                         <span style="white-space: pre-wrap;">{{ nonMatch }}</span>
                         <b style="white-space: pre-wrap;">{{ match }}</b>
                       </template>
@@ -93,13 +97,19 @@
                       title="Taxon not present in latest data import"
                     >Taxon Dataset removed</span>
                     <p>
-                      <template v-for="[nonMatch, match] in taxonDataset.descriptionParts">
+                      <template
+                        v-for="([nonMatch, match], index) in taxonDataset.descriptionParts"
+                        :key="index"
+                      >
                         <span style="white-space: pre-wrap;">{{ nonMatch }}</span>
                         <b style="white-space: pre-wrap;">{{ match }}</b>
                       </template>
                     </p>
                     <p>
-                      <template v-for="[nonMatch, match] in taxonDataset.taxonParts">
+                      <template
+                        v-for="([nonMatch, match], index) in taxonDataset.taxonParts"
+                        :key="index"
+                      >
                         <span style="white-space: pre-wrap;">{{ nonMatch }}</span>
                         <b style="white-space: pre-wrap;">{{ match }}</b>
                       </template>
@@ -200,6 +210,12 @@ export default {
       return this.currentUser?.is_admin
     }
   },
+  watch: {
+    searchText: debounce(function(searchText) {
+      console.log(searchText)
+      this.debouncedSearchText = searchText
+    }, 500)
+  },
   created() {
     this.refresh()
     api.isLoggedIn().then(isLoggedIn => {
@@ -213,12 +229,6 @@ export default {
     }).catch(error => {
       this.error = error
     })
-  },
-  watch: {
-    searchText: debounce(function(searchText) {
-      console.log(searchText)
-      this.debouncedSearchText = searchText
-    }, 500)
   },
   methods: {
     refresh() {

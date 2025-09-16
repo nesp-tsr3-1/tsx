@@ -23,12 +23,10 @@
 
           <h4 class="title is-4">
             Dataset Details
-            <router-link
-              :to="{ name: 'SourceEdit', params: { id: sourceId }}"
-              tag="button"
-              class="button is-small"
-            >
-              Edit
+            <router-link :to="{ name: 'SourceEdit', params: { id: sourceId }}">
+              <button class="button is-small">
+                Edit
+              </button>
             </router-link>
           </h4>
 
@@ -83,7 +81,10 @@
               <div v-if="documentsEnabled">
                 <h4>Agreement(s)</h4>
                 {{ source.data_agreement_status_long_description }}
-                <div v-for="file in source.data_agreement_files">
+                <div
+                  v-for="file in source.data_agreement_files"
+                  :key="file.upload_uuid"
+                >
                   <a :href="uploadURL(file.upload_uuid)">{{ file.filename }}</a>
                 </div>
               </div>

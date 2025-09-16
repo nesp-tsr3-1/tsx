@@ -116,6 +116,7 @@
                       </option>
                       <option
                         v-for="mp in monitoringPrograms"
+                        :key="mp"
                         :value="mp"
                       >
                         {{ mp }}
@@ -288,7 +289,10 @@
                 </h3>
                 <div class="field">
                   <label class="label">Please indicate the status of the data sharing agreement for this dataset</label>
-                  <div v-for="option in dataAgreementStatusOptions">
+                  <div
+                    v-for="option in dataAgreementStatusOptions"
+                    :key="option.code"
+                  >
                     <div class="control">
                       <label class="radio">
                         <input

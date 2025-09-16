@@ -34,7 +34,16 @@ export default {
   components: {
     Spinner
   },
-  props: ['heatmapData', 'loading'],
+  props: {
+    heatmapData: {
+      type: null,
+      required: true
+    },
+    loading: {
+      type: Boolean,
+      required: true
+    }
+  },
   data () {
     return {
       map: null,

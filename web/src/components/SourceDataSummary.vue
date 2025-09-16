@@ -16,7 +16,10 @@
           No records have been imported for this dataset.
         </p>
       </div>
-      <div v-for="taxon in items">
+      <div
+        v-for="taxon in items"
+        :key="taxon.id"
+      >
         <div :id="taxon.id" />
         <div class="table-header">
           <div class="table-header-title">
@@ -145,7 +148,10 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="t in taxon.ts">
+            <tr
+              v-for="[index, t] in taxon.ts.entries()"
+              :key="index"
+            >
               <td>{{ t.site_name }}</td>
               <td>{{ t.search_type }}</td>
               <td>{{ t.min_year }}–{{ t.max_year }}</td>
@@ -256,7 +262,10 @@ export default {
   components: {
   },
   props: {
-    sourceId: Number
+    sourceId: {
+      type: Number,
+      required: true
+    }
   },
   data () {
     return {

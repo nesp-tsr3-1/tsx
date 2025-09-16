@@ -74,7 +74,10 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="file in uploadedFiles">
+                    <tr
+                      v-for="file in uploadedFiles"
+                      :key="file.upload_uuid"
+                    >
                       <td>
                         <a :href="file.downloadURL()">{{ file.filename }}</a>
                       </td>
@@ -109,7 +112,10 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="file in uploadingFiles">
+                    <tr
+                      v-for="file in uploadingFiles"
+                      :key="file.upload_uuid"
+                    >
                       <td>
                         {{ file.filename }}<br>
                         <progress
@@ -672,6 +678,8 @@ export default {
     fileURL() {
       if(this.agreement.upload_uuid) {
         return api.uploadURL(this.agreement.upload_uuid)
+      } else {
+        return undefined;
       }
     },
     lastEditDescription() {

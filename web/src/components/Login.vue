@@ -60,11 +60,13 @@
         <router-link
           v-if="!after_signup"
           to="/signup"
-          tag="button"
-          class="button"
-          style="margin-top: 2em;"
         >
-          Create an account
+          <button
+            class="button"
+            style="margin-top: 2em;"
+          >
+            Create an account
+          </button>
         </router-link>
       </p>
     </div>

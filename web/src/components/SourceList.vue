@@ -41,7 +41,10 @@
               <option :value="null">
                 Any agreement status
               </option>
-              <template v-for="option in dataAgreementStatusOptions">
+              <template
+                v-for="option in dataAgreementStatusOptions"
+                :key="option.code"
+              >
                 <option :value="option.code">
                   {{ option.description }}
                 </option>
@@ -101,24 +104,33 @@
         <tbody>
           <tr
             v-for="source in sortedSources"
+            :key="source.id"
             @click="$emit('clickSource', source, $event)"
           >
             <td :title="source.description">
-              <template v-for="[nonMatch, match] in source.descriptionParts">
+              <template
+                v-for="([nonMatch, match], index) in source.descriptionParts"
+                :key="index"
+              >
                 <span style="white-space: pre-wrap;">{{ nonMatch }}</span>
                 <b style="white-space: pre-wrap;">{{ match }}</b>
               </template>
               <div>
                 <span
-                  v-for="parts in source.custodianParts"
+                  v-for="(parts, partsIndex) in source.custodianParts"
+                  :key="partsIndex"
                   class="tag is-info is-light"
                 >
-                  <template v-for="[nonMatch, match] in parts">
+                  <template
+                    v-for="([nonMatch, match], index) in parts"
+                    :key="index"
+                  >
                     <span style="white-space: pre-wrap;">{{ nonMatch }}</span>
                     <b style="white-space: pre-wrap;">{{ match }}</b>
                   </template>
                 </span>
               </div>
+              <!-- eslint-enable -->
             </td>
             <td>{{ formatDateTime(source.time_created) }}</td>
             <td v-if="showModified">
@@ -130,6 +142,7 @@
             <td v-if="actions">
               <button
                 v-for="action in actions"
+                :key="action"
                 class="button is-small is-primary"
                 @click.stop="$emit('action', action, source)"
               >
@@ -156,6 +169,29 @@ function normalize(x) {
 
 export default {
   name: 'SourceList',
+  props: {
+    programId: {
+      type: Number,
+      default: undefined
+    },
+    showStatus: {
+      type: Boolean,
+      default: true
+    },
+    showAgreement: {
+      type: Boolean,
+      default: false
+    },
+    actions: {
+      type: Array,
+      default: undefined
+    },
+    clickableRows: {
+      type: Boolean,
+      default: true
+    }
+  },
+  emits: ["clickSource", "action"],
   data () {
     return {
       sources: [],
@@ -215,6 +251,11 @@ export default {
       return result
     }
   },
+  watch: {
+    searchText: debounce(function(searchText) {
+      this.debouncedSearchText = searchText
+    }, 500)
+  },
   created() {
     this.refresh()
     api.currentUser().then(user => {
@@ -235,6 +276,17 @@ export default {
     this.$router.beforeEach((to, from) => {
       this.navigationsSinceBackButtonPressed++
     })
+  },
+  activated() {
+    // We use KeepAlive to preserve state when returning to the datasets page via the back button,
+    // but unfortunately this also preserves state even when navigating to the datasets page via
+    // the navigation bar.
+    // The work-around below resets the page state if we are *not* arriving at this page via the back button
+    let lastNavigationWasBack = (this.navigationsSinceBackButtonPressed == 1)
+    if(!lastNavigationWasBack) {
+      this.debouncedSearchText = this.searchText = ''
+      this.refresh()
+    }
   },
   methods: {
     refresh() {
@@ -279,39 +331,6 @@ export default {
           asc: true
         }
       }
-    }
-  },
-  watch: {
-    searchText: debounce(function(searchText) {
-      this.debouncedSearchText = searchText
-    }, 500)
-  },
-  props: {
-    programId: Number,
-    showStatus: {
-      type: Boolean,
-      default: true
-    },
-    showAgreement: {
-      type: Boolean,
-      default: false
-    },
-    actions: Array,
-    clickableRows: {
-      type: Boolean,
-      default: true
-    }
-  },
-  emits: ["clickSource"],
-  activated() {
-    // We use KeepAlive to preserve state when returning to the datasets page via the back button,
-    // but unfortunately this also preserves state even when navigating to the datasets page via
-    // the navigation bar.
-    // The work-around below resets the page state if we are *not* arriving at this page via the back button
-    let lastNavigationWasBack = (this.navigationsSinceBackButtonPressed == 1)
-    if(!lastNavigationWasBack) {
-      this.debouncedSearchText = this.searchText = ''
-      this.refresh()
     }
   }
 }

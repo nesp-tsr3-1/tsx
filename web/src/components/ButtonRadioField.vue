@@ -7,6 +7,7 @@
   >
     <button
       v-for="option in field.options"
+      :key="option.value"
       class="button is-small"
       :class="buttonClasses(option)"
       :disabled="option.disabled"
@@ -24,9 +25,16 @@ import * as api from '../api.js'
 export default {
   name: 'ButtonRadioField',
   props: {
-    field: Object,
-    value: null
+    field: {
+      type: Object,
+      required: true
+    },
+    value: {
+      type: null,
+      default: undefined
+    }
   },
+  emits: [ "update:value" ],
   data () {
     return {
     }

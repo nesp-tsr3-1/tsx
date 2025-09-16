@@ -37,9 +37,16 @@ export default {
     tippy: directive
   },
   props: {
-    field: Object,
-    value: null
+    field: {
+      type: Object,
+      required: true
+    },
+    value: {
+      type: null,
+      default: undefined
+    }
   },
+  emits: ["update:value"],
   data () {
     return {}
   },
@@ -65,6 +72,8 @@ export default {
           trigger: 'manual',
           showOnCreate: true
         }
+      } else {
+        return undefined;
       }
     }
   },

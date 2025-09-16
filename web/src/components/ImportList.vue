@@ -30,7 +30,10 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="i in imports">
+          <tr
+            v-for="i in imports"
+            :key="i.id"
+          >
             <td :title="i.filename">
               <span
                 v-if="i.data_type === 2"
@@ -91,7 +94,10 @@ import { humanizeStatus, formatDateTime } from '../util.js'
 export default {
   name: 'ImportList',
   props: {
-    sourceId: Number
+    sourceId: {
+      type: Number,
+      required: true
+    }
   },
   data () {
     var data = {

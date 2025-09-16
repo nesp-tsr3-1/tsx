@@ -84,8 +84,12 @@ import * as api from '../api.js'
 
 export default {
   props: {
-    note: Object
+    note: {
+      type: Object,
+      required: true
+    }
   },
+  emits: ["deleted"],
   data() {
     return {
       state: 'init',

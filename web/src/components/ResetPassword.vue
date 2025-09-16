@@ -118,7 +118,7 @@
           </fieldset>
         </form>
       </div>
-      <div v-else="resetEmailSent">
+      <div v-else-if="resetEmailSent">
         <div style="margin-bottom: 1em; text-align: center;">
           <p>An email containing instructions to reset your password has been sent to {{ email }}.</p>
         </div>

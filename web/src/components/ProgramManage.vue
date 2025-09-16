@@ -1,4 +1,5 @@
 <template>
+  <!-- Note: this functionality not in use (see email 15 Jun 2022) -->
   <div class="section">
     <div class="container">
       <div class="columns">
@@ -17,12 +18,10 @@
           </div>
 
           <div v-if="state === 'loaded'">
-            <router-link
-              to="/program/edit/new"
-              tag="button"
-              class="button is-primary"
-            >
-              Create New Program
+            <router-link to="/program/edit/new">
+              <button class="button is-primary">
+                Create New Program
+              </button>
             </router-link>
             <hr>
             <program-list />

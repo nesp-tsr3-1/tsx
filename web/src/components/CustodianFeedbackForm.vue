@@ -234,6 +234,7 @@
                       <div class="radio-list">
                         <label
                           v-for="option in options.admin_type"
+                          :key="option.id"
                           class="radio"
                         >
                           <input
@@ -326,6 +327,7 @@
                       <div class="radio-list">
                         <label
                           v-for="option in options.yes_no"
+                          :key="option.id"
                           class="radio"
                         >
                           <input
@@ -375,6 +377,7 @@
                       <div class="radio-list">
                         <label
                           v-for="option in options.yes_no_unsure"
+                          :key="option.id"
                           class="radio"
                         >
                           <input
@@ -424,6 +427,7 @@
                       <div class="radio-list">
                         <label
                           v-for="option in options.yes_no"
+                          :key="option.id"
                           class="radio"
                         >
                           <input
@@ -581,7 +585,10 @@
                         </tr>
                       </thead>
                       <tbody>
-                        <tr v-for="row in form.stats.processing_summary">
+                        <tr
+                          v-for="(row, rowIndex) in form.stats.processing_summary"
+                          :key="rowIndex"
+                        >
                           <td>{{ row.search_type }}</td>
                           <td>{{ row.unit }}</td>
                           <td>{{ row.unit_type }}</td>
@@ -605,7 +612,10 @@
                         </tr>
                       </thead>
                       <tbody>
-                        <tr v-for="row in form.stats.site_management_summary">
+                        <tr
+                          v-for="(row, rowIndex) in form.stats.site_management_summary"
+                          :key="rowIndex"
+                        >
                           <td>{{ row.management_category }}</td>
                           <td>{{ row.management_comments }}</td>
                           <td>{{ row.site_count.toLocaleString() }}</td>
@@ -628,6 +638,7 @@
                       <div class="radio-list">
                         <label
                           v-for="option in options.yes_no"
+                          :key="option.id"
                           class="radio"
                         >
                           <input
@@ -674,6 +685,7 @@
                       <div class="radio-list">
                         <label
                           v-for="option in options.yes_no_unsure"
+                          :key="option.id"
                           class="radio"
                         >
                           <input
@@ -727,7 +739,10 @@
                         </tr>
                       </thead>
                       <tbody>
-                        <template v-for="stats in [form?.stats?.raw_data_stats].filter(x=>x)">
+                        <template
+                          v-for="(stats, statsIndex) in [form?.stats?.raw_data_stats].filter(x=>x)"
+                          :key="statsIndex"
+                        >
                           <tr>
                             <td colspan="2">
                               <b>Raw data</b>
@@ -750,7 +765,10 @@
                             <td>{{ stats.zero_counts.toLocaleString() }}</td>
                           </tr>
                         </template>
-                        <template v-for="stats in [form?.stats?.time_series_stats].filter(x=>x)">
+                        <template
+                          v-for="(stats, statsIndex) in [form?.stats?.time_series_stats].filter(x=>x)"
+                          :key="statsIndex"
+                        >
                           <tr>
                             <td colspan="2">
                               <b>Aggregated data</b>
@@ -809,6 +827,7 @@
                       <div class="radio-list">
                         <label
                           v-for="option in options.yes_no_unsure"
+                          :key="option.id"
                           class="radio"
                         >
                           <input
@@ -872,6 +891,7 @@
                                 <select v-model="trendParams.refYear">
                                   <option
                                     v-for="year in availableYears"
+                                    :key="year"
                                     :value="year"
                                   >
                                     {{ year }}
@@ -889,6 +909,7 @@
                                 <select v-model="trendParams.finalYear">
                                   <option
                                     v-for="year in availableYears"
+                                    :key="year"
                                     :value="year"
                                   >
                                     {{ year }}
@@ -932,7 +953,10 @@
                                 </tr>
                               </thead>
                               <tbody>
-                                <tr v-for="siteInfo in trendParams.sites">
+                                <tr
+                                  v-for="(siteInfo, siteIndex) in trendParams.sites"
+                                  :key="siteIndex"
+                                >
                                   <td>{{ siteInfo.split(',')[1] }}</td>
                                   <td>{{ siteInfo.split(',')[0] }}</td>
                                   <td>
@@ -1033,6 +1057,7 @@
                       <div class="radio-list">
                         <label
                           v-for="option in options.yes_no_unsure"
+                          :key="option.id"
                           class="radio"
                         >
                           <input
@@ -1195,6 +1220,7 @@
                         </tr>
                         <tr
                           v-for="option in options.standardisation_of_method_effort"
+                          :key="option.id"
                           @click="() => { formData.standardisation_of_method_effort = option.id}"
                         >
                           <td>
@@ -1230,6 +1256,7 @@
                         </tr>
                         <tr
                           v-for="option in options.objective_of_monitoring"
+                          :key="option.id"
                           @click="() => { formData.objective_of_monitoring = option.id}"
                         >
                           <td>
@@ -1265,6 +1292,7 @@
                         </tr>
                         <tr
                           v-for="option in options.consistency_of_monitoring"
+                          :key="option.id"
                           @click="() => { formData.consistency_of_monitoring = option.id}"
                         >
                           <td>
@@ -1300,6 +1328,7 @@
                         </tr>
                         <tr
                           v-for="option in options.monitoring_frequency_and_timing"
+                          :key="option.id"
                           @click="() => { formData.monitoring_frequency_and_timing = option.id}"
                         >
                           <td>
@@ -1335,6 +1364,7 @@
                         </tr>
                         <tr
                           v-for="option in options.absences_recorded"
+                          :key="option.id"
                           @click="() => { formData.absences_recorded = option.id}"
                         >
                           <td>
@@ -1415,6 +1445,7 @@
                       <div class="radio-list">
                         <label
                           v-for="option in options.yes_no"
+                          :key="option.id"
                           class="radio"
                         >
                           <input
@@ -1536,6 +1567,7 @@
                       <div class="radio-list">
                         <label
                           v-for="option in options.monitoring_program_information_provided"
+                          :key="option.id"
                           class="radio"
                         >
                           <input
@@ -1576,6 +1608,7 @@
                           </option>
                           <option
                             v-for="option in previousAnswers"
+                            :key="option.id"
                             :value="option.id"
                           >
                             {{ option.description }}

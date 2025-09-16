@@ -39,9 +39,16 @@ import * as api from '../api.js'
 export default {
   name: 'SourceCustodian',
   props: {
-    user: Object,
-    sourceId: Number
+    user: {
+      type: Object,
+      required: true
+    },
+    sourceId: {
+      type: Number,
+      required: true
+    }
   },
+  emits: ['deleted'],
   data() {
     return {
       state: 'init'

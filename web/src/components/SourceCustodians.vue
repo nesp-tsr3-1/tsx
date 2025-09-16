@@ -102,7 +102,10 @@ export default {
     'user-row': SourceCustodian
   },
   props: {
-    sourceId: Number
+    sourceId: {
+      type: Number,
+      required: true
+    }
   },
   data () {
     return {

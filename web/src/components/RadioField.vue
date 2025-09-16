@@ -1,7 +1,10 @@
 <template>
   <div class="field">
     <label class="label">{{ field.label }}</label>
-    <div v-for="option in field.options">
+    <div
+      v-for="option in field.options"
+      :key="option.value"
+    >
       <label>
         <input
           v-model="fieldValue"
@@ -40,9 +43,16 @@ export default {
     Tippy
   },
   props: {
-    field: Object,
-    value: null
+    field: {
+      type: Object,
+      required: true
+    },
+    value: {
+      type: null,
+      default: undefined
+    }
   },
+  emits: ["update:value"],
   data () {
     return {
     }

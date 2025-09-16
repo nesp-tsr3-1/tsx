@@ -21,7 +21,10 @@
           Failed to update role
         </p>
         <div v-if="clientRole === 'Program manager'">
-          <div v-for="program in clientPrograms">
+          <div
+            v-for="program in clientPrograms"
+            :key="program.id"
+          >
             <label><input
               v-model="program.selected"
               type="checkbox"
@@ -40,8 +43,14 @@ import * as api from '../api.js'
 export default {
   name: 'UserRow',
   props: {
-    user: Object,
-    monitoringPrograms: Array
+    user: {
+      type: Object,
+      required: true
+    },
+    monitoringPrograms: {
+      type: Array,
+      required: true
+    }
   },
   data () {
     var currentRole = this.user.role

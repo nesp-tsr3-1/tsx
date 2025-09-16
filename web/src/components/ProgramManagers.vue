@@ -1,4 +1,5 @@
 <template>
+  <!-- Note: this functionality not in use (see email 15 Jun 2022) -->
   <div class="content">
     <p>Program managers are users who can view and download the raw, time-series and trend data for all datasets associated with this program.</p>
 
@@ -14,6 +15,7 @@
       <div class="columns is-multiline">
         <div
           v-for="manager in managers"
+          :key="manager.id"
           class="column is-half"
         >
           <div class="card">
@@ -97,7 +99,10 @@ import * as api from '../api.js'
 export default {
   name: 'ProgramManagers',
   props: {
-    programId: Number,
+    programId: {
+      type: Number,
+      required: true
+    },
     canEdit: Boolean
   },
   data () {

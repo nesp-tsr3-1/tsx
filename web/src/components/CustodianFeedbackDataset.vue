@@ -57,7 +57,10 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="form in taxonDataset.forms">
+                <tr
+                  v-for="form in taxonDataset.forms"
+                  :key="form.id"
+                >
                   <td>
                     {{ taxonDataset.taxon.scientific_name }}
                     <span class="tag">{{ taxonDataset.id }}</span>
@@ -67,18 +70,18 @@
                       <router-link
                         v-if="canEdit(form)"
                         :to="{ name: 'EditCustodianFeedbackForm', params: { id: form.id }}"
-                        tag="button"
-                        class="button is-dark is-small"
                       >
-                        {{ editButtonLabel(form) }}
+                        <button class="button is-dark is-small">
+                          {{ editButtonLabel(form) }}
+                        </button>
                       </router-link>
                       <router-link
                         v-if="canView(form)"
                         :to="{ name: 'ViewCustodianFeedbackForm', params: { id: form.id }}"
-                        tag="button"
-                        class="button is-dark is-small"
                       >
-                        View
+                        <button class="button is-dark is-small">
+                          View
+                        </button>
                       </router-link>
                     </div>
                   </td>

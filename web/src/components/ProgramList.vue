@@ -1,4 +1,5 @@
 <template>
+  <!-- Note: this functionality not in use (see email 15 Jun 2022) -->
   <div class="program-list">
     <div v-if="status == 'loading'">
       <p>
@@ -48,7 +49,8 @@
         <tbody>
           <tr
             v-for="i in sortedPrograms"
-            @click="$router.push(&quot;/program/&quot; + i.id)"
+            :key="i.id"
+            @click="$router.push('/program/' + i.id)"
           >
             <td :title="i.description">
               {{ i.description }}
@@ -79,6 +81,9 @@ function compare(a, b) {
 
 export default {
   name: 'ProgramList',
+  props: {
+    completed: Boolean
+  },
   data () {
     return {
       programs: [],
@@ -104,6 +109,11 @@ export default {
       }
       return result
     }
+  },
+  watch: {
+    searchText: debounce(function(searchText) {
+      this.debouncedSearchText = searchText
+    }, 500)
   },
   created() {
     api.monitoringPrograms().then((programs) => {
@@ -133,14 +143,6 @@ export default {
         }
       }
     }
-  },
-  watch: {
-    searchText: debounce(function(searchText) {
-      this.debouncedSearchText = searchText
-    }, 500)
-  },
-  props: {
-    completed: Boolean
   }
 }
 </script>
