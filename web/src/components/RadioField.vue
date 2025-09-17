@@ -22,6 +22,7 @@
         >
           <template #default><i class="far fa-question-circle" /></template>
           <template #content>
+            <!-- eslint-disable vue/no-v-html -->
             <div
               class="popup-content"
               v-html="option.help"
