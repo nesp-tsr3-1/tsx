@@ -16,6 +16,7 @@
         :key="note.id"
         :note="note"
         @deleted="refreshNotes"
+        @updated="refreshNotes"
       />
       <p
         v-if="notes.length === 0"
@@ -50,7 +51,6 @@
 
 <script>
 import * as api from '../api.js'
-import { nextTick } from 'vue'
 import Note from './ProcessingNote.vue'
 
 export default {

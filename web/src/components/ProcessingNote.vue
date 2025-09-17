@@ -62,18 +62,20 @@
             />
           </div>
         </div>
-        <button
-          class="button is-primary"
-          @click="updateNote"
-        >
-          Update
-        </button>
-        <button
-          class="button"
-          @click="cancelEditNote"
-        >
-          Cancel
-        </button>
+        <div class="buttons">
+          <button
+            class="button is-primary"
+            @click="updateNote"
+          >
+            Update
+          </button>
+          <button
+            class="button"
+            @click="cancelEditNote"
+          >
+            Cancel
+          </button>
+        </div>
       </fieldset>
     </div>
   </div>
@@ -81,6 +83,7 @@
 
 <script>
 import * as api from '../api.js'
+import { nextTick } from 'vue'
 
 export default {
   props: {
@@ -89,7 +92,7 @@ export default {
       required: true
     }
   },
-  emits: ["deleted"],
+  emits: [ "deleted", "updated" ],
   data() {
     return {
       state: 'init',
@@ -106,8 +109,7 @@ export default {
       this.newNotes = this.note.notes
       this.state = 'editing'
       nextTick(() => {
-        console.log(this.$refs.notesField[0])
-        this.$refs.notesField[0].focus()
+        this.$refs.notesField.focus()
       })
     },
     cancelEditNote() {
@@ -126,7 +128,7 @@ export default {
     updateNote() {
       this.state = 'updating'
       api.updateDataSourceNote(this.note.source_id, this.note.id, this.newNotes).then(() => {
-        this.note.notes = this.newNotes
+        this.$emit('updated')
         this.state = 'init'
       }).catch(error => {
         console.log(error)
