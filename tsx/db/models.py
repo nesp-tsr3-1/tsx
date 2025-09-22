@@ -562,7 +562,6 @@ class DataSource(Base):
     consistency_of_monitoring_id: Mapped[Optional[int]] = mapped_column(Integer)
     start_year: Mapped[Optional[int]] = mapped_column(Integer)
     end_year: Mapped[Optional[int]] = mapped_column(Integer)
-    citation: Mapped[Optional[str]] = mapped_column(Text)
 
     source: Mapped['Source'] = relationship('Source')
     taxon: Mapped['Taxon'] = relationship('Taxon')

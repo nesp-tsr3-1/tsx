@@ -37,8 +37,7 @@ def main():
 				'start_year': row.get('StartYear') or None,
 				'end_year': row.get('EndYear') or None,
 				'exclude_from_analysis': get_bool(row, 'NotInIndex', False, unknown_value_default=True, optional=True),
-				'suppress_aggregated_data': get_suppress_aggregated_data(row),
-				'citation': row.get('Citation') or None
+				'suppress_aggregated_data': get_suppress_aggregated_data(row)
 			}
 
 			# In relaxed mode, silently skip rows without SourceID value
@@ -93,8 +92,7 @@ def main():
 					start_year,
 					end_year,
 					exclude_from_analysis,
-					suppress_aggregated_data,
-					citation
+					suppress_aggregated_data
 				) VALUES (
 					:source_id,
 					:taxon_id,
@@ -106,8 +104,7 @@ def main():
 					:start_year,
 					:end_year,
 					:exclude_from_analysis,
-					:suppress_aggregated_data,
-					:citation
+					:suppress_aggregated_data
 				)"""),
 				data
 			)

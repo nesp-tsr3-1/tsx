@@ -279,7 +279,13 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                         IF(time_series_inclusion.non_zero, '',
                             'All values are 0; ')
                     )) AS InclusionCategoryComments,
-                    data_source.citation AS Citation
+                    CONCAT(
+                        source.authors,
+                        ' (', YEAR(NOW()), '). ',
+                        TRIM(TRAILING '.' FROM TRIM(source.details)), '. ',
+                        TRIM(TRAILING '.' FROM TRIM(source.provider)), '. ',
+                        'Aggregated for the Australian Threatened Species Index, an output of the NESP Threatened Species Recovery Hub and operated by the Terrestrial Ecosystem Research Network, The University of Queensland.'
+                    ) AS Citation
                 FROM
                     {aggregated_table} agg
                     INNER JOIN taxon ON taxon.id = agg.taxon_id
