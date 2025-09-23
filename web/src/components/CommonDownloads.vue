@@ -121,6 +121,21 @@
         </div>
       </div>
     </div>
+    <div
+      v-if="enableTaxonStatusFilter"
+      class="field"
+    >
+      <label class="label">Taxon Eligibility</label>
+      <div
+        class="control"
+        style="margin-bottom: 1em;"
+      >
+        <label><input
+            v-model="criteria.eligibleForTSXOnly"
+            type="checkbox"
+          > Only include taxa eligible for inclusion in the TSX</label>
+      </div>
+    </div>
     <div class="field">
       <label class="label">Species</label>
       <div class="control">
@@ -608,7 +623,8 @@ export default {
         management: null,
         taxonomicGroup: null,
         taxonStatus: [],
-        statusAuthority: null
+        statusAuthority: null,
+        eligibleForTSXOnly: false
 
       },
       changeCounter: 0, // Incremented every time criteria are changed
@@ -934,6 +950,10 @@ export default {
       if(this.enableTaxonStatusFilter && this.criteria.statusAuthority) {
         params.status_auth = this.criteria.statusAuthority.id
         params.taxon_status = this.criteria.taxonStatus.map(x => x.id).join(",")
+      }
+
+      if(this.enableTaxonStatusFilter && this.criteria.eligibleForTSXOnly) {
+        params.eligible_for_tsx_only = 'true'
       }
 
       return params
