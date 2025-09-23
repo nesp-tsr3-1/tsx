@@ -374,6 +374,7 @@ class Taxon(Base):
     national_priority: Mapped[int] = mapped_column(TINYINT(1), server_default=text("'0'"))
     taxonomic_group: Mapped[str] = mapped_column(String(255))
     suppress_spatial_representativeness: Mapped[int] = mapped_column(TINYINT(1), server_default=text("'0'"))
+    eligible_for_tsx: Mapped[int] = mapped_column(TINYINT(1), server_default=text("'1'"))
     taxon_level_id: Mapped[Optional[int]] = mapped_column(Integer)
     spno: Mapped[Optional[int]] = mapped_column(SmallInteger)
     common_name: Mapped[Optional[str]] = mapped_column(String(512))

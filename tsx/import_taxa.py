@@ -67,6 +67,9 @@ def main():
 			if row['SpNo'] and str(row['SpNo']) not in str(row['TaxonID']):
 				raise ValueError("Invalid SpNo/TaxonID combination: %s/%s" % (row['SpNo'], row['TaxonID']))
 
+			if row.get('EligibleForTSX', 'YES') not in ('YES', 'N'):
+				raise ValueError("Unexepcted value for EligibleForTSX column: %s" % row['EligibleForTSX'])
+
 			taxon_groups = []
 
 			try:
@@ -88,7 +91,8 @@ def main():
 					bird_action_plan_status = get_status('AP2020Status'),
 					taxonomic_group = row['TaxonomicGroup'],
 					national_priority = str(row.get('NationalPriorityTaxa')) == '1',
-					suppress_spatial_representativeness = str(row.get('SuppressSpatialRep', '0')) == '1'
+					suppress_spatial_representativeness = str(row.get('SuppressSpatialRep', '0')) == '1',
+					eligible_for_tsx = str(row.get('EligibleForTSX', 'YES')) == 'YES'
 				)
 
 				groups = row.get('FunctionalGroup')
