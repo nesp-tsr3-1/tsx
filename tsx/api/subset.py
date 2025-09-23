@@ -70,6 +70,7 @@ def subset_stats():
             t1_sighting.id AS sighting_id,
             t1_sighting.taxon_id,
             region.state AS State,
+            COALESCE(region.id, -1) AS region_id,
             t1_sighting.unit_id,
             t1_survey.site_id,
             t1_survey.source_id,
@@ -91,7 +92,7 @@ def subset_stats():
             COUNT(DISTINCT sighting_id) AS sighting_count,
             COUNT(DISTINCT taxon_id) AS taxon_count,
             COUNT(DISTINCT source_id) AS source_count,
-            COUNT(DISTINCT site_id, taxon_id, source_id, unit_id, search_type_id) AS time_series_count,
+            COUNT(DISTINCT site_id, taxon_id, source_id, unit_id, search_type_id, region_id) AS time_series_count,
             MIN(min_year) AS min_year,
             MAX(max_year) AS max_year
         FROM t

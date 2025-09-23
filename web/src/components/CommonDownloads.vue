@@ -312,7 +312,7 @@
     Selected data subset contains
     {{ formatQuantity(stats.sighting_count, "individual survey count") }},
     {{ formatQuantity(stats.taxon_count, "taxon", "taxa") }},
-    {{ formatQuantity(stats.source_count, "dataset") }} and approx.
+    {{ formatQuantity(stats.source_count, "dataset") }} and
     {{ formatQuantity(stats.time_series_count, "time series", "time series") }}.
   </div>
   <div
