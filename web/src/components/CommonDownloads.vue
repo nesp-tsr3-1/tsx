@@ -896,26 +896,9 @@ export default {
       })
     },
     downloadConsistency() {
-      let data = this.consistencyPlotData
-      let years = this.availableYears.map(y => y.toString())
+      var params = this.buildDownloadParams()
 
-      let header = ['Time Series', ...years]
-      let columnMap = Object.fromEntries(header.map((col, index) => [col, index]))
-      let rows = data.map((ts, index) => {
-          let row = Array(header.length).fill('')
-          row[0] = index + 1
-          for(let [year, value] of ts) {
-            row[columnMap[year.toString()]] = value
-          }
-          return row
-        })
-
-      let csv = [header, ...rows].map(row => row.join(',')).join('\n')
-
-      saveTextFile(csv, 'text/csv', 'monitoring-consistency.csv')
-
-
-      console.log(data)
+      window.location = api.dataSubsetDownloadURL('monitoring_consistency_all', params)
     },
     buildDownloadParams: function() {
       var params = {}

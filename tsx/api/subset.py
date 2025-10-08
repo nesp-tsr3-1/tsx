@@ -485,6 +485,33 @@ def subset_time_series():
     return zip_response([(csv_filename, csv_string(result), 'str')] + extra_entries, zip_filename)
 
 
+@bp.route('/subset/monitoring_consistency_all', methods = ['GET'])
+def monitoring_consistency_all_csv():
+    if not params_permitted():
+        return "Not authorised", 401
+
+    filename = 'monitoring-consistency&%s.csv' % filename_component_from_params()
+
+    csv_rows = []
+    result = query_subset_time_series()
+
+    numeric_cols = [(index, key) for index, key in enumerate(result.keys()) if key.isdigit()]
+    numeric_col_indices = [index for index, key in numeric_cols]
+    numeric_col_names = [key for index, key in numeric_cols]
+
+    csv_rows.append(','.join(['TimeSeries'] + numeric_col_names))
+
+    for row_index, row in enumerate(result.fetchall()):
+        row_data = [str(row_index + 1)] + ['' if row[col_index] == None else '1' for col_index in numeric_col_indices]
+        csv_rows.append(','.join(row_data))
+
+    csv_data = '\n'.join(csv_rows) + '\n'
+
+    return Response(csv_data, mimetype="text/csv", headers={
+       "Content-Disposition": "attachment; filename=%s" % (filename)
+    })
+
+
 @bp.route('/subset/monitoring_consistency', methods = ['GET'])
 def monitoring_consistency_plot():
     return jsonify(monitoring_consistency_plot_json()), 200
