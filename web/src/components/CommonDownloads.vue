@@ -321,14 +321,10 @@
     </div>
   </fieldset>
   <div
-    v-if="stats"
+    v-if="statsDescription"
     class="notification"
   >
-    Selected data subset contains
-    {{ formatQuantity(stats.sighting_count, "individual survey count") }},
-    {{ formatQuantity(stats.taxon_count, "taxon", "taxa") }},
-    {{ formatQuantity(stats.source_count, "dataset") }} and
-    {{ formatQuantity(stats.time_series_count, "time series", "time series") }}.
+    {{statsDescription}}
   </div>
   <div
     v-else
@@ -652,6 +648,23 @@ export default {
     },
     enableTrendParams: function() {
       return this.trendStatus !== 'processing'
+    },
+    statsDescription: function() {
+      let stats = this.stats
+      if(stats) {
+        let statsPhrases = [
+          this.formatQuantity(stats.sighting_count, "individual survey count"),
+          this.formatQuantity(stats.taxon_count, "taxon", "taxa"),
+          this.sourceId ? [] : this.formatQuantity(stats.source_count, "dataset"),
+          this.formatQuantity(stats.time_series_count, "time series", "time series")
+        ].flat()
+
+        return "Selected data subset contains " +
+          statsPhrases.slice(0, -1).join(", ") + " and " + statsPhrases.slice(-1)[0] +
+          ".";
+      } else {
+        return undefined
+      }
     },
     availableYears: function() {
       let min = this.stats?.min_year
