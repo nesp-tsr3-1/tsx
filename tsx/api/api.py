@@ -42,7 +42,7 @@ CORS(app=app, supports_credentials=True)
 app.secret_key = tsx.config.get("api", "secret_key") or "not-secret"
 app.config['SESSION_TYPE'] = 'cachelib'
 app.config['SESSION_SERIALIZATION_FORMAT'] = 'json'
-app.config['SESSION_CACHELIB'] = FileSystemCache(threshold=500, cache_dir=tsx.config.data_dir("flask_session"))
+app.config['SESSION_CACHELIB'] = FileSystemCache(threshold=50000, cache_dir=tsx.config.data_dir("flask_session"))
 Session(app)
 
 setup_db(app)
