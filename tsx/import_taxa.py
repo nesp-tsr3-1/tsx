@@ -88,7 +88,7 @@ def main():
 					epbc_status = get_status('EPBCStatus'),
 					iucn_status = get_status('IUCNStatus'),
 					state_status = get_status('StatePlantStatus'),
-					bird_action_plan_status = get_status('AP2020Status'),
+					bird_action_plan_status = get_status('BirdActionPlanStatus'),
 					taxonomic_group = row['TaxonomicGroup'],
 					national_priority = str(row.get('NationalPriorityTaxa')) == '1',
 					suppress_spatial_representativeness = str(row.get('SuppressSpatialRep', '0')) == '1',
