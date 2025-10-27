@@ -37,8 +37,13 @@ def main():
 				'start_year': row.get('StartYear') or None,
 				'end_year': row.get('EndYear') or None,
 				'exclude_from_analysis': get_bool(row, 'NotInIndex', False, unknown_value_default=True, optional=True),
-				'suppress_aggregated_data': get_suppress_aggregated_data(row)
+				'suppress_aggregated_data': get_suppress_aggregated_data(row),
 			}
+
+			try:
+				data['suppress_aggregated_data_until'] = parse_date(row.get('SuppressAggregatedDataUntil'))
+			except:
+				pass
 
 			# In relaxed mode, silently skip rows without SourceID value
 			if args.relax and row['SourceID'].strip() in ('', 'NULL', 'NA'):
@@ -92,7 +97,8 @@ def main():
 					start_year,
 					end_year,
 					exclude_from_analysis,
-					suppress_aggregated_data
+					suppress_aggregated_data,
+					suppress_aggregated_data_until
 				) VALUES (
 					:source_id,
 					:taxon_id,
@@ -104,7 +110,8 @@ def main():
 					:start_year,
 					:end_year,
 					:exclude_from_analysis,
-					:suppress_aggregated_data
+					:suppress_aggregated_data,
+					:suppress_aggregated_data_until
 				)"""),
 				data
 			)
@@ -139,6 +146,16 @@ TRUE_VALUES = ('1', 'yes', 'true', 'y', 't')
 FALSE_VALUES = ('0', 'no', 'false', 'n', 'f')
 NA_VALUES = ('', 'na', 'null')
 
+def parse_date(value):
+	dmy = value.split('/')
+	if(len(dmy) == 3):
+		d = max(int(dmy[0]), 1)
+		m = max(int(dmy[1]), 1)
+		y = int(dmy[2])
+		return date(y, m, d)
+	else:
+		return None
+
 def get_suppress_aggregated_data(row):
 	value = row.get('SuppressAggregatedDataUntil')
 	raw_value = value
@@ -154,13 +171,9 @@ def get_suppress_aggregated_data(row):
 		return False
 
 	try:
-		dmy = value.split('/')
-		if(len(dmy) == 3):
-			d = max(int(dmy[0]), 1)
-			m = max(int(dmy[1]), 1)
-			y = int(dmy[2])
-
-			return date.today() < date(y, m, d)
+		supress_until = parse_date(value)
+		if supress_until:
+			return date.today() < supress_until
 	except:
 		pass
 

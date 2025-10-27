@@ -563,6 +563,7 @@ class DataSource(Base):
     consistency_of_monitoring_id: Mapped[Optional[int]] = mapped_column(Integer)
     start_year: Mapped[Optional[int]] = mapped_column(Integer)
     end_year: Mapped[Optional[int]] = mapped_column(Integer)
+    suppress_aggregated_data_until: Mapped[Optional[datetime.date]] = mapped_column(Date)
 
     source: Mapped['Source'] = relationship('Source')
     taxon: Mapped['Taxon'] = relationship('Taxon')
