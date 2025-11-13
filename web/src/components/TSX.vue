@@ -336,7 +336,8 @@
                   href="https://tsx.org.au/visualising-the-index/how-good/"
                 >(Click here for more details on how to assess reliability of trends)</a>
               </p>
-              <p>By using this tool you acknowledge the preliminary nature of these trends and the precautions regarding trend generation and reliability.</p>
+              <p>Please also note that the trends for reptiles are a pilot index, with further data to be added in 2026. The trends shown should be considered interim.</p>
+              <p>By using this tool, you acknowledge the precautions regarding trend generation and reliability.</p>
             </section>
             <footer class="modal-card-foot">
               <button
