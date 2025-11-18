@@ -27,6 +27,18 @@ years <- strtoi(substr(yearCols, 2, 5))
 refYear <- ifelse(is.na(strtoi(args[3])), min(years), strtoi(args[3]))
 plotMax <- ifelse(is.na(strtoi(args[4])), max(years), strtoi(args[4]))
 
+# Always end plot where the available data ends
+dataMaxYear <- data %>%
+  select(all_of(yearCols)) %>%
+  pivot_longer(all_of(yearCols)) %>%
+  filter(!is.na(value)) %>%
+  summarise(max(name)) %>%
+  pull %>%
+  substr(2,5) %>%
+  strtoi
+
+plotMax <- min(plotMax, dataMaxYear)
+
 # Remove rows with all zeroes or only one value within range
 filterRows <- any(args == '--filter-rows')
 if(filterRows) {
@@ -64,7 +76,8 @@ if(nSpecies == 1) {
 
 speciesPerYear <- data %>%
   select(Binomial, ID, all_of(yearCols)) %>%
-  pivot_longer(all_of(yearCols)) %>% mutate(value2 = value) %>%
+  pivot_longer(all_of(yearCols)) %>%
+  mutate(value2 = value) %>%
   group_by(ID) %>%
   fill(value, .direction = 'down') %>%
   fill(value2, .direction='up') %>%
