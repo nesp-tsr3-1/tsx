@@ -155,6 +155,9 @@ def reference_years(perm):
     if perm['FunctionalGroup'] in ('Wetland breeding', 'Terrestrial breeding', 'Stream breeding'):
         years.append(2001)
 
+    if perm['TaxonomicGroup'] in ('Reptiles'):
+        years.append(2005)
+
     return years
 
 def iterate_tasks(df, work_path, script_path):
