@@ -183,7 +183,14 @@ def iterate_tasks(df, work_path, script_path):
                 perm = dict(perm)
                 perm['ReferenceYear'] = year
 
+                # At least 3 taxa must be present in the reference year
                 if df[(df['MinYear'] <= year) & (df['MaxYear'] >= year)]['TaxonID'].nunique() < 3:
+                    yield perm, None, None
+                    continue
+
+                # At least 2 taxa must be present in a time series that covers both the reference year and the following year
+                # (i.e. the trend cannot begin with a single-species segment)
+                if df[(df['MinYear'] <= year) & (df['MaxYear'] > year)]['TaxonID'].nunique() < 2:
                     yield perm, None, None
                     continue
 
