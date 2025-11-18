@@ -18,7 +18,7 @@ from random import shuffle
 log = logging.getLogger(__name__)
 
 default_reference_years = [1985, 1990, 1995, 2000]
-end_year = 2021
+end_year = 2022
 
 def main():
     logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)-15s %(name)s %(levelname)-8s %(message)s')
