@@ -324,7 +324,10 @@
     v-if="statsDescription"
     class="notification"
   >
-    {{statsDescription}}
+    <p>{{statsDescription}}</p>
+    <p v-if="excludedStatsDescription">
+      {{excludedStatsDescription}}
+    </p>
   </div>
   <div
     v-else
@@ -661,10 +664,20 @@ export default {
 
         return "Selected data subset contains " +
           statsPhrases.slice(0, -1).join(", ") + " and " + statsPhrases.slice(-1)[0] +
-          ".";
+          "."
       } else {
         return undefined
       }
+    },
+    excludedStatsDescription: function() {
+      let stats = this.stats
+      if(stats?.excluded_time_series_count > 0) {
+          return " This includes " +
+            this.formatQuantity(stats.excluded_time_series_count, "one-off survey") +
+            " or absent-only time series for " +
+            this.formatQuantity(stats.excluded_time_series_taxon_count, "taxon", "taxa") +
+            ", which will not be included in any trends generated."
+        }
     },
     availableYears: function() {
       let min = this.stats?.min_year

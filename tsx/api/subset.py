@@ -65,7 +65,8 @@ def subset_raw_data():
 def subset_stats():
     where_conditions, having_conditions, params = subset_sql_params()
 
-    sql = """WITH t AS (SELECT
+    sql = """WITH
+        t AS (SELECT
             t1_survey.id AS survey_id,
             t1_sighting.id AS sighting_id,
             t1_sighting.taxon_id,
@@ -75,8 +76,8 @@ def subset_stats():
             t1_survey.site_id,
             t1_survey.source_id,
             t1_site.search_type_id,
-            MIN(t1_survey.start_date_y) AS min_year,
-            MAX(t1_survey.start_date_y) AS max_year
+            t1_survey.start_date_y AS year,
+            t1_sighting.`count`
         FROM t1_survey
         LEFT JOIN t1_survey_region ON t1_survey.id = t1_survey_region.survey_id
         LEFT JOIN region ON region.id = t1_survey_region.region_id
@@ -85,16 +86,24 @@ def subset_stats():
         JOIN source ON t1_survey.source_id = source.id
         JOIN t1_site ON t1_survey.site_id = t1_site.id
         WHERE {where_clause}
-        GROUP BY t1_survey.id, t1_sighting.id
-        {having_clause})
+        {having_clause}),
+
+        excluded_ts AS (SELECT
+            taxon_id
+        FROM t
+        GROUP BY site_id, taxon_id, source_id, unit_id, search_type_id, region_id
+        HAVING MAX(`count`) = 0 OR COUNT(*) = 1)
+
         SELECT
             COUNT(DISTINCT survey_id) AS survey_count,
             COUNT(DISTINCT sighting_id) AS sighting_count,
             COUNT(DISTINCT taxon_id) AS taxon_count,
             COUNT(DISTINCT source_id) AS source_count,
             COUNT(DISTINCT site_id, taxon_id, source_id, unit_id, search_type_id, region_id) AS time_series_count,
-            MIN(min_year) AS min_year,
-            MAX(max_year) AS max_year
+            MIN(year) AS min_year,
+            MAX(year) AS max_year,
+            (SELECT COUNT(*) FROM excluded_ts) AS excluded_time_series_count,
+            (SELECT COUNT(DISTINCT taxon_id) FROM excluded_ts) AS excluded_time_series_taxon_count
         FROM t
     """.format(
         where_clause = " AND ".join(where_conditions) if where_conditions else "TRUE",
