@@ -131,9 +131,9 @@
         style="margin-bottom: 1em;"
       >
         <label><input
-            v-model="criteria.eligibleForTSXOnly"
-            type="checkbox"
-          > Only include taxa eligible for inclusion in the TSX</label>
+          v-model="criteria.eligibleForTSXOnly"
+          type="checkbox"
+        > Only include taxa eligible for inclusion in the TSX</label>
       </div>
     </div>
     <div class="field">
@@ -324,9 +324,9 @@
     v-if="statsDescription"
     class="notification"
   >
-    <p>{{statsDescription}}</p>
+    <p>{{ statsDescription }}</p>
     <p v-if="excludedStatsDescription">
-      {{excludedStatsDescription}}
+      {{ excludedStatsDescription }}
     </p>
   </div>
   <div
@@ -672,12 +672,14 @@ export default {
     excludedStatsDescription: function() {
       let stats = this.stats
       if(stats?.excluded_time_series_count > 0) {
-          return " This includes " +
-            this.formatQuantity(stats.excluded_time_series_count, "one-off survey") +
-            " or absent-only time series for " +
-            this.formatQuantity(stats.excluded_time_series_taxon_count, "taxon", "taxa") +
-            ", which will not be included in any trends generated."
-        }
+        return " This includes " +
+          this.formatQuantity(stats.excluded_time_series_count, "one-off survey") +
+          " or absent-only time series for " +
+          this.formatQuantity(stats.excluded_time_series_taxon_count, "taxon", "taxa") +
+          ", which will not be included in any trends generated."
+      } else {
+        return undefined
+      }
     },
     availableYears: function() {
       let min = this.stats?.min_year
