@@ -46,67 +46,6 @@ export function selectFiles(options) {
   })
 }
 
-export function CSVToArray(strData, strDelimiter) {
-  // Check to see if the delimiter is defined. If not,
-  // then default to comma.
-  strDelimiter = (strDelimiter || ',')
-  // Create a regular expression to parse the CSV values.
-  var objPattern = new RegExp(
-    (
-      // Delimiters.
-      '(\\' + strDelimiter + '|\\r?\\n|\\r|^)' +
-
-      // Quoted fields.
-      // '(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|' +
-      '(?:"([^"]*(?:""[^"]*)*)"|' +
-
-      // Standard fields.
-      // '([^\"\\' + strDelimiter + '\\r\\n]*))'
-      '([^"\\' + strDelimiter + '\\r\\n]*))'
-    ),
-    'gi'
-  )
-  // Create an array to hold our data. Give the array
-  // a default empty first row.
-  var arrData = [[]]
-  // Create an array to hold our individual pattern
-  // matching groups.
-  var arrMatches = objPattern.exec(strData)
-  // Keep looping over the regular expression matches
-  // until we can no longer find a match.
-  while (arrMatches) {
-    // Get the delimiter that was found.
-    var strMatchedDelimiter = arrMatches[1]
-    // Check to see if the given delimiter has a length
-    // (is not the start of string) and if it matches
-    // field delimiter. If id does not, then we know
-    // that this delimiter is a row delimiter.
-    if (strMatchedDelimiter.length && strMatchedDelimiter !== strDelimiter) {
-      // Since we have reached a new row of data,
-      // add an empty row to our data array.
-      arrData.push([])
-    }
-    var strMatchedValue
-    // Now that we have our delimiter out of the way,
-    // let's check to see which kind of value we
-    // captured (quoted or unquoted).
-    if (arrMatches[ 2 ]) {
-      // We found a quoted value. When we capture
-      // this value, unescape any double quotes.
-      strMatchedValue = arrMatches[ 2 ].replace(new RegExp('\'\'', 'g'), '\'')
-    } else {
-      // We found a non-quoted value.
-      strMatchedValue = arrMatches[3]
-    }
-    // Now that we have our value string, let's add
-    // it to the data array.
-    arrData[ arrData.length - 1 ].push(strMatchedValue)
-    arrMatches = objPattern.exec(strData)
-  }
-  // Return the parsed data.
-  return arrData
-}
-
 export function pluck(array, key) {
   return array.map(function(x) { return x[key] })
 }
@@ -206,13 +145,15 @@ export function saveTextFile(text, mimeType, fileName) {
 }
 
 // Not currently used, but might be useful for Species IDs list
-function parseCSV(input) {
+export function parseCSV(input) {
   var p = 0
   var c = input[0]
   var quote = '"'
   var comma = ','
   var rows = []
   var row = []
+  var lines = 1
+  var lineStart = 0
 
   function endRow() {
     rows.push(row)
@@ -222,10 +163,18 @@ function parseCSV(input) {
   function next() {
     if(eof()) { throw "Unexpected EOF" }
     c = input[++p]
+    if(c === '\n') {
+      lines++
+      lineStart = p
+    }
   }
 
   function eof() {
     return p >= input.length
+  }
+
+  if(eof()) {
+    return []
   }
 
   while(true) {
@@ -244,6 +193,9 @@ function parseCSV(input) {
     } else {
       w = ''
       while(!eof() && c !== comma && c !== '\n' && c !== '\r') {
+        if(c === quote) {
+          throw new Error("Unexpected double-quote (line: " + lines + ", char: " + (p - lineStart + 1) + ")")
+        }
         w += c; next()
       }
     }
@@ -254,10 +206,12 @@ function parseCSV(input) {
       next()
     } else if(c === '\n') {
       next(); endRow()
+      if(eof()) { break }
     } else if(c === '\r') {
       next()
       if(c === '\n') { next() }
       endRow()
+      if(eof()) { break }
     } else if(eof()) {
       endRow(); break
     } else {
@@ -289,20 +243,12 @@ export function generateSpeciesCSV(species) {
   return csv
 }
 
-export function deepClone(a) {
-  if(typeof a != "object" || a === null) {
-    return a
-  } else if(Array.isArray(a)) {
-    return a.map(x => deepClone(x))
-  } else {
-    return Object.fromEntries(Object.entries(a).map(e => [e[0], deepClone(e[1])]))
-  }
-}
-
 export function deepEquals(a, b) {
   if(Object.is(a, b)) {
     return true
-  } else if(Array.isArray(a) && Array.isArray(b)) {
+  } else if(Array.isArray(a) != Array.isArray(b)) {
+    return false
+  } else if(Array.isArray(a)) {
     return a.length === b.length && a.every((ai, i) => deepEquals(ai, b[i]))
   } else if(typeof a === "object" && typeof b === "object") {
     let ak = Object.keys(a), bk = Object.keys(b)
@@ -342,6 +288,7 @@ export function handleLinkClick(evt, url, router) {
 // Unlike debounce(), fn is called immediately at first
 export function throttle(fn, delay) {
   let state = 0
+  let pendingArguments
   function throttleWrapper() {
     if(state == 0) {
       fn.apply(this, [...arguments])
@@ -350,11 +297,12 @@ export function throttle(fn, delay) {
         let oldState = state
         state = 0
         if(oldState == 2) {
-          throttleWrapper.apply(this, [...arguments])
+          throttleWrapper.apply(this, pendingArguments)
         }
       }, delay)
     } else {
       state = 2
+      pendingArguments = [...arguments]
     }
   }
   return throttleWrapper

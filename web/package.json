@@ -12,7 +12,8 @@
     "dev-tsx": "vite tsx",
     "build-tsx": "vite build tsx",
     "serve-tsx": "vite preview tsx",
-    "postinstall": "if grep -q '^\\s*img.data = imgData' node_modules/heatmap.js/build/heatmap.js; then echo 'WARNING: Buggy version of heatmap.js found'; fi"
+    "postinstall": "if grep -q '^\\s*img.data = imgData' node_modules/heatmap.js/build/heatmap.js; then echo 'WARNING: Buggy version of heatmap.js found'; fi",
+    "test": "vitest"
   },
   "dependencies": {
     "@vueform/multiselect": "^2.4.2",
@@ -32,6 +33,7 @@
     "eslint": "^9.35.0",
     "eslint-plugin-vue": "^10.4.0",
     "sass": "^1.38.1",
-    "vite": "^5.2.12"
+    "vite": "^5.2.12",
+    "vitest": "^4.0.15"
   }
 }
