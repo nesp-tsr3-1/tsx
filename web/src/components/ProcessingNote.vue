@@ -92,7 +92,7 @@ export default {
       required: true
     }
   },
-  emits: [ "deleted", "updated" ],
+  emits: ['deleted', 'updated'],
   data() {
     return {
       state: 'init',
@@ -119,7 +119,7 @@ export default {
       this.state = 'deleting'
       api.deleteDataSourceNote(this.note.source_id, this.note.id).then(() => {
         this.$emit('deleted')
-      }).catch(error => {
+      }).catch((error) => {
         console.log(error)
         this.state = 'init'
         this.error = 'Delete failed'
@@ -130,7 +130,7 @@ export default {
       api.updateDataSourceNote(this.note.source_id, this.note.id, this.newNotes).then(() => {
         this.$emit('updated')
         this.state = 'init'
-      }).catch(error => {
+      }).catch((error) => {
         console.log(error)
         this.state = 'init'
         this.error = 'Updating notes failed'
@@ -138,7 +138,7 @@ export default {
     },
     formatDateTime(str) {
       let date = new Date(Date.parse(str))
-      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
+      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   }
 }

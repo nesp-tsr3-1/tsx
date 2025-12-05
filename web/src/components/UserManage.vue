@@ -65,7 +65,7 @@ export default {
   components: {
     'user-row': UserRow
   },
-  data () {
+  data() {
     return {
       status: 'loading',
       allUsers: [],
@@ -92,7 +92,7 @@ export default {
       this.debouncedSearchText = searchText
     }, 500)
   },
-  created () {
+  created() {
     api.users().then((users) => {
       users.forEach((user) => {
         user.serverRole = user.role

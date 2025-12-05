@@ -134,7 +134,6 @@
 import * as api from '../api.js'
 import SourceList from './SourceList.vue'
 import ProgramManagers from './ProgramManagers.vue'
-import { plotTrend } from '../plotTrend'
 
 export default {
   name: 'ProgramView',
@@ -142,13 +141,13 @@ export default {
     'source-list': SourceList,
     'program-managers': ProgramManagers
   },
-  data () {
+  data() {
     return {
       programId: +this.$route.params.id,
       program: null,
       enableDelete: false,
       sourceToRemove: null,
-      managerStatus: "loading",
+      managerStatus: 'loading',
       managers: []
     }
   },
@@ -160,13 +159,13 @@ export default {
       return this.program && this.program.can_manage_managers
     }
   },
-  created () {
-    api.isLoggedIn().then(isLoggedIn => {
+  created() {
+    api.isLoggedIn().then((isLoggedIn) => {
       if(!isLoggedIn) {
         this.$router.replace({ path: '/login', query: { after_login: this.$route.path } })
       }
     })
-    api.monitoringProgram(this.programId).then(program => {
+    api.monitoringProgram(this.programId).then((program) => {
       this.program = program
     })
   },
@@ -174,7 +173,7 @@ export default {
     deleteProgram() {
       api.deleteMonitoringProgram(this.programId).then(() => {
         this.$router.replace({ path: '/manage_programs' })
-      }).catch(error => {
+      }).catch((error) => {
         console.log(error)
         alert('Delete failed.')
       })

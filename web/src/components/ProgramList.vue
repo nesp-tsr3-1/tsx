@@ -72,7 +72,7 @@ function normalize(x) {
 }
 
 function compare(a, b) {
-  if(typeof a === "string") {
+  if(typeof a === 'string') {
     return a.localeCompare(b)
   } else {
     return (a > b) ? 1 : (a < b) ? -1 : 0
@@ -84,7 +84,7 @@ export default {
   props: {
     completed: Boolean
   },
-  data () {
+  data() {
     return {
       programs: [],
       status: 'loading',

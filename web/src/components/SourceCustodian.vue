@@ -74,7 +74,7 @@ export default {
       this.state = 'deleting'
       api.deleteDataSourceCustodian(this.sourceId, this.user.id).then(() => {
         this.$emit('deleted')
-      }).catch(error => {
+      }).catch((error) => {
         console.log(error)
         this.state = 'init'
         this.error = 'Delete failed'

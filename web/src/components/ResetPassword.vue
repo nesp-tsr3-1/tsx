@@ -132,7 +132,7 @@ import * as api from '../api.js'
 
 export default {
   name: 'ResetPassword',
-  data () {
+  data() {
     return {
       submitting: false,
       resetSucceeded: false,
@@ -150,7 +150,7 @@ export default {
     }
   },
   watch: {
-    '$route': function(val) {
+    $route: function(val) {
       this.code = val.query.code
       this.errors = {}
     }
@@ -162,10 +162,10 @@ export default {
       }
 
       this.submitting = true
-      api.requestPasswordReset(this.email).then(response => {
+      api.requestPasswordReset(this.email).then((response) => {
         this.resetEmailSent = true
         // this.$router.replace(this.$route.query.after_login || '/')
-      }).catch(error => {
+      }).catch((error) => {
         if(error.xhr.status === 400) {
           this.errors = JSON.parse(error.xhr.response)
         }
@@ -184,13 +184,13 @@ export default {
       }
 
       this.submitting = true
-      api.resetPassword(this.code, this.password).then(response => {
+      api.resetPassword(this.code, this.password).then((response) => {
         this.resetSucceeded = true
-      }).catch(error => {
+      }).catch((error) => {
         if(error.xhr.status === 400) {
           this.errors = JSON.parse(error.xhr.response)
         } else {
-          this.errors = { 'server_error': true }
+          this.errors = { server_error: true }
         }
       }).finally(() => {
         this.submitting = false

@@ -79,7 +79,7 @@ import { globalEventBus } from '../eventBus.js'
 
 export default {
   name: 'UserLogin',
-  data () {
+  data() {
     return {
       submitting: false,
       email: '',
@@ -88,18 +88,18 @@ export default {
     }
   },
   computed: {
-    after_signup () {
+    after_signup() {
       return this.$route.query.after_signup
     }
   },
   methods: {
     login: function() {
       this.submitting = true
-      api.login(this.email, this.password).then(response => {
+      api.login(this.email, this.password).then((response) => {
         api.refreshCurrentUser()
         globalEventBus.dispatchEvent('login', {})
         this.$router.replace(this.$route.query.after_login || '/source')
-      }).catch(error => {
+      }).catch((error) => {
         if(error.xhr.status === 400) {
           this.errors = JSON.parse(error.xhr.response)
         }

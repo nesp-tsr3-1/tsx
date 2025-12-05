@@ -27,11 +27,10 @@
 </template>
 
 <script>
-import * as api from '../api.js'
-import SelectField from "./SelectField.vue"
-import SearchableSelectField from "./SearchableSelectField.vue"
-import RadioField from "./RadioField.vue"
-import ButtonRadioField from "./ButtonRadioField.vue"
+import SelectField from './SelectField.vue'
+import SearchableSelectField from './SearchableSelectField.vue'
+import RadioField from './RadioField.vue'
+import ButtonRadioField from './ButtonRadioField.vue'
 
 export default {
   name: 'GenericField',
@@ -52,7 +51,7 @@ export default {
     }
   },
   emits: ['update:value'],
-  data () {
+  data() {
     return {
 
     }
@@ -62,15 +61,15 @@ export default {
       return this.field && this.field.type
     },
     fieldComponent() {
-      fieldType = this.field && this.field.type
-      if(fieldType === "select") {
+      let fieldType = this.field && this.field.type
+      if(fieldType === 'select') {
         return SelectField
       } else {
         return null
       }
     },
     classes() {
-      return "field-named-" + this.field.name
+      return 'field-named-' + this.field.name
     },
     fieldValue: {
       get() {

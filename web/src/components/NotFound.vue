@@ -22,7 +22,7 @@
 
 export default {
   name: 'NotFound',
-  data () {
+  data() {
     return {
     }
   },

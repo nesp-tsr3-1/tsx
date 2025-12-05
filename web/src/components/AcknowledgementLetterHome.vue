@@ -144,7 +144,7 @@ import { searchStringToRegex, matchParts, debounce } from '../util.js'
 
 export default {
   name: 'AcknowledgementLetterHome',
-  data () {
+  data() {
     return {
       status: 'loading',
       letters: [],
@@ -163,12 +163,11 @@ export default {
       let search = this.debouncedSearchText
 
       if(search) {
-
         let searchRegex = searchStringToRegex(search)
 
         function filterLetter(letter) {
-          return letter.files.some(x => x.filename.match(searchRegex)) ||
-            letter.custodians?.some(x => x.match(searchRegex))
+          return letter.files.some(x => x.filename.match(searchRegex))
+            || letter.custodians?.some(x => x.match(searchRegex))
         }
 
         let matchingLetters = this.letters.filter(filterLetter)
@@ -186,7 +185,7 @@ export default {
           ...letter,
           files: letter.files.map(file => ({
             ...file,
-            filenameParts: [[file.filename, ""]]
+            filenameParts: [[file.filename, '']]
           })),
           custodianParts: []
         }))
@@ -196,7 +195,7 @@ export default {
       let key = this.sort.key
 
       function compare(a, b) {
-        if(typeof a == "number" && typeof b == "number") {
+        if(typeof a == 'number' && typeof b == 'number') {
           return a - b
         } else {
           return (a ?? '').localeCompare(b ?? '')
@@ -218,13 +217,13 @@ export default {
       this.debouncedSearchText = searchText
     }, 500)
   },
-  created () {
-    api.isLoggedIn().then(isLoggedIn => {
+  created() {
+    api.isLoggedIn().then((isLoggedIn) => {
       if(!isLoggedIn) {
         this.$router.replace({ path: '/login', query: { after_login: this.$route.path } })
       }
     })
-    api.currentUser().then(currentUser => {
+    api.currentUser().then((currentUser) => {
       this.currentUser = currentUser
     })
     this.refresh()
@@ -238,7 +237,7 @@ export default {
         api.documentStats()
       ]).then(([letters, stats]) => {
         this.letters = letters
-        this.letters.forEach(letter => {
+        this.letters.forEach((letter) => {
           if(letter.files.length > 0) {
             letter.filenames = letter.files.map(f => f.filename).join(', ')
           } else {
@@ -247,8 +246,8 @@ export default {
         })
         this.stats = stats
         this.status = 'loaded'
-      }).catch(error => {
-        console.log("Failed to load acknowledgement letters")
+      }).catch((error) => {
+        console.log('Failed to load acknowledgement letters')
         console.log(error)
         this.status = 'error'
       })

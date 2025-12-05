@@ -221,7 +221,6 @@
                 <hr>
               </div>
 
-
               <fieldset :disabled="consentLacking">
                 <!---- Admin Type ---->
                 <div
@@ -624,7 +623,6 @@
                     </table>
                   </div>
 
-
                   <div class="field numbered">
                     <label
                       v-if="notAdmin"
@@ -981,7 +979,6 @@
                       </button>
                     </div>
                   </div>
-
 
                   <div
                     v-if="canResetTrend"
@@ -2171,7 +2168,7 @@
 
 <script>
 import * as api from '../api.js'
-import { handleLinkClick, formatDateTime, throttle, deepEquals, setupPageNavigationHighlighting } from '../util.js'
+import { formatDateTime, setupPageNavigationHighlighting } from '../util.js'
 import { generateCitation } from '../util.js'
 import { plotConsistency } from '../plotConsistency.js'
 import { plotTrend, generateTrendPlotData } from '../plotTrend.js'
@@ -2187,9 +2184,9 @@ export default {
     Spinner
   },
   props: {
-    viewOnly: Boolean,
+    viewOnly: Boolean
   },
-  data () {
+  data() {
     return {
       currentUser: null,
       status: 'loading',
@@ -2260,10 +2257,10 @@ export default {
     },
     disableMonitoringProgramFields() {
       let x = this.formData.monitoring_program_information_provided
-      return !(x == "provided" || x == "provided_copy")
+      return !(x == 'provided' || x == 'provided_copy')
     },
     showPreviousAnswersMenu() {
-      return this.formData.monitoring_program_information_provided == "provided_copy"
+      return this.formData.monitoring_program_information_provided == 'provided_copy'
     },
     disableCopyAnswersButton() {
       return this.selectedPreviousAnswer == null || this.copyAnswerStatus != 'idle'
@@ -2285,7 +2282,7 @@ export default {
       if(stats) {
         let min = stats.min_year
         let max = stats.max_year
-        return Array.from({length: max - min + 1}, (x, i) => i + min);
+        return Array.from({ length: max - min + 1 }, (x, i) => i + min)
       } else {
         return []
       }
@@ -2303,7 +2300,7 @@ export default {
       if(isVisible && data) {
         this.$nextTick(() => {
           plotConsistency(data, this.$refs.consistencyPlot)
-        });
+        })
       }
     },
     formData: {
@@ -2321,27 +2318,26 @@ export default {
     }
   },
   created() {
-    api.custodianFeedbackFormDefinition().then(formDefinition => {
+    api.custodianFeedbackFormDefinition().then((formDefinition) => {
       this.formDefinition = formDefinition
       this.options = formDefinition.options
       this.refresh()
     })
-    api.isLoggedIn().then(isLoggedIn => {
+    api.isLoggedIn().then((isLoggedIn) => {
       if(!isLoggedIn) {
         this.$router.replace({ path: '/login', query: { after_login: this.$route.path } })
       }
     })
 
-    api.currentUser().then(currentUser => {
+    api.currentUser().then((currentUser) => {
       this.currentUser = currentUser
-    }).catch(error => {
+    }).catch((error) => {
       this.error = error
     })
   },
   mounted() {
     this.disposables = []
     this.setupSideMenu()
-
   },
   unmounted() {
     for(let f of this.disposables) {
@@ -2354,7 +2350,7 @@ export default {
         this.form = form
 
         let initialFormData = {
-          ... form.answers,
+          ...form.answers,
           admin_type: form.answers.admin_type || 'informal'
         }
 
@@ -2374,14 +2370,14 @@ export default {
         console.log(error.json)
         this.status = 'error'
       })
-      api.custodianFeedbackPreviousAnswers(this.formId).then((answers) => this.previousAnswers = answers)
+      api.custodianFeedbackPreviousAnswers(this.formId).then(answers => this.previousAnswers = answers)
     },
     formatDateTime,
     formatDecimal(x) {
       return x.toLocaleString(undefined, { maximumFractionDigits: 2 })
     },
     save(close, submit) {
-      let json = { ... this.formData }
+      let json = { ...this.formData }
       if(submit) {
         json.action = 'submit'
       }
@@ -2393,7 +2389,7 @@ export default {
           if(error.json) {
             this.fieldErrors = error.json
             setTimeout(() => {
-              document.querySelector(".field .help.is-danger")?.closest(".field")?.scrollIntoView()
+              document.querySelector('.field .help.is-danger')?.closest('.field')?.scrollIntoView()
             })
           }
           this.saveStatus = 'error'
@@ -2411,19 +2407,18 @@ export default {
       this.save(true, true)
     },
     close() {
-      this.$router.push({ name: 'CustodianFeedbackDataset', params: { id: this.form.dataset_id }})
+      this.$router.push({ name: 'CustodianFeedbackDataset', params: { id: this.form.dataset_id } })
     },
     setupSideMenu() {
       let highlighter = setupPageNavigationHighlighting(this.$refs.sideMenu)
       this.disposables.push(() => highlighter.dispose())
     },
     showField(fieldName) {
-      if(fieldName.endsWith("_comments")) {
+      if(fieldName.endsWith('_comments')) {
         let parentFieldName = fieldName.replace(/_comments$/, '')
         let parentFieldValue = this.formData[parentFieldName] ?? ''
         return this.isAdmin || ['no', 'unsure'].includes(parentFieldValue.toLowerCase())
       }
-
 
       if(this.isAdmin && this.formData.admin_type == 'informal') {
         let informalFields = [
@@ -2436,7 +2431,7 @@ export default {
           'custodian_comments',
           'internal_comments'
         ]
-        return informalFields.includes(fieldName);
+        return informalFields.includes(fieldName)
       }
 
       return true
@@ -2449,9 +2444,9 @@ export default {
           'additional_comments_admin'
         ]
         return informalSections.includes(sectionName)
-      } else if(sectionName.endsWith("_admin")) {
+      } else if(sectionName.endsWith('_admin')) {
         return this.isAdmin
-      } else if(sectionName.endsWith("_custodian")) {
+      } else if(sectionName.endsWith('_custodian')) {
         return !this.isAdmin
       } else {
         return true
@@ -2483,7 +2478,7 @@ export default {
         taxon_id: this.form.taxon.id
       }
       return api.dataSubsetSites(params)
-        .then(sites => sites.map(site => ({ name: site.name, id: site.id + "," + site.name })))
+        .then(sites => sites.map(site => ({ name: site.name, id: site.id + ',' + site.name })))
     },
     deselectSite(site) {
       this.trendParams.sites = this.trendParams.sites.filter(x => x != site)
@@ -2497,20 +2492,20 @@ export default {
         final_year: this.trendParams.finalYear
       }
       if(this.trendParams.sites.length) {
-        params.site_id = this.trendParams.sites.map(x => x.split(',')[0]).join(",")
+        params.site_id = this.trendParams.sites.map(x => x.split(',')[0]).join(',')
       }
-      api.dataSubsetGenerateTrend(params).then(trend => {
+      api.dataSubsetGenerateTrend(params).then((trend) => {
         this.trendStatus = 'processing'
         setTimeout(() => this.checkTrend(trend.id), 3000)
-      }).catch(e => {
+      }).catch((e) => {
         console.log(e)
         this.trendStatus = 'error'
       })
     },
     checkTrend(id) {
-      api.dataSubsetTrendStatus(id).then(status => {
+      api.dataSubsetTrendStatus(id).then((status) => {
         if(status.status == 'ready') {
-          api.dataSubsetTrend(id).then(data => {
+          api.dataSubsetTrend(id).then((data) => {
             let plotData = generateTrendPlotData(data)
             let isEmpty = plotData.labels.length < 2
             if(isEmpty) {
@@ -2523,7 +2518,7 @@ export default {
         } else if(status.status == 'processing') {
           setTimeout(() => this.checkTrend(id), 2000)
         }
-      }).catch(e => {
+      }).catch((e) => {
         console.log(e)
         this.trendStatus = 'error'
         this.canResetTrend = true

@@ -21,11 +21,11 @@ export function approveImport(id) {
 }
 
 export function showImport(id) {
-  return post("/imports/" + id + "/show")
+  return post('/imports/' + id + '/show')
 }
 
 export function hideImport(id) {
-  return post("/imports/" + id + "/hide")
+  return post('/imports/' + id + '/hide')
 }
 
 export function dataSources(criteria) {
@@ -177,7 +177,7 @@ export function createUser(user) {
 }
 
 export function updateUser(userId, userData) {
-  return put('/users/' + userId, userData);
+  return put('/users/' + userId, userData)
 }
 
 export function dataSourceProcessedData(id) {
@@ -303,10 +303,6 @@ export function deleteImport(id) {
   return del('/imports/' + id)
 }
 
-export function intensiveManagementGroup(id) {
-  return get('/intensive_management_group')
-}
-
 export function taxonomicGroups() {
   return get('/taxonomic_group')
 }
@@ -370,7 +366,6 @@ export function updateDataAgreement(id, data) {
 export function deleteDataAgreement(id) {
   return del('/documents/data_agreements/' + id)
 }
-
 
 export function acknowledgementLetters(params) {
   return get('/documents/acknowledgement_letters', params)
@@ -442,7 +437,9 @@ function putOrPost(method, url, data, contentType, progressCallback) {
 
   return xhrPromise(xhr, data).then(function(xhr) {
     var response = xhr.responseText
-    try { response = JSON.parse(response) } catch(e) {}
+    try {
+      response = JSON.parse(response)
+    } catch(e) {}
     return response
   })
 }
@@ -460,7 +457,9 @@ function del(url) {
 
   return xhrPromise(xhr).then(function(xhr) {
     var response = xhr.responseText
-    try { response = JSON.parse(response) } catch(e) {}
+    try {
+      response = JSON.parse(response)
+    } catch(e) {}
     return response
   })
 }
@@ -495,14 +494,18 @@ function get(url, params) {
 
   return xhrPromise(xhr).then(function(xhr) {
     var response = xhr.responseText
-    try { response = JSON.parse(response) } catch(e) {}
+    try {
+      response = JSON.parse(response)
+    } catch(e) {}
     return response
   })
 }
 
 function xhrPromise(xhr, dataToSend) {
   return new Promise(function(resolve, reject) {
-    xhr.addEventListener('error', function() { reject(XHRError(xhr)) })
+    xhr.addEventListener('error', function() {
+      reject(XHRError(xhr))
+    })
     xhr.addEventListener('load', function(evt) {
       // Check for error
       if(xhr.status >= 200 && xhr.status < 300) {

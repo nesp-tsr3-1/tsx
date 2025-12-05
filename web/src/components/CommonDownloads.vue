@@ -374,7 +374,6 @@
     </button>
   </div>
 
-
   <div class="block">
     <button
       type="button"
@@ -578,7 +577,7 @@ export default {
     enableMap: Boolean,
     enableTaxonStatusFilter: Boolean
   },
-  data () {
+  data() {
     return {
       status: 'loading',
       trendStatus: 'idle',
@@ -601,13 +600,13 @@ export default {
           { name: 'Vulnerable', id: 'VU' },
           { name: 'Endangered', id: 'EN' },
           { name: 'Critically Endangered', id: 'CR' },
-          { name: 'Extinct', id: 'EX' },
+          { name: 'Extinct', id: 'EX' }
         ],
         statusAuthority: [
-          { name: 'Max', id: 'max'},
-          { name: 'EPBC', id: 'epbc'},
-          { name: 'Australian IUCN status', id: 'iucn'},
-          { name: '2020 Bird Action Plan', id: 'bird_action_plan'},
+          { name: 'Max', id: 'max' },
+          { name: 'EPBC', id: 'epbc' },
+          { name: 'Australian IUCN status', id: 'iucn' },
+          { name: '2020 Bird Action Plan', id: 'bird_action_plan' }
         ],
         monitoringPrograms: [],
         taxonomicGroup: [],
@@ -645,9 +644,9 @@ export default {
       return (!this.enableProgramFilter || this.criteria.monitoringPrograms.length > 0) && this.stats && this.stats.sighting_count > 0
     },
     enableGenerateTrend: function() {
-      return this.enableDownload &&
-        this.trendParamsError === undefined &&
-        this.trendStatus !== 'processing'
+      return this.enableDownload
+        && this.trendParamsError === undefined
+        && this.trendStatus !== 'processing'
     },
     enableTrendParams: function() {
       return this.trendStatus !== 'processing'
@@ -656,15 +655,15 @@ export default {
       let stats = this.stats
       if(stats) {
         let statsPhrases = [
-          this.formatQuantity(stats.sighting_count, "individual survey count"),
-          this.formatQuantity(stats.taxon_count, "taxon", "taxa"),
-          this.sourceId ? [] : this.formatQuantity(stats.source_count, "dataset"),
-          this.formatQuantity(stats.time_series_count, "time series", "time series")
+          this.formatQuantity(stats.sighting_count, 'individual survey count'),
+          this.formatQuantity(stats.taxon_count, 'taxon', 'taxa'),
+          this.sourceId ? [] : this.formatQuantity(stats.source_count, 'dataset'),
+          this.formatQuantity(stats.time_series_count, 'time series', 'time series')
         ].flat()
 
-        return "Selected data subset contains " +
-          statsPhrases.slice(0, -1).join(", ") + " and " + statsPhrases.slice(-1)[0] +
-          "."
+        return 'Selected data subset contains '
+          + statsPhrases.slice(0, -1).join(', ') + ' and ' + statsPhrases.slice(-1)[0]
+          + '.'
       } else {
         return undefined
       }
@@ -672,11 +671,11 @@ export default {
     excludedStatsDescription: function() {
       let stats = this.stats
       if(stats?.excluded_time_series_count > 0) {
-        return " This includes " +
-          this.formatQuantity(stats.excluded_time_series_count, "one-off survey") +
-          " or absent-only time series for " +
-          this.formatQuantity(stats.excluded_time_series_taxon_count, "taxon", "taxa") +
-          ", which will not be included in any trends generated."
+        return ' This includes '
+          + this.formatQuantity(stats.excluded_time_series_count, 'one-off survey')
+          + ' or absent-only time series for '
+          + this.formatQuantity(stats.excluded_time_series_taxon_count, 'taxon', 'taxa')
+          + ', which will not be included in any trends generated.'
       } else {
         return undefined
       }
@@ -696,12 +695,12 @@ export default {
     },
     trendParamsError: function() {
       if(this.stats && this.stats.min_year === this.stats.max_year) {
-        return "Insufficient data available to generate a trend"
+        return 'Insufficient data available to generate a trend'
       }
       if(this.trendReferenceYear >= this.trendFinalYear) {
-        return "Reference year must be earlier than final year"
+        return 'Reference year must be earlier than final year'
       }
-      return undefined;
+      return undefined
     },
     isAdmin: function() {
       return this.user?.is_admin
@@ -742,7 +741,7 @@ export default {
       deep: true
     }
   },
-  created () {
+  created() {
     let initialisationPromises = []
 
     api.currentUser().then((user) => {
@@ -760,10 +759,10 @@ export default {
           }
         }).then((programs) => {
           if(this.user.is_admin) {
-            programs = [{ description: "Any program", id: "any" }, { description: "No program", id: "none"}].concat(programs)
+            programs = [{ description: 'Any program', id: 'any' }, { description: 'No program', id: 'none' }].concat(programs)
           }
           this.options.monitoringPrograms = programs
-          this.criteria.monitoringPrograms = programs.filter(p => p.id != "none") // select all programs by default
+          this.criteria.monitoringPrograms = programs.filter(p => p.id != 'none') // select all programs by default
         })
       )
     }
@@ -782,14 +781,13 @@ export default {
           this.options.taxonomicGroup = options.map(option => option.description)))
     }
 
-    this.criteria.taxonStatus = [ ...this.options.taxonStatus ]
+    this.criteria.taxonStatus = [...this.options.taxonStatus]
 
     initialisationPromises.push(speciesPromise.then((species) => {
-      species.forEach(sp => {
+      species.forEach((sp) => {
         this.speciesLookup[sp.id] = { ...sp, label: speciesLabel(sp) }
       })
     }))
-
 
     Promise.all(initialisationPromises).catch((error) => {
       console.log(error)
@@ -813,10 +811,10 @@ export default {
       this.criteria.sites = this.criteria.sites.filter(x => x != site)
     },
     importSpeciesList: function() {
-      readTextFile("text/plain, text/csv", (text) => {
+      readTextFile('text/plain, text/csv', (text) => {
         var ids = extractSpeciesIDsFromCSV(text)
-        api.speciesForIDs(ids).then(species => {
-          species.forEach(sp => {
+        api.speciesForIDs(ids).then((species) => {
+          species.forEach((sp) => {
             this.speciesLookup[sp.id] = { ...sp, label: speciesLabel(sp) }
           })
           this.criteria.species = ids
@@ -847,11 +845,11 @@ export default {
       let v = this.changeCounter // used to detect if parameters are changed during trend generation
       this.trendDiagnosticsText = null
       this.trendStatus = 'processing'
-      api.dataSubsetGenerateTrend(params).then(x => {
+      api.dataSubsetGenerateTrend(params).then((x) => {
         this.trendId = x.id
         this.trendStatus = 'processing'
         setTimeout(() => this.checkTrendStatus(x.id, v), 3000)
-      }).catch(e => {
+      }).catch((e) => {
         console.log(e)
         this.trendStatus = 'error'
       })
@@ -860,7 +858,7 @@ export default {
       if(v != this.changeCounter) {
         return
       }
-      api.dataSubsetTrendStatus(id).then(x => {
+      api.dataSubsetTrendStatus(id).then((x) => {
         if(x.status == 'ready') {
           this.trendDownloadURL = api.dataSubsetTrendDownloadURL(id)
           this.plotTrend(id, v)
@@ -868,7 +866,7 @@ export default {
         } else if(x.status == 'processing') {
           setTimeout(() => this.checkTrendStatus(id, v), 3000)
         }
-      }).catch(e => {
+      }).catch((e) => {
         console.log(e)
         this.trendStatus = 'error'
       })
@@ -879,15 +877,15 @@ export default {
     downloadTrendImage() {
       let params = this.buildDownloadParams()
 
-      api.dataSubsetFilenameComponent(params).then(filenameComponent => {
-        let a = document.createElement("a")
+      api.dataSubsetFilenameComponent(params).then((filenameComponent) => {
+        let a = document.createElement('a')
         a.download = 'tsx-trend&' + filenameComponent + '.png'
-        a.href = this.$refs.plot.toDataURL("image/png")
+        a.href = this.$refs.plot.toDataURL('image/png')
         a.click()
       })
     },
     plotTrend(id, v) {
-      api.dataSubsetTrend(id).then(data => {
+      api.dataSubsetTrend(id).then((data) => {
         if(v != this.changeCounter) {
           return
         }
@@ -904,13 +902,13 @@ export default {
             plotTrend(data, this.$refs.plot)
           })
         }
-      }).catch(e => {
+      }).catch((e) => {
         console.log(e)
         this.trendStatus = 'error'
       })
     },
     updateTrendDiagnostics(id, v) {
-      api.dataSubsetTrendDiagnostics(id).then(data => {
+      api.dataSubsetTrendDiagnostics(id).then((data) => {
         if(v != this.changeCounter) {
           return
         }
@@ -922,7 +920,7 @@ export default {
       let params = this.buildDownloadParams()
       this.consistencyPlotStatus = 'processing'
       let v = this.changeCounter
-      api.dataSubsetConsistencyPlot(params).then(data => {
+      api.dataSubsetConsistencyPlot(params).then((data) => {
         if(v != this.changeCounter) {
           return
         }
@@ -931,7 +929,7 @@ export default {
         setTimeout(() => {
           plotConsistency(data, this.$refs.consistencyPlot)
         })
-      }).catch(e => {
+      }).catch((e) => {
         if(v != this.changeCounter) {
           return
         }
@@ -964,11 +962,11 @@ export default {
       }
 
       if(this.criteria.species && this.criteria.species.length > 0) {
-        params.taxon_id = this.criteria.species.join(",")
+        params.taxon_id = this.criteria.species.join(',')
       }
 
       if(this.criteria.sites && this.criteria.sites.length > 0) {
-        params.site_id = this.criteria.sites.map(x => x.split(',')[0]).join(",")
+        params.site_id = this.criteria.sites.map(x => x.split(',')[0]).join(',')
       }
 
       if(this.enableTaxonomicGroupFilter && this.criteria.taxonomicGroup) {
@@ -977,7 +975,7 @@ export default {
 
       if(this.enableTaxonStatusFilter && this.criteria.statusAuthority) {
         params.status_auth = this.criteria.statusAuthority.id
-        params.taxon_status = this.criteria.taxonStatus.map(x => x.id).join(",")
+        params.taxon_status = this.criteria.taxonStatus.map(x => x.id).join(',')
       }
 
       if(this.enableTaxonStatusFilter && this.criteria.eligibleForTSXOnly) {
@@ -987,13 +985,13 @@ export default {
       return params
     },
     formatQuantity: function(x, singular, plural) {
-      plural = plural || singular + "s"
+      plural = plural || singular + 's'
       if(x == 0) {
-        return "no " + plural
+        return 'no ' + plural
       } else if(x == 1) {
-        return x + " " + singular
+        return x + ' ' + singular
       } else {
-        return x.toLocaleString() + " " + plural
+        return x.toLocaleString() + ' ' + plural
       }
     },
     isProgramDisabled: function(program) {
@@ -1006,14 +1004,14 @@ export default {
     querySites: function(query) {
       let params = this.buildDownloadParams()
       delete params.site_id
-      params.site_name_query = query || ""
+      params.site_name_query = query || ''
       return api.dataSubsetSites(params)
-        .then(sites => sites.map(site => ({ name: site.name, id: site.id + "," + site.name })))
+        .then(sites => sites.map(site => ({ name: site.name, id: site.id + ',' + site.name })))
     },
     querySpecies: function(query) {
       let params = this.buildDownloadParams()
       delete params.taxon_id
-      params.species_name_query = query || ""
+      params.species_name_query = query || ''
       return api.dataSubsetSpecies(params)
         .then(species => species.map(sp => ({ ...sp, label: speciesLabel(sp) })))
     },
@@ -1021,7 +1019,7 @@ export default {
       this.stats = null
       var params = this.buildDownloadParams()
       let v = this.changeCounter
-      api.dataSubsetStats(params).then(stats => {
+      api.dataSubsetStats(params).then((stats) => {
         if(v === this.changeCounter) {
           this.stats = stats
           this.trendReferenceYear = this.stats.min_year
@@ -1030,7 +1028,7 @@ export default {
       })
       if(this.enableMap) {
         this.heatmapLoading = true
-        api.dataSubsetIntensityMap(params).then(data => {
+        api.dataSubsetIntensityMap(params).then((data) => {
           if(v === this.changeCounter) {
             this.heatmapData = markRaw(data)
           }
@@ -1045,7 +1043,7 @@ export default {
 }
 
 function speciesLabel(sp) {
-  return sp.scientific_name + " (" + (sp.common_name ? (sp.common_name + ", ") : "") + sp.id + ")"
+  return sp.scientific_name + ' (' + (sp.common_name ? (sp.common_name + ', ') : '') + sp.id + ')'
 }
 </script>
 

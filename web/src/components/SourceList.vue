@@ -163,10 +163,6 @@
 import * as api from '../api.js'
 import { humanizeStatus, formatDateTime, debounce, searchStringToRegex, matchParts } from '../util.js'
 
-function normalize(x) {
-  return x.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
-}
-
 export default {
   name: 'SourceList',
   props: {
@@ -191,8 +187,8 @@ export default {
       default: true
     }
   },
-  emits: ["clickSource", "action"],
-  data () {
+  emits: ['clickSource', 'action'],
+  data() {
     return {
       sources: [],
       status: 'loading',
@@ -229,7 +225,7 @@ export default {
         }
       } else {
         for(let source of matchingSources) {
-          source.descriptionParts = [[source.description, ""]]
+          source.descriptionParts = [[source.description, '']]
           source.custodianParts = []
         }
       }
@@ -237,7 +233,7 @@ export default {
       let agreementStatus = this.dataAgreementStatusFilter
       if(agreementStatus) {
         matchingSources = matchingSources.filter(s =>
-          s.data_agreement_status == agreementStatus);
+          s.data_agreement_status == agreementStatus)
       }
 
       return matchingSources
@@ -258,7 +254,7 @@ export default {
   },
   created() {
     this.refresh()
-    api.currentUser().then(user => {
+    api.currentUser().then((user) => {
       if(user.roles.includes('Administrator')) {
         this.showModified = true
       }

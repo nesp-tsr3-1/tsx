@@ -149,8 +149,8 @@ export default {
       required: true
     }
   },
-  emits: ["data-import-updated"],
-  data () {
+  emits: ['data-import-updated'],
+  data() {
     return {
       uploading: false,
       uploadProgress: 0,
@@ -191,13 +191,13 @@ export default {
     }
   },
   created: function() {
-    api.isLoggedIn().then(isLoggedIn => {
+    api.isLoggedIn().then((isLoggedIn) => {
       if(!isLoggedIn) {
         this.$router.replace({ path: '/login', query: { after_login: this.$route.path } })
       }
     })
 
-    api.dataSourceImports(this.sourceId).then(imports => {
+    api.dataSourceImports(this.sourceId).then((imports) => {
       if(imports.length > 0) {
         var lastImport = imports[imports.length - 1]
         if(lastImport.status !== 'imported' && lastImport.status !== 'approved') {
@@ -334,7 +334,6 @@ function poll(promiseFn, delay, callback) {
 .error { color: $red; }
 .info { color: $blue; }
 .warning { color: orange; }
-
 
 .log code {
   background: #eee;

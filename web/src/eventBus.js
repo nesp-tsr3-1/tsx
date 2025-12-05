@@ -1,4 +1,3 @@
-
 export class EventBus {
   constructor() {
     this.nextId = 0

@@ -267,7 +267,7 @@ export default {
       required: true
     }
   },
-  data () {
+  data() {
     return {
       status: 'loading',
       fullItems: [],
@@ -348,7 +348,7 @@ export default {
       this.$refs.container.scrollIntoView(true)
     },
     firstCommonName(taxon) {
-      return taxon.common_name.split(",")[0]
+      return taxon.common_name.split(',')[0]
     }
   }
 }

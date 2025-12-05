@@ -400,7 +400,7 @@ import Spinner from 'vue-simple-spinner/src/components/Spinner.vue'
 import L from 'leaflet'
 import HeatmapOverlay from 'heatmap.js/plugins/leaflet-heatmap/leaflet-heatmap.js'
 import 'leaflet-easybutton/src/easy-button.js'
-import { min, max, pluck, uniq, parseParams, encodeParams, deepEquals, saveTextFile } from '../util.js'
+import { min, max, pluck, parseParams, deepEquals, saveTextFile } from '../util.js'
 import { Tippy } from 'vue-tippy'
 import GenericField from './GenericField.vue'
 import { generateTrendPlotData, plotTrend } from '../plotTrend.js'
@@ -415,7 +415,7 @@ export default {
     Tippy,
     GenericField
   },
-  data () {
+  data() {
     var data = {
       fields: [], // Field definitions from server
       fieldValues: null, // Curent field values, bound to inputs
@@ -454,12 +454,12 @@ export default {
     filterQueryString() {
       var params = this.latestFieldValuesFromServer()
       delete params.dataset
-      return Object.entries(params).map(x => x[0] + '=' + encodeURIComponent(x[1])).join("&")
+      return Object.entries(params).map(x => x[0] + '=' + encodeURIComponent(x[1])).join('&')
     },
     filterFilenamePart() {
       var name = decodeURIComponent(this.filterQueryString).replace(/[<>:"/\\|?*]/g, '-')
       if(dataset) {
-        name = "dataset=" + dataset + "&" + name
+        name = 'dataset=' + dataset + '&' + name
       }
       return name
     },
@@ -484,9 +484,9 @@ export default {
       history.replaceState(null, '', url)
     }
   },
-  created () {
+  created() {
   },
-  mounted () {
+  mounted() {
     Chart.defaults.font.size = 14
     this.createMonitoringConsistencyPlot()
     this.createMainIndexPlot()
@@ -498,17 +498,17 @@ export default {
       }
     )
     this.heatmapLayer = new HeatmapOverlay({
-      'fullscreenControl': true,
-      'radius': 0.45,
-      'maxOpacity': 0.8,
-      'minOpacity': 0.5,
-      'blur': 0.75,
-      'scaleRadius': true,
-      'useLocalExtrema': false,
+      fullscreenControl: true,
+      radius: 0.45,
+      maxOpacity: 0.8,
+      minOpacity: 0.5,
+      blur: 0.75,
+      scaleRadius: true,
+      useLocalExtrema: false,
       latField: 'lat',
       lngField: 'long',
       valueField: 'count',
-      gradient: {0.25: 'rgb(0,94,255)', 0.5: 'rgb(0,0,255)', 0.85: 'rgb(163,0,255)', 1.0: 'rgb(255,0,255)'}
+      gradient: { 0.25: 'rgb(0,94,255)', 0.5: 'rgb(0,0,255)', 0.85: 'rgb(163,0,255)', 1.0: 'rgb(255,0,255)' }
     })
     this.map = new L.Map('intensityplot', {
       center: new L.LatLng(-25.917574, 132.702789),
@@ -526,7 +526,9 @@ export default {
         onClick: (btn, map) => {
           btn.state('big')
           this.showFullMap = true
-          setTimeout(function() { window.dispatchEvent(new Event('resize')) })
+          setTimeout(function() {
+            window.dispatchEvent(new Event('resize'))
+          })
         }
       }, {
         icon: '<strong style="color: black">&nearr;</strong>',
@@ -534,7 +536,9 @@ export default {
         onClick: (btn, map) => {
           btn.state('small')
           this.showFullMap = false
-          setTimeout(function() { window.dispatchEvent(new Event('resize')) })
+          setTimeout(function() {
+            window.dispatchEvent(new Event('resize'))
+          })
         }
       }]
     }).addTo(this.map)
@@ -552,9 +556,9 @@ export default {
     },
     noDataMessage() {
       if(this.fieldValues && this.fieldValues.type == 'individual') {
-        return "";
+        return ''
       } else {
-        return "(No data to show)"
+        return '(No data to show)'
       }
     },
     updateFields() {
@@ -574,8 +578,8 @@ export default {
       }
 
       this.loadingData = true
-      api.visualisationParameters(params).then(result => {
-        let typeField = result.fields.find(x=>x.name=='type')
+      api.visualisationParameters(params).then((result) => {
+        let typeField = result.fields.find(x => x.name == 'type')
 
         if(!enableIndividualTrends) {
           // Hide individual trends
@@ -608,15 +612,8 @@ export default {
       delete params.dataset
       this.fieldValues = params
     },
-    updateManagementList() {
-      if(this.managementEnabled) {
-        this.managementList = managementTypes
-      } else {
-        this.managementList = []
-      }
-    },
     createMainIndexPlot() {
-      this.mainIndexPlot = plotTrend("", this.$refs.lpiplot)
+      this.mainIndexPlot = plotTrend('', this.$refs.lpiplot)
       this.mainIndexPlot.options.scales.yAxis.title.display = false
       this.mainIndexPlot.options.scales.xAxis.title.display = false
       this.mainIndexPlot.options.maintainAspectRatio = false
@@ -719,17 +716,17 @@ export default {
     },
     updateMonitoringConsistencyAndSummaryPlot(params) {
       return api.diagnosticPlots(params).then((data) => {
-          this.noData = data.dotplot.length === 0
-          this.refreshMonitoringConsistencyPlot(data.dotplot)
-          this.refreshSummaryPlot(data.summary)
-        })
+        this.noData = data.dotplot.length === 0
+        this.refreshMonitoringConsistencyPlot(data.dotplot)
+        this.refreshSummaryPlot(data.summary)
+      })
     },
     updatePlots(params) {
       this.loadingData = true
       Promise.all([
         this.updateMainIndexPlot(params),
-        this.updateMonitoringConsistencyAndSummaryPlot(params),
-      ]).finally(x => {
+        this.updateMonitoringConsistencyAndSummaryPlot(params)
+      ]).finally((x) => {
         this.loadingData = false
       })
     },
@@ -758,7 +755,7 @@ export default {
           data: surveyData
         })
 
-        let coordinates = data.map(([lng,lat,count]) => L.latLng(lat, lng))
+        let coordinates = data.map(([lng, lat, count]) => L.latLng(lat, lng))
 
         if(coordinates.length > 0) {
           let bounds = L.latLngBounds(coordinates)
@@ -789,15 +786,15 @@ export default {
       let params = {
         format: 'zip',
         download: 'tsxdata.zip',
-        data_filename: "tsx-aggregated-data-" + this.filterFilenamePart + ".csv",
+        data_filename: 'tsx-aggregated-data-' + this.filterFilenamePart + '.csv',
         ...this.dataParams
       }
       var url = api.timeSeriesURL(params)
       window.open(url)
     },
     downloadTrend: function(evt) {
-      api.trend({ format: 'csv', ...this.dataParams}).then((data) => {
-        saveTextFile(data, 'text/csv', "tsx-trend-" + this.filterFilenamePart + ".csv")
+      api.trend({ format: 'csv', ...this.dataParams }).then((data) => {
+        saveTextFile(data, 'text/csv', 'tsx-trend-' + this.filterFilenamePart + '.csv')
       })
 
       if(evt.shiftKey) {
@@ -806,7 +803,7 @@ export default {
     },
     downloadPlotData: function() {
       function quote(v) {
-        if(typeof v === "string" && v.match(/["\n\r]/)) {
+        if(typeof v === 'string' && v.match(/["\n\r]/)) {
           return JSON.stringify(v)
         } else {
           return v
@@ -818,9 +815,9 @@ export default {
       }
 
       function download(text, filename) {
-        var dl = document.createElement("a")
-        dl.href="data:text/plain,"+encodeURIComponent(text)
-        dl.setAttribute("download", filename)
+        var dl = document.createElement('a')
+        dl.href = 'data:text/plain,' + encodeURIComponent(text)
+        dl.setAttribute('download', filename)
         dl.click()
       }
 
@@ -828,12 +825,12 @@ export default {
         var json = await api.diagnosticPlots(params)
 
         var rows = json.dotplot.flatMap((a, i) => [a.map(b => [i, b[0], b[1]])]).flat()
-        rows = [["TimeSeries", "Year", "NonZeroCount"]].concat(rows)
+        rows = [['TimeSeries', 'Year', 'NonZeroCount']].concat(rows)
 
-        download(csv(rows), "tsx-dotplot-" + name + ".csv")
+        download(csv(rows), 'tsx-dotplot-' + name + '.csv')
 
-        download(csv([["Year", "NumberOfTimeSeries"]].concat(Object.entries(json.summary.timeseries))), "tsx-time-series-" + name + ".csv")
-        download(csv([["Year", "NumberOfTaxa"]].concat(Object.entries(json.summary.taxa))), "tsx-taxa-" + name + ".csv")
+        download(csv([['Year', 'NumberOfTimeSeries']].concat(Object.entries(json.summary.timeseries))), 'tsx-time-series-' + name + '.csv')
+        download(csv([['Year', 'NumberOfTaxa']].concat(Object.entries(json.summary.taxa))), 'tsx-taxa-' + name + '.csv')
 
         // data = await fetch("https://tsx.org.au/tsxapi/lpi-data/intensity?" + params)
         // json = await data.json()
@@ -854,7 +851,7 @@ export default {
       window.history.back()
     },
     refreshMonitoringConsistencyPlot(data) {
-     let datasets = this.monitoringConsistencyPlot.data.datasets
+      let datasets = this.monitoringConsistencyPlot.data.datasets
 
       datasets.forEach((dataset, datasetIndex) => {
         dataset.data = data.flatMap((timeSeries, timeSeriesIndex) =>
@@ -870,7 +867,7 @@ export default {
       this.monitoringConsistencyPlot.update()
     },
     refreshSummaryPlot: function(data) {
-      if (this.summaryPlot) {
+      if(this.summaryPlot) {
         this.summaryPlot.destroy()
       }
 

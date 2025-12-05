@@ -44,7 +44,7 @@ export default {
       required: true
     }
   },
-  data () {
+  data() {
     return {
       map: null,
       heatmapLayer: null
@@ -57,7 +57,7 @@ export default {
       this.updateHeatmap()
     }
   },
-  mounted () {
+  mounted() {
     var baseLayer = L.tileLayer(
       '//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 5,
@@ -75,7 +75,7 @@ export default {
       latField: 'lat',
       lngField: 'lon',
       valueField: 'c',
-      gradient: {0.25: 'rgb(0,94,255)', 0.5: 'rgb(0,0,255)', 0.85: 'rgb(163,0,255)', 1.0: 'rgb(255,0,255)'}
+      gradient: { 0.25: 'rgb(0,94,255)', 0.5: 'rgb(0,0,255)', 0.85: 'rgb(163,0,255)', 1.0: 'rgb(255,0,255)' }
     })
     this.map = new L.Map(this.$refs.map, {
       center: new L.LatLng(-25.917574, 132.702789),
@@ -84,7 +84,7 @@ export default {
     })
     this.updateHeatmap()
   },
-  created () {
+  created() {
 
   },
   methods: {
@@ -94,7 +94,7 @@ export default {
           this.heatmapLayer.setData({ min: 0, max: 1, data: this.heatmapData })
           this.map.fitBounds(this.heatmapData.map(x => [x.lat, x.lon]))
         } else {
-          this.heatmapLayer.setData({ min: 0, max: 1, data: []})
+          this.heatmapLayer.setData({ min: 0, max: 1, data: [] })
         }
       }
     }

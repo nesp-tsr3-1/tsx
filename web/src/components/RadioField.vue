@@ -35,7 +35,6 @@
 </template>
 
 <script>
-import * as api from '../api.js'
 import { Tippy } from 'vue-tippy'
 
 export default {
@@ -53,8 +52,8 @@ export default {
       default: undefined
     }
   },
-  emits: ["update:value"],
-  data () {
+  emits: ['update:value'],
+  data() {
     return {
     }
   },
@@ -69,7 +68,7 @@ export default {
       }
     }
   },
-  created () {
+  created() {
 
   },
   methods: {

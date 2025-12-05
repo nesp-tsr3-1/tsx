@@ -59,7 +59,6 @@
         Please contact a member of the Threatened Species Index team at <a href="mailto:tsx@uq.edu.au">tsx@uq.edu.au</a> if you wish to add or remove a program manager for this program.
       </p>
 
-
       <fieldset v-if="canEdit">
         <div class="field has-addons">
           <div class="control">
@@ -105,7 +104,7 @@ export default {
     },
     canEdit: Boolean
   },
-  data () {
+  data() {
     return {
       managers: [],
       status: 'loading',
@@ -129,7 +128,7 @@ export default {
   methods: {
     refresh() {
       this.status = 'loading'
-      api.programManagers(this.programId).then(managers => {
+      api.programManagers(this.programId).then((managers) => {
         this.managers = managers
         this.status = 'loaded'
       }).catch((error) => {
@@ -152,10 +151,10 @@ export default {
       })
     },
     deleteManager(manager) {
-      if(window.confirm("Are you sure you wish to remove this program manager?")) {
+      if(window.confirm('Are you sure you wish to remove this program manager?')) {
         api.removeManagerFromMonitoringProgram(this.programId, manager.id).then(() => {
           this.refresh()
-        }).catch(error => {
+        }).catch((error) => {
           console.log(error)
           alert('Failed to remove program manager')
         })

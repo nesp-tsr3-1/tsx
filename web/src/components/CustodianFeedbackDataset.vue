@@ -109,11 +109,11 @@
 
 <script>
 import * as api from '../api.js'
-import { handleLinkClick, formatDateTime } from '../util.js'
+import { formatDateTime } from '../util.js'
 
 export default {
   name: 'CustodianFeedbackDataset',
-  data () {
+  data() {
     return {
       currentUser: null,
       status: 'loading',
@@ -128,15 +128,15 @@ export default {
   },
   created() {
     this.refresh()
-    api.isLoggedIn().then(isLoggedIn => {
+    api.isLoggedIn().then((isLoggedIn) => {
       if(!isLoggedIn) {
         this.$router.replace({ path: '/login', query: { after_login: this.$route.path } })
       }
     })
 
-    api.currentUser().then(currentUser => {
+    api.currentUser().then((currentUser) => {
       this.currentUser = currentUser
-    }).catch(error => {
+    }).catch((error) => {
       this.error = error
     })
   },

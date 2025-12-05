@@ -65,7 +65,6 @@
                 </p>
               </div>
 
-
               <button
                 type="button"
                 class="button is-primary"
@@ -90,7 +89,7 @@ const programProps = ['description', 'summary', 'lead']
 
 export default {
   name: 'ProgramEdit',
-  data () {
+  data() {
     var programId = this.$route.params.id
     return {
       isNew: programId === 'new',
@@ -111,7 +110,7 @@ export default {
     }
   },
   created() {
-    api.isLoggedIn().then(isLoggedIn => {
+    api.isLoggedIn().then((isLoggedIn) => {
       if(!isLoggedIn) {
         this.$router.replace({ path: '/login', query: { after_login: this.$route.path } })
       }
@@ -138,13 +137,13 @@ export default {
         promise = api.updateMonitoringProgram(program)
       }
 
-      promise.then(program => {
+      promise.then((program) => {
         this.$router.push({ path: '/program/' + program.id })
-      }).catch(error => {
+      }).catch((error) => {
         if(error.xhr.status === 400) {
           this.errors = JSON.parse(error.xhr.response)
         } else {
-          this.errors = { 'server_error': true }
+          this.errors = { server_error: true }
         }
       }).finally(() => {
         this.submitting = false

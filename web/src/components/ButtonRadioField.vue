@@ -20,7 +20,6 @@
 </template>
 
 <script>
-import * as api from '../api.js'
 
 export default {
   name: 'ButtonRadioField',
@@ -34,8 +33,8 @@ export default {
       default: undefined
     }
   },
-  emits: [ "update:value" ],
-  data () {
+  emits: ['update:value'],
+  data() {
     return {
     }
   },
@@ -49,7 +48,7 @@ export default {
       }
     }
   },
-  created () {
+  created() {
 
   },
   methods: {
@@ -58,7 +57,7 @@ export default {
     },
     buttonClasses(option) {
       return {
-        "is-selected": this.fieldValue == option.value,
+        'is-selected': this.fieldValue == option.value
       }
     }
   }

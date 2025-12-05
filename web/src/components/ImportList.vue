@@ -99,7 +99,7 @@ export default {
       required: true
     }
   },
-  data () {
+  data() {
     var data = {
       imports: [],
       status: 'loading',
@@ -108,8 +108,8 @@ export default {
 
     return data
   },
-  created () {
-    api.currentUser().then(currentUser => {
+  created() {
+    api.currentUser().then((currentUser) => {
       this.currentUser = currentUser
     })
     this.refresh()
@@ -118,7 +118,7 @@ export default {
     refresh() {
       var importsPromise = api.dataSourceImports(this.sourceId)
       importsPromise.then((imports) => {
-        imports.forEach(i => {
+        imports.forEach((i) => {
           i.isApproving = false
           i.isUpdatingVisibility = false
         })

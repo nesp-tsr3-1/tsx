@@ -248,7 +248,7 @@ export default {
     'source-downloads': SourceDownloads,
     'source-data-summary': SourceDataSummary
   },
-  data () {
+  data() {
     return {
       sourceId: +this.$route.params.id,
       source: null,
@@ -279,7 +279,7 @@ export default {
       return this.source && generateCitation(this.source.authors, this.source.details, this.source.provider)
     },
     sourceType() {
-      return capitalise(this.source.source_type ?? "")
+      return capitalise(this.source.source_type ?? '')
     },
     documentsEnabled() {
       return features.documents
@@ -288,13 +288,13 @@ export default {
       return this.documentsEnabled && this.source.show_no_agreement_message
     }
   },
-  created () {
-    api.isLoggedIn().then(isLoggedIn => {
+  created() {
+    api.isLoggedIn().then((isLoggedIn) => {
       if(!isLoggedIn) {
         this.$router.replace({ path: '/login', query: { after_login: this.$route.path } })
       }
     })
-    api.dataSource(this.sourceId).then(source => {
+    api.dataSource(this.sourceId).then((source) => {
       this.source = source
       this.showDownloads = source.has_t1_data
     })
@@ -303,7 +303,7 @@ export default {
     deleteSource() {
       api.deleteDataSource(this.sourceId).then(() => {
         this.$router.replace({ path: '/source' })
-      }).catch(error => {
+      }).catch((error) => {
         console.log(error)
         alert('Delete failed.')
       })
@@ -311,7 +311,7 @@ export default {
     handleDataImportUpdated() {
       this.$refs.importList.refresh()
       this.$refs.dataSummary.refresh()
-      api.dataSource(this.sourceId).then(source => {
+      api.dataSource(this.sourceId).then((source) => {
         this.showDownloads = source.has_t1_data
       })
     },

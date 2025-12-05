@@ -20,8 +20,6 @@
 </template>
 
 <script>
-import * as api from '../api.js'
-
 export default {
   name: 'SelectField',
   props: {
@@ -34,8 +32,8 @@ export default {
       default: undefined
     }
   },
-  emits: ["update:value"],
-  data () {
+  emits: ['update:value'],
+  data() {
     return {
     }
   },
@@ -49,7 +47,7 @@ export default {
       }
     }
   },
-  created () {
+  created() {
 
   },
   methods: {

@@ -39,9 +39,9 @@ import features from '../features.js'
 
 export default {
   name: 'LocalSettings',
-  data () {
+  data() {
     return {
-        features
+      features
     }
   },
   computed: {

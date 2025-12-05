@@ -1,4 +1,3 @@
-
 import {
   Chart,
   LineElement,
@@ -41,14 +40,14 @@ let stripeFill = createDiagonalPattern('grey', 1, 4)
 const backgroundColorPlugin = {
   id: 'canvasBackgroundColor',
   beforeDraw: (chart, args, options) => {
-    const {ctx} = chart;
-    ctx.save();
-    ctx.globalCompositeOperation = 'destination-over';
-    ctx.fillStyle = options.color || '#ffffff';
-    ctx.fillRect(0, 0, chart.width, chart.height);
-    ctx.restore();
+    const { ctx } = chart
+    ctx.save()
+    ctx.globalCompositeOperation = 'destination-over'
+    ctx.fillStyle = options.color || '#ffffff'
+    ctx.fillRect(0, 0, chart.width, chart.height)
+    ctx.restore()
   }
-};
+}
 
 export function plotTrend(data, dom, options) {
   let plotData = generateTrendPlotData(data, options)
@@ -133,9 +132,9 @@ export function generateTrendPlotData(data, options) {
   }
 
   let series = data.split('\n')
-      .slice(1) // Ignore first line
-      .filter(line => line.trim().length > 0 && !/NA/.test(line)) // Ignore empty or NA lines
-      .map(line => line.split(' '))
+    .slice(1) // Ignore first line
+    .filter(line => line.trim().length > 0 && !/NA/.test(line)) // Ignore empty or NA lines
+    .map(line => line.split(' '))
 
   let labels = series.map(x => parseInt(x[0].replace(/"/g, '')))
   let index = series.map(x => parseFloat(x[1]))
@@ -176,7 +175,6 @@ export function generateTrendPlotData(data, options) {
       data: dashedIndex
     }, {
       label: 'Confidence Interval (low)',
-      borderColor: solidFill,
       backgroundColor: allSingleSpecies ? stripeFill : solidFill,
       fill: false,
       pointRadius: 0,
@@ -186,7 +184,6 @@ export function generateTrendPlotData(data, options) {
       data: lowerCI
     }, {
       label: 'Confidence Interval (high)',
-      // backgroundColor: '#eee',
       borderColor: solidFill,
       backgroundColor: allSingleSpecies ? stripeFill : solidFill,
       fill: 2, // Fill between this dataset and dataset[1], i.e. between low & hi CI
@@ -215,8 +212,8 @@ export function trendDiagnosticsText(diagnosticsData) {
   }
 
   if(gamCount == 0 && chainCount == 0) {
-    parts.push("none")
+    parts.push('none')
   }
 
-  return "Models used: " + parts.join(", ")
+  return 'Models used: ' + parts.join(', ')
 }

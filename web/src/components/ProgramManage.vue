@@ -33,7 +33,6 @@
 </template>
 
 <script>
-import * as api from '../api.js'
 import ProgramList from './ProgramList.vue'
 
 export default {
@@ -41,12 +40,12 @@ export default {
   components: {
     'program-list': ProgramList
   },
-  data () {
+  data() {
     return {
       state: 'loading'
     }
   },
-  created () {
+  created() {
     this.state = 'loaded'
   },
   methods: {

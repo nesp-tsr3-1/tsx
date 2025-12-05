@@ -10,7 +10,7 @@
 
 <script>
 
-import "tippy.js/dist/tippy.css"
+import 'tippy.js/dist/tippy.css'
 
 export default {
   name: 'App'

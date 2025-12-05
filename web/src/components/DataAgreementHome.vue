@@ -208,7 +208,7 @@ import { formatDate, searchStringToRegex, matchParts, debounce } from '../util.j
 
 export default {
   name: 'DataAgreementHome',
-  data () {
+  data() {
     return {
       status: 'loading',
       agreements: [],
@@ -227,13 +227,12 @@ export default {
       let search = this.debouncedSearchText
 
       if(search) {
-
         let searchRegex = searchStringToRegex(search)
 
         function filterAgreement(agreement) {
-          return agreement.files.some(x => x.filename.match(searchRegex)) ||
-            agreement.sources?.some(x => x.match(searchRegex)) ||
-            agreement.custodians?.some(x => x.match(searchRegex))
+          return agreement.files.some(x => x.filename.match(searchRegex))
+            || agreement.sources?.some(x => x.match(searchRegex))
+            || agreement.custodians?.some(x => x.match(searchRegex))
         }
 
         let matchingAgreements = this.agreements.filter(filterAgreement)
@@ -254,7 +253,7 @@ export default {
           ...agreement,
           files: agreement.files.map(file => ({
             ...file,
-            filenameParts: [[file.filename, ""]]
+            filenameParts: [[file.filename, '']]
           })),
           custodianParts: [],
           sourceParts: []
@@ -275,12 +274,12 @@ export default {
     awaitingSignatureBanner() {
       if(this.status == 'loaded' && this.isAdmin) {
         if(this.stats?.pending_uq_count > 1) {
-          return "Note: There are " + this.awaiting_uq_count + " data sharing agreements waiting to be signed by UQ."
+          return 'Note: There are ' + this.awaiting_uq_count + ' data sharing agreements waiting to be signed by UQ.'
         } else if(this.stats?.pending_uq_count == 1) {
-          return "Note: There is one data sharing agreement waiting to be signed by UQ."
+          return 'Note: There is one data sharing agreement waiting to be signed by UQ.'
         }
       }
-      return undefined;
+      return undefined
     }
   },
   watch: {
@@ -288,13 +287,13 @@ export default {
       this.debouncedSearchText = searchText
     }, 500)
   },
-  created () {
-    api.isLoggedIn().then(isLoggedIn => {
+  created() {
+    api.isLoggedIn().then((isLoggedIn) => {
       if(!isLoggedIn) {
         this.$router.replace({ path: '/login', query: { after_login: this.$route.path } })
       }
     })
-    api.currentUser().then(currentUser => {
+    api.currentUser().then((currentUser) => {
       this.currentUser = currentUser
     })
     this.refresh()
@@ -308,7 +307,7 @@ export default {
         api.documentStats()
       ]).then(([agreements, stats]) => {
         this.agreements = agreements
-        this.agreements.forEach(agg => {
+        this.agreements.forEach((agg) => {
           if(agg.files.length > 0) {
             agg.filenames = agg.files.map(f => f.filename).join(', ')
           } else {
@@ -317,8 +316,8 @@ export default {
         })
         this.stats = stats
         this.status = 'loaded'
-      }).catch(error => {
-        console.log("Failed to load data agreements")
+      }).catch((error) => {
+        console.log('Failed to load data agreements')
         console.log(error)
         this.status = 'error'
       })
@@ -330,13 +329,13 @@ export default {
       return api.dataAgreementCSVURL(agreement.id)
     },
     downloadAgreementTemplate() {
-      alert("Not yet implemented")
+      alert('Not yet implemented')
     },
     createNewAgreement() {
       this.$router.push('/documents/data_agreements/edit/new')
     },
     edit(agreement) {
-      this.$router.push("/documents/data_agreements/edit/" + agreement.id)
+      this.$router.push('/documents/data_agreements/edit/' + agreement.id)
     },
     sortIcon(key) {
       if(this.sort.key === key) {

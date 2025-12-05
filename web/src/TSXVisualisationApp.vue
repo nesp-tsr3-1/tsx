@@ -1,5 +1,5 @@
 <script setup>
-import "tippy.js/dist/tippy.css"
+import 'tippy.js/dist/tippy.css'
 import TSX from './components/TSX.vue'
 </script>
 

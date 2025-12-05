@@ -35,7 +35,6 @@
           </div>
         </div>
 
-
         <div class="column is-8">
           <h2 class="title is-3">
             {{ title }}
@@ -207,7 +206,6 @@
                   {{ errors.ala_yes }}
                 </p>
               </div>
-
 
               <div class="field">
                 <label class="label required">2. Does the data provider permit data sharing with DCCEEW?</label>
@@ -645,17 +643,12 @@
 
 <script>
 import * as api from '../api.js'
-import { selectFiles, pick, setupPageNavigationHighlighting } from '../util.js'
+import { selectFiles, setupPageNavigationHighlighting } from '../util.js'
 import { reactive } from 'vue'
-
-function withFullStop(str) {
-  return str.trim().replace(/\.?$/, ".")
-}
-
 
 export default {
   name: 'DataAgreementEdit',
-  data () {
+  data() {
     var dataAgreementId = this.$route.params.id
     return {
       isNew: dataAgreementId === 'new',
@@ -679,15 +672,15 @@ export default {
       if(this.agreement.upload_uuid) {
         return api.uploadURL(this.agreement.upload_uuid)
       } else {
-        return undefined;
+        return undefined
       }
     },
     lastEditDescription() {
       if(this.agreement?.last_edited && this.agreement?.last_edited_by) {
         let lastEdited = new Date(Date.parse(this.agreement?.last_edited))
-        return "Last modified by " +
-          this.agreement?.last_edited_by + " on " +
-          lastEdited.toLocaleDateString()
+        return 'Last modified by '
+          + this.agreement?.last_edited_by + ' on '
+          + lastEdited.toLocaleDateString()
       } else {
         return null
       }
@@ -703,7 +696,7 @@ export default {
     }
   },
   created() {
-    api.isLoggedIn().then(isLoggedIn => {
+    api.isLoggedIn().then((isLoggedIn) => {
       if(!isLoggedIn) {
         this.$router.replace({ path: '/login', query: { after_login: this.$route.path } })
       }
@@ -734,12 +727,12 @@ export default {
       this.save(false)
     },
     deleteAgreement() {
-      if(window.confirm("Are you sure you wish to delete this agreement?")) {
-        this.submitError = null;
+      if(window.confirm('Are you sure you wish to delete this agreement?')) {
+        this.submitError = null
         api.deleteDataAgreement(this.dataAgreementId).then(() => {
           this.$router.push({ path: '/documents/data_agreements' })
-        }).catch(error => {
-          this.submitError = "Failed to delete agreement"
+        }).catch((error) => {
+          this.submitError = 'Failed to delete agreement'
         })
       }
     },
@@ -766,15 +759,15 @@ export default {
         promise = api.updateDataAgreement(agreement.id, agreement)
       }
 
-      promise.then(agreement => {
+      promise.then((agreement) => {
         this.$router.push({ path: '/documents/data_agreements' })
-      }).catch(error => {
+      }).catch((error) => {
         if(error.xhr.status === 400) {
           this.errors = JSON.parse(error.xhr.response)
-          this.submitError = "Unable to update data agreement due to invalid or missing details. Review the fields above for further information."
+          this.submitError = 'Unable to update data agreement due to invalid or missing details. Review the fields above for further information.'
         } else {
-          this.errors = { 'server_error': true }
-          this.submitError = "Something went wrong while processing your request."
+          this.errors = { server_error: true }
+          this.submitError = 'Something went wrong while processing your request.'
         }
       }).finally(() => {
         this.submitting = false
@@ -786,10 +779,10 @@ export default {
         multiple: true
       }).then((files) => {
         // Clear any existing error files before uploading
-        this.files = this.files.filter(f => f.state != 'error');
+        this.files = this.files.filter(f => f.state != 'error')
 
         for(let file of files) {
-          let fileModel = this.fileModelFromFile(file);
+          let fileModel = this.fileModelFromFile(file)
           fileModel.upload()
           this.files.push(fileModel)
         }

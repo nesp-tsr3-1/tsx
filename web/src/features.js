@@ -1,21 +1,20 @@
+// function setFeatureFlag(str, enabled) {
+//   localStorage['feat_' + str] = enabled ? 'true' : 'false'
+// }
 
-function setFeatureFlag(str, enabled) {
-	localStorage["feat_" + str] = enabled ? "true" : "false"
-}
-
-function getFeatureFlag(str) {
-	return localStorage["feat_" + str] === "true"
-}
+// function getFeatureFlag(str) {
+//   return localStorage['feat_' + str] === 'true'
+// }
 
 class Features {
-	get documents() {
-		return true;
-		// return getFeatureFlag("documents")
-	}
+  get documents() {
+    return true
+    // return getFeatureFlag("documents")
+  }
 
-	set documents(x) {
-		// setFeatureFlag("documents", x)
-	}
+  set documents(x) {
+    // setFeatureFlag("documents", x)
+  }
 }
 
 let instance = new Features()

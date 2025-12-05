@@ -6,9 +6,9 @@ export default defineConfig({
   plugins: [vue()],
   base: '/tsx/',
   build: {
-   sourcemap: true,
+    sourcemap: true
   },
   server: {
     port: 3000
-  },
+  }
 })

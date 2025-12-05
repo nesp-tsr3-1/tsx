@@ -108,7 +108,6 @@
           Logout
         </router-link>
 
-
         <span
           class="navbar-item"
           style="color: #888"
@@ -125,7 +124,7 @@ import { globalEventBus } from '../eventBus.js'
 
 export default {
   name: 'UserNav',
-  data () {
+  data() {
     return {
       status: 'loading',
       user: null,
@@ -139,13 +138,13 @@ export default {
       return this.user && this.user.is_admin
     },
     isProgramManager: function() {
-      return this.user && (this.user.is_admin || this.user.roles.indexOf("Program manager") != -1)
+      return this.user && (this.user.is_admin || this.user.roles.indexOf('Program manager') != -1)
     },
     canManagePrograms: function() {
       return this.user && this.user.is_admin
     }
   },
-  created () {
+  created() {
     this.loginListener = globalEventBus.addListener('login', () => this.refresh())
     this.refresh()
   },

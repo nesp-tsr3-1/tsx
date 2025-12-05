@@ -329,7 +329,6 @@
                 </div>
               </div>
 
-
               <button
                 type="button"
                 class="button is-primary"
@@ -354,16 +353,12 @@ import Multiselect from '@vueform/multiselect'
 
 const sourceProps = ['description', 'details', 'provider', 'authors', 'monitoring_program', 'source_type', 'contact_name', 'contact_institution', 'contact_position', 'contact_email', 'contact_phone', 'data_agreement_status', 'data_agreement_ids']
 
-function withFullStop(str) {
-  return str.trim().replace(/\.?$/, ".")
-}
-
 export default {
   name: 'SourceEdit',
   components: {
     Multiselect
   },
-  data () {
+  data() {
     var sourceId = this.$route.params.id
     return {
       isNew: sourceId === 'new',
@@ -408,14 +403,14 @@ export default {
     }
   },
   created() {
-    api.isLoggedIn().then(isLoggedIn => {
+    api.isLoggedIn().then((isLoggedIn) => {
       if(!isLoggedIn) {
         this.$router.replace({ path: '/login', query: { after_login: this.$route.path } })
       }
     })
-    api.currentUser().then(currentUser => {
+    api.currentUser().then((currentUser) => {
       this.currentUser = currentUser
-    });
+    })
     if(this.sourceId) {
       api.dataSource(this.sourceId).then((source) => {
         for(let k of sourceProps) {
@@ -455,13 +450,13 @@ export default {
         promise = api.updateDataSource(source)
       }
 
-      promise.then(source => {
+      promise.then((source) => {
         this.$router.push({ path: '/datasets/' + source.id })
-      }).catch(error => {
+      }).catch((error) => {
         if(error.xhr.status === 400) {
           this.errors = JSON.parse(error.xhr.response)
         } else {
-          this.errors = { 'server_error': true }
+          this.errors = { server_error: true }
         }
       }).finally(() => {
         this.submitting = false

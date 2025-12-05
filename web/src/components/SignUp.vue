@@ -120,7 +120,7 @@ import * as api from '../api.js'
 
 export default {
   name: 'SignUp',
-  data () {
+  data() {
     return {
       submitting: false,
       errors: {},
@@ -155,14 +155,14 @@ export default {
         email: this.email,
         phone_number: this.phone_number,
         password: this.password
-      }).then(response => {
+      }).then((response) => {
         // Navigate to login with message
         this.$router.push({ path: 'login', query: { after_signup: true } })
-      }).catch(error => {
+      }).catch((error) => {
         if(error.xhr.status === 400) {
           this.errors = JSON.parse(error.xhr.response)
         } else {
-          this.errors = { 'server_error': true }
+          this.errors = { server_error: true }
         }
       }).finally(() => {
         this.submitting = false

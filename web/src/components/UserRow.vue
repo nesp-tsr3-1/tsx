@@ -52,7 +52,7 @@ export default {
       required: true
     }
   },
-  data () {
+  data() {
     var currentRole = this.user.role
     return {
       clientRole: currentRole,
@@ -99,49 +99,49 @@ export default {
       }
     },
     clientPrograms: {
-    	handler(val) {
-	    	function selectedProgramIds(ps) {
-	    		return ps.filter(p => p.selected).map(p => p.id)
-	    	}
-	    	function copy(x) {
-	    		return JSON.parse(JSON.stringify(x))
-	    	}
-	    	var clientIds = selectedProgramIds(this.clientPrograms)
-	    	var serverIds = selectedProgramIds(this.serverPrograms)
+      handler(val) {
+        function selectedProgramIds(ps) {
+          return ps.filter(p => p.selected).map(p => p.id)
+        }
+        function copy(x) {
+          return JSON.parse(JSON.stringify(x))
+        }
+        var clientIds = selectedProgramIds(this.clientPrograms)
+        var serverIds = selectedProgramIds(this.serverPrograms)
 
-	    	if(clientIds.join() != serverIds.join()) {
-	    		api.updateProgramsManagedBy(this.user.id, clientIds).then(x => {
-	    			this.serverPrograms = copy(this.clientPrograms)
-	    		}).catch(x => {
-	    			this.clientPrograms = copy(this.serverPrograms)
-	    		})
-	    	}
-	    },
-	    deep: true
-	  }
+        if(clientIds.join() != serverIds.join()) {
+          api.updateProgramsManagedBy(this.user.id, clientIds).then((x) => {
+            this.serverPrograms = copy(this.clientPrograms)
+          }).catch((x) => {
+            this.clientPrograms = copy(this.serverPrograms)
+          })
+        }
+      },
+      deep: true
+    }
   },
   created: function() {
-  	this.loadPrograms()
+    this.loadPrograms()
   },
   methods: {
-  	loadPrograms: function() {
-  		if(this.clientRole == 'Program manager') {
-  			api.programsManagedBy(this.user.id).then(x => {
-  				this.serverPrograms = this.programModels(x)
-  				this.clientPrograms = this.programModels(x)
-  			})
-  		} else {
-  			this.serverPrograms = this.programModels([])
-  			this.clientPrograms = this.programModels([])
-  		}
-  	},
-  	programModels: function(selectedPrograms) {
-			return this.monitoringPrograms.map(p => ({
-				id: p.id,
-				description: p.description,
-				selected: selectedPrograms.filter(p2 => p.id === p2.id).length > 0
-			}))
-  	}
+    loadPrograms: function() {
+      if(this.clientRole == 'Program manager') {
+        api.programsManagedBy(this.user.id).then((x) => {
+          this.serverPrograms = this.programModels(x)
+          this.clientPrograms = this.programModels(x)
+        })
+      } else {
+        this.serverPrograms = this.programModels([])
+        this.clientPrograms = this.programModels([])
+      }
+    },
+    programModels: function(selectedPrograms) {
+      return this.monitoringPrograms.map(p => ({
+        id: p.id,
+        description: p.description,
+        selected: selectedPrograms.filter(p2 => p.id === p2.id).length > 0
+      }))
+    }
   }
 }
 </script>

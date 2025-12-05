@@ -54,7 +54,7 @@ export default {
   components: {
     'source-list': SourceList
   },
-  data () {
+  data() {
     return {
       currentUser: null,
       error: null
@@ -77,7 +77,7 @@ export default {
     }
   },
   watch: {
-    $route (to, from) {
+    $route(to, from) {
       // This fixes a problem caused by KeepAlive when attempting to access the page and being redirected to login
       // This ensures that after logging in and returning to this page, we attempt to reload the current user
       if(to.name == 'SourceHome' && this.error) {
@@ -90,21 +90,21 @@ export default {
   },
   methods: {
     handleSourceClick(source, evt) {
-      let url = "/datasets/" + source.id
+      let url = '/datasets/' + source.id
       handleLinkClick(evt, url, this.$router)
     },
     reload() {
       this.error = false
 
-      api.isLoggedIn().then(isLoggedIn => {
+      api.isLoggedIn().then((isLoggedIn) => {
         if(!isLoggedIn) {
           this.$router.replace({ path: '/login', query: { after_login: this.$route.path } })
         }
       })
 
-      api.currentUser().then(currentUser => {
+      api.currentUser().then((currentUser) => {
         this.currentUser = currentUser
-      }).catch(error => {
+      }).catch((error) => {
         this.error = error
       })
     }

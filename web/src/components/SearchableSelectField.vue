@@ -23,10 +23,8 @@
 </template>
 
 <script>
-import * as api from '../api.js'
 import Multiselect from '@vueform/multiselect'
 import { directive } from 'vue-tippy'
-import { useTippy } from 'vue-tippy'
 
 export default {
   name: 'SelectField',
@@ -46,8 +44,8 @@ export default {
       default: undefined
     }
   },
-  emits: ["update:value"],
-  data () {
+  emits: ['update:value'],
+  data() {
     return {}
   },
   computed: {
@@ -73,11 +71,11 @@ export default {
           showOnCreate: true
         }
       } else {
-        return undefined;
+        return undefined
       }
     }
   },
-  created () {
+  created() {
   },
   methods: {
   }

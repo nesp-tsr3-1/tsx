@@ -1,4 +1,3 @@
-
 // Converts a simple query string a=b&c=d&e=f into a javascript object
 // Doesn't allow for keys with more than one - last value overwrites previous values for a given key
 export function parseParams(queryString) {
@@ -47,7 +46,9 @@ export function selectFiles(options) {
 }
 
 export function pluck(array, key) {
-  return array.map(function(x) { return x[key] })
+  return array.map(function(x) {
+    return x[key]
+  })
 }
 
 export function min(array) {
@@ -91,7 +92,7 @@ export function formatDateTime(str) {
   if(!date) {
     return ''
   }
-  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
+  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
 export function formatDate(str) {
@@ -102,7 +103,7 @@ export function formatDate(str) {
   if(!date) {
     return ''
   }
-  return date.toLocaleDateString(undefined, { timeZone: "UTC"})
+  return date.toLocaleDateString(undefined, { timeZone: 'UTC' })
 }
 
 export function debounce(fn, delay) {
@@ -118,10 +119,10 @@ export function debounce(fn, delay) {
 }
 
 export function readTextFile(mimeType, callback) {
-  var input = document.createElement("input")
-  input.type = "file"
+  var input = document.createElement('input')
+  input.type = 'file'
   input.accept = mimeType
-  input.addEventListener("change", function(evt) {
+  input.addEventListener('change', function(evt) {
     var file = input.files[0]
     var reader = new FileReader()
     reader.readAsText(file)
@@ -136,7 +137,7 @@ export function readTextFile(mimeType, callback) {
 export function saveTextFile(text, mimeType, fileName) {
   var data = new Blob([text], { type: mimeType })
   var url = window.URL.createObjectURL(data)
-  var link = document.createElement("a")
+  var link = document.createElement('a')
   link.href = url
   link.download = fileName
   document.body.append(link)
@@ -161,7 +162,9 @@ export function parseCSV(input) {
   }
 
   function next() {
-    if(eof()) { throw "Unexpected EOF" }
+    if(eof()) {
+      throw 'Unexpected EOF'
+    }
     c = input[++p]
     if(c === '\n') {
       lines++
@@ -183,20 +186,25 @@ export function parseCSV(input) {
       next()
       while(true) {
         if(c !== quote) {
-          w += c; next()
+          w += c
+          next()
         } else if(input[p + 1] === quote) {
-          w += c; p++; next()
+          w += c
+          p++
+          next()
         } else {
-          next(); break
+          next()
+          break
         }
       }
     } else {
       w = ''
       while(!eof() && c !== comma && c !== '\n' && c !== '\r') {
         if(c === quote) {
-          throw new Error("Unexpected double-quote (line: " + lines + ", char: " + (p - lineStart + 1) + ")")
+          throw new Error('Unexpected double-quote (line: ' + lines + ', char: ' + (p - lineStart + 1) + ')')
         }
-        w += c; next()
+        w += c
+        next()
       }
     }
 
@@ -205,17 +213,25 @@ export function parseCSV(input) {
     if(c === comma) {
       next()
     } else if(c === '\n') {
-      next(); endRow()
-      if(eof()) { break }
+      next()
+      endRow()
+      if(eof()) {
+        break
+      }
     } else if(c === '\r') {
       next()
-      if(c === '\n') { next() }
+      if(c === '\n') {
+        next()
+      }
       endRow()
-      if(eof()) { break }
+      if(eof()) {
+        break
+      }
     } else if(eof()) {
-      endRow(); break
+      endRow()
+      break
     } else {
-      throw "Unexpected char at index " + p + ": " + c
+      throw 'Unexpected char at index ' + p + ': ' + c
     }
   }
   return rows
@@ -223,22 +239,22 @@ export function parseCSV(input) {
 
 export function extractSpeciesIDsFromCSV(csv) {
   return csv
-        .split(/[\n\r]/)
-        .flatMap(x => x.split(","))
-        .map(x => x.trim())
-        .filter(x => x.match(/^[pmu_]+[0-9]+[a-z]?$/))
+    .split(/[\n\r]/)
+    .flatMap(x => x.split(','))
+    .map(x => x.trim())
+    .filter(x => x.match(/^[pmu_]+[0-9]+[a-z]?$/))
 }
 
 export function generateSpeciesCSV(species) {
   function sanitise(x) {
-    return x.replace(/[,\n\"]/g, ' ')
+    return x.replace(/[,\n"]/g, ' ')
   }
 
-  var header = "TaxonCommonName,TaxonScientificName,TaxonID\n"
+  var header = 'TaxonCommonName,TaxonScientificName,TaxonID\n'
 
-  var csv = header + species.map(sp => {
-    return sanitise(sp.common_name || "") + "," + sanitise(sp.scientific_name || "") + "," + (sp.id)
-  }).join("\n")
+  var csv = header + species.map((sp) => {
+    return sanitise(sp.common_name || '') + ',' + sanitise(sp.scientific_name || '') + ',' + (sp.id)
+  }).join('\n')
 
   return csv
 }
@@ -250,39 +266,39 @@ export function deepEquals(a, b) {
     return false
   } else if(Array.isArray(a)) {
     return a.length === b.length && a.every((ai, i) => deepEquals(ai, b[i]))
-  } else if(typeof a === "object" && typeof b === "object") {
+  } else if(typeof a === 'object' && typeof b === 'object') {
     let ak = Object.keys(a), bk = Object.keys(b)
     return ak.length === bk.length && ak.every(k => deepEquals(a[k], b[k]))
   } else {
-    return false;
+    return false
   }
 }
 
 export function generateCitation(authors, details, provider) {
-  let year = new Date().getFullYear();
+  let year = new Date().getFullYear()
   function fix(str) {
-    return (str || "").trim().replace(/\.$/, '')
+    return (str || '').trim().replace(/\.$/, '')
   }
 
-  authors = fix(authors) || "<Author(s)>";
-  details = fix(details) || "<Data Details>"
-  provider = fix(provider) || "<Data Provider>"
+  authors = fix(authors) || '<Author(s)>'
+  details = fix(details) || '<Data Details>'
+  provider = fix(provider) || '<Data Provider>'
 
   return `${authors} (${year}). ${details}. ${provider}. Aggregated for the Australian Threatened Species Index, an output of the NESP Threatened Species Recovery Hub and operated by the Terrestrial Ecosystem Research Network, The University of Queensland.`
 }
 
 export function handleLinkClick(evt, url, router) {
-    let openInNewTab =
-      (evt.metaKey && /Mac/.test(navigator.platform)) ||
-      (evt.ctrlKey && !/Mac/.test(navigator.platform)) ||
-      evt.button == 1
+  let openInNewTab
+    = (evt.metaKey && /Mac/.test(navigator.platform))
+      || (evt.ctrlKey && !/Mac/.test(navigator.platform))
+      || evt.button == 1
 
-    if(openInNewTab) {
-      let routeData = router.resolve(url)
-      window.open(routeData.href, '_blank')
-    } else {
-      router.push(url)
-    }
+  if(openInNewTab) {
+    let routeData = router.resolve(url)
+    window.open(routeData.href, '_blank')
+  } else {
+    router.push(url)
+  }
 }
 
 // Unlike debounce(), fn is called immediately at first
@@ -309,10 +325,9 @@ export function throttle(fn, delay) {
 }
 
 export function searchStringToRegex(search) {
-  //https://stackoverflow.com/a/3561711/165783
-  return new RegExp(search.replace(/[/\-\\^$*+?.()|[\]{}]/g, '\\$&'), "gi")
+  // https://stackoverflow.com/a/3561711/165783
+  return new RegExp(search.replace(/[/\-\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi')
 }
-
 
 // Converts a string to an array of string pairs, where each pair
 // consists of a non-matching part followed by a matching part.
@@ -329,7 +344,7 @@ export function matchParts(str, regex) {
     ])
     i = j
   }
-  result.push([str.substr(i, str.length), ""])
+  result.push([str.substr(i, str.length), ''])
   return result
 }
 
@@ -349,10 +364,10 @@ Returns an object with a dispose() method which cleans up any resources.
 */
 export function setupPageNavigationHighlighting(menuDom) {
   function updateMenu() {
-    let sections = Array.from(menuDom.querySelectorAll("a"))
+    let sections = Array.from(menuDom.querySelectorAll('a'))
       .map(a => ({
         link: a,
-        target: document.querySelector(a.getAttribute("href"))
+        target: document.querySelector(a.getAttribute('href'))
       }))
       .filter(s => s.target)
 
@@ -371,12 +386,12 @@ export function setupPageNavigationHighlighting(menuDom) {
   }
 
   let handler = throttle(updateMenu, 250)
-  document.addEventListener("scroll", handler)
-  setTimeout(updateMenu, 250);
+  document.addEventListener('scroll', handler)
+  setTimeout(updateMenu, 250)
 
   return {
     dispose() {
-      document.removeEventListener("scroll", handler)
+      document.removeEventListener('scroll', handler)
     }
   }
 }

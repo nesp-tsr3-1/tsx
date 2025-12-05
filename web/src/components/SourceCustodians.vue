@@ -107,7 +107,7 @@ export default {
       required: true
     }
   },
-  data () {
+  data() {
     return {
       users: [],
       status: 'loading',

@@ -113,7 +113,7 @@ import * as api from '../api.js'
 
 export default {
   name: 'UserEdit',
-  data () {
+  data() {
     return {
       errors: {},
       message: '',
@@ -165,16 +165,16 @@ export default {
         last_name: this.last_name,
         email: this.email,
         phone_number: this.phone_number
-      }).then(response => {
+      }).then((response) => {
         this.message = 'User updated successfully'
         this.state = 'idle'
         // Navigate to login with message
         // this.$router.push({ path: 'login', query: { after_signup: true } })
-      }).catch(error => {
+      }).catch((error) => {
         if(error.xhr.status === 400) {
           this.errors = JSON.parse(error.xhr.response)
         } else {
-          this.errors = { 'server_error': true }
+          this.errors = { server_error: true }
           this.message = 'Something went wrong while updating the user'
         }
         this.state = 'submit_error'

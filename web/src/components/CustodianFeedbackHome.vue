@@ -150,12 +150,12 @@ let sortMappings = {
   },
   admin_feedback_status(ds) {
     return ds.admin_feedback_status.description
-  },
+  }
 }
 
 export default {
   name: 'CustodianFeedbackHome',
-  data () {
+  data() {
     return {
       currentUser: null,
       status: 'loading',
@@ -175,9 +175,9 @@ export default {
         let searchRegex = searchStringToRegex(search)
 
         function filterDataset(ds) {
-          return ds.source.description.match(searchRegex) ||
-            ds.taxon.scientific_name.match(searchRegex) ||
-            ds.id.match(searchRegex)
+          return ds.source.description.match(searchRegex)
+            || ds.taxon.scientific_name.match(searchRegex)
+            || ds.id.match(searchRegex)
         }
 
         let matchingDatasets = this.taxonDatasets.filter(filterDataset)
@@ -190,9 +190,9 @@ export default {
         return matchingDatasets
       } else {
         for(let dataset of this.taxonDatasets) {
-          dataset.idParts = [[dataset.id, ""]]
-          dataset.descriptionParts = [[dataset.source.description, ""]]
-          dataset.taxonParts = [[dataset.taxon.scientific_name, ""]]
+          dataset.idParts = [[dataset.id, '']]
+          dataset.descriptionParts = [[dataset.source.description, '']]
+          dataset.taxonParts = [[dataset.taxon.scientific_name, '']]
         }
         return this.taxonDatasets
       }
@@ -218,15 +218,15 @@ export default {
   },
   created() {
     this.refresh()
-    api.isLoggedIn().then(isLoggedIn => {
+    api.isLoggedIn().then((isLoggedIn) => {
       if(!isLoggedIn) {
         this.$router.replace({ path: '/login', query: { after_login: this.$route.path } })
       }
     })
 
-    api.currentUser().then(currentUser => {
+    api.currentUser().then((currentUser) => {
       this.currentUser = currentUser
-    }).catch(error => {
+    }).catch((error) => {
       this.error = error
     })
   },
@@ -241,7 +241,7 @@ export default {
       })
     },
     handleDatasetClick(taxonDataset, evt) {
-      let url = "/custodian_feedback/" + taxonDataset.id
+      let url = '/custodian_feedback/' + taxonDataset.id
       handleLinkClick(evt, url, this.$router)
     },
     formatDateTime,
