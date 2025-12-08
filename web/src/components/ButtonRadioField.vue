@@ -10,6 +10,7 @@
       :key="option.value"
       class="button is-small"
       :class="buttonClasses(option)"
+      :data-test="option.value"
       :disabled="option.disabled"
       @click="select(option)"
     >
