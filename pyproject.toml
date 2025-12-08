@@ -1,0 +1,40 @@
+[project]
+name = ""
+version = "0.0.1"
+requires-python = "~=3.11.0"
+dependencies = [
+    "fiona",
+    "flask",
+    "flask-cors",
+    "flask-session",
+    "mysql-connector-python",
+    "numpy",
+    "openpyxl",
+    "pandas",
+    "pyproj",
+    "scipy",
+    "rpy2",
+    "shapely",
+    "sqlalchemy",
+    "tqdm",
+    "sqlacodegen==3.0.0rc5",
+    "passlib",
+    "argon2-cffi",
+    "watchdog",
+    "pytest",
+    "fpdf2",
+    "matplotlib",
+    "flask-executor",
+    "cartopy",
+    "cachelib",
+]
+
+[dependency-groups]
+dev = []
+
+[tool.uv]
+package = false
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
