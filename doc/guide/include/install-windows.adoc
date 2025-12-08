@@ -23,14 +23,6 @@ Now open Anaconda and use the 'Import Environment' function to import the `conda
 
 This guide will make extensive use of this Command Prompt. All commands assume that your current working directory is `TSX_HOME`, so the first command you will need to run is `cd` to change your working directory.
 
-To download TSX workflow sample data that is referred to throughout this guide, run the following command:
-
-----
-python setup\download_sample_data.py
-----
-
-This will place the sample data into a directory under `TSX_HOME` called `sample-data`.
-
 ==== Database Setup
 
 Start the MySQL command-line client and create a database called “tsx”. In this guide we will simply be accessing MySQL as the default “root” user. (Note that in a shared environment it is advised to create a separate user that has limited access to the tsx database only.)

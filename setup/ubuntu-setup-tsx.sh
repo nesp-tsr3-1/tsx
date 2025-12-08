@@ -8,8 +8,6 @@ cd tsx
 
 sudo -u tsx cp tsx.conf.example tsx.conf
 
-sudo -u tsx python setup/download_sample_data.py
-
 setup/setup-database.sh
 sudo mysql tsx < sample-data/seed.sql
 
