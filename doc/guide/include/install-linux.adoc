@@ -9,6 +9,8 @@ sudo apt-get update
 sudo apt-get install -y nginx mysql-server python python-pip git
 ----
 
+Install `uv` by following the instructions at https://docs.astral.sh/uv/getting-started/installation/
+
 ==== Download TSX Workflow and Sample Data
 
 Run the following command to download the TSX workflow into a folder named `tsx`
@@ -20,11 +22,10 @@ git clone https://github.com/nesp-tsr3-1/tsx.git
 Then enter the `tsx` directory and run the following commands:
 
 ----
-pip install pipenv
-pipenv sync
+uv sync
 ----
 
-This will place the sample data into a directory called `sample-data`.
+NOTE: Since we are using the `uv` package manager, all python commands in this guide should be prefixed by `uv run` (e.g. `uv run python -m tsx.process -c t1_aggregation`). Alternatively, you may wish to start a new shell with `uv run bash` and run all commands from there without the `uv run` prefix.
 
 ==== Database Setup
 
