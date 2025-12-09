@@ -6,9 +6,8 @@ import sys
 import argparse
 import re
 import os
-from tsx.util import run_parallel
+from tsx.util import run_parallel, get_resource
 from tempfile import TemporaryDirectory
-import importlib.resources
 import subprocess
 from tqdm import tqdm
 import shutil
@@ -258,7 +257,7 @@ def run_permutations(db, df, generate_plot_data, end_year):
     script_path = os.path.join(work_path, "lpi.R")
     # Write LPI script into temp dir
     with open(script_path, "wb") as f:
-        f.write(importlib.resources.read_binary("tsx.resources", "lpi.R"))
+        f.write(get_resource("lpi.R").read_bytes())
 
     # This first generates all tasks (takes a few minutes), so that we can show a meaningful progress indicator for the next phase
     tasks = list(tqdm(iterate_tasks(df, work_path, script_path)))

@@ -12,11 +12,11 @@ from sqlalchemy import text
 from tsx.config import data_dir
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
-import importlib
 from datetime import datetime
 from textwrap import dedent
 import urllib.request
 import zipfile
+from tsx.util import get_resource
 
 # These lines are necessary to stop MatplotLib from trying to initialize
 # GUI backend and crashing due to not being on the main thread:
@@ -816,8 +816,8 @@ white = "#FFFFFF"
 light_grey = "#F4F4F4"
 tsx_green = "#266F6A"
 
-footer_png = importlib.resources.read_binary("tsx.resources", "pdf-footer.png")
-tsx_logo_svg = importlib.resources.read_binary("tsx.resources", "pdf-logo.svg")
+footer_png = get_resource("pdf-footer.png").read_bytes()
+tsx_logo_svg = get_resource("pdf-logo.svg").read_bytes()
 
 filled_circle = BytesIO(b"<svg version='1.1' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'><circle cx='10' cy='10' r='10' stroke-width='1' stroke='black' fill='#266F6A' /></svg>")
 empty_circle = BytesIO(b"<svg version='1.1' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'><circle cx='10' cy='10' r='10' stroke-width='1' stroke='black' /></svg>")

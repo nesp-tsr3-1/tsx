@@ -10,7 +10,7 @@ from tsx.db import get_session
 from shapely.geometry import Point
 from tsx.mysql_to_sqlite import export_to_sqlite
 import binascii
-import importlib
+from tsx.util import get_resource
 import subprocess
 import shutil
 from datetime import datetime
@@ -191,7 +191,7 @@ def process_source(source_id, output_dir = None):
 
     log.info("Running LPI analysis")
     with open(os.path.join(path, "lpi.R"), "wb") as f:
-        f.write(importlib.resources.read_binary("tsx.resources", "lpi.R"))
+        f.write(get_resource("lpi.R").read_bytes())
     subprocess.run(["Rscript", os.path.join(path, "lpi.R"), os.path.join(path, "lpi.csv"), path])
     if output_dir:
         os.makedirs(output_dir, exist_ok=True)

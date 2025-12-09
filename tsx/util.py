@@ -7,6 +7,7 @@ import logging
 import faulthandler
 import collections
 import functools
+import importlib.resources
 
 from tsx.config import config
 
@@ -46,6 +47,9 @@ def local_iso_datetime():
     Returns ISO8601 formatted timestamp for the current time and timezone
     """
     return datetime.now().isoformat()
+
+def get_resource(path):
+    return importlib.resources.files("tsx.resources") / path
 
 # https://stackoverflow.com/a/31142078/165783
 class CounterHandler(logging.Handler):

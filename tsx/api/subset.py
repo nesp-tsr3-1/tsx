@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request, send_file, session, Response
 import csv
 from uuid import uuid4
 from tsx.api.util import db_session, get_user, get_roles, jsonify_rows, get_request_args_or_body, sanitise_file_name_string
+from tsx.util import get_resource
 from tsx.api.permissions import permitted
 from tsx.api.results import trend_txt_to_csv
 from tsx.config import data_dir
@@ -9,7 +10,6 @@ import os
 from threading import Thread, Lock
 import shutil
 import subprocess
-import importlib.resources
 import io
 import tempfile
 from zipfile import ZipFile, ZIP_DEFLATED
@@ -802,7 +802,7 @@ def subset_generate_trend_async(subset_params=None):
     os.makedirs(path, exist_ok=True)
 
     with open(os.path.join(path, "lpi.R"), "wb") as f:
-        f.write(importlib.resources.read_binary("tsx.resources", "lpi.R"))
+        f.write(get_resource("lpi.R").read_bytes())
 
     result = query_subset_time_series(subset_params)
     save_csv(result, os.path.join(path, "lpi.csv"))
