@@ -18,7 +18,6 @@ from random import shuffle
 log = logging.getLogger(__name__)
 
 default_reference_years = [1985, 1990, 1995, 2000]
-end_year = 2022
 
 def main():
     logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)-15s %(name)s %(levelname)-8s %(message)s')
@@ -26,6 +25,7 @@ def main():
     parser = argparse.ArgumentParser(description='Run trend permutations')
     parser.add_argument('lpi_wide', type=str, help='LPI wide table with final results (lpi-filtered.csv)')
     parser.add_argument('output_db', type=str, help='SQLite file to save results in')
+    parser.add_argument('end_year', type=int, help="Cutoff year for time series")
     parser.add_argument('--plot-data', action='store_true', dest='generate_plot_data', help="Generate CSV plot data")
 
     args = parser.parse_args()
@@ -33,7 +33,7 @@ def main():
     db = sqlite3.connect(args.output_db)
     df = load_lpi_wide(args.lpi_wide)
 
-    run_permutations(db, df, args.generate_plot_data)
+    run_permutations(db, df, args.generate_plot_data, args.end_year)
 
     log.info("Finished")
 
@@ -200,7 +200,7 @@ def iterate_tasks(df, work_path, script_path):
 
                 yield perm, path, script_path
 
-def run_task(perm, work_path, script_path, generate_plot_data):
+def run_task(perm, work_path, script_path, generate_plot_data, end_year):
     if work_path is None:
         return (perm, None)
 
@@ -236,7 +236,7 @@ def remove_file_or_dir(path):
     elif os.path.isdir(path):
         shutil.rmtree(path)
 
-def run_permutations(db, df, generate_plot_data):
+def run_permutations(db, df, generate_plot_data, end_year):
     db.execute("""DROP TABLE IF EXISTS trend""");
     db.execute("""CREATE TABLE trend (
         TaxonomicGroup TEXT,
@@ -265,7 +265,7 @@ def run_permutations(db, df, generate_plot_data):
     # Randomise tasks to get a more consistent progress rate
     shuffle(tasks)
 
-    tasks = [task + (generate_plot_data,) for task in tasks]
+    tasks = [task + (generate_plot_data, end_year) for task in tasks]
 
     for result, error in run_parallel(run_task, tqdm(tasks)):
         if result:
