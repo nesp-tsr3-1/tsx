@@ -33,6 +33,7 @@
     <div
       v-if="enableProgramFilter"
       class="field"
+      data-test="program-filter"
     >
       <label class="label">Programs</label>
       <div class="control">
@@ -136,7 +137,10 @@
         > Only include taxa eligible for inclusion in the TSX</label>
       </div>
     </div>
-    <div class="field">
+    <div
+      class="field"
+      data-test="species-filter"
+    >
       <label class="label">Species</label>
       <div class="control">
         <Multiselect
@@ -230,7 +234,10 @@
       </div>
     </div>
 
-    <div class="field">
+    <div
+      class="field"
+      data-test="site-filter"
+    >
       <label class="label">Sites</label>
       <div class="control">
         <Multiselect
