@@ -9,6 +9,7 @@
           </h2>
           <CommonDownloads
             :enable-program-filter="true"
+            :enable-region-filter="true"
             :enable-state-filter="true"
             :enable-management-filter="true"
             :enable-taxonomic-group-filter="true"

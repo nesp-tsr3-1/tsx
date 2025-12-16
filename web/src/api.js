@@ -271,8 +271,8 @@ export function resetPassword(code, password) {
   return post('/reset_password', { code, password })
 }
 
-export function region() {
-  return get('/region')
+export function regions() {
+  return get('/regions')
 }
 
 export function searchtype() {

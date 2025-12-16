@@ -10,8 +10,8 @@ bp = Blueprint('misc', __name__)
 def query_to_json(query, params={}):
 	return jsonify_rows(db_session.execute(text(query), params))
 
-@bp.route('/region', methods = ['GET'])
-def get_region():
+@bp.route('/regions', methods = ['GET'])
+def get_regions():
 	return query_to_json("""SELECT id, name, state FROM region""")
 
 @bp.route('/search_type', methods = ['GET'])

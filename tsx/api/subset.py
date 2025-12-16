@@ -251,6 +251,11 @@ def filename_component_from_params(params=None):
     if 'state' in params:
         parts.append(('state', params['state']))
 
+    if 'regions' in params:
+        ids = params['regions']
+        if len(ids):
+            parts.append(('regions', ','.join(ids)))
+
     if 'monitoring_programs' in params:
         ids = params['monitoring_programs']
 
@@ -321,6 +326,15 @@ def subset_sql_params(subset_params=None, state_via_region=False):
         else:
             having_conditions.append("State = :state")
             params['state'] = args['state']
+
+    if 'regions' in args:
+        ids = args['regions']
+        if isinstance(ids, str):
+            ids = ids.split(",")
+        if len(ids):
+            pnames = ["region%s" % i for i in range(0, len(ids))]
+            where_conditions.append("COALESCE(region.id, -1) IN (%s)" % ", ".join([":%s" % p for p in pnames]))
+            params.update(dict(zip(pnames, ids)))
 
     if 'monitoring_programs' in args:
         ids = args['monitoring_programs']

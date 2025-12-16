@@ -31,6 +31,57 @@
       </div>
     </div>
     <div
+      v-if="enableRegionFilter"
+      class="field"
+      data-test="region-filter"
+    >
+      <label class="label">Regions</label>
+      <div class="control">
+        <Multiselect
+          v-model="criteria.regions"
+          mode="multiple"
+          :options="queryRegions"
+          :searchable="true"
+          no-options-text="No regions found"
+          placeholder="All regions"
+          label="label"
+          value-prop="id"
+          @open="(select) => select.refreshOptions()"
+        />
+      </div>
+      <div style="border-left: 2px solid #eee; padding-left: 1em; margin-top: 1em">
+        <table
+          v-if="criteria.regions.length"
+          style="border: 1px solid #ccc;"
+          class="table is-narrow"
+        >
+          <thead>
+            <tr>
+              <th>Region</th>
+              <th>State</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="(region, index) in criteria.regions"
+              :key="index"
+            >
+              <td>{{ regionById(region).name }}</td>
+              <td>{{ regionById(region).state }}</td>
+              <td>
+                <button
+                  class="delete is-small"
+                  style="margin-top: 4px"
+                  @click="deselectRegion(region)"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div
       v-if="enableProgramFilter"
       class="field"
       data-test="program-filter"
@@ -582,7 +633,8 @@ export default {
     enableManagementFilter: Boolean,
     enableTaxonomicGroupFilter: Boolean,
     enableMap: Boolean,
-    enableTaxonStatusFilter: Boolean
+    enableTaxonStatusFilter: Boolean,
+    enableRegionFilter: Boolean
   },
   data() {
     return {
@@ -617,7 +669,8 @@ export default {
         ],
         monitoringPrograms: [],
         taxonomicGroup: [],
-        species: []
+        species: [],
+        regions: []
       },
       sitesLoading: false,
       criteria: {
@@ -625,6 +678,7 @@ export default {
         monitoringPrograms: [],
         species: [],
         sites: [],
+        regions: [],
         management: null,
         taxonomicGroup: null,
         taxonStatus: [],
@@ -774,6 +828,18 @@ export default {
       )
     }
 
+    if(this.enableRegionFilter) {
+      this.regionLookup = {}
+      initialisationPromises.push(api.regions().then((regions) => {
+        for(let region of regions) {
+          region.label = region.name + " (" + region.state + ")"
+        }
+        regions.sort((a, b) => a.label.localeCompare(b.label))
+        this.options.regions = regions
+        this.regionLookup = Object.fromEntries(regions.map(r => [r.id, r]))
+      }))
+    }
+
     let speciesPromise
     if(this.sourceId) {
       speciesPromise = api.species({ source_id: this.sourceId })
@@ -811,11 +877,17 @@ export default {
     speciesById: function(id) {
       return this.speciesLookup[id]
     },
+    regionById: function(id) {
+      return this.regionLookup[id]
+    },
     deselectSpecies: function(id) {
       this.criteria.species = this.criteria.species.filter(x => x !== id)
     },
     deselectSite: function(site) {
       this.criteria.sites = this.criteria.sites.filter(x => x != site)
+    },
+    deselectRegion: function(id) {
+      this.criteria.regions = this.criteria.regions.filter(x => x !== id)
     },
     importSpeciesList: function() {
       readTextFile('text/plain, text/csv', (text) => {
@@ -960,6 +1032,10 @@ export default {
         params.monitoring_programs = this.criteria.monitoringPrograms.map(x => x.id)
       }
 
+      if(this.enableRegionFilter && this.criteria.regions.length > 0) {
+        params.regions = this.criteria.regions.join(",")
+      }
+
       if(this.enableStateFilter && this.criteria.state) {
         params.state = this.criteria.state
       }
@@ -1021,6 +1097,10 @@ export default {
       params.species_name_query = query || ''
       return api.dataSubsetSpecies(params)
         .then(species => species.map(sp => ({ ...sp, label: speciesLabel(sp) })))
+    },
+    queryRegions: async function(query) {
+      return this.options.regions.filter(region =>
+        !this.criteria.state || region.state == this.criteria.state)
     },
     updateStats: function() {
       this.stats = null

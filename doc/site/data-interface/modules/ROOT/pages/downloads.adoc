@@ -30,6 +30,16 @@ This filter is only available on the Downloads page.
 
 User may select a single state or territory, or leave unspecified to include data from all states/territories.
 
+=== Regions
+
+This filter is only available on the Downloads page.
+
+This filter uses a searchable drop down list consisting of all SubIBRA regions. If a state filter has also been specified, only regions in the selected state will be available for selection.
+
+The user may select any number of regions. The selected regions are displayed in a table showing the region name and state.
+
+When one or more regions are selected, only surveys falling inside those regions will be included in the filtered dataset.
+
 === Programs
 
 This filter is only available on the Downloads page.
