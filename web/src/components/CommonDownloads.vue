@@ -531,14 +531,25 @@
   </div>
 
   <div class="block">
-    <button
-      type="button"
-      class="button is-primary"
-      :disabled="!enableGenerateTrend"
-      @click="generateTrend"
-    >
-      Generate Population Trend
-    </button>
+    <div class="buttons">
+      <button
+        type="button"
+        class="button is-primary"
+        :disabled="!enableGenerateTrend"
+        @click="generateTrend"
+      >
+        Generate Population Trend
+      </button>
+      <button
+        v-if="enableLogLinearTrend"
+        type="button"
+        class="button is-primary"
+        :disabled="!enableGenerateTrend"
+        @click="() => generateTrend({ model: 'log-linear' })"
+      >
+        Generate Population Trend (log-linear)
+      </button>
+    </div>
     <p
       v-if="trendStatus == 'error'"
       class="help is-danger block"
@@ -629,7 +640,8 @@ export default {
     enableTaxonomicGroupFilter: Boolean,
     enableMap: Boolean,
     enableTaxonStatusFilter: Boolean,
-    enableRegionFilter: Boolean
+    enableRegionFilter: Boolean,
+    enableLogLinearTrend: Boolean
   },
   data() {
     return {
@@ -697,7 +709,7 @@ export default {
       return this.status === 'submitting'
     },
     enableDownload: function() {
-      return (!this.enableProgramFilter || this.criteria.monitoringPrograms.length > 0) && this.stats && this.stats.sighting_count > 0
+      return this.stats && this.stats.sighting_count > 0
     },
     enableGenerateTrend: function() {
       return this.enableDownload
@@ -906,11 +918,12 @@ export default {
       var params = this.buildDownloadParams()
       window.location = api.dataSubsetDownloadURL('time_series', params)
     },
-    generateTrend: function() {
+    generateTrend: function(options) {
       let params = {
         reference_year: this.trendReferenceYear,
         final_year: this.trendFinalYear,
-        ...this.buildDownloadParams()
+        ...this.buildDownloadParams(),
+        ...options
       }
       let v = this.changeCounter // used to detect if parameters are changed during trend generation
       this.trendDiagnosticsText = null

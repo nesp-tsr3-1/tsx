@@ -144,6 +144,7 @@
                 <source-downloads
                   :source-id="sourceId"
                   :enable-map="true"
+                  :enable-log-linear-trend="true"
                 />
               </div>
             </div>

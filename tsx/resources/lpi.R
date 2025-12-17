@@ -2,7 +2,7 @@ library(rlpi)
 library(dplyr)
 library(tidyr)
 
-## Usage: lpi.R input_file work_dir [refYear] [plotMax] [--filter-rows]
+## Usage: lpi.R input_file work_dir [refYear] [plotMax] [--filter-rows] [--log-linear]
 
 args <- commandArgs(TRUE)
 
@@ -52,6 +52,8 @@ if(filterRows) {
   }
 }
 
+logLinear <- any(args == '--log-linear')
+
 infile_name <- create_infile(data, name='data', start_col_name=min(yearCols), end_col_name=max(yearCols))
 
 nesp_lpi<-LPIMain(
@@ -59,6 +61,7 @@ nesp_lpi<-LPIMain(
   REF_YEAR=refYear,
   PLOT_MAX=plotMax - 1, # Note: this is because rlpi adds an extra year for some reason
   BOOT_STRAP_SIZE=1000,
+  GAM_GLOBAL_FLAG=ifelse(logLinear, 0, 1),
   VERBOSE=TRUE,
   goParallel=FALSE,
   title="Title",

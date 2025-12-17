@@ -760,6 +760,8 @@ def process_trend(trend_id):
                     script_params.append(str(params_json['reference_year']))
                     if 'final_year' in params_json:
                         script_params.append(str(params_json['final_year']))
+                if params_json.get('model') == 'log-linear':
+                    script_params.append('--log-linear')
         except:
             pass
 
