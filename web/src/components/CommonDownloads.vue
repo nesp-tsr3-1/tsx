@@ -88,23 +88,18 @@
     >
       <label class="label">Programs</label>
       <div class="control">
-        <div
-          v-for="program in options.monitoringPrograms"
-          :key="program.id"
-        >
-          <label><input
-            v-model="criteria.monitoringPrograms"
-            type="checkbox"
-            :value="program"
-            :disabled="isProgramDisabled(program)"
-          > {{ program.description }}</label>
-        </div>
-        <p
-          v-if="criteria.monitoringPrograms.length == 0"
-          style="margin-top: 1em; font-style: italic;"
-        >
-          At least one program must be selected
-        </p>
+        <Multiselect
+          v-model="criteria.monitoringPrograms"
+          mode="tags"
+          :options="options.monitoringPrograms"
+          :searchable="true"
+          :can-clear="canAccessAllPrograms"
+          no-options-text="No programs found"
+          placeholder="Any or no program"
+          label="description"
+          value-prop="id"
+          @deselect="handleProgramDeselect"
+        />
       </div>
     </div>
     <div
@@ -765,27 +760,14 @@ export default {
     },
     isAdmin: function() {
       return this.user?.is_admin
+    },
+    canAccessAllPrograms() {
+      return this.isAdmin
     }
   },
   watch: {
     criteria: {
       handler() {
-        // Update programs first if necessary
-        if(this.enableProgramFilter) {
-          let selectedProgramIds = this.criteria.monitoringPrograms.map(p => p.id).sort()
-          let anyProgramSelected = selectedProgramIds.includes('any')
-          let noProgramSelected = selectedProgramIds.includes('none')
-          if(anyProgramSelected) {
-            let newPrograms = this.options.monitoringPrograms.filter(p => noProgramSelected || p.id !== 'none')
-            let newProgramIds = newPrograms.map(p => p.id).sort()
-
-            if(selectedProgramIds.join() != newProgramIds.join()) {
-              this.criteria.monitoringPrograms = newPrograms
-              return
-            }
-          }
-        }
-
         this.changeCounter++
         var c = this.changeCounter
 
@@ -820,10 +802,13 @@ export default {
           }
         }).then((programs) => {
           if(this.user.is_admin) {
-            programs = [{ description: 'Any program', id: 'any' }, { description: 'No program', id: 'none' }].concat(programs)
+            programs = [{ description: '(No program)', id: 'none' }].concat(programs)
           }
           this.options.monitoringPrograms = programs
-          this.criteria.monitoringPrograms = programs.filter(p => p.id != 'none') // select all programs by default
+          if(!this.user.is_admin) {
+            // select all programs by default
+            this.criteria.monitoringPrograms = programs.filter(p => p.id != 'none')
+          }
         })
       )
     }
@@ -832,7 +817,7 @@ export default {
       this.regionLookup = {}
       initialisationPromises.push(api.regions().then((regions) => {
         for(let region of regions) {
-          region.label = region.name + " (" + region.state + ")"
+          region.label = region.name + ' (' + region.state + ')'
         }
         regions.sort((a, b) => a.label.localeCompare(b.label))
         this.options.regions = regions
@@ -888,6 +873,12 @@ export default {
     },
     deselectRegion: function(id) {
       this.criteria.regions = this.criteria.regions.filter(x => x !== id)
+    },
+    handleProgramDeselect: function(value, option, select$) {
+      // Prevent deselection of last program for non-admin
+      if(!this.canAccessAllPrograms && this.criteria.monitoringPrograms.length == 0) {
+        this.criteria.monitoringPrograms = [value]
+      }
     },
     importSpeciesList: function() {
       readTextFile('text/plain, text/csv', (text) => {
@@ -1028,12 +1019,12 @@ export default {
         params.source_id = this.sourceId
       }
 
-      if(this.enableProgramFilter) {
-        params.monitoring_programs = this.criteria.monitoringPrograms.map(x => x.id)
+      if(this.enableProgramFilter && this.criteria.monitoringPrograms.length > 0) {
+        params.monitoring_programs = this.criteria.monitoringPrograms
       }
 
       if(this.enableRegionFilter && this.criteria.regions.length > 0) {
-        params.regions = this.criteria.regions.join(",")
+        params.regions = this.criteria.regions.join(',')
       }
 
       if(this.enableStateFilter && this.criteria.state) {
@@ -1075,13 +1066,6 @@ export default {
         return x + ' ' + singular
       } else {
         return x.toLocaleString() + ' ' + plural
-      }
-    },
-    isProgramDisabled: function(program) {
-      if(program.id == 'any' || program.id == 'none') {
-        return false
-      } else {
-        return this.criteria.monitoringPrograms.map(p => p.id).includes('any')
       }
     },
     querySites: function(query) {

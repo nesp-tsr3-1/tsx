@@ -34,7 +34,7 @@ User may select a single state or territory, or leave unspecified to include dat
 
 This filter is only available on the Downloads page.
 
-This filter uses a searchable drop down list consisting of all SubIBRA regions. If a state filter has also been specified, only regions in the selected state will be available for selection.
+This filter uses a searchable drop down list of all SubIBRA regions with multiple selection allowed. If a state filter has also been specified, only regions in the selected state will be available for selection.
 
 The user may select any number of regions. The selected regions are displayed in a table showing the region name and state.
 
@@ -44,11 +44,9 @@ When one or more regions are selected, only surveys falling inside those regions
 
 This filter is only available on the Downloads page.
 
-For Program Managers, only programs that they have access to are listed. For Administrators, all programs are listed, as well as an 'Any program' and 'No program' option.
+The filter uses a searchable drop down list with multiple selection allowed. For Program Managers, only programs that they manage are listed. For Administrators, all programs are listed, as well as a 'No program' option. The 'No program' option causes data with no associated monitoring program to be included.
 
-The various programs are listed as checkboxes, so any combination of programs can be selected. If the 'Any program' is option selected, all other programs are automatically selected and disabled.
-
-The 'No program' option causes data with no associated monitoring program to be included.
+For Program Managers, all of the programs they manage are automatically selected and they are prevented from deselecting all programs as this would result in an empty dataset. For Administrators, no programs are selected by default, which corresponds to no filtering of records based on program.
 
 === Taxonomic Group
 
