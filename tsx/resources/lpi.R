@@ -1,8 +1,9 @@
 library(rlpi)
 library(dplyr)
 library(tidyr)
+library(stringr)
 
-## Usage: lpi.R input_file work_dir [refYear] [plotMax] [--filter-rows] [--log-linear]
+## Usage: lpi.R input_file work_dir [refYear] [plotMax] [--filter-rows] [--log-linear] [--excluded-years=YYYY,YYYY...]
 
 args <- commandArgs(TRUE)
 
@@ -53,6 +54,17 @@ if(filterRows) {
 }
 
 logLinear <- any(args == '--log-linear')
+
+# Set excluded years to NA
+excludedYears <- args %>%
+  str_match('--excluded-years=(.*)') %>%
+  .[,2] %>%
+  str_split(",") %>%
+  unlist %>%
+  na.omit %>%
+  sprintf("X%s", .)
+
+data[excludedYears] <- NA
 
 infile_name <- create_infile(data, name='data', start_col_name=min(yearCols), end_col_name=max(yearCols))
 

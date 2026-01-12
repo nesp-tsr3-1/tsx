@@ -293,6 +293,9 @@ def filename_component_from_params(params=None):
     if 'final_year' in params:
         parts.append(('final_year', params['final_year']))
 
+    if 'excluded_years' in params:
+        parts.append(('excl_years', ",".join(params['excluded_years'])))
+
     result = sanitise_file_name_string("&".join("%s=%s" % (k, v) for k, v in parts))
 
     # Truncate result if too long and add hash
@@ -762,6 +765,8 @@ def process_trend(trend_id):
                         script_params.append(str(params_json['final_year']))
                 if params_json.get('model') == 'log-linear':
                     script_params.append('--log-linear')
+                if params_json.get('excluded_years'):
+                    script_params.append('--excluded-years=' + params_json.get('excluded_years'))
         except:
             pass
 

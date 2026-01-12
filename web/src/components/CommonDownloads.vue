@@ -476,6 +476,18 @@
     </h4>
     <div class="sideborder block">
       <div class="field is-horizontal">
+        <label class="radio"><input
+          v-model="yearSelectionType"
+          type="radio"
+          name="yearSelectionType"
+          value="range"
+        > Select year range
+        </label>
+      </div>
+      <div
+        v-if="yearSelectionType == 'range'"
+        class="field is-horizontal"
+      >
         <div class="field-label is-normal">
           <label class="label">Reference year</label>
         </div>
@@ -498,7 +510,10 @@
           </div>
         </div>
       </div>
-      <div class="field is-horizontal">
+      <div
+        v-if="yearSelectionType == 'range'"
+        class="field is-horizontal"
+      >
         <div class="field-label is-normal">
           <label class="label">Final year</label>
         </div>
@@ -519,6 +534,37 @@
               </select>
             </div>
           </div>
+        </div>
+      </div>
+      <div class="field is-horizontal">
+        <label class="radio"><input
+          v-model="yearSelectionType"
+          type="radio"
+          name="yearSelectionType"
+          value="individual"
+        > Select individual years
+        </label>
+      </div>
+      <div
+        v-if="yearSelectionType == 'individual'"
+        id="year-selector"
+      >
+        <div
+          v-for="{ year, included } in yearSelection"
+          :key="year"
+        >
+          <label
+            class="checkbox"
+            @mousedown="handleTrendYearSelectionMousedown(year, $event)"
+            @click="handleTrendYearSelectionClick(year, $event)"
+          >
+            <input
+              type="checkbox"
+              :checked="included"
+              @focus="handleTrendYearSelectionFocus(year, $event)"
+              @blur="handleTrendYearSelectionBlur(year, $event)"
+            > {{ year }}
+          </label>
         </div>
       </div>
       <p
@@ -699,6 +745,9 @@ export default {
       heatmapData: [],
       trendReferenceYear: null,
       trendFinalYear: null,
+      trendExcludedYears: new Set(),
+      yearWithFocus: null,
+      yearSelectionType: 'range',
       consistencyPlotStatus: 'idle',
       trendDiagnosticsText: null,
       user: null
@@ -761,12 +810,22 @@ export default {
         return []
       }
     },
+    trendIncludedYears: function() {
+      return new Set(this.availableYears).difference(this.trendExcludedYears)
+    },
     trendParamsError: function() {
       if(this.stats && this.stats.min_year === this.stats.max_year) {
         return 'Insufficient data available to generate a trend'
       }
-      if(this.trendReferenceYear >= this.trendFinalYear) {
-        return 'Reference year must be earlier than final year'
+      if(this.yearSelectionType == 'range') {
+        if(this.trendReferenceYear >= this.trendFinalYear) {
+          return 'Reference year must be earlier than final year'
+        }
+      }
+      if(this.yearSelectionType == 'individual') {
+        if(this.trendIncludedYears.size < 2) {
+          return 'At least two years must be selected to generate a trend'
+        }
       }
       return undefined
     },
@@ -775,6 +834,12 @@ export default {
     },
     canAccessAllPrograms() {
       return this.isAdmin
+    },
+    yearSelection: function() {
+      return this.availableYears.map(year => ({
+        year,
+        included: !this.trendExcludedYears.has(year)
+      }))
     }
   },
   watch: {
@@ -919,9 +984,24 @@ export default {
       window.location = api.dataSubsetDownloadURL('time_series', params)
     },
     generateTrend: function(options) {
+      let yearParams
+
+      if(this.yearSelectionType == 'range') {
+        yearParams = {
+          reference_year: this.trendReferenceYear,
+          final_year: this.trendFinalYear
+        }
+      } else if(this.yearSelectionType == 'individual') {
+        let includedYears = this.trendIncludedYears
+        yearParams = {
+          reference_year: Math.min(...includedYears),
+          final_year: Math.max(...includedYears),
+          excluded_years: [...this.trendExcludedYears].sort().join(',')
+        }
+      }
+
       let params = {
-        reference_year: this.trendReferenceYear,
-        final_year: this.trendFinalYear,
+        ...yearParams,
         ...this.buildDownloadParams(),
         ...options
       }
@@ -1122,6 +1202,55 @@ export default {
           }
         })
       }
+    },
+    handleTrendYearSelectionClick(year, event) {
+      // Clicking on a checkbox label triggers a separate event on the input element, but browsers do different things when the shift key is held down. We work around this by ensuring that we only process one click event per actual click.
+      if(this.handleTrendYearSelectionClick.ignoreNext) {
+        return
+      } else {
+        this.handleTrendYearSelectionClick.ignoreNext = true
+        setTimeout(() => {
+          this.handleTrendYearSelectionClick.ignoreNext = false
+        })
+      }
+
+      let excludedYears = new Set(this.trendExcludedYears)
+      let minYear = Math.min(year, this.yearSelectionStart || year)
+      let maxYear = Math.max(year, this.yearSelectionStart || year)
+      if(excludedYears.has(year)) {
+        for(let y = minYear; y <= maxYear; y++) {
+          excludedYears.delete(y)
+        }
+      } else {
+        for(let y = minYear; y <= maxYear; y++) {
+          excludedYears.add(y)
+        }
+      }
+      // Updating this asynchronously avoids problems relating interactions between Vue internals and our logic
+      setTimeout(() => {
+        this.trendExcludedYears = excludedYears
+      })
+      this.yearSelectionStart = null
+
+      // On Safari, clicking a checkbox doesn't cause it to receive focus so we have to do it programatically
+      if(event.target.tagName == 'INPUT') {
+        event.target.focus()
+      } else {
+        event.target.querySelector('input')?.focus()
+      }
+    },
+    handleTrendYearSelectionMousedown(year, event) {
+      if(event.shiftKey) {
+        this.yearSelectionStart = this.yearWithFocus
+      } else {
+        this.yearSelectionStart = null
+      }
+    },
+    handleTrendYearSelectionFocus(year, event) {
+      this.yearWithFocus = year
+    },
+    handleTrendYearSelectionBlur(year, event) {
+      this.yearWithFocus = null
     }
   }
 }
@@ -1138,6 +1267,15 @@ function speciesLabel(sp) {
 .sideborder {
   border-left: 2px solid #eee;
   padding-left:  1em;
+}
+#year-selector :focus {
+  /*box-shadow: 0 0 0 1pt #ccc;*/
+  outline: 2px solid #ccc;
+  border-radius: 4px;
+}
+#year-selector {
+  user-select: none;
+  padding-left: 4em;
 }
 </style>
 <style src="@vueform/multiselect/themes/default.css"></style>
