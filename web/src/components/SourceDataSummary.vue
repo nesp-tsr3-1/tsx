@@ -25,6 +25,8 @@
           <div class="table-header-title">
             <em>{{ taxon.scientific_name }}</em> <span v-if="taxon.common_name">({{ firstCommonName(taxon) }})</span>
           </div>
+          <div style="flex-grow: 1"></div>
+          <div><span class="tag is-medium">{{sourceId}}_{{taxon.taxon_id}}</span></div>
           <ul
             v-if="showNavigationButtons"
             class="table-header-links"
@@ -371,6 +373,7 @@ caption .notification {
 }
 .table-header {
   display: flex;
+  gap: 0.5em;
   justify-content: space-between;
   align-items: center;
   padding: 1em 0.75em;
