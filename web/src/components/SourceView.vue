@@ -91,6 +91,22 @@
             </div>
           </div>
 
+          <template v-if="viewHistoryPermitted">
+            <hr>
+
+            <h4
+              id="summary_top"
+              class="title is-4"
+            >
+              Update History
+            </h4>
+
+            <source-history
+              ref="sourceHistory"
+              :source-id="sourceId"
+            />
+          </template>
+
           <hr>
 
           <h4
@@ -238,6 +254,7 @@ import ProcessingNotes from './ProcessingNotes.vue'
 import SourceCustodians from './SourceCustodians.vue'
 import SourceDownloads from './SourceDownloads.vue'
 import SourceDataSummary from './SourceDataSummary.vue'
+import SourceHistory from './SourceHistory.vue'
 
 export default {
   name: 'SourceView',
@@ -247,7 +264,8 @@ export default {
     'processing-notes': ProcessingNotes,
     'source-custodians': SourceCustodians,
     'source-downloads': SourceDownloads,
-    'source-data-summary': SourceDataSummary
+    'source-data-summary': SourceDataSummary,
+    'source-history': SourceHistory
   },
   data() {
     return {
@@ -275,6 +293,9 @@ export default {
     },
     manageCustodiansPermitted() {
       return this.source && this.source.can_manage_custodians
+    },
+    viewHistoryPermitted() {
+      return this.source?.can_view_history
     },
     citation() {
       return this.source && generateCitation(this.source.authors, this.source.details, this.source.provider)

@@ -4,7 +4,7 @@ from tsx.api.util import db_session, get_user, get_roles, get_executor
 from tsx.api.upload import get_upload_path, get_upload_name
 from tsx.importer import Importer
 from tsx.config import data_dir
-from tsx.db import User, Source, get_session, DataImport, DataProcessingNotes, t_user_source
+from tsx.db import User, Source, get_session, DataImport, DataProcessingNotes, t_user_source, AuditLogItem
 import logging
 import os
 from threading import Thread, Lock
@@ -135,6 +135,7 @@ def get_source(source_id=None):
 	result['can_delete'] = permitted(user, 'delete', 'source', source_id)
 	result['can_import_data'] = permitted(user, 'import_data', 'source', source_id)
 	result['can_manage_custodians'] = permitted(user, 'manage_custodians', 'source', source_id)
+	result['can_view_history'] = permitted(user, 'view_history', 'source', source_id)
 
 	is_admin = 'Administrator' in get_roles(user)
 	result['show_no_agreement_message'] = is_admin and source.data_agreement_status.code == 'no_agreement'
@@ -411,6 +412,34 @@ def site_summary(source_id=None):
 	[(result,)] = db_session.execute(text(sql), { 'source_id': source_id })
 	return Response(result or "[]", mimetype='application/json')
 
+@bp.route('/data_sources/<int:source_id>/history', methods = ['GET'])
+def get_source_history(source_id=None):
+	user = get_user()
+
+	if not permitted(user, 'view_history', 'source', source_id):
+		return "Not authorised", 401
+
+	sql = """
+	SELECT
+		JSON_ARRAYAGG(JSON_OBJECT(
+			'user', JSON_OBJECT(
+				'first_name', user.first_name,
+				'last_name', user.last_name,
+				'id', user.id
+			),
+			'action_name', audit_log_item.action_name,
+			'data', audit_log_item.resource_data,
+			'user_agent', audit_log_item.user_agent,
+			'time_recorded', DATE_FORMAT(audit_log_item.time_recorded, "%Y-%m-%d %H:%i:%sZ")
+		))
+	FROM audit_log_item
+	LEFT JOIN user ON user.id = audit_log_item.user_id
+	WHERE resource_id = :source_id
+	AND action_name IN ('CREATE_SOURCE', 'UPDATE_SOURCE')
+	"""
+
+	[(result,)] = db_session.execute(text(sql), { 'source_id': source_id })
+	return Response(result or "[]", mimetype='application/json')
 
 def create_or_update_source(source_id=None):
 	action = 'update' if source_id else 'create'
@@ -422,14 +451,15 @@ def create_or_update_source(source_id=None):
 
 	if source_id:
 		source = db_session.query(Source).get(source_id)
+		old_source_json = source_to_json(source)
 	else:
 		source = Source()
+		old_source_json = {}
 
 	if not source:
 		return "Not found", 400
 
 	body = request.json
-
 
 	is_admin = 'Administrator' in get_roles(user)
 	update_data_agreements = is_admin
@@ -466,6 +496,11 @@ def create_or_update_source(source_id=None):
 		for data_agreement_id in body.get('data_agreement_ids', []):
 			db_session.execute(text("""INSERT INTO source_data_agreement(source_id, data_agreement_id) VALUES (:source_id, :data_agreement_id)"""), { 'source_id': source.id, 'data_agreement_id': data_agreement_id })
 
+	db_session.refresh(source)
+	new_source_json = source_to_json(source)
+
+	audit_log_item = source_audit_log_item(old_source_json, new_source_json, action)
+	db_session.add(audit_log_item)
 
 	db_session.commit()
 
@@ -478,7 +513,39 @@ def create_or_update_source(source_id=None):
 			email=user.email
 		))
 
-	return jsonify(source_to_json(source)), 200 if source_id else 201
+	return jsonify(new_source_json), 200 if source_id else 201
+
+def source_audit_log_item(old_json, new_json, action):
+	item = AuditLogItem()
+	item.user_id = get_user().id
+	item.user_agent = request.headers.get('User-Agent')
+	item.action_name = action.upper() + "_SOURCE"
+	item.resource_id = new_json.get('id')
+
+	field_data = []
+	for field in source_fields:
+		if field.name not in new_json:
+			continue
+		elif field.name == 'data_agreement_status':
+			old_value = old_json.get('data_agreement_status_description')
+			new_value = new_json.get('data_agreement_status_description')
+		elif field.name == 'data_agreement_ids':
+			old_value = ", ".join(f['filename'] for f in old_json.get('data_agreement_files', [])) or None
+			new_value = ", ".join(f['filename'] for f in new_json.get('data_agreement_files', [])) or None
+		else:
+			old_value = old_json.get(field.name)
+			new_value = new_json.get(field.name)
+		field_data.append({
+			"name": field.name,
+			"label": field.title,
+			"old_value": old_value,
+			"new_value": new_value
+		})
+
+	item.resource_data = {
+		"fields": field_data
+	}
+	return item
 
 new_source_notification_body = Template(dedent("""
 	A new dataset was created on the TSX data interface.
@@ -522,7 +589,6 @@ def update_source_from_json(source, json):
 			pass # These are handled separately
 		else:
 			setattr(source, field.name, clean(json.get(field.name)))
-
 
 def get_monitoring_program_id(description):
 	if not description:

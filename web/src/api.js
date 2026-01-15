@@ -48,6 +48,10 @@ export function dataSourceSiteSummary(id) {
   return get('/data_sources/' + id + '/site_summary')
 }
 
+export function dataSourceHistory(id) {
+  return get('/data_sources/' + id + '/history')
+}
+
 export function createDataSourceNote(dataSourceId, notes) {
   return post('/data_sources/' + dataSourceId + '/notes', { notes })
 }

@@ -20,6 +20,18 @@ class AcknowledgementLetter(Base):
     recipient_user: Mapped[List['User']] = relationship('User', secondary='acknowledgement_letter_recipient')
 
 
+class AuditLogItem(Base):
+    __tablename__ = 'audit_log_item'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    time_recorded: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
+    action_name: Mapped[Optional[str]] = mapped_column(String(255))
+    user_id: Mapped[Optional[int]] = mapped_column(Integer)
+    resource_id: Mapped[Optional[int]] = mapped_column(Integer)
+    resource_data: Mapped[Optional[dict]] = mapped_column(JSON)
+    user_agent: Mapped[Optional[str]] = mapped_column(Text)
+
+
 class DataAgreementStatus(Base):
     __tablename__ = 'data_agreement_status'
     __table_args__ = (
