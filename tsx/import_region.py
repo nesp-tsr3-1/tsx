@@ -5,7 +5,7 @@ import argparse
 from tqdm import tqdm
 import shapely.wkb
 import shapely.ops
-from tsx.geo import reproject_fn, to_multipolygon, subdivide_geometry
+from tsx.geo import to_multipolygon, subdivide_geometry
 from shapely.geometry import shape
 from fiona.transform import transform_geom
 import fiona

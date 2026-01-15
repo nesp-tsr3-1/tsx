@@ -25,8 +25,8 @@
           <div class="table-header-title">
             <em>{{ taxon.scientific_name }}</em> <span v-if="taxon.common_name">({{ firstCommonName(taxon) }})</span>
           </div>
-          <div style="flex-grow: 1"></div>
-          <div><span class="tag is-medium">{{sourceId}}_{{taxon.taxon_id}}</span></div>
+          <div style="flex-grow: 1" />
+          <div><span class="tag is-medium">{{ sourceId }}_{{ taxon.taxon_id }}</span></div>
           <ul
             v-if="showNavigationButtons"
             class="table-header-links"

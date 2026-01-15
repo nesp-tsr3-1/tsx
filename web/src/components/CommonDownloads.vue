@@ -1269,7 +1269,6 @@ function speciesLabel(sp) {
   padding-left:  1em;
 }
 #year-selector :focus {
-  /*box-shadow: 0 0 0 1pt #ccc;*/
   outline: 2px solid #ccc;
   border-radius: 4px;
 }
