@@ -422,6 +422,7 @@ def get_source_history(source_id=None):
 	sql = """
 	SELECT
 		JSON_ARRAYAGG(JSON_OBJECT(
+			'id', audit_log_item.id,
 			'user', JSON_OBJECT(
 				'first_name', user.first_name,
 				'last_name', user.last_name,
