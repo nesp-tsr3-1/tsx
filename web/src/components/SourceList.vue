@@ -23,12 +23,11 @@
             Showing {{ filteredSources.length }} / {{ sources.length }} datasets
           </div>
           <div class="column is-6">
-            <input
+            <AutocompleteInput
               v-model="searchText"
-              class="input"
-              type="text"
               placeholder="Search datasets"
-            >
+              :items="searchPrefixes"
+            />
           </div>
         </div>
         <div
@@ -103,31 +102,34 @@
         </thead>
         <tbody>
           <tr
-            v-for="source in sortedSources"
+            v-for="{ source, descriptionParts, propertyMatches } in sortedSources"
             :key="source.id"
             @click="$emit('clickSource', source, $event)"
           >
             <td :title="source.description">
               <template
-                v-for="([nonMatch, match], index) in source.descriptionParts"
+                v-for="([nonMatch, match], index) in descriptionParts"
                 :key="index"
               >
-                <span style="white-space: pre-wrap;">{{ nonMatch }}</span>
-                <b style="white-space: pre-wrap;">{{ match }}</b>
+                <span>{{ nonMatch }}</span>
+                <span class="match">{{ match }}</span>
               </template>
-              <div>
+              <div class="property-matches">
                 <span
-                  v-for="(parts, partsIndex) in source.custodianParts"
-                  :key="partsIndex"
+                  v-for="({property, matchParts}, matchIndex) in propertyMatches"
+                  :key="matchIndex"
                   class="tag is-info is-light"
                 >
-                  <template
-                    v-for="([nonMatch, match], index) in parts"
-                    :key="index"
-                  >
-                    <span style="white-space: pre-wrap;">{{ nonMatch }}</span>
-                    <b style="white-space: pre-wrap;">{{ match }}</b>
-                  </template>
+                  <div>
+                    <span>{{ property }}:&nbsp;</span>
+                    <template
+                      v-for="([nonMatch, match], index) in matchParts"
+                      :key="index"
+                    >
+                      <span>{{ nonMatch }}</span>
+                      <span class="match">{{ match }}</span>
+                    </template>
+                  </div>
                 </span>
               </div>
               <!-- eslint-enable -->
@@ -162,9 +164,32 @@
 <script>
 import * as api from '../api.js'
 import { humanizeStatus, formatDateTime, debounce, searchStringToRegex, matchParts } from '../util.js'
+import AutocompleteInput from './AutocompleteInput.vue'
+
+function valuesForPrefix(source, prefix) {
+  switch (prefix) {
+    case 'Data provider':
+      return [source.provider ?? '']
+    case 'Data details':
+      return [source.details ?? '']
+    case 'Author':
+      return [source.authors ?? '']
+    case 'Monitoring program':
+      return [source.monitoring_program ?? '']
+    case 'Agreement':
+      return source.data_agreement_files ?? []
+    case 'Custodian':
+      return source.custodians ?? []
+    default:
+      throw new Error('Unknown prefix: ' + prefix)
+  }
+}
 
 export default {
   name: 'SourceList',
+  components: {
+    AutocompleteInput
+  },
   props: {
     programId: {
       type: Number,
@@ -201,46 +226,97 @@ export default {
       showModified: false,
       navigationsSinceBackButtonPressed: 2,
       dataAgreementStatusOptions: null,
-      dataAgreementStatusFilter: null
+      dataAgreementStatusFilter: null,
+      searchPrefixes: [
+        'Data provider',
+        'Data details',
+        'Author',
+        'Monitoring program',
+        'Agreement',
+        'Custodian'
+      ]
     }
   },
   computed: {
     filteredSources() {
-      let matchingSources = this.sources
+      let results
+
       let search = this.debouncedSearchText
 
-      if(search) {
-        let searchRegex = searchStringToRegex(search)
+      let searchPrefix = this.searchPrefixes.filter(prefix => search.indexOf(prefix + ':') == 0)[0] ?? ''
+      let searchValue = searchPrefix ? search.substr(searchPrefix.length + 1).trim() : search.trim()
 
-        function filterSource(s) {
-          return s.description.match(searchRegex) || (s.custodians && s.custodians.some(c => c.match(searchRegex)))
-        }
+      if(searchValue) {
+        let searchRegex = searchStringToRegex(searchValue)
 
-        matchingSources = matchingSources.filter(filterSource)
-        for(let source of matchingSources) {
-          source.descriptionParts = matchParts(source.description, searchRegex)
-          source.custodianParts = (source.custodians || [])
-            .map(custodian => matchParts(custodian, searchRegex))
-            .filter(parts => parts.length > 1)
+        if(searchPrefix) {
+          results = this.sources.map((source) => {
+            let values = valuesForPrefix(source, searchPrefix)
+            let matches = values.map(v => matchParts(v, searchRegex)).filter(m => m.length > 1)
+            if(matches.length > 0) {
+              return {
+                source,
+                descriptionParts: [[source.description, '']],
+                propertyMatches: matches.map(match => ({
+                  property: searchPrefix,
+                  matchParts: match
+                }))
+              }
+            } else {
+              return undefined
+            }
+          }).filter(x => x)
+        } else {
+          results = this.sources.map((source) => {
+            let matches = matchParts(source.description, searchRegex)
+            if(matches.length > 1) {
+              return {
+                source,
+                descriptionParts: matches,
+                propertyMatches: []
+              }
+            } else {
+              return undefined
+            }
+          }).filter(x => x)
         }
       } else {
-        for(let source of matchingSources) {
-          source.descriptionParts = [[source.description, '']]
-          source.custodianParts = []
+        if(searchPrefix) {
+          results = this.sources.map((source) => {
+            let values = valuesForPrefix(source, searchPrefix).filter(x => x)
+            if(values.length) {
+              return {
+                source,
+                descriptionParts: [[source.description, '']],
+                propertyMatches: values.map(value => ({
+                  property: searchPrefix,
+                  matchParts: [[value, '']]
+                }))
+              }
+            } else {
+              return undefined
+            }
+          }).filter(x => x)
+        } else {
+          results = this.sources.map(source => ({
+            source,
+            descriptionParts: [[source.description, '']],
+            propertyMatches: []
+          }))
         }
       }
 
       let agreementStatus = this.dataAgreementStatusFilter
       if(agreementStatus) {
-        matchingSources = matchingSources.filter(s =>
-          s.data_agreement_status == agreementStatus)
+        results = results.filter(s =>
+          s.source.data_agreement_status == agreementStatus)
       }
 
-      return matchingSources
+      return results
     },
     sortedSources() {
       let key = this.sort.key
-      let result = this.filteredSources.slice().sort((a, b) => (a[key] || '').localeCompare(b[key] || ''))
+      let result = this.filteredSources.slice().sort((a, b) => (a.source[key] || '').localeCompare(b.source[key] || ''))
       if(!this.sort.asc) {
         result.reverse()
       }
@@ -354,5 +430,25 @@ export default {
   }
   .table thead th:hover {
     background: #f8f8f8;
+  }
+
+  .match {
+    font-weight: bold;
+  }
+
+  .property-matches {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    gap: 0.5em;
+
+    > .tag {
+      height: auto;
+      min-height: 2em;
+      white-space: pre-wrap;
+      max-width: 100%;
+      overflow: hidden;
+
+    }
   }
 </style>

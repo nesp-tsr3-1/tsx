@@ -77,9 +77,20 @@ def get_sources():
 					AND user.email IS NOT NULL
 				),
 				'data_agreement_status_description', data_agreement_status.description,
-				'data_agreement_status', data_agreement_status.code
+				'data_agreement_status', data_agreement_status.code,
+				'authors', source.authors,
+				'provider', source.provider,
+				'details', source.details,
+				'monitoring_program', monitoring_program.description,
+				'data_agreement_files', (
+					SELECT JSON_ARRAYAGG(data_agreement_file.filename)
+					FROM source_data_agreement
+					JOIN data_agreement_file ON data_agreement_file.data_agreement_id = source_data_agreement.data_agreement_id
+					WHERE source_data_agreement.source_id = source.id
+				)
 			))
 		FROM source
+		LEFT JOIN monitoring_program ON monitoring_program.id = source.monitoring_program_id
 		LEFT JOIN (SELECT source_id, max(data_import.id) AS data_import_id FROM data_import GROUP BY source_id) AS latest_import
 			ON latest_import.source_id = source.id
 		LEFT JOIN data_import ON latest_import.data_import_id = data_import.id
