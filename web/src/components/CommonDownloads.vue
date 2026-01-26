@@ -1276,5 +1276,8 @@ function speciesLabel(sp) {
   user-select: none;
   padding-left: 4em;
 }
+#year-selector:has(> :nth-child(24)) {
+  columns: 5em;
+}
 </style>
 <style src="@vueform/multiselect/themes/default.css"></style>
