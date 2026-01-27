@@ -551,7 +551,7 @@
       >
         <div
           v-for="chunk in splitIntoChunks(yearSelection, 10)"
-          :key="chunk[0]">
+          :key="chunk[0].year">
           <div
             v-for="{ year, included } in chunk"
             :key="year"
