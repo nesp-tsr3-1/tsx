@@ -355,6 +355,10 @@ def create_source_custodian(source_id=None):
 	if len(list(rows)) == 0:
 		db_session.execute(text("""INSERT INTO user_source (user_id, source_id) VALUES (:user_id, :source_id)"""),
 			{ 'source_id': source_id, 'user_id': custodian.id })
+
+		audit_log_item = custodian_audit_log_item(source_id, custodian, 'add')
+		db_session.add(audit_log_item)
+
 		db_session.commit()
 
 	return "OK", 201
@@ -366,9 +370,17 @@ def delete_source_custodian(source_id=None, user_id=None):
 	if not permitted(user, 'manage_custodians', 'source', source_id):
 		return "Not authorised", 401
 
+	custodian = db_session.query(User).get(user_id)
+	if not custodian:
+		return "Not found", 404
+
 	db_session.execute(text("""DELETE FROM user_source
 		WHERE user_id = :user_id
 		AND source_id = :source_id"""), { 'source_id': source_id, 'user_id': user_id })
+
+	audit_log_item = custodian_audit_log_item(source_id, custodian, 'remove')
+	db_session.add(audit_log_item)
+
 	db_session.commit()
 
 	return "OK", 200
@@ -447,7 +459,7 @@ def get_source_history(source_id=None):
 	FROM audit_log_item
 	LEFT JOIN user ON user.id = audit_log_item.user_id
 	WHERE resource_id = :source_id
-	AND action_name IN ('CREATE_SOURCE', 'UPDATE_SOURCE')
+	AND action_name IN ('CREATE_SOURCE', 'UPDATE_SOURCE', 'ADD_CUSTODIAN', 'REMOVE_CUSTODIAN')
 	"""
 
 	[(result,)] = db_session.execute(text(sql), { 'source_id': source_id })
@@ -527,10 +539,14 @@ def create_or_update_source(source_id=None):
 
 	return jsonify(new_source_json), 200 if source_id else 201
 
-def source_audit_log_item(old_json, new_json, action):
+def new_audit_log_item():
 	item = AuditLogItem()
 	item.user_id = get_user().id
 	item.user_agent = request.headers.get('User-Agent')
+	return item
+
+def source_audit_log_item(old_json, new_json, action):
+	item = new_audit_log_item()
 	item.action_name = action.upper() + "_SOURCE"
 	item.resource_id = new_json.get('id')
 
@@ -556,6 +572,20 @@ def source_audit_log_item(old_json, new_json, action):
 
 	item.resource_data = {
 		"fields": field_data
+	}
+	return item
+
+def custodian_audit_log_item(source_id, custodian, action):
+	item = new_audit_log_item()
+	item.action_name = action.upper() + "_CUSTODIAN"
+	item.resource_id = source_id
+	item.resource_data = {
+		"custodian": {
+			"user_id": custodian.id,
+			"email": custodian.email,
+			"first_name": custodian.first_name,
+			"last_name": custodian.last_name
+		}
 	}
 	return item
 

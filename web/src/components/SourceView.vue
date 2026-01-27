@@ -132,7 +132,11 @@
                 <p class="content">
                   Custodians are users who have access to import data and edit details for this dataset.
                 </p>
-                <source-custodians :source-id="sourceId" />
+                <source-custodians
+                  :source-id="sourceId"
+                  @added-custodian="handleAddedCustodian"
+                  @removed-custodian="handleRemovedCustodian"
+                />
               </div>
             </div>
           </div>
@@ -337,7 +341,13 @@ export default {
         this.showDownloads = source.has_t1_data
       })
     },
-    uploadURL: api.uploadURL
+    uploadURL: api.uploadURL,
+    handleAddedCustodian() {
+      this.$refs.sourceHistory.refresh()
+    },
+    handleRemovedCustodian() {
+      this.$refs.sourceHistory.refresh()
+    }
   }
 }
 </script>

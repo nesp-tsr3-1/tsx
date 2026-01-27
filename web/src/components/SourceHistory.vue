@@ -80,6 +80,26 @@
                 No changes recorded.
               </p>
             </div>
+
+            <table
+              v-if="item.action_name == 'ADD_CUSTODIAN' || item.action_name == 'REMOVE_CUSTODIAN'"
+              class="table"
+            >
+              <tbody>
+                <tr v-if="item.data.custodian.first_name">
+                  <th>First name</th>
+                  <td>{{ item.data.custodian.first_name }}</td>
+                </tr>
+                <tr v-if="item.data.custodian.last_name">
+                  <th>Last name</th>
+                  <td>{{ item.data.custodian.last_name }}</td>
+                </tr>
+                <tr>
+                  <th>Email address</th>
+                  <td>{{ item.data.custodian.email }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </details>
       </div>
@@ -95,6 +115,8 @@ function actionDescription(name) {
   switch (name) {
     case 'CREATE_SOURCE': return 'Dataset created'
     case 'UPDATE_SOURCE': return 'Dataset updated'
+    case 'ADD_CUSTODIAN': return 'Custodian added'
+    case 'REMOVE_CUSTODIAN': return 'Custodian removed'
     default: return name
   }
 }

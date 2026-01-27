@@ -17,7 +17,7 @@
           :key="user.id"
           :user="user"
           :source-id="sourceId"
-          @deleted="refresh"
+          @deleted="handleDeleteCustodian"
         >
           <div class="column is-half">
             <div class="card">
@@ -107,6 +107,7 @@ export default {
       required: true
     }
   },
+  emits: ['addedCustodian', 'removedCustodian'],
   data() {
     return {
       users: [],
@@ -139,6 +140,10 @@ export default {
         this.status = 'error'
       })
     },
+    handleDeleteCustodian() {
+      this.$emit('removedCustodian')
+      this.refresh()
+    },
     addUser() {
       if(this.newCustodianEmail.trim() === '') {
         return
@@ -147,6 +152,7 @@ export default {
       api.addDataSourceCustodian(this.sourceId, this.newCustodianEmail.trim()).then(() => {
         this.newCustodianEmail = ''
         this.refresh()
+        this.$emit('addedCustodian')
         this.submitStatus = 'init'
       }).catch((error) => {
         this.submitErrorMessage = (error.json && error.json.error) || 'Something went wrong'
