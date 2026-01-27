@@ -474,7 +474,10 @@
     <h4 class="title is-6">
       Population Trend
     </h4>
-    <div class="sideborder block">
+    <div
+      v-if="stats"
+      class="sideborder block"
+    >
       <div class="field is-horizontal">
         <label class="radio"><input
           v-model="yearSelectionType"
@@ -551,7 +554,8 @@
       >
         <div
           v-for="chunk in splitIntoChunks(yearSelection, 10)"
-          :key="chunk[0].year">
+          :key="chunk[0].year"
+        >
           <div
             v-for="{ year, included } in chunk"
             :key="year"
@@ -577,6 +581,13 @@
       >
         {{ trendParamsError }}
       </p>
+    </div>
+    <div v-else>
+      Loading...
+      <spinner
+        size="small"
+        style="display: inline-block;"
+      />
     </div>
   </div>
 
