@@ -550,21 +550,25 @@
         id="year-selector"
       >
         <div
-          v-for="{ year, included } in yearSelection"
-          :key="year"
-        >
-          <label
-            class="checkbox"
-            @mousedown="handleTrendYearSelectionMousedown(year, $event)"
-            @click="handleTrendYearSelectionClick(year, $event)"
+          v-for="chunk in splitIntoChunks(yearSelection, 10)"
+          :key="chunk[0]">
+          <div
+            v-for="{ year, included } in chunk"
+            :key="year"
           >
-            <input
-              type="checkbox"
-              :checked="included"
-              @focus="handleTrendYearSelectionFocus(year, $event)"
-              @blur="handleTrendYearSelectionBlur(year, $event)"
-            > {{ year }}
-          </label>
+            <label
+              class="checkbox"
+              @mousedown="handleTrendYearSelectionMousedown(year, $event)"
+              @click="handleTrendYearSelectionClick(year, $event)"
+            >
+              <input
+                type="checkbox"
+                :checked="included"
+                @focus="handleTrendYearSelectionFocus(year, $event)"
+                @blur="handleTrendYearSelectionBlur(year, $event)"
+              > {{ year }}
+            </label>
+          </div>
         </div>
       </div>
       <p
@@ -664,7 +668,7 @@ import HeatMap from './HeatMap.vue'
 import { plotTrend, generateTrendPlotData, trendDiagnosticsText } from '../plotTrend.js'
 import { plotConsistency } from '../plotConsistency.js'
 import { Tippy } from 'vue-tippy'
-import { readTextFile, extractSpeciesIDsFromCSV, saveTextFile, generateSpeciesCSV } from '../util.js'
+import { readTextFile, extractSpeciesIDsFromCSV, saveTextFile, generateSpeciesCSV, splitIntoChunks } from '../util.js'
 import { markRaw } from 'vue'
 
 export default {
@@ -1251,7 +1255,8 @@ export default {
     },
     handleTrendYearSelectionBlur(year, event) {
       this.yearWithFocus = null
-    }
+    },
+    splitIntoChunks
   }
 }
 
@@ -1273,11 +1278,13 @@ function speciesLabel(sp) {
   border-radius: 4px;
 }
 #year-selector {
+  columns: 5em;
   user-select: none;
   padding-left: 4em;
-}
-#year-selector:has(> :nth-child(24)) {
-  columns: 5em;
+
+  > div {
+    break-inside: avoid-column;
+  }
 }
 </style>
 <style src="@vueform/multiselect/themes/default.css"></style>

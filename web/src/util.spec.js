@@ -12,7 +12,8 @@ import {
   throttle,
   searchStringToRegex,
   matchParts,
-  capitalise
+  capitalise,
+  splitIntoChunks
 } from './util.js'
 
 import { expect, test, describe, vi } from 'vitest'
@@ -322,4 +323,26 @@ describe('capitalise', () => {
     (input, expectedResult) => {
       expect(capitalise(input)).toBe(expectedResult)
     })
+})
+
+describe('splitIntoChunks', () => {
+  let testValues = [
+    [[], 1, []],
+    [[1,2,3], 1, [[1],[2],[3]]],
+    [[1,2,3], 2, [[1,2],[3]]],
+    [[1,2,3], 3, [[1,2,3]]],
+    [[1,2,3], 4, [[1,2,3]]]
+  ]
+
+  test.each(testValues)(
+    '\'%s\' => \'%s\'',
+    (items, chunkSize, expectedResult) => {
+      expect(splitIntoChunks(items, chunkSize)).toEqual(expectedResult)
+    })
+
+  test('fails with non-positive chunkSize', () => {
+    expect(() => splitIntoChunks([], 0)).toThrowError()
+    expect(() => splitIntoChunks([], -1)).toThrowError()
+    expect(() => splitIntoChunks([], NaN)).toThrowError()
+  })
 })
