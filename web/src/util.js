@@ -398,7 +398,7 @@ export function setupPageNavigationHighlighting(menuDom) {
 
 export function splitIntoChunks(items, chunkSize) {
   if(!(chunkSize > 0)) {
-    throw new Error("chunkSize must be greater than zero")
+    throw new Error('chunkSize must be greater than zero')
   }
   let result = []
   for(let i = 0; i < items.length; i += chunkSize) {
