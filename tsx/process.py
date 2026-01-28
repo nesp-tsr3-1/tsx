@@ -49,11 +49,11 @@ def main():
 
     p.add_argument('layers', nargs='+', choices=['alpha', 'ultrataxa', 'pa'], help='Layers to export')
 
-    p = subparsers.add_parser('range_ultrataxon')
-    p = subparsers.add_parser('pseudo_absence')
+    p = subparsers.add_parser('range_ultrataxon') # LEGACY
+    p = subparsers.add_parser('pseudo_absence') # LEGACY
     p = subparsers.add_parser('t1_aggregation')
     p = subparsers.add_parser('t2_aggregation')
-    p = subparsers.add_parser('response_variable')
+    p = subparsers.add_parser('response_variable') # LEGACY
     p = subparsers.add_parser('export_lpi')
 
     p.add_argument('--monthly', '-m', action='store_true', dest='monthly', help='Output a column for each month')

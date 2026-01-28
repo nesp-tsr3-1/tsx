@@ -1,3 +1,7 @@
+#IMPORTANT: This step is no longer used in the workflow. It has been
+# replaced by t2_aggregation. This file is only being kept around for
+# reference until we have done the next major processign of Type 2 data.
+
 from tsx.db import get_session
 from tqdm import tqdm
 import logging
