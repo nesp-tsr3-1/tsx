@@ -252,7 +252,7 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                     data_source.standardisation_of_method_effort_id AS StandardisationOfMethodEffort,
                     data_source.objective_of_monitoring_id AS ObjectiveOfMonitoring,
                     data_source.consistency_of_monitoring_id AS ConsistencyOfMonitoring,
-                    data_source.data_agreement_id AS DataAgreement,
+                    (SELECT description FROM data_agreement_status WHERE id = source.data_agreement_status_id) AS DataAgreement,
                     data_source.suppress_aggregated_data AS SuppressAggregatedData,
                     MAX(ST_X(agg.centroid_coords)) AS SurveysCentroidLongitude,
                     MAX(ST_Y(agg.centroid_coords)) AS SurveysCentroidLatitude,
@@ -271,7 +271,7 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                         IF(time_series_inclusion.region, '',
                             'Region is NA; '),
                         IF(time_series_inclusion.data_agreement, '',
-                            'AgreementSigned is 0; '),
+                            'Data agreement status excluded; '),
                         IF(time_series_inclusion.standardisation_of_method_effort, '',
                             'StandardisationOfMethodEffort is 0 or 1; '),
                         IF(time_series_inclusion.consistency_of_monitoring, '',
@@ -296,7 +296,7 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                     LEFT JOIN region ON region.id = agg.region_id
                     LEFT JOIN region_centroid ON region_centroid.id = agg.region_id
                     LEFT JOIN taxon_source_alpha_hull alpha ON alpha.taxon_id = agg.taxon_id AND alpha.source_id = agg.source_id AND alpha.data_type = agg.data_type
-                    LEFT JOIN data_source ON data_source.taxon_id = agg.taxon_id AND data_source.source_id = agg.source_id
+                    LEFT JOIN data_source_merged AS data_source ON data_source.taxon_id = agg.taxon_id AND data_source.source_id = agg.source_id
                     LEFT JOIN t1_site ON site_id = t1_site.id AND agg.data_type = 1
                     LEFT JOIN t2_site ON site_id = t2_site.id AND agg.data_type = 2
                 WHERE agg.taxon_id = :taxon_id
