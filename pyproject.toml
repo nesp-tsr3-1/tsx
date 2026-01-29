@@ -27,6 +27,8 @@ dependencies = [
     "flask-executor",
     "cartopy",
     "cachelib",
+    "freezegun>=1.5.5",
+    "python-stripzip>=2.0.0",
 ]
 
 [dependency-groups]

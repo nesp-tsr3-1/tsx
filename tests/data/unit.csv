@@ -1,0 +1,13 @@
+id,description
+1,Sample: Occupancy (# presences/# surveys)
+2,Sample: abundance (counts)
+3,Sample: density (counts/fixed areas)
+4,Index
+5,Proxy: recorded calls
+6,Proxy: nests
+7,Proxy: breeding pairs
+8,Proxy: count of pre-fledging chicks
+9,Sample: count of seen individuals after playback
+10,Proxy: nests with eggs
+11,Proxy: burrow estimate based on transect density
+12,Proportion of surveyed sites that had animal tracks/signs

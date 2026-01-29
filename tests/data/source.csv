@@ -1,0 +1,2 @@
+id,source_type_id,provider,description,details,authors,notes,contact_name,contact_institution,contact_position,contact_email,contact_phone,time_created,last_modified,monitoring_program_id,monitoring_program_comments,data_processing_type_id,data_agreement_status_id
+1,1,Test Provider,T1 Source,T1 Source Details,Test Authors,NULL,Test Contact,Test Institution,NA,test@example.com,NULL,2020-01-01 00:00:00,2020-01-01 00:00:00,NULL,NULL,NULL,1

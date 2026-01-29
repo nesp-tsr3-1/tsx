@@ -59,6 +59,8 @@ def main():
 
 		importer = Importer(args.filename, data_type = args.data_type, commit = args.commit, simple_mode = args.simple_mode, source_id = args.source_id)
 		importer.ingest_data()
+		if importer.error_count > 0:
+			exit(1)
 	elif args.test:
 		test_db()
 	else:
@@ -483,6 +485,9 @@ class Importer:
 		if self.source_id:
 			# Import via web interface
 			source = session.query(Source).get(self.source_id)
+			if source is None:
+				log.error("No source exists with id = %s", self.source_id)
+				ok[0] = False
 			if row_index == 2:
 				# source.description = row.get('SourceDesc')
 				source.notes = row.get('SourceDescDetails')

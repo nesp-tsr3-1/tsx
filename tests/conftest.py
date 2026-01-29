@@ -4,18 +4,45 @@ import tempfile
 import os
 import tsx.config
 import mysql.connector
+import shutil
 
 from subprocess import Popen, PIPE, STDOUT
 
+# Note to self: pytest fixtures automatically become available to tests
+# based on the test function having an argument that matches the name of
+# the fixture function
 
 @pytest.fixture(scope="function")
 def db_name(request):
+	"""
+	Return the name of a temporary database that may be created for the current test
+	"""
+
 	# Database name based on current test
 	return 'tsx_%s' % request.node.name
 
 @pytest.fixture(scope="function")
+def output_dir(request):
+	"""
+	Return the name of an newly-created output directory based on the current test.
+	If the directory already exists, it will be deleted and recreated.
+	The directory is *not* automatically deleted after the test.
+	"""
+	path = os.path.join("tests", "output", request.node.name)
+	if os.path.exists(path):
+		shutil.rmtree(path)
+	os.makedirs(path)
+	return path
+
+
+@pytest.fixture(scope="function")
 def fresh_database(db_name):
-	# Create database
+	"""
+	Return a function for connecting to a temporary database for the current test.
+	The temporary database is initialised with the TSX schema using db/sql/create.sql and db/sql/init.sql.
+	A configuration file is created and environment variable is set so that TSX scripts will use the temporary database.
+	"""
+
 	init_sql = [
 		"""DROP DATABASE IF EXISTS %s""" % db_name,
 		"""CREATE DATABASE %s""" % db_name,
