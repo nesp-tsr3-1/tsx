@@ -89,8 +89,9 @@ def process_database():
         SELECT
             time_series_id,
             SUM(
-                agg.start_date_y <= COALESCE(data_source.end_year, :max_year)
-                AND agg.start_date_y >= COALESCE(data_source.start_year, :min_year)
+                agg.start_date_y <= LEAST(COALESCE(data_source.end_year, :max_year), :max_year)
+                AND agg.start_date_y >= GREATEST(COALESCE(data_source.start_year, :min_year), :min_year)
+                AND ey.year IS NULL
             ) >= :min_tssy, # sample_years
             MAX(COALESCE(NOT data_source.exclude_from_analysis, FALSE)), # master_list_include
             MAX(COALESCE(agg.search_type_id, 0) != 6), # search_type
@@ -99,14 +100,16 @@ def process_database():
             MAX(source.data_agreement_status_id NOT IN (1, 2, 3)), # data_agreement
             MAX(COALESCE(data_source.standardisation_of_method_effort_id, -1) NOT IN (0, 1)), # standardisation_of_method_effort
             MAX(COALESCE(data_source.consistency_of_monitoring_id, -1) NOT IN (0, 1)), # consistency_of_monitoring
-            MAX(IF(agg.start_date_y <= COALESCE(data_source.end_year, :max_year)
-                    AND agg.start_date_y >= COALESCE(data_source.start_year, :min_year),
+            MAX(IF(agg.start_date_y <= LEAST(COALESCE(data_source.end_year, :max_year), :max_year)
+                    AND agg.start_date_y >= GREATEST(COALESCE(data_source.start_year, :min_year), :min_year)
+                    AND ey.year IS NULL,
                 value,
                 0)) > 0 # non_zero
         FROM aggregated_by_year agg
         INNER JOIN taxon ON agg.taxon_id = taxon.id
         INNER JOIN source ON agg.source_id = source.id
         LEFT JOIN data_source_merged AS data_source ON data_source.taxon_id = agg.taxon_id AND data_source.source_id = agg.source_id
+        LEFT JOIN data_source_excluded_years ey ON ey.taxon_id = agg.taxon_id AND ey.source_id = agg.source_id AND ey.year = agg.start_date_y
         GROUP BY agg.time_series_id;
     """), {
         'min_year': min_year,
@@ -119,10 +122,13 @@ def process_database():
     session.execute(text("""UPDATE aggregated_by_year agg
         JOIN time_series_inclusion ON agg.time_series_id = time_series_inclusion.time_series_id
         LEFT JOIN data_source_merged AS data_source ON data_source.taxon_id = agg.taxon_id AND data_source.source_id = agg.source_id
+        LEFT JOIN data_source_excluded_years ey ON ey.taxon_id = agg.taxon_id AND ey.source_id = agg.source_id AND ey.year = agg.start_date_y
         SET agg.include_in_analysis = (
             time_series_inclusion.include_in_analysis
-            AND agg.start_date_y <= COALESCE(data_source.end_year, :max_year)
-            AND agg.start_date_y >= COALESCE(data_source.start_year, :min_year)
+            # TODO: What if data_source.end_year > max_year (likewise for min_year)
+            AND agg.start_date_y <= LEAST(COALESCE(data_source.end_year, :max_year), :max_year)
+            AND agg.start_date_y >= GREATEST(COALESCE(data_source.start_year, :min_year), :min_year)
+            AND ey.year IS NULL
         )"""), {
         'min_year': min_year,
         'max_year': max_year

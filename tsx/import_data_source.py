@@ -21,6 +21,7 @@ def main():
 	session = get_session()
 
 	session.execute(text("DELETE FROM data_source"));
+	session.execute(text("DELETE FROM data_source_excluded_years"));
 
 	with open(args.filename) as f:
 		reader = csv.DictReader(f)
@@ -36,6 +37,7 @@ def main():
 				'consistency_of_monitoring_id': lookup(row, 'ConsistencyOfMonitoring', optional=True),
 				'start_year': row.get('StartYear') or None,
 				'end_year': row.get('EndYear') or None,
+				'excluded_years': row.get('ExcludedYears') or None,
 				'exclude_from_analysis': get_bool(row, 'NotInIndex', False, unknown_value_default=True, optional=True),
 				'suppress_aggregated_data': get_suppress_aggregated_data(row),
 			}
@@ -62,6 +64,16 @@ def main():
 					continue
 				else:
 					raise ValueError("Invalid source id: %s" % data['source_id'])
+
+			excluded_years = []
+			if data['excluded_years']:
+				try:
+					excluded_years = [int(x) for x in data['excluded_years'].split(",")]
+				except ValueError:
+					raise ValueError("Invalid ExcludedYears: %s" % data['excluded_years'])
+				for year in excluded_years:
+					if year < 0 or year > 9999:
+						raise ValueError('Invalid year (%s) in ExcludedYears' % year)
 
 			try:
 				if data['data_agreement_id']:
@@ -115,6 +127,23 @@ def main():
 				)"""),
 				data
 			)
+
+			for year in excluded_years:
+				session.execute(text("""INSERT INTO data_source_excluded_years (
+						source_id,
+						taxon_id,
+						year
+					) VALUES (
+						:source_id,
+						:taxon_id,
+						:year
+					)"""),
+					{
+						'source_id': data['source_id'],
+						'taxon_id': data['taxon_id'],
+						'year': year
+					}
+				)
 
 	session.commit()
 

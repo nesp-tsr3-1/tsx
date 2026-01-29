@@ -290,6 +290,7 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                     {aggregated_table} agg
                     INNER JOIN taxon ON taxon.id = agg.taxon_id
                     INNER JOIN time_series_inclusion ON time_series_inclusion.time_series_id = agg.time_series_id
+                    LEFT JOIN data_source_excluded_years ey ON ey.taxon_id = agg.taxon_id AND ey.source_id = agg.source_id AND ey.year = agg.start_date_y
                     LEFT JOIN search_type ON search_type.id = agg.search_type_id
                     INNER JOIN source ON source.id = agg.source_id
                     INNER JOIN unit ON unit.id = agg.unit_id
@@ -300,8 +301,9 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                     LEFT JOIN t1_site ON site_id = t1_site.id AND agg.data_type = 1
                     LEFT JOIN t2_site ON site_id = t2_site.id AND agg.data_type = 2
                 WHERE agg.taxon_id = :taxon_id
-                AND start_date_y >= COALESCE(data_source.start_year, :min_year)
-                AND start_date_y <= COALESCE(data_source.end_year, :max_year)
+                AND start_date_y >= GREATEST(COALESCE(data_source.start_year, :min_year), :min_year)
+                AND start_date_y <= LEAST(COALESCE(data_source.end_year, :max_year), :max_year)
+                AND ey.year IS NULL
                 {where_conditions}
                 GROUP BY
                     agg.source_id,

@@ -581,6 +581,23 @@ class DataSource(Base):
     taxon: Mapped['Taxon'] = relationship('Taxon')
 
 
+class DataSourceExcludedYears(Base):
+    __tablename__ = 'data_source_excluded_years'
+    __table_args__ = (
+        ForeignKeyConstraint(['source_id'], ['source.id'], name='fk_data_source_excluded_years_source1'),
+        ForeignKeyConstraint(['taxon_id'], ['taxon.id'], name='fk_data_source_excluded_years_taxon1'),
+        Index('fk_data_source_excluded_years_source1_idx', 'source_id'),
+        Index('fk_data_source_excluded_years_taxon1_idx', 'taxon_id')
+    )
+
+    source_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    taxon_id: Mapped[str] = mapped_column(CHAR(8), primary_key=True)
+    year: Mapped[str] = mapped_column(String(45), primary_key=True)
+
+    source: Mapped['Source'] = relationship('Source')
+    taxon: Mapped['Taxon'] = relationship('Taxon')
+
+
 t_incidental_sighting = Table(
     'incidental_sighting', Base.metadata,
     Column('taxon_id', CHAR(8), nullable=False),
