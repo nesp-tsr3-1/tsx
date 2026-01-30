@@ -129,7 +129,7 @@ def point_intersects_geom(poly, x, y, cache, z = 2, tile_key = None, tile_bounds
 	if z > 18:
 		return poly.intersects(Point(x, y))
 
-	if tile_key == None:
+	if tile_key is None:
 		if 'tile_key' not in cache:
 			cache['tile_key'] = tile_key_fn(poly.bounds)
 			cache['tile_bounds'] = tile_bounds_fn(poly.bounds)

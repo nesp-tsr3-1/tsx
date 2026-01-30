@@ -35,7 +35,7 @@ def process_database(species = None, commit = False):
     session = get_session()
 
     if commit:
-        if species == None:
+        if species is None:
             session.execute(text("DELETE FROM taxon_source_alpha_hull"))
         else:
             session.execute(text("""DELETE FROM taxon_source_alpha_hull

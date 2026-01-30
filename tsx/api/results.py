@@ -73,7 +73,7 @@ def download_time_series():
 			# Write out extra files
 			try:
 				dataset = get_dataset_name()
-				if dataset == None:
+				if dataset is None:
 					extra_dir = tsx.config.data_dir('download-extras')
 				else:
 					extra_dir = tsx.config.data_dir('download-extras-%s' % dataset)
@@ -246,13 +246,13 @@ def suppress_aggregated_data(df):
 # Gets 'dataset' request parameter and sanitises it
 def get_dataset_name():
 	dataset = request.args.get('dataset', type=str)
-	if dataset != None:
+	if dataset is not None:
 		dataset = re.sub(r'[^-_\w.]', '', dataset)
 	return dataset
 
 def get_database_filename():
 	dataset = get_dataset_name()
-	if dataset == None:
+	if dataset is None:
 		return 'results.db'
 	else:
 		return 'results-%s.db' % dataset
@@ -280,7 +280,7 @@ def filter_data(df, params):
 
 	# Special logic for threatened *bird* index
 	dataset = get_dataset_name()
-	if dataset != None and dataset.startswith('tbx'):
+	if dataset is not None and dataset.startswith('tbx'):
 		df = df[df['TaxonomicGroup'] == 'Birds']
 
 	# Special logic for individual species

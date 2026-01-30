@@ -40,7 +40,7 @@ def is_custodian_of_form(user_id, form_id):
 		}).fetchall()) > 0
 
 def permitted(user, action, resource_type, resource_id=None):
-	if user == None:
+	if user is None:
 		return False
 
 	user_roles = get_roles(user)
@@ -51,9 +51,9 @@ def permitted(user, action, resource_type, resource_id=None):
 		if action in ('create', 'list'):
 			return True
 		if action in ('get', 'update', 'download_data'):
-			return resource_id != None and (is_program_manager_of_source(user.id, resource_id) or is_custodian_of_source(user.id, resource_id))
+			return resource_id is not None and (is_program_manager_of_source(user.id, resource_id) or is_custodian_of_source(user.id, resource_id))
 		if action in ('delete', 'import_data', 'manage_custodians'):
-			return resource_id != None and is_custodian_of_source(user.id, resource_id)
+			return resource_id is not None and is_custodian_of_source(user.id, resource_id)
 
 	if resource_type == 'user':
 		if action in ('list_programs'):
@@ -76,7 +76,7 @@ def permitted(user, action, resource_type, resource_id=None):
 
 	if resource_type == 'custodian_feedback_form':
 		if action in ('view', 'update'):
-			return resource_id != None and is_custodian_of_form(user.id, resource_id)
+			return resource_id is not None and is_custodian_of_form(user.id, resource_id)
 
 	if resource_type == 'data_agreement':
 		if action in ('list'):

@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 def process_database(species = None, commit = False):
     session = get_session()
 
-    if species == None:
+    if species is None:
         taxa = [taxon_id for (taxon_id,) in session.execute(text("SELECT DISTINCT taxon_id FROM processing_method WHERE data_type = 2")).fetchall()]
     else:
         taxa = [taxon_id for (taxon_id,) in session.execute(

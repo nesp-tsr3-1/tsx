@@ -212,7 +212,7 @@ def snake_to_capital_case(snake):
 
 @bp.route('/documents/data_agreements/<int:agreement_id>/csv', methods = ['GET'])
 def agreement_csv(agreement_id=None):
-	if agreement_id == None:
+	if agreement_id is None:
 		return "Not found", 404
 
 	user = get_user()
@@ -222,7 +222,7 @@ def agreement_csv(agreement_id=None):
 
 	data = get_agreement_json(agreement_id)
 
-	if data == None:
+	if data is None:
 		return "Not found", 404
 
 	csv_data = {
@@ -300,8 +300,8 @@ def get_agreement_json(agreement_id):
 	if len(rows):
 		data = dict(rows[0]._mapping)
 		map_fields(data, backend_fields)
-		data['has_expiry_date'] = data['expiry_date'] != None
-		data['has_embargo_date'] = data['embargo_date'] != None
+		data['has_expiry_date'] = data['expiry_date'] is not None
+		data['has_embargo_date'] = data['embargo_date'] is not None
 		data['files'] = json.loads(data['files'] or '[]')
 		data['source_ids'] = json.loads(data['source_ids'] or '[]')
 		return data
@@ -310,7 +310,7 @@ def get_agreement_json(agreement_id):
 
 @bp.route('/documents/data_agreements/<int:agreement_id>', methods = ['GET'])
 def get_data_agreement(agreement_id=None):
-	if agreement_id == None:
+	if agreement_id is None:
 		return "Not found", 404
 
 	user = get_user()
@@ -327,7 +327,7 @@ def get_data_agreement(agreement_id=None):
 
 @bp.route('/documents/data_agreements/<int:agreement_id>', methods = ['DELETE'])
 def delete_data_agreement(agreement_id=None):
-	if agreement_id == None:
+	if agreement_id is None:
 		return "Not found", 404
 
 	user = get_user()
@@ -363,7 +363,7 @@ def create_data_agreement():
 
 @bp.route('/documents/data_agreements/<int:agreement_id>', methods = ['PUT'])
 def update_data_agreement(agreement_id=None):
-	if agreement_id == None:
+	if agreement_id is None:
 		return "Not found", 404
 
 	return create_or_update_data_agreement(agreement_id)
@@ -444,7 +444,7 @@ def val_required_if(other_field):
 	return _validate_required_if
 
 def val_list(value, field, context):
-	if value != None and type(value) != list:
+	if value is not None and type(value) != list:
 		return "Must be a list"
 
 def val_non_empty_for_submit(value, field, context):

@@ -13,7 +13,7 @@ def get_program_managers(program_id = None):
 	if not permitted(user, 'list_managers', 'program', program_id):
 		return "Not authorised", 401
 
-	if program_id == None:
+	if program_id is None:
 		return "Not found", 404
 
 	rows = db_session.execute(text("""
@@ -32,7 +32,7 @@ def get_programs(user_id = None):
 	if not permitted(user, 'list_programs', 'user', user_id):
 		return "Not authorised", 401
 
-	if user_id == None:
+	if user_id is None:
 		return "Not found", 404
 
 	rows = db_session.execute(text("""
@@ -50,7 +50,7 @@ def update_programs(user_id = None):
 	if not permitted(user, 'update_programs', 'user', user_id):
 		return "Not authorised", 401
 
-	if user_id == None:
+	if user_id is None:
 		return "Not found", 404
 
 	body = request.json

@@ -18,7 +18,7 @@ def process_database(species = None, commit = False):
     session = get_session()
 
     # Just get taxa that have range polygons
-    if species == None:
+    if species is None:
         taxa = session.execute(text("SELECT DISTINCT taxon_id FROM taxon_range")).fetchall()
     else:
         taxa = session.execute(text("SELECT DISTINCT taxon_id FROM taxon_range, taxon WHERE taxon_id = taxon.id AND spno IN (%s)" % sql_list_placeholder('species', species)),

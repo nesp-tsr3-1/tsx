@@ -8,7 +8,7 @@ log = logging.getLogger(__name__)
 
 def process_database(species = None, commit = False, simple_mode = False, database_config = None):
     session = get_session(database_config)
-    if species == None:
+    if species is None:
         taxa = [taxon_id for (taxon_id,) in session.execute(text("SELECT DISTINCT taxon_id FROM t1_sighting")).fetchall()]
     else:
         taxa = [taxon_id for (taxon_id,) in session.execute(

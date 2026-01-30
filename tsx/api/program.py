@@ -22,7 +22,7 @@ def get_program(program_id=None):
 
 	program = db_session.query(MonitoringProgram).get(program_id) if program_id else None
 
-	if program == None:
+	if program is None:
 		return "Not found", 404
 
 	result = program_to_json(program)
@@ -41,14 +41,14 @@ def create_monitoring_program():
 
 @bp.route('/monitoring_programs/<int:program_id>', methods = ['PUT'])
 def update_monitoring_program(program_id = None):
-	if program_id == None:
+	if program_id is None:
 		return "Not found", 404
 
 	return create_or_update_program(program_id)
 
 @bp.route('/monitoring_programs/<int:program_id>', methods = ['DELETE'])
 def delete_monitoring_program(program_id = None):
-	if program_id == None:
+	if program_id is None:
 		return "Not found", 404
 
 	user = get_user()
@@ -63,7 +63,7 @@ def delete_monitoring_program(program_id = None):
 
 @bp.route('/monitoring_programs/<int:program_id>/sources/<int:source_id>', methods = ['DELETE'])
 def remove_source_from_monitoring_program(program_id = None, source_id = None):
-	if program_id == None or source_id == None:
+	if program_id is None or source_id is None:
 		return "Not found", 404
 
 	user = get_user()
@@ -79,7 +79,7 @@ def remove_source_from_monitoring_program(program_id = None, source_id = None):
 
 @bp.route('/monitoring_programs/<int:program_id>/managers/<int:user_id>', methods = ['DELETE'])
 def remove_manager_from_monitoring_program(program_id = None, user_id = None):
-	if program_id == None or user_id == None:
+	if program_id is None or user_id is None:
 		return "Not found", 404
 
 	user = get_user()
@@ -95,7 +95,7 @@ def remove_manager_from_monitoring_program(program_id = None, user_id = None):
 
 @bp.route('/monitoring_programs/<int:program_id>/managers', methods = ['POST'])
 def add_manager_to_monitoring_program(program_id = None):
-	if program_id == None:
+	if program_id is None:
 		return "Not found", 404
 
 	user = get_user()

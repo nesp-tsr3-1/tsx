@@ -281,7 +281,7 @@ def reset_password():
 		code = body['code'].strip()
 		user = db_session.query(User).filter(User.password_reset_code == code).one_or_none()
 
-		if user == None:
+		if user is None:
 			return jsonify({ 'invalid_code': True }), 400
 		else:
 			user.password_hash = pwd_context.hash(body['password'])
@@ -304,10 +304,10 @@ def reset_password():
 
 		user = db_session.query(User).filter(User.email == email).one_or_none()
 
-		if user.password_hash == None:
+		if user.password_hash is None:
 			user = None
 
-		if user == None:
+		if user is None:
 			root_url = config.get("api", "root_url")
 			email_body = reset_email_no_account_body.substitute(email=email, root_url=root_url)
 		else:

@@ -420,7 +420,7 @@ class Importer:
 				row[key] = row[key].strip()
 			if row[key] == '':
 				row[key] = None
-			if row[key] != None:
+			if row[key] is not None:
 				row_is_empty = False
 
 		if row_is_empty:
@@ -428,7 +428,7 @@ class Importer:
 			return
 
 		# Check that survey information doesn't change for the same SourcePrimaryKey
-		if self.source_id == None:
+		if self.source_id is None:
 			primary_key = row.get('SourcePrimaryKey')
 		else:
 			if 'SourcePrimaryKey' in row:
@@ -444,16 +444,16 @@ class Importer:
 			ok[0] = False
 
 		# Check if there is not sighting data at all (i.e. survey with no sightings)
-		sighting_empty = all(row.get(key) == None for key in self.sighting_keys)
+		sighting_empty = all(row.get(key) is None for key in self.sighting_keys)
 
 		# Check for empty values
 		for key in self.non_empty_keys:
-			if key in row and row.get(key) == None and not (sighting_empty and key in self.sighting_keys):
+			if key in row and row.get(key) is None and not (sighting_empty and key in self.sighting_keys):
 				log.error("%s: must not be empty" % key)
 				return False
 
 		# Check constant values
-		if self.first_row == None:
+		if self.first_row is None:
 			self.first_row = row
 		else:
 			for key in self.constant_keys:
@@ -501,7 +501,7 @@ class Importer:
 			# Import via command line
 			source = self.get_source(session, row.get('SourceDesc'))
 
-			if source == None:
+			if source is None:
 				source = Source(
 					description = row.get('SourceDesc'),
 					provider = row.get('SourceProvider'),
@@ -522,7 +522,7 @@ class Importer:
 					ok[0] = False
 
 		# Data Import
-		if self.data_import_id == None:
+		if self.data_import_id is None:
 			data_import = None
 		else:
 			data_import = session.query(DataImport).get(self.data_import_id)
@@ -535,9 +535,9 @@ class Importer:
 
 		site = None
 		# Site
-		if self.data_type == 1 or row.get('SiteName') != None:
+		if self.data_type == 1 or row.get('SiteName') is not None:
 			last_site = self.cache.get('last_site')
-			if last_site != None and last_site.name == row.get('SiteName') and last_site.search_type == search_type and last_site.source == source and (self.data_type != 1 or last_site.management == management):
+			if last_site is not None and last_site.name == row.get('SiteName') and last_site.search_type == search_type and last_site.source == source and (self.data_type != 1 or last_site.management == management):
 				# Same site as last row - no need to process site
 				site = last_site
 			else:
@@ -563,7 +563,7 @@ class Importer:
 
 		# Survey
 		last_survey = self.cache.get('last_survey')
-		if last_survey != None and last_survey.source_primary_key == primary_key:
+		if last_survey is not None and last_survey.source_primary_key == primary_key:
 			# Same survey as last row - no need to process survey fields (this yields a huge speed up for type 2/3 data)
 			survey = last_survey
 		else:
@@ -572,7 +572,7 @@ class Importer:
 			else:
 				survey = session.query(Survey).filter_by(source_primary_key = primary_key, data_import = data_import).one_or_none()
 
-			if survey == None:
+			if survey is None:
 				survey = Survey(site = site, source_primary_key = primary_key, data_import = data_import)
 
 			self.cache['last_survey'] = survey
@@ -637,7 +637,7 @@ class Importer:
 			with field('Y') as value:
 				y = validate(value, validate_float)
 
-			if x != None and y != None:
+			if x is not None and y is not None:
 				if x == 0 or y == 0:
 					log.warning('Suspicious zero coordinate before projection: %s, %s' % (x, y))
 
@@ -728,7 +728,7 @@ class Importer:
 			else:
 				sighting = session.query(Sighting).filter_by(survey = survey, taxon_id = taxon.id).one_or_none()
 
-			if sighting == None:
+			if sighting is None:
 				sighting = Sighting(survey = survey, taxon_id = taxon.id)
 
 			with field('Breeding') as value:
@@ -855,7 +855,7 @@ class Importer:
 			lambda: get_or_create(session, SearchType, description = description))
 
 	def get_or_create_monitoring_program(self, session, description):
-		if description == None:
+		if description is None:
 			return None
 		return self.get_cached('monitoring_program', description,
 			lambda: get_or_create(session, MonitoringProgram, description = description))
@@ -878,7 +878,7 @@ class Importer:
 
 		result = fn()
 
-		if result != None or cacheNone:
+		if result is not None or cacheNone:
 			g[key] = result
 
 		return result
@@ -922,7 +922,7 @@ def get_or_create(session, model, **kwargs):
 	Gets a single row from the database matching the passed criteria, or creates such a row if none exists
 	"""
 	instance = session.query(model).filter_by(**kwargs).one_or_none()
-	if instance != None:
+	if instance is not None:
 		return instance
 	else:
 		instance = model(**kwargs)
@@ -945,7 +945,7 @@ def description_lookup(session, model):
 
 def validate(value, *validators):
 	for validator in validators:
-		if value != None:
+		if value is not None:
 			value = validator(value)
 	return value
 
@@ -1005,7 +1005,7 @@ def parse_date(raw_date, log):
 
 	All other cases raise a ValueError
 	"""
-	if raw_date == None:
+	if raw_date is None:
 		return None, None, None
 
 	if type(raw_date) == datetime:
@@ -1049,7 +1049,7 @@ def parse_time(raw_time):
 
 	If raw_time is None or empty, returns None
 	"""
-	if raw_time == None:
+	if raw_time is None:
 		return None
 
 	if type(raw_time) == time:
@@ -1066,7 +1066,7 @@ def normalize(s):
 
 	 - replaces any sequence of whitespace characters (including non-breaking space) with a single space character
 	"""
-	if s == None:
+	if s is None:
 		return None
 	else:
 		return re.sub(r'\s+', ' ', s)

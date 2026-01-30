@@ -225,7 +225,7 @@ def export(layers, species = None):
 
     export_dir = tsx.config.data_dir('export')
 
-    if species == None:
+    if species is None:
         species = get_all_spno(session)
 
     for spno in tqdm(species):

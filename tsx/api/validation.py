@@ -16,7 +16,7 @@ class Field:
 email_regex = r'^[^@\s]+@[^@\s]+\.[^@\s]+$'
 
 def value_present(value):
-	return value != None and value != ""
+	return value is not None and value != ""
 
 def validate_email(value, field, context):
 	if value_present(value) and not re.match(email_regex, value):
@@ -63,21 +63,21 @@ def validate_integer(min_value=None, max_value=None):
 		if value_present(value):
 			try:
 				x = int(value)
-				if min_value != None:
+				if min_value is not None:
 					ok = ok and x >= min_value
-				if max_value != None:
+				if max_value is not None:
 					ok = ok and x <= max_value
 			except ValueError:
 				ok = False
 
 			if not ok:
-				if min_value != None:
-					if max_value != None:
+				if min_value is not None:
+					if max_value is not None:
 						criteria = " between %s and %s (inclusive)" % (min_value, max_value)
 					else:
 						criteria = " greater than or equal to %s" % min_value
 				else:
-					if max_value != None:
+					if max_value is not None:
 						criteria = " less than or equal to %s" % max_value
 					else:
 						criteria + ""
@@ -91,31 +91,31 @@ def validate_decimal(min_value=None, max_value=None, max_dp=None):
 		if value_present(value):
 			try:
 				x = float(value)
-				if min_value != None:
+				if min_value is not None:
 					ok = ok and x >= min_value
-				if max_value != None:
+				if max_value is not None:
 					ok = ok and x >= max_value
 			except ValueError:
 				ok = False
 
-			if max_dp != None:
+			if max_dp is not None:
 				if type(value) == str and '.' in value:
 					if len(value.split('.')[1]) > max_dp:
 						ok = False
 
 			if not ok:
-				if min_value != None:
-					if max_value != None:
+				if min_value is not None:
+					if max_value is not None:
 						criteria = " between %s and %s (inclusive)" % (min_value, max_value)
 					else:
 						criteria = " greater than or equal to %s" % min_value
 				else:
-					if max_value != None:
+					if max_value is not None:
 						criteria = " less than or equal to %s" % max_value
 					else:
 						criteria + ""
 
-				if max_dp != None:
+				if max_dp is not None:
 					criteria += " (up to 2 decimal places)"
 
 				return "Must be a number%s" % criteria

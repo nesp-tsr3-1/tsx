@@ -150,7 +150,7 @@ def make_alpha_hull(points, coastal_shape,
     final = alpha_hull_buff.union(single_points)
 
     #clipping
-    if coastal_shape != None:
+    if coastal_shape is not None:
         final = final.intersection(coastal_shape)
 
     return final
@@ -322,7 +322,7 @@ def generate_alphashape(infile, outfile, inproj, outproj, coastal_shape,
     """
     """
     with fiona.open(infile) as i_shape:
-        if inproj == None or inproj.strip() == '':
+        if inproj is None or inproj.strip() == '':
             # get spno
             inproj= "+proj=" + i_shape.meta['crs']['proj']
             inproj += " +ellps=" + i_shape.meta['crs']['ellps']

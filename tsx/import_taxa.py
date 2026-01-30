@@ -124,7 +124,7 @@ def get_or_create(session, model, **kwargs):
 	Gets a single row from the database matching the passed criteria, or creates such a row if none exists
 	"""
 	instance = session.query(model).filter_by(**kwargs).one_or_none()
-	if instance != None:
+	if instance is not None:
 		return instance
 	else:
 		instance = model(**kwargs)
@@ -137,7 +137,7 @@ def normalize(s):
 
 	 - replaces any sequence of whitespace characters (including non-breaking space) with a single space character
 	"""
-	if s == None:
+	if s is None:
 		return None
 	else:
 		return re.sub(r'\s+', ' ', s)

@@ -96,7 +96,7 @@ def read_data(filename):
 def get_db_session():
 	dataset = get_dataset_name()
 
-	if dataset == None:
+	if dataset is None:
 		return get_session()
 	else:
 		return get_session(database_config=("database_%s" % dataset))
@@ -111,10 +111,10 @@ def lpi_data():
 	# Filter LPI data based on request parameters
 	filtered_dat = get_filtered_data()
 
-	if output_format == None or output_format == 'csv':
+	if output_format is None or output_format == 'csv':
 		filtered_dat = suppress_aggregated_data(filtered_dat)
 
-		if download_file == None or download_file == "":
+		if download_file is None or download_file == "":
 			return filtered_dat.to_csv()
 		else:
 			output = make_response(filtered_dat.to_csv())
@@ -135,7 +135,7 @@ def lpi_data():
 			# Write out extra files
 			try:
 				dataset = get_dataset_name()
-				if dataset == None:
+				if dataset is None:
 					extra_dir = tsx.config.data_dir('download-extras')
 				else:
 					extra_dir = tsx.config.data_dir('download-extras-%s' % dataset)
@@ -188,7 +188,7 @@ def lpi_data():
 		binomials = json_data['Binomial']
 		for year in years:
 			for _timeserie_id, _item_value in json_data[year].items():
-				if _item_value != None:
+				if _item_value is not None:
 					plot_dat.append({"ID": _timeserie_id, "year": year, "Binomial": binomials[_timeserie_id], "count": _item_value})
 		return json.dumps(plot_dat)
 	# TODO: replace dotplot with plot
@@ -206,7 +206,7 @@ def lpi_data():
 		taxa = json_data['TaxonID']
 		for year in years:
 			for _timeserie_id, _item_value in json_data[year].items():
-				if _item_value != None:
+				if _item_value is not None:
 					dotplot_dat.append({"ID": _timeserie_id, "year": year, "Binomial": binomials[_timeserie_id], "count": _item_value})
 					if year in timeseries_year.keys():
 						timeseries_year[year] = timeseries_year[year] + 1
@@ -432,13 +432,13 @@ def suppress_aggregated_data(df):
 # Gets 'dataset' request parameter and sanitises it
 def get_dataset_name():
 	dataset = request.args.get('dataset', type=str)
-	if dataset != None:
+	if dataset is not None:
 		dataset = re.sub(r'[^-_\w.]', '', dataset)
 	return dataset
 
 def get_unfiltered_data():
 	dataset = get_dataset_name()
-	if dataset == None:
+	if dataset is None:
 		return read_data('lpi-filtered.csv')
 	else:
 		return read_data('lpi-filtered-%s.csv' % dataset)
@@ -507,7 +507,7 @@ def build_filter_string():
 
 	# Special logic for threatened *bird* index
 	dataset = get_dataset_name()
-	if dataset != None and dataset.startswith('tbx'):
+	if dataset is not None and dataset.startswith('tbx'):
 		filters.append("TaxonomicGroup=='Birds'")
 
 	#taxonomic group
@@ -566,7 +566,7 @@ def build_filter_sql(taxon_only=False):
 
 	# Special logic for threatened *bird* index
 	dataset = get_dataset_name()
-	if dataset != None and dataset.startswith('tbx'):
+	if dataset is not None and dataset.startswith('tbx'):
 		expressions.append("taxon.taxonomic_group = 'Birds'")
 
 	#spno

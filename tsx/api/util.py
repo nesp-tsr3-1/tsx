@@ -20,7 +20,7 @@ log = LocalProxy(lambda: current_app.logger)
 executor = None
 def get_executor():
 	global executor
-	if executor == None:
+	if executor is None:
 		executor = Executor(current_app)
 	return executor
 

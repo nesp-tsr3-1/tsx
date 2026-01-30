@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 
 # database_config can be a config file section, or a database connection url (e.g. for sqlite)
 def get_database_url(database_config=None):
-    if database_config == None:
+    if database_config is None:
         database_config = "database"
 
     if ":" in database_config:
@@ -31,7 +31,7 @@ last_pid = os.getpid()
 
 cached_session_makers = {}
 def get_session_maker(database_config=None):
-    if database_config == None:
+    if database_config is None:
         database_config = "database"
     global last_pid
     if last_pid != os.getpid():
@@ -84,7 +84,7 @@ def clear_session_maker_cache():
     cached_session_makers = {}
 
 def get_session(database_config=None):
-    if database_config == None:
+    if database_config is None:
         database_config = "database"
     session = get_session_maker(database_config=database_config)()
     return session

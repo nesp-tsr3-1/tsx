@@ -230,7 +230,7 @@ def subset_species():
 
 # This tries to strike a balance between a descriptive name and not being too long
 def filename_component_from_params(params=None):
-    if params == None:
+    if params is None:
         params = get_request_args_or_body()
     parts = []
 
@@ -531,7 +531,7 @@ def monitoring_consistency_all_csv():
     csv_rows.append(','.join(['TimeSeries'] + numeric_col_names))
 
     for row_index, row in enumerate(result.fetchall()):
-        row_data = [str(row_index + 1)] + ['' if row[col_index] == None else '1' for col_index in numeric_col_indices]
+        row_data = [str(row_index + 1)] + ['' if row[col_index] is None else '1' for col_index in numeric_col_indices]
         csv_rows.append(','.join(row_data))
 
     csv_data = '\n'.join(csv_rows) + '\n'
@@ -563,7 +563,7 @@ def monitoring_consistency_plot_json(subset_params=None):
         row_data = []
         for index, key in numeric_keys:
             value = row[index]
-            if value != None:
+            if value is not None:
                 row_data.append([key, 1])
         result_data.append(row_data)
 
@@ -657,7 +657,7 @@ def query_subset_time_series(subset_params=None, random_sample_size=None):
     year_fields_sql = ",\n".join(
         year_field_sql(year, year in years) for year in range(min_year, max_year + 1))
 
-    if random_sample_size == None:
+    if random_sample_size is None:
         random_sample_sql = ''
     else:
         random_sample_sql = 'ORDER BY MD5(TimeSeriesID) LIMIT %s' % int(random_sample_size)

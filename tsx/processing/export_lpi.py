@@ -21,7 +21,7 @@ except NameError:
 def process_database(species = None, monthly = False, filter_output = False, include_all_years_data = False, database_config = None, export_dir = None):
     session = get_session(database_config)
 
-    if species == None:
+    if species is None:
         taxa = [taxon_id for (taxon_id,) in session.execute(text("SELECT DISTINCT taxon_id FROM aggregated_by_year")).fetchall()]
     else:
         taxa = [taxon_id for (taxon_id,) in session.execute(
@@ -79,7 +79,7 @@ def process_database(species = None, monthly = False, filter_output = False, inc
 
 
     # Without this, the GROUP_CONCAT in the export query produces rows that are too long
-    if database_config == None or "sqlite:" not in database_config:
+    if database_config is None or "sqlite:" not in database_config:
         session.execute(text("""SET SESSION group_concat_max_len = 50000;"""))
 
     export_dir = export_dir or tsx.config.data_dir('export')
@@ -387,8 +387,8 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                 del data['scientific_name']
 
                 if unicode_type_exists:
-                    writer.writerow({k: None if v == None else unicode(v).encode("utf-8") for k, v in data.items()})
+                    writer.writerow({k: None if v is None else unicode(v).encode("utf-8") for k, v in data.items()})
                 else:
-                    writer.writerow({k: None if v == None else str(v) for k, v in data.items()})
+                    writer.writerow({k: None if v is None else str(v) for k, v in data.items()})
 
     log.info("Done")
