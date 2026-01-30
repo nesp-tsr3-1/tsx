@@ -1,8 +1,6 @@
 
 from shapely.ops import transform
-from functools import partial
 import pyproj
-import sys, os, getopt
 from shapely.geometry import shape, Point, GeometryCollection
 from tsx.geo import to_multipolygon
 from tsx.util import run_parallel, sql_list_placeholder, sql_list_argument
@@ -15,9 +13,7 @@ import shapely.wkb
 import binascii
 from sqlalchemy import text
 
-from tsx.db import get_session
 from tsx.processing.alpha_hull import make_alpha_hull
-from tsx.geo import to_multipolygon
 
 import fiona
 

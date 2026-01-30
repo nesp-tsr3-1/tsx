@@ -1,4 +1,4 @@
-from tsx.db import Taxon, TaxonLevel, TaxonStatus, get_session
+from tsx.db import get_session
 import os
 import logging
 import sys
@@ -6,11 +6,10 @@ import argparse
 from tqdm import tqdm
 import re
 import shapely.wkb
-from tsx.geo import subdivide_geometry, to_multipolygon, count_points
+from tsx.geo import subdivide_geometry, to_multipolygon
 from shapely.geometry import MultiPolygon, Polygon, shape
 from shapely.ops import transform
 import fiona
-import time
 import pyproj
 from sqlalchemy import text
 

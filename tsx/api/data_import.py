@@ -1,22 +1,19 @@
-from flask import Blueprint, jsonify, request, send_file, session, Response
-from tsx.util import next_path, local_iso_datetime, Bunch
+from flask import Blueprint, jsonify, request, send_file, Response
+from tsx.util import local_iso_datetime, Bunch
 from tsx.api.util import db_session, get_user, get_roles, get_executor
 from tsx.api.upload import get_upload_path, get_upload_name
 from tsx.importer import Importer
 from tsx.config import data_dir
-from tsx.db import User, Source, get_session, DataImport, DataProcessingNotes, t_user_source, AuditLogItem
+from tsx.db import User, Source, DataImport, DataProcessingNotes, AuditLogItem
 import logging
 import os
 from threading import Thread, Lock
-import json
 import traceback
-from shutil import rmtree
 import time
 from tsx.api.validation import *
 from tsx.api.permissions import permitted
 from queue import Queue
 import subprocess
-from tsx.api.util import log
 from sqlalchemy import text
 from string import Template
 from textwrap import dedent

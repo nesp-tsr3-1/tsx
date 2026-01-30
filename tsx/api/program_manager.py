@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, session
+from flask import Blueprint, request
 from tsx.api.util import db_session, get_user, jsonify_rows
 
 from tsx.api.permissions import permitted

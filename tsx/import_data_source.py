@@ -20,8 +20,8 @@ def main():
 
 	session = get_session()
 
-	session.execute(text("DELETE FROM data_source"));
-	session.execute(text("DELETE FROM data_source_excluded_years"));
+	session.execute(text("DELETE FROM data_source"))
+	session.execute(text("DELETE FROM data_source_excluded_years"))
 
 	with open(args.filename) as f:
 		reader = csv.DictReader(f)

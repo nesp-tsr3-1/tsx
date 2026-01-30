@@ -1,11 +1,9 @@
 import logging
 import time
-import functools
 from tqdm import tqdm
 from tsx.db import get_session
 from tsx.util import run_parallel, sql_list_placeholder, sql_list_argument
 from sqlalchemy import text
-import time
 from random import shuffle
 
 log = logging.getLogger(__name__)

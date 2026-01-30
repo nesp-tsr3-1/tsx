@@ -26,7 +26,7 @@ def main():
 			AND taxon_level.description = 'sp'""")).fetchall()
 	}
 
-	session.execute(text("""DELETE FROM incidental_sighting"""));
+	session.execute(text("""DELETE FROM incidental_sighting"""))
 
 	with open(args.filename) as f:
 		reader = csv.DictReader(f)

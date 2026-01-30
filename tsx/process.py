@@ -1,5 +1,4 @@
 import argparse
-import tempfile
 import shapely.geometry
 import shapely.wkb
 import tsx.config
@@ -7,7 +6,6 @@ from tqdm import tqdm
 import logging
 import os
 from tsx.db import get_session
-from shapely.geometry import Point
 from tsx.mysql_to_sqlite import export_to_sqlite
 import binascii
 from tsx.util import get_resource

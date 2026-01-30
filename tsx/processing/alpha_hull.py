@@ -7,8 +7,8 @@ import numpy as np
 from functools import partial
 import pyproj
 import math
-from math import sin, cos, sqrt, atan2, radians
-import sys, os, getopt
+import sys
+import getopt
 from shapely.geometry import shape, Point, MultiPolygon
 from tsx.geo import to_multipolygon, subdivide_geometry, fast_difference
 from tsx.util import run_parallel
@@ -20,12 +20,9 @@ import logging
 import shapely.wkb
 import binascii
 from sqlalchemy import text
-import gc
 import fiona # Important - moving this dependency to the top causes a segfault loading sqlite extensions in mysql_to_sqlite!
 
-import mysql.connector
 
-import threading, sys, traceback
 
 log = logging.getLogger(__name__)
 
@@ -377,7 +374,7 @@ def main(argv):
     """
     try:
         opts, args = getopt.getopt(argv, 'h:i:o:t:a:b:s:p:q:')
-    except getopt.GetoptError as err:
+    except getopt.GetoptError:
         usage()
         sys.exit(1)
     inproj = None

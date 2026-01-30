@@ -2,11 +2,10 @@
 # replaced by t2_aggregation. This file is only being kept around for
 # reference until we have done the next major processign of Type 2 data.
 
-from shapely.geometry import Point, Polygon
+from shapely.geometry import Polygon
 import shapely.wkb
 from tqdm import tqdm
 from tsx.db import get_session, Taxon, T2UltrataxonSighting
-import tsx.db.connect
 from tsx.util import run_parallel, sql_list_placeholder, sql_list_argument
 from tsx.geo import point_intersects_geom
 import logging
@@ -134,7 +133,7 @@ def process_taxon(taxon_id, commit):
             session.bulk_save_objects(records)
         if commit:
             session.commit()
-    except Exception as e:
+    except Exception:
         log.exception('Exception in range and ultrataxon processing')
         raise
     finally:

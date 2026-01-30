@@ -9,7 +9,6 @@ from tsx.geo import to_multipolygon, subdivide_geometry
 from shapely.geometry import shape
 from fiona.transform import transform_geom
 import fiona
-import pyproj
 from sqlalchemy import text
 
 log = logging.getLogger(__name__)

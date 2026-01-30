@@ -1,9 +1,7 @@
 # Geospatial utils
 from collections import deque
-import time
-from shapely.geometry import Point, MultiPoint, Polygon, MultiPolygon, GeometryCollection, LineString, LinearRing, shape
+from shapely.geometry import Point, MultiPoint, Polygon, MultiPolygon, GeometryCollection, LineString
 from shapely.ops import transform
-from functools import partial
 import pyproj
 from contextlib import contextmanager
 import fiona

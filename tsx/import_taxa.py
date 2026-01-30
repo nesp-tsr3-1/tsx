@@ -1,5 +1,4 @@
 from tsx.db import Taxon, TaxonGroup, TaxonLevel, TaxonStatus, get_session
-import os
 import logging
 import sys
 import argparse

@@ -1,5 +1,4 @@
 from tsx.api.util import db_session, get_roles
-from tsx.db import DataProcessingNotes
 from sqlalchemy import text
 
 def is_program_manager_of_source(user_id, source_id):

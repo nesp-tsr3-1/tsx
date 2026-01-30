@@ -1,9 +1,7 @@
 from pyproj import Transformer
-from tsx.db import T1Survey, T1Sighting, T1Site, T2Survey, T2Sighting, T2Site, Taxon, TaxonLevel, Source, DataImport, SourceType, SearchType, Unit, UnitType, Management, ProjectionName, DataProcessingType, get_session, MonitoringProgram
+from tsx.db import T1Survey, T1Sighting, T1Site, T2Survey, T2Sighting, T2Site, Taxon, Source, DataImport, SourceType, SearchType, Unit, UnitType, Management, ProjectionName, DataProcessingType, get_session, MonitoringProgram
 import tsx.util
-import os
 import logging
-import sys
 from datetime import date, datetime, time
 import argparse
 from contextlib import contextmanager
@@ -599,7 +597,7 @@ class Importer:
 				survey.finish_time = parse_time(value)
 
 			if row.get('FinishDate') and (survey.start_date_y, survey.start_date_m, survey.start_date_d) > (survey.finish_date_y, survey.finish_date_m, survey.finish_date_d):
-				log.error("Start date after finish date: %s > %s" % ((survey.start_date_y, survey.start_date_m, survey.start_date_d), (survey.finish_date_y, survey.finish_date_m, survey.finish_date_d)));
+				log.error("Start date after finish date: %s > %s" % ((survey.start_date_y, survey.start_date_m, survey.start_date_d), (survey.finish_date_y, survey.finish_date_m, survey.finish_date_d)))
 				ok[0] = False
 
 			# Duration, area, length, location, accuracy

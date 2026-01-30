@@ -1,8 +1,6 @@
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker, scoped_session
-from tsx.db.models import Base
 from tsx.config import config
-import mysql.connector
 import os
 import logging
 import sqlite3

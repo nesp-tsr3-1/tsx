@@ -3,7 +3,6 @@ from datetime import datetime
 import logging
 import time
 from contextlib import contextmanager
-import logging
 import faulthandler
 import collections
 import functools
@@ -127,7 +126,6 @@ class memoized(object):
 import multiprocessing
 from threading import Thread
 from six.moves.queue import Queue, Empty
-import math
 import platform
 import sys
 

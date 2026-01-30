@@ -38,7 +38,7 @@ SET FOREIGN_KEY_CHECKS = 1;
 
 	process_sites(session)
 
-	session.commit();
+	session.commit()
 
 def get_taxon_sites(taxon_id):
 	session = get_session()

@@ -1,13 +1,12 @@
 import sqlite3
 import logging
 import pandas as pd
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 import sys
 import argparse
 import re
 import os
 from tsx.util import run_parallel, get_resource
-from tempfile import TemporaryDirectory
 import subprocess
 from tqdm import tqdm
 import shutil
@@ -236,7 +235,7 @@ def remove_file_or_dir(path):
         shutil.rmtree(path)
 
 def run_permutations(db, df, generate_plot_data, end_year):
-    db.execute("""DROP TABLE IF EXISTS trend""");
+    db.execute("""DROP TABLE IF EXISTS trend""")
     db.execute("""CREATE TABLE trend (
         TaxonomicGroup TEXT,
         FunctionalGroup TEXT,

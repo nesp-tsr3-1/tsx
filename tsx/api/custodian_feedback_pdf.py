@@ -1,4 +1,4 @@
-from fpdf import FPDF, TextStyle
+from fpdf import FPDF
 from fpdf.fonts import FontFace
 from tsx.api.custodian_feedback_shared import get_form_json_raw, field_options, form_fields
 from tsx.api.util import server_timezone
@@ -11,8 +11,6 @@ from tsx.api.util import db_session
 from sqlalchemy import text
 from tsx.config import data_dir
 import cartopy.crs as ccrs
-import cartopy.feature as cfeature
-from datetime import datetime
 from textwrap import dedent
 import urllib.request
 import zipfile

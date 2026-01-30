@@ -1,6 +1,6 @@
 
 from flask import Blueprint, jsonify, request, Response #, send_file, session,
-from tsx.api.util import db_session, get_user, get_roles, jsonify_rows, db_insert, db_update #, server_timezone, sanitise_file_name_string
+from tsx.api.util import db_session, get_user, get_roles, db_insert, db_update #, server_timezone, sanitise_file_name_string
 from tsx.util import Bunch
 from tsx.api.validation import *
 from tsx.api.permissions import permitted

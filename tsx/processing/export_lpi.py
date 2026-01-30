@@ -1,15 +1,12 @@
 from tsx.db import get_session
 from tqdm import tqdm
 import logging
-from tsx.util import run_parallel, sql_list_placeholder, sql_list_argument
-import time
+from tsx.util import sql_list_placeholder, sql_list_argument
 import csv
 import os
 import tsx.config
-from datetime import date
 import re
 import numpy as np
-import tsx.config
 import sys
 from sqlalchemy import text
 

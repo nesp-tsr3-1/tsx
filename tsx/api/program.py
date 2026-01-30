@@ -1,5 +1,5 @@
-from flask import Blueprint, jsonify, request, session
-from tsx.api.util import db_session, get_user, jsonify_rows
+from flask import Blueprint, jsonify, request
+from tsx.api.util import db_session, get_user
 from tsx.api.permissions import permitted
 from tsx.db import MonitoringProgram, User
 from tsx.api.validation import *

@@ -1,7 +1,7 @@
-from flask import Blueprint, jsonify, request, send_file, session, Response
+from flask import Blueprint, jsonify, request, Response
 import csv
 from uuid import uuid4
-from tsx.api.util import db_session, get_user, get_roles, jsonify_rows, get_request_args_or_body, sanitise_file_name_string
+from tsx.api.util import db_session, get_user, jsonify_rows, get_request_args_or_body, sanitise_file_name_string
 from tsx.util import get_resource
 from tsx.api.permissions import permitted
 from tsx.api.results import trend_txt_to_csv

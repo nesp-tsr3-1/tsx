@@ -6,7 +6,6 @@ from tsx.db import get_session
 from tqdm import tqdm
 import logging
 from tsx.util import run_parallel, sql_list_placeholder, sql_list_argument
-import time
 import functools
 from sqlalchemy import text
 

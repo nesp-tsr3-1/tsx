@@ -1,8 +1,5 @@
-from flask import request, make_response, g, jsonify, Blueprint
-from tsx.db import get_session
+from flask import request, Blueprint
 from tsx.api.util import db_session, jsonify_rows
-import os
-import json
 from sqlalchemy import text
 
 bp = Blueprint('misc', __name__)
