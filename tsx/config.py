@@ -35,10 +35,7 @@ def get(section, option, default = None):
 	"""
 	Reads a config option from the given section, returning the default if the option does not exist
 	"""
-	try:
-		return config.get(section, option)
-	except:
-		return default
+	return config.get(section, option, fallback=default)
 
 def data_dir(path):
 	"""

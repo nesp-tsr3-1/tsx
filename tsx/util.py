@@ -7,6 +7,11 @@ import faulthandler
 import collections
 import functools
 import importlib.resources
+import multiprocessing
+from threading import Thread
+from six.moves.queue import Queue, Empty
+import platform
+import sys
 
 from tsx.config import config
 
@@ -72,10 +77,10 @@ class CounterHandler(logging.Handler):
         self.counters = {}
 
     def emit(self, record):
-        l = record.levelname
-        if (l not in self.counters):
-            self.counters[l] = 0
-        self.counters[l] += 1
+        levelname = record.levelname
+        if (levelname not in self.counters):
+            self.counters[levelname] = 0
+        self.counters[levelname] += 1
 
     def count(self, level):
         return self.counters.get(level, 0)
@@ -123,16 +128,7 @@ class memoized(object):
         '''Support instance methods.'''
         return functools.partial(self.__call__, obj)
 
-import multiprocessing
-from threading import Thread
-from six.moves.queue import Queue, Empty
-import platform
-import sys
-
-try:
-    default_num_workers = config.getint("processing","num_workers")
-except:
-    default_num_workers = None
+default_num_workers = config.getint("processing","num_workers")
 
 # Helper to get next item from queue without constantly blocking
 def next(q):
@@ -141,7 +137,7 @@ def next(q):
             return q.get(True, 1) # Get with timeout so thread isn't constantly blocked
         except Empty:
             pass
-        except:
+        except Exception:
             log.exception("Exception getting item from queue")
             raise
 
@@ -155,7 +151,7 @@ def worker(target, work_q, result_q):
             break
         try:
             result_q.put((target(*task), None))
-        except:
+        except Exception:
             e = sys.exc_info()[0]
             log.exception("Exception in worker")
             result_q.put((None, e))
@@ -234,7 +230,7 @@ def run_parallel(target, tasks, n_workers = default_num_workers, use_processes =
     i = 0
     for task in tasks:
         # Tasks must always be tuples
-        if type(task) != tuple:
+        if type(task) is tuple:
             task = (task,)
         work_q.put(task)
         i += 1

@@ -1,6 +1,4 @@
-import csv
-from io import StringIO
-from flask import make_response, session, current_app, jsonify, request
+from flask import session, current_app, jsonify, request
 from tsx.db.connect import Session
 from tsx.db import User
 from sqlalchemy import orm
@@ -23,21 +21,6 @@ def get_executor():
 	if executor is None:
 		executor = Executor(current_app)
 	return executor
-
-def csv_response(rows, filename="export.csv"):
-	"""Generate CSV response from a list of row values"""
-	# Unfortunately Flask doesn't let you output response as an IO Stream, so you have
-	# buffer the entire response to a string first.
-	si = StringIO()
-	cw = csv.writer(si)
-	cw.writerow(header)
-	for row in rows:
-		cw.writerow()
-	output = make_response(si.getvalue())
-	output.headers["Content-Disposition"] = "attachment; filename=%s" % filename
-	output.headers["Content-type"] = "text/csv"
-	return output
-
 
 # This should be used by any web app code for accessing the database. The database connection
 # will automatically be released at the end of each request (assuming setup_db() has been called
