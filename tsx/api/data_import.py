@@ -7,13 +7,11 @@ from tsx.config import data_dir
 from tsx.db import User, Source, DataImport, DataProcessingNotes, AuditLogItem
 import logging
 import os
-from threading import Thread, Lock
+from threading import Lock
 import traceback
 import time
-from tsx.api.validation import *
+from tsx.api.validation import validate_fields, validate_required, Field, email_regex, validate_max_chars, validate_one_of, validate_email
 from tsx.api.permissions import permitted
-from queue import Queue
-import subprocess
 from sqlalchemy import text
 from string import Template
 from textwrap import dedent
@@ -21,6 +19,7 @@ from tsx.api.mail import send_admin_notification
 from tsx.config import config
 from tsx.api.custodian_feedback_shared import update_all_dataset_stats
 from tsx.api.custodian_feedback_pdf import generate_archive_pdfs
+import re
 
 bp = Blueprint('data_import', __name__)
 
@@ -121,7 +120,7 @@ def create_source():
 
 @bp.route('/data_sources/<int:source_id>', methods = ['PUT'])
 def update_source(source_id = None):
-	if source_id == None:
+	if source_id is None:
 		return "Not found", 404
 
 	return create_or_update_source(source_id)
@@ -135,7 +134,7 @@ def get_source(source_id=None):
 
 	source = db_session.query(Source).get(source_id) if source_id else None
 
-	if source == None:
+	if source is None:
 		return "Not found", 404
 
 	result = source_to_json(source)
@@ -174,7 +173,7 @@ def get_source_imports(source_id=None):
 
 	source = db_session.query(Source).get(source_id) if source_id else None
 
-	if source == None:
+	if source is None:
 		return "Not found", 404
 
 	show_hidden = permitted(user, 'view_hidden_import', 'source', source_id)
@@ -215,7 +214,7 @@ def get_source_processing_notes(source_id=None):
 
 	source = db_session.query(Source).get(source_id) if source_id else None
 
-	if source == None:
+	if source is None:
 		return "Not found", 404
 
 	rows = db_session.execute(text("""SELECT
@@ -301,7 +300,7 @@ def get_source_custodians(source_id=None):
 
 	source = db_session.query(Source).get(source_id) if source_id else None
 
-	if source == None:
+	if source is None:
 		return "Not found", 404
 
 	rows = db_session.execute(text("""SELECT
@@ -611,7 +610,7 @@ def source_url(source_id):
 
 def update_source_from_json(source, json):
 	def clean(value):
-		if type(value) == str:
+		if type(value) is str:
 			value = value.strip()
 		return value
 
@@ -847,7 +846,7 @@ def process_import_async(import_id, status):
 		# t = Thread(target = process_import, args = (file_path, working_path, data_type, status == 'importing', progress_callback, result_callback, info.source_id, import_id))
 		# t.start()
 		get_executor().submit(process_import, file_path, working_path, data_type, status == 'importing', progress_callback, result_callback, info.source_id, import_id)
-	except:
+	except Exception:
 		traceback.print_exc()
 		result_callback({
 			'warnings': 0,
@@ -855,7 +854,6 @@ def process_import_async(import_id, status):
 		})
 
 # This is called off the main thread
-# Ideally we would run this in a separate process, but Python 2 multiprocessing is broken/hard. Easy with Python 3 though.
 def process_import(file_path, working_path, data_type, commit, progress_callback, result_callback, source_id, data_import_id):
 	try:
 		# Create logger for this import
@@ -874,7 +872,7 @@ def process_import(file_path, working_path, data_type, commit, progress_callback
 			'warnings': importer.warning_count,
 			'errors': importer.error_count
 		})
-	except:
+	except Exception:
 		traceback.print_exc()
 		result_callback({
 			'warnings': 0,
@@ -1011,5 +1009,5 @@ def import_path(id):
 def load_import(import_id):
 	try:
 		return db_session.query(DataImport).get(int(import_id))
-	except:
+	except Exception:
 		return None
