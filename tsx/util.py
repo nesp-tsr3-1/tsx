@@ -128,7 +128,11 @@ class memoized(object):
         '''Support instance methods.'''
         return functools.partial(self.__call__, obj)
 
-default_num_workers = config.getint("processing","num_workers")
+try:
+    default_num_workers = config.getint("processing","num_workers")
+except Exception:
+    default_num_workers = None
+
 
 # Helper to get next item from queue without constantly blocking
 def next(q):
@@ -230,7 +234,7 @@ def run_parallel(target, tasks, n_workers = default_num_workers, use_processes =
     i = 0
     for task in tasks:
         # Tasks must always be tuples
-        if type(task) is tuple:
+        if type(task) is not tuple:
             task = (task,)
         work_q.put(task)
         i += 1
