@@ -602,7 +602,7 @@
         Generate Population Trend
       </button>
       <button
-        v-if="enableLogLinearTrend"
+        v-if="isAdmin && enableLogLinearTrend"
         type="button"
         class="button is-primary"
         :disabled="!enableGenerateTrend"
