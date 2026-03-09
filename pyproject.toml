@@ -29,6 +29,7 @@ dependencies = [
     "cachelib",
     "freezegun>=1.5.5",
     "python-stripzip>=2.0.0",
+    "duckdb"
 ]
 
 [dependency-groups]

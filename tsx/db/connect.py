@@ -26,6 +26,22 @@ def get_database_url(database_config=None):
 
     return url
 
+def get_database_duckdb_attach_string(database_config=None):
+    if database_config is None:
+        database_config = "database"
+
+    if ":" in database_config:
+        return ValueError("database_config not supported: %s" % database_config)
+
+    info = [
+        ('host', config.get(database_config, "host").strip()),
+        ('user', config.get(database_config, "username").strip()),
+        ('passwd', config.get(database_config, "password").strip()),
+        ('db', config.get(database_config, "name").strip())
+    ]
+
+    return " ".join("%s=%s" % (key, value) for key, value in info if value)
+
 # We detect process ID so we can automatically start a new engine for new processes
 last_pid = os.getpid()
 

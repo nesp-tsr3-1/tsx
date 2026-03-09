@@ -16,6 +16,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 import json
 from sqlalchemy import text
 import hashlib
+import duckdb
 
 bp = Blueprint('subset', __name__)
 
@@ -23,9 +24,15 @@ class EchoWriter:
     def write(self, line):
         return line
 
+def get_keys(cursor):
+    try:
+        return cursor.keys()
+    except AttributeError:
+        return [c[0] for c in cursor.description]
+
 def stream_csv(result):
     writer = csv.writer(EchoWriter())
-    yield writer.writerow(result.keys())
+    yield writer.writerow(get_keys(result))
     for row in result.fetchall():
         yield writer.writerow(row)
 
@@ -40,7 +47,7 @@ def csv_string(result):
 
 def write_csv(result, output):
     writer = csv.writer(output)
-    writer.writerow(result.keys())
+    writer.writerow(get_keys(result))
     for row in result.fetchall():
         writer.writerow(row)
 
@@ -57,13 +64,18 @@ def subset_raw_data():
     csv_filename = 'raw-data&%s.csv' % filename_component_from_params()
 
     result = query_subset_raw_data()
+
     extra_dir = data_dir('raw-download-extras')
     extra_entries = [(filename, os.path.join(extra_dir, filename), 'file') for filename in os.listdir(extra_dir)]
     return zip_response([(csv_filename, csv_string(result), 'str')] + extra_entries, zip_filename)
 
 @bp.route('/subset/stats', methods = ['GET'])
 def subset_stats():
-    where_conditions, having_conditions, params = subset_sql_params()
+    data = subset_stats_data()
+    return jsonify(data)
+
+def subset_stats_data_legacy():
+    where_conditions, having_conditions, params = subset_sql_params_legacy()
 
     sql = """WITH
         t AS (SELECT
@@ -92,7 +104,7 @@ def subset_stats():
             taxon_id
         FROM t
         GROUP BY site_id, taxon_id, source_id, unit_id, search_type_id, region_id
-        HAVING MAX(`count`) = 0 OR COUNT(*) = 1)
+        HAVING MAX(`count`) = 0 OR COUNT(DISTINCT year) = 1)
 
         SELECT
             COUNT(DISTINCT survey_id) AS survey_count,
@@ -110,14 +122,70 @@ def subset_stats():
         having_clause = "HAVING " + " AND ".join(having_conditions) if having_conditions else "")
 
     result = db_session.execute(text(sql), params).fetchone()
-    return jsonify(dict(result._mapping))
+    return dict(result._mapping)
+
+preprocessed_data_dir = data_dir('preprocessed')
+
+def raw_data_glob():
+    return os.path.join(preprocessed_data_dir, '*_raw.parquet').replace("'", "''")
+
+def aggregated_data_glob():
+    return os.path.join(preprocessed_data_dir, '*_agg*.parquet').replace("'", "''")
+
+def subset_stats_data():
+    if legacy():
+        return subset_stats_data_legacy()
+
+    where_conditions, params = subset_sql_params()
+
+    db = duckdb.connect()
+    cursor = db.cursor()
+
+    # Get stats based on raw data
+    sql = f"""
+        WITH raw_stats AS (
+            SELECT
+                COUNT(DISTINCT SurveyID) AS survey_count,
+                COUNT(DISTINCT SightingID) AS sighting_count,
+                COUNT(DISTINCT TaxonID) AS taxon_count,
+                COUNT(DISTINCT SourceID) AS source_count,
+                MIN(StartYear) AS min_year,
+                MAX(StartYear) AS max_year,
+            FROM '{raw_data_glob()}'
+            WHERE {" AND ".join(where_conditions)}
+        ),
+        t AS
+        (
+            SELECT
+                COUNT(*) > 1 AND Max(Val) > 0 AS Included,
+                TaxonID
+            FROM '{aggregated_data_glob()}'
+            WHERE {" AND ".join(where_conditions)}
+            GROUP BY (TaxonID, TimeSeriesID, Region, State)
+        ),
+        ts_stats AS (
+            SELECT
+            COUNT(*) AS time_series_count,
+            COUNT(*) FILTER (NOT Included) AS excluded_time_series_count,
+            COUNT(DISTINCT TaxonID) FILTER (NOT Included) AS excluded_time_series_taxon_count
+            FROM t
+        )
+        SELECT *
+        FROM raw_stats, ts_stats
+        """
+
+    row = cursor.execute(sql, params).fetchone()
+    return dict(zip(get_keys(cursor), row))
+
 
 @bp.route('/subset/intensity_map', methods = ['GET'])
 def subset_intensity_map():
-    return jsonify(subset_intensity_map_json()), 200
+    data = subset_intensity_map_json()
 
-def subset_intensity_map_json(subset_params=None):
-    where_conditions, having_conditions, params = subset_sql_params(subset_params)
+    return jsonify(data), 200
+
+def subset_intensity_map_json_legacy(subset_params=None):
+    where_conditions, having_conditions, params = subset_sql_params_legacy(subset_params)
 
     sql = """WITH t AS (SELECT
             t1_survey.id AS survey_id,
@@ -145,6 +213,7 @@ def subset_intensity_map_json(subset_params=None):
             COUNT(DISTINCT site_id, taxon_id, source_id, unit_id, search_type_id) AS c
         FROM t
         GROUP BY lat, lon
+        ORDER BY lat, lon
     """.format(
         where_clause = " AND ".join(where_conditions) if where_conditions else "TRUE",
         having_clause = "HAVING " + " AND ".join(having_conditions) if having_conditions else "")
@@ -152,9 +221,37 @@ def subset_intensity_map_json(subset_params=None):
     result = db_session.execute(text(sql), params).fetchall()
     return [dict(row._mapping) for row in result]
 
+def subset_intensity_map_json(subset_params=None):
+    if legacy():
+        return subset_intensity_map_json_legacy(subset_params)
+
+    where_conditions, params = subset_sql_params(subset_params)
+
+    db = duckdb.connect()
+    cursor = db.cursor()
+
+    sql = f"""
+        SELECT
+            ROUND(X, 1) AS lon,
+            ROUND(Y, 1) AS lat,
+            COUNT(DISTINCT (TimeSeriesID, SiteID, TaxonID, UnitOfMeasurement, SearchTypeDesc)) AS c
+        FROM '{raw_data_glob()}'
+        WHERE {" AND ".join(where_conditions)}
+        GROUP BY lat, lon
+        ORDER BY lat, lon
+        """
+
+    rows = cursor.execute(sql, params).fetchall()
+    keys = get_keys(cursor)
+    return [dict(zip(keys, row)) for row in rows]
+
 @bp.route('/subset/sites', methods = ['GET'])
 def subset_sites():
-    where_conditions, having_conditions, params = subset_sql_params(state_via_region=True)
+    data = subset_sites_data()
+    return jsonify(data)
+
+def subset_sites_data_legacy():
+    where_conditions, having_conditions, params = subset_sql_params_legacy(state_via_region=True)
 
     order_by_expressions = []
 
@@ -165,7 +262,8 @@ def subset_sites():
         where_conditions.append("t1_site.name LIKE :site_name_query_pattern")
         order_by_expressions.append("INSTR(t1_site.name, :site_name_query)")
 
-    order_by_expressions.append("t1_site.name")
+    order_by_expressions.append("t1_site.name COLLATE utf8mb4_bin")
+    order_by_expressions.append("t1_site.id")
 
     sql = """SELECT DISTINCT t1_site.id, t1_site.name
         FROM t1_survey
@@ -181,12 +279,46 @@ def subset_sites():
     """.format(where_clause=" AND ".join(where_conditions) or "TRUE",
         order_by_clause=", ".join(order_by_expressions))
 
-    result = db_session.execute(text(sql), params).fetchall()
-    return jsonify_rows(result)
+    rows = db_session.execute(text(sql), params).fetchall()
+    return [dict(row._mapping) for row in rows]
+
+def subset_sites_data():
+    if legacy():
+        return subset_sites_data_legacy()
+
+    where_conditions, params = subset_sql_params()
+
+    db = duckdb.connect()
+    cursor = db.cursor()
+
+    if request.args.get('site_name_query'):
+        params['site_name_query'] = request.args['site_name_query'].strip()
+    else:
+        params['site_name_query'] = ''
+
+    where_conditions.append("($site_name_query = '' OR INSTR(SiteName, $site_name_query COLLATE NOCASE) > 0)")
+
+    cursor.execute(f"""
+        SELECT DISTINCT
+            SiteID as id,
+            SiteName as name
+        FROM '{raw_data_glob()}'
+        WHERE {" AND ".join(where_conditions)}
+        ORDER BY INSTR(SiteName, $site_name_query COLLATE NOCASE), SiteName, SiteID
+        LIMIT 300
+    """, params)
+
+    rows = cursor.fetchall()
+    keys = get_keys(cursor)
+    return [dict(zip(keys, row)) for row in rows]
 
 @bp.route('/subset/species', methods = ['GET'])
 def subset_species():
-    where_conditions, having_conditions, params = subset_sql_params(state_via_region=True)
+    data = subset_species_data()
+    return jsonify(data)
+
+def subset_species_data_legacy():
+    where_conditions, having_conditions, params = subset_sql_params_legacy(state_via_region=True)
     order_by_expressions = []
 
     if request.args.get('species_name_query'):
@@ -224,8 +356,51 @@ def subset_species():
     """.format(where_clause=" AND ".join(where_conditions) or "TRUE",
         order_by_clause=", ".join(order_by_expressions))
 
-    result = db_session.execute(text(sql), params).fetchall()
-    return jsonify_rows(result)
+    rows = db_session.execute(text(sql), params).fetchall()
+    return [dict(row._mapping) for row in rows]
+
+def subset_species_data():
+    if legacy():
+        return subset_species_data_legacy()
+
+    where_conditions, params = subset_sql_params()
+    order_by_expressions = []
+
+    if request.args.get('species_name_query'):
+        params['species_name_query'] = request.args['species_name_query'].strip()
+
+        sql_min_index = """list_min(
+            list_filter(
+                apply(
+                    [CommonName, ScientificName, TaxonID],
+                    lambda x: INSTR(COALESCE(x, ''), $species_name_query COLLATE NOCASE)
+                ),
+                lambda x: x > 0
+            )
+        )"""
+
+        where_conditions.append(sql_min_index + " > 0")
+        order_by_expressions.append(sql_min_index)
+
+    order_by_expressions.append("ScientificName")
+
+    db = duckdb.connect()
+    cursor = db.cursor()
+
+    sql = f"""SELECT DISTINCT
+        TaxonID AS id,
+        CommonName AS common_name,
+        ScientificName AS scientific_name
+            FROM '{raw_data_glob()}'
+            WHERE {" AND ".join(where_conditions)}
+            ORDER BY {", ".join(order_by_expressions)}
+            LIMIT 300"""
+
+    cursor.execute(sql, params)
+
+    rows = cursor.fetchall()
+    keys = get_keys(cursor)
+    return [dict(zip(keys, row)) for row in rows]
 
 
 # This tries to strike a balance between a descriptive name and not being too long
@@ -315,7 +490,7 @@ def db_query_single(sql, params):
         return None
 
 
-def subset_sql_params(subset_params=None, state_via_region=False):
+def subset_sql_params_legacy(subset_params=None, state_via_region=False):
     where_conditions = []
     having_conditions = []
     params = {}
@@ -400,8 +575,97 @@ def subset_sql_params(subset_params=None, state_via_region=False):
 
     return (where_conditions, having_conditions, params)
 
-def query_subset_raw_data_sql_and_params():
-    where_conditions, having_conditions, params = subset_sql_params()
+def region_name(region_id):
+    (name,) = db_session.execute(text("SELECT name FROM region WHERE id = :id"), { "id": region_id }).fetchone()
+    return name
+
+def monitoring_program_name(program_id):
+    (name,) = db_session.execute(text("SELECT description FROM monitoring_program WHERE id = :id"), { "id": program_id }).fetchone()
+    return name
+
+def taxon_status(code):
+    (name,) = db_session.execute(text("SELECT description FROM taxon_status WHERE code = :code"), { "code": code }).fetchone()
+    return name
+
+def subset_sql_params(subset_params=None, state_via_region=False):
+    where_conditions = [ "TRUE", "DataType = 1" ]
+    params = {}
+
+    args = subset_params or get_request_args_or_body()
+
+    if 'state' in args:
+        where_conditions.append("State = $state")
+        params['state'] = args['state']
+
+    if 'regions' in args:
+        ids = args['regions']
+        if isinstance(ids, str):
+            ids = ids.split(",")
+        if len(ids):
+            params['regions'] = [region_name(region_id) for region_id in ids]
+            where_conditions.append("Region IN $regions")
+
+    if 'monitoring_programs' in args:
+        ids = args['monitoring_programs']
+        if isinstance(ids, str):
+            ids = ids.split(",")
+
+        if 'any' in ids:
+            if 'none' in ids:
+                pass
+            else:
+                where_conditions.append("MonitoringProgram IS NOT NULL")
+        else:
+            names = []
+            for program_id in ids:
+                if program_id == 'none':
+                    names.append("_NONE_")
+                else:
+                    names.append(monitoring_program_name(program_id))
+
+            params["monitoring_programs"] = names
+            where_conditions.append("COALESCE(MonitoringProgram, '_NONE_') IN $monitoring_programs")
+
+    if 'management' in args:
+        where_conditions.append("Management = $management")
+        params['management'] = args['management']
+
+    if 'taxon_id' in args:
+        params["taxon_ids"] = args['taxon_id'].split(',')
+        where_conditions.append("TaxonID IN $taxon_ids")
+
+    if 'taxonomic_group' in args:
+        params["taxonomic_group"] = args['taxonomic_group']
+        where_conditions.append('TaxonomicGroup = $taxonomic_group')
+
+    if 'status_auth' in args and 'taxon_status' in args:
+        status_auth = args['status_auth']
+        if status_auth in ["max", "epbc", "iucn", "bird_action_plan"]:
+            col = {
+                "max": "MaxStatus",
+                "epbc": "EPBCStatus",
+                "iucn": "IUCNStatus",
+                "bird_action_plan": "BirdActionPlanStatus"
+            }[status_auth]
+
+            params["taxon_status"] = [taxon_status(code) for code in args['taxon_status'].split(',')]
+            where_conditions.append("COALESCE(%s, 'Least Concern') IN $taxon_status" % col)
+
+    if 'eligible_for_tsx_only' in args and args['eligible_for_tsx_only'] == 'true':
+        where_conditions.append('EligibleForTSX')
+
+    if 'source_id' in args:
+        where_conditions.append('SourceID = $source_id')
+        params['source_id'] = args['source_id']
+
+    if 'site_id' in args:
+        where_conditions.append('SiteID::TEXT IN $site_ids')
+        params["site_ids"] = args['site_id'].split(",")
+
+    return (where_conditions, params)
+
+def query_subset_raw_data_sql_and_params_legacy():
+    where_conditions, having_conditions, params = subset_sql_params_legacy()
 
     params['redact_location'] = not permitted(get_user(), 'import_data', 'source', params.get('source_id'))
 
@@ -467,16 +731,73 @@ def query_subset_raw_data_sql_and_params():
         WHERE {where_clause}
         GROUP BY t1_survey.id, t1_sighting.id
         {having_clause}
+        ORDER BY SourceDesc COLLATE utf8mb4_bin, SourcePrimaryKey COLLATE utf8mb4_bin, TaxonID, t1_sighting.id
     """.format(
         where_clause = " AND ".join(where_conditions) if where_conditions else "TRUE",
         having_clause = "HAVING " + " AND ".join(having_conditions) if having_conditions else "")
 
     return sql, params
 
-def query_subset_raw_data():
-    sql, params = query_subset_raw_data_sql_and_params()
-    return db_session.execute(text(sql), params)
 
+def query_subset_raw_data():
+    if legacy():
+        return query_subset_raw_data_legacy()
+
+    (where_conditions, params) = subset_sql_params()
+
+    params['redact_location'] = not permitted(get_user(), 'import_data', 'source', params.get('source_id'))
+
+    db = duckdb.connect()
+    cursor = db.cursor()
+
+    sql = f"""
+        SELECT
+            SourceType,
+            SourceDesc,
+            SourceProvider,
+            DataProcessingType,
+            LocationName,
+            SearchTypeDesc,
+            SourcePrimaryKey,
+            StartDate,
+            FinishDate,
+            StartTime,
+            FinishTime,
+            DurationInMinutes,
+            "DurationInDays/Nights",
+            "NumberOfTrapsPerDay/Night",
+            AreaInM2,
+            LengthInKm,
+            IF($redact_location, 'REDACTED', SiteName) AS SiteName,
+            IF($redact_location, 'REDACTED', regexp_replace(Y::text, '.0$', '')) as Y,
+            IF($redact_location, 'REDACTED', regexp_replace(X::text, '.0$', '')) as X,
+            ProjectionReference,
+            PositionalAccuracyInM,
+            State,
+            Region,
+            SurveyComments,
+            MonitoringProgram,
+            MonitoringProgramComments,
+            Management,
+            ManagementCategory,
+            ManagementCategoryComments,
+            TaxonID,
+            CommonName,
+            ScientificName,
+            Count,
+            UnitOfMeasurement,
+            UnitType,
+            SightingComments
+        FROM '{raw_data_glob()}'
+        WHERE {" AND ".join(where_conditions)}
+        ORDER BY SourceDesc, SourcePrimaryKey, TaxonID, SightingID
+        """
+
+    return cursor.execute(sql, params)
+
+def query_subset_raw_data_legacy():
+    sql, params = query_subset_raw_data_sql_and_params_legacy()
+    return db_session.execute(text(sql), params)
 
 def params_permitted():
     if permitted(get_user(), '*', '*'):
@@ -499,6 +820,9 @@ def params_permitted():
                 return True
 
     return False
+
+def legacy():
+    return 'subset_legacy' in request.cookies
 
 @bp.route('/subset/time_series', methods = ['GET'])
 def subset_time_series():
@@ -524,7 +848,7 @@ def monitoring_consistency_all_csv():
     csv_rows = []
     result = query_subset_time_series()
 
-    numeric_cols = [(index, key) for index, key in enumerate(result.keys()) if key.isdigit()]
+    numeric_cols = [(index, key) for index, key in enumerate(get_keys(result)) if key.isdigit()]
     numeric_col_indices = [index for index, key in numeric_cols]
     numeric_col_names = [key for index, key in numeric_cols]
 
@@ -557,7 +881,7 @@ def monitoring_consistency_plot_json(subset_params=None):
 
     result_data = []
 
-    numeric_keys = [(index, int(key)) for index, key in enumerate(result.keys()) if key.isdigit()]
+    numeric_keys = [(index, int(key)) for index, key in enumerate(get_keys(result)) if key.isdigit()]
 
     for row in result.fetchall():
         row_data = []
@@ -601,8 +925,8 @@ def zip_response(entries, download_file_name):
         }
     )
 
-def query_subset_time_series(subset_params=None, random_sample_size=None):
-    where_conditions, having_conditions, params = subset_sql_params(subset_params)
+def query_subset_time_series_legacy(subset_params=None, random_sample_size=None):
+    where_conditions, having_conditions, params = subset_sql_params_legacy(subset_params)
 
     if ('source_id' in params) and permitted(get_user(), 'import_data', 'source', params['source_id']):
         coordinates_sql = """
@@ -651,6 +975,7 @@ def query_subset_time_series(subset_params=None, random_sample_size=None):
     def year_field_sql(year, has_data):
         if has_data:
             return  "AVG(IF(start_date_y = %s, x, NULL)) AS `%s`" % (year, year)
+            # return  "ROUND(AVG(IF(start_date_y = %s, x, NULL)), 7) AS `%s`" % (year, year)
         else:
             return "NULL as `%s`" % year
 
@@ -658,9 +983,9 @@ def query_subset_time_series(subset_params=None, random_sample_size=None):
         year_field_sql(year, year in years) for year in range(min_year, max_year + 1))
 
     if random_sample_size is None:
-        random_sample_sql = ''
+        order_limit_sql = 'ORDER BY TimeSeriesID COLLATE utf8mb4_bin, Region, State'
     else:
-        random_sample_sql = 'ORDER BY MD5(TimeSeriesID) LIMIT %s' % int(random_sample_size)
+        order_limit_sql = 'ORDER BY MD5(TimeSeriesID) LIMIT %s' % int(random_sample_size)
 
     sql = """WITH t AS (%s),
         t2 AS (SELECT
@@ -695,7 +1020,7 @@ def query_subset_time_series(subset_params=None, random_sample_size=None):
             MIN(CONCAT(t2.source_id, '_', t2.unit_id, '_', COALESCE(t2.search_type_id, '0'), '_', t2.site_id, '_', t2.taxon_id)) AS TimeSeriesID,
             source.id AS SourceID,
             source.description AS SourceDesc,
-            (SELECT description FROM data_processing_type WHERE id = source.data_processing_type_id) AS DataProcessingType,
+            COALESCE((SELECT description FROM data_processing_type WHERE id = source.data_processing_type_id), 'N/A') AS DataProcessingType,
             taxon.id AS TaxonID,
             taxon.common_name AS CommonName,
             taxon.`order` AS `Order`,
@@ -736,9 +1061,101 @@ def query_subset_time_series(subset_params=None, random_sample_size=None):
             t2.search_type_id,
             t2.region_id
         %s
-        """ % (raw_data_sql, coordinates_sql, year_fields_sql, random_sample_sql)
+        """ % (raw_data_sql, coordinates_sql, year_fields_sql, order_limit_sql)
 
     return db_session.execute(text(sql), params)
+
+def query_subset_time_series(subset_params=None, random_sample_size=None):
+    if legacy():
+        return query_subset_time_series_legacy(subset_params, random_sample_size)
+
+    where_conditions, params = subset_sql_params(subset_params)
+
+    if ('source_id' in params) and permitted(get_user(), 'import_data', 'source', params['source_id']):
+        coordinates_sql = """
+            ROUND(SurveysCentroidLatitude, 7) AS SurveysCentroidLatitude,
+            ROUND(SurveysCentroidLongitude, 7) AS SurveysCentroidLongitude"""
+    else:
+        coordinates_sql = """
+            ROUND(RegionCentroidLatitude, 7) AS RegionCentroidLatitude,
+            ROUND(RegionCentroidLongitude, 7) AS RegionCentroidLongitude"""
+
+    if random_sample_size is None:
+        order_limit_sql = 'ORDER BY TimeSeriesID, Region, State'
+    else:
+        order_limit_sql = 'ORDER BY MD5(TimeSeriesID) LIMIT %s' % int(random_sample_size)
+
+    db = duckdb.connect()
+    cursor = db.cursor()
+
+    (min_year, max_year) = cursor.execute(f"""SELECT
+        MIN(StartYear),
+        MAX(StartYear)
+        FROM '{aggregated_data_glob()}'
+        WHERE {" AND ".join(where_conditions)}
+    """, params).fetchone()
+
+    if min_year:
+        year_clause = ", ".join(str(y) for y in range(min_year, max_year + 1))
+    else:
+        year_clause = "0"
+
+    sql = f"""WITH x AS (
+        SELECT
+            * REPLACE (
+                SUM(SurveyCount) OVER w AS SurveyCount,
+                MAX(SurveysSpatialAccuracyInMetres) OVER w AS SurveysSpatialAccuracyInMetres,
+                AVG(SurveysCentroidLongitude) OVER w AS SurveysCentroidLongitude,
+                AVG(SurveysCentroidLatitude) OVER w AS SurveysCentroidLatitude
+                -- ROUND_EVEN(Val, 7) AS Val
+            ),
+            COUNT(*) OVER w AS TimeSeriesSampleYears,
+            MAX(StartYear) OVER w - MIN(StartYear) OVER w + 1 AS TimeSeriesLength,
+            TimeSeriesSampleYears / TimeSeriesLength AS TimeSeriesCompleteness
+        FROM '{aggregated_data_glob()}'
+        WHERE {" AND ".join(where_conditions)}
+        WINDOW w AS (PARTITION BY TimeSeriesID, Region, State)
+        ORDER BY TimeSeriesID, Region, State
+    ),
+    y AS (
+        PIVOT x ON StartYear IN ({year_clause}) USING any_value(Val)
+    )
+    SELECT
+        Binomial,
+        ROW_NUMBER() OVER () AS ID,
+        TimeSeriesID,
+        SourceID,
+        SourceDesc,
+        DataProcessingType,
+        TaxonID,
+        CommonName,
+        "Order",
+        ScientificName,
+        Family,
+        FamilyCommonName,
+        Class,
+        SiteID,
+        SiteName,
+        State,
+        Region,
+        {coordinates_sql},
+        SurveysSpatialAccuracyInMetres,
+        SearchTypeDesc,
+        UnitOfMeasurement,
+        MonitoringProgram,
+        Management,
+        ManagementCategory,
+        COLUMNS('^[0-9]+$'),
+        SurveyCount::INTEGER AS SurveyCount,
+        TimeSeriesLength,
+        TimeSeriesSampleYears,
+        TimeSeriesCompleteness::DECIMAL(5,4) AS TimeSeriesCompleteness
+    FROM y
+    {order_limit_sql}
+    """
+
+    cursor.execute(sql, params)
+    return cursor
 
 
 def trend_work_dir(trend_id):
