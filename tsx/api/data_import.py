@@ -109,7 +109,7 @@ def get_sources():
 		{ 'user_id': user.id, 'program_id': program_id })
 
 	[(result,)] = rows
-	return Response(result, mimetype='application/json')
+	return Response(result or "[]", mimetype='application/json')
 
 def jsonify_rows(rows):
 	return jsonify([dict(row._mapping) for row in rows])
