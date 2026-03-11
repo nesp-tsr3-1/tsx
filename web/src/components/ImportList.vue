@@ -35,16 +35,48 @@
             :key="i.id"
           >
             <td :title="i.filename">
-              <span
-                v-if="i.data_type === 2"
-                class="tag is-danger"
-                style="margin-right: 0.5em"
-              >Type 2</span><a :href="importUrl(i)">{{ i.filename }}</a>
-              <br>
-              <span
-                v-if="isMostRecentImport(i)"
-                class="most-recent-import-message"
-              >Most recent import – to update your dataset, download this file and add your new data.</span>
+              <div
+                style="display: flex;
+                flex-direction: column;
+                gap: 0.5em;
+                align-items: start;">
+                <div>
+                  <span
+                    v-if="i.data_type === 2"
+                    class="tag is-danger"
+                    style="margin-right: 0.5em"
+                  >Type 2</span><a :href="importUrl(i)">{{ i.filename }}</a>
+                </div>
+                <div
+                  v-if="isMostRecentImport(i)"
+                  class="celltag"
+                >Most recent import – to update your dataset, download this file and add your new data.</div>
+                <div
+                  v-if="i.timeSeriesImportStatus == 'imported'"
+                  class="celltag">
+                  Time series imported (<a :href="importUrl(i.time_series_import)">{{i.time_series_import.filename}}</a>) at {{ formatDateTime(i.time_series_import.time_created) }} <span v-if="i.time_series_import.user">by {{ i.time_series_import.user }}</span>
+                    (<span class="link" @click="function() { deleteTimeSeriesImport(i) }">delete</span>)
+                </div>
+                <div
+                  v-if="i.timeSeriesImportError"
+                  class="celltag tag is-danger">
+                    {{ i.timeSeriesImportError }}
+                </div>
+                <div
+                  v-if="showImportTimeSeries(i)">
+                  <button
+                    v-if="showImportButton(i)"
+                    class="button is-small"
+                    @click="function() { importTimeSeries(i) }">
+                      Upload Time Series
+                  </button>
+                </div>
+                <div
+                  v-if="importStatusDescription(i)">
+                  {{ importStatusDescription(i) }}
+                  <span class="loader"></span>
+                </div>
+              </div>
             </td>
             <td>
               {{ humanizeStatus(i.status) }}
@@ -89,7 +121,7 @@
 
 <script>
 import * as api from '../api.js'
-import { humanizeStatus, formatDateTime } from '../util.js'
+import { humanizeStatus, formatDateTime, selectFiles } from '../util.js'
 
 export default {
   name: 'ImportList',
@@ -121,6 +153,7 @@ export default {
         imports.forEach((i) => {
           i.isApproving = false
           i.isUpdatingVisibility = false
+          i.timeSeriesImportStatus = i.time_series_import ? 'imported' : 'init'
         })
         this.imports = imports
         //   .sort((a, b) => b.time_created.localeCompare(a.time_created))
@@ -190,6 +223,65 @@ export default {
     currentUserIsAdmin() {
       return this.currentUser !== null && this.currentUser.roles.some(x => x === 'Administrator')
     },
+    showImportTimeSeries(i) {
+      return i.data_type == 2 && (i.status == "approved" || i.status == "imported") && this.currentUserIsAdmin
+    },
+    showImportButton(i) {
+      return i.timeSeriesImportStatus == 'init'
+    },
+    importStatusDescription(i) {
+      if(i.timeSeriesImportStatus == 'uploading') {
+        return "Uploading (" + i.timeSeriesUploadProgress + "%)"
+      }
+      if(i.timeSeriesImportStatus == 'importing') {
+        return "Importing…"
+      }
+    },
+    deleteTimeSeriesImport(i) {
+      if(window.confirm("Are you sure you wish to delete this time series import?")) {
+        api.deleteTimeSeriesImport(i.id)
+          .then(() => this.refresh())
+          .catch((error) => {
+            console.log(error)
+            alert('Delete failed')
+            throw error
+          })
+      }
+    },
+    importTimeSeries(i) {
+      selectFiles({
+        accept: 'text/csv',
+        multiple: false
+      }).then((files) => {
+        i.timeSeriesImportError = null
+        if(files.length > 0) {
+          i.timeSeriesImportStatus = 'uploading'
+          i.timeSeriesUploadProgress = 0
+
+          return api.upload(files[0], (progress) => {
+            i.timeSeriesUploadProgress = progress * 100
+          })
+        }
+      }).then((result) => {
+        console.log(result)
+        i.timeSeriesImportStatus = 'importing'
+        return api.importTimeSeries({
+          source_id: this.sourceId,
+          data_import_id: i.id,
+          upload_uuid: result.uuid
+        })
+      }).then(() => {
+        this.refresh()
+      }).catch((error) => {
+        console.log(error)
+        if(error.json?.check_error) {
+          i.timeSeriesImportError = "Error importing time series: " + error.json?.check_error
+        } else {
+          return "Failed to import time series due to unexpected problem."
+        }
+        i.timeSeriesImportStatus = 'init'
+      })
+    },
     humanizeStatus,
     formatDateTime
   }
@@ -224,12 +316,12 @@ export default {
   button:disabled {
     opacity: 0.5;
   }
-  .most-recent-import-message {
+  .celltag {
     background: hsl(0, 0%, 96%);
     color: hsl(0, 0%, 29%);
     font-size: 0.75rem;
     padding: 0.3em 0.75em;
-    display: block;
+    display: inline;
     white-space: normal;
     border-radius: 4px;
     margin-top: 0.3em;

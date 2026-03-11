@@ -4,7 +4,8 @@ from tsx.api.util import db_session, get_user, get_roles, get_executor
 from tsx.api.upload import get_upload_path, get_upload_name
 from tsx.importer import Importer
 from tsx.config import data_dir
-from tsx.db import User, Source, DataImport, DataProcessingNotes, AuditLogItem
+from tsx.db import User, Source, DataImport, DataProcessingNotes, AuditLogItem, TimeSeriesImport
+from tsx.db.connect import get_database_duckdb_attach_string
 import logging
 import os
 from threading import Lock
@@ -20,6 +21,8 @@ from tsx.config import config
 from tsx.api.custodian_feedback_shared import update_all_dataset_stats
 from tsx.api.custodian_feedback_pdf import generate_archive_pdfs
 import re
+import duckdb
+from threading import Lock
 
 bp = Blueprint('data_import', __name__)
 
@@ -178,21 +181,35 @@ def get_source_imports(source_id=None):
 
 	show_hidden = permitted(user, 'view_hidden_import', 'source', source_id)
 
-	rows = db_session.execute(text("""SELECT
-		data_import.id,
-		data_import.filename,
-		data_import.data_type,
-		data_import_status.code AS status,
-		data_import.time_created,
-		data_import.upload_uuid,
-		CASE
-			WHEN data_import.is_admin AND :show_hidden
-			THEN CONCAT('an administrator (', COALESCE(CONCAT(user.first_name, " ", user.last_name), user.email, 'Unknown user'), ')')
-			WHEN data_import.is_admin
-			THEN 'an administrator'
-			ELSE COALESCE(CONCAT(user.first_name, " ", user.last_name), user.email, 'an unknown user')
-		END AS user,
-		data_import.is_hidden
+	rows = db_session.execute(text("""SELECT JSON_OBJECT(
+			'id', data_import.id,
+			'filename', data_import.filename,
+			'data_type', data_import.data_type,
+			'status', data_import_status.code,
+			'time_created', DATE_FORMAT(data_import.time_created, "%Y-%m-%d %H:%i:%sZ"),
+			'upload_uuid', data_import.upload_uuid,
+			'user',
+				(CASE
+					WHEN data_import.is_admin AND :show_hidden
+					THEN CONCAT('an administrator (', COALESCE(CONCAT(user.first_name, " ", user.last_name), user.email, 'Unknown user'), ')')
+					WHEN data_import.is_admin
+					THEN 'an administrator'
+					ELSE COALESCE(CONCAT(user.first_name, " ", user.last_name), user.email, 'an unknown user')
+				END),
+			'is_hidden', data_import.is_hidden IS TRUE,
+			'time_series_import', (SELECT JSON_OBJECT(
+					'time_created', time_series_import.time_created,
+					'user', CONCAT(ts_user.first_name, " ", ts_user.last_name),
+					'filename', time_series_import.filename,
+					'upload_uuid', time_series_import.upload_uuid
+				)
+				FROM time_series_import
+				LEFT JOIN user AS ts_user ON time_series_import.user_id = ts_user.id
+				WHERE data_import_id = data_import.id
+				ORDER BY time_series_import.id DESC
+				LIMIT 1
+			)
+		)
 		FROM data_import
 		LEFT JOIN data_import_status ON data_import_status.id = data_import.status_id
 		LEFT JOIN user ON user.id = data_import.user_id
@@ -201,7 +218,9 @@ def get_source_imports(source_id=None):
 		ORDER BY data_import.time_created DESC
 	"""), { 'source_id': source_id, 'show_hidden': show_hidden })
 
-	return jsonify_rows(rows)
+	result = "[%s]" % ",".join(x for (x,) in rows)
+
+	return Response(result, mimetype='application/json')
 
 # --------- Data processing notes
 
@@ -1011,3 +1030,263 @@ def load_import(import_id):
 		return db_session.query(DataImport).get(int(import_id))
 	except Exception:
 		return None
+
+
+
+
+@bp.route('/time_series_import', methods = ['POST'])
+def post_time_series():
+	user = get_user()
+
+	body = request.json
+
+	try:
+		source_id = body['source_id']
+	except KeyError:
+		return jsonify('source_id is required'), 400
+
+	try:
+		data_import_id = body['data_import_id']
+	except KeyError:
+		return jsonify('data_import_id is required'), 400
+
+	if not permitted(user, 'update', 'type2_time_series', source_id):
+		return 'Not authorized', 401
+
+	# Check upload parameter
+	if 'upload_uuid' not in body:
+		return jsonify("upload_uuid is required"), 400
+
+	# Check data_import_id parameter
+	data_import = db_session.query(DataImport).get(data_import_id)
+	if not data_import:
+		return jsonify('data import not found'), 404
+
+	if data_import.source_id != source_id:
+		return jsonify('data_import_id and source_id do not match'), 400
+
+	upload_uuid = body['upload_uuid']
+	file_path = get_upload_path(upload_uuid)
+
+	if not os.path.exists(file_path):
+		return jsonify("invalid upload_uuid"), 400
+
+	error = check_time_series_upload(file_path, source_id)
+
+	if error:
+		return jsonify({ "check_error": error }), 400
+
+	import_type2_time_series(file_path, source_id, data_import_id)
+
+	time_series_import = TimeSeriesImport(
+		data_import_id = data_import_id,
+		user_id = user.id,
+		upload_uuid = upload_uuid,
+		filename = get_upload_name(upload_uuid)
+	)
+
+	db_session.add(time_series_import)
+	db_session.commit()
+
+	return "OK", 201
+
+@bp.route('/time_series_import/<int:data_import_id>', methods = ['DELETE'])
+def delete_time_series_import(data_import_id):
+	user = get_user()
+
+	if not permitted(user, 'delete', 'type2_time_series', data_import_id):
+		return 'Not authorized', 401
+
+	db_session.execute(text("DELETE FROM time_series_import WHERE data_import_id = :data_import_id"),
+		{ "data_import_id": data_import_id })
+
+	if is_current_type2_data_import(data_import_id):
+		(source_id,) = db_session.execute(text("SELECT source_id FROM data_import WHERE id = :id"), { "id": data_import_id }).fetchone()
+		path = os.path.join(data_dir('preprocessed'), "%s_agg_t2.parquet" % source_id)
+		try:
+			os.remove(path)
+		except FileNotFoundError:
+			pass
+
+	db_session.commit()
+
+	return "OK", 204
+
+def attach_region_db(db):
+	ensure_region_db_exists()
+	db.sql("ATTACH '%s' AS region (READ_ONLY)" % region_db_path())
+
+def duckdb_instance(path=None):
+	if path:
+		db = duckdb.connect(path)
+	else:
+		db = duckdb.connect()
+	db.sql("LOAD mysql")
+	db.sql("INSTALL spatial")
+	db.sql("LOAD spatial")
+	db.sql("ATTACH '%s' AS mysqldb (TYPE mysql)" % get_database_duckdb_attach_string())
+	return db
+
+def region_db_path():
+	return os.path.join(data_dir('cache'), "region.duckdb")
+
+region_db_lock = Lock()
+def ensure_region_db_exists():
+	with region_db_lock:
+		path = region_db_path()
+		if os.path.exists(path):
+			print("Existing region DB found")
+			return
+		print("Creating region DB")
+
+		db = duckdb_instance(path)
+		db.sql("""CREATE TABLE region AS
+			SELECT id, name, state, ST_GeomFromText(geom_wkt) AS geom, lat, lon
+			FROM mysql_query('mysqldb', 'SELECT
+				id, name, state,
+				ST_AsWKT(geometry) AS geom_wkt,
+				ST_Y(ST_Centroid(geometry)) AS lat,
+				ST_X(ST_Centroid(geometry)) AS lon
+			FROM region')
+		""")
+		db.sql("""CREATE INDEX region_idx ON region USING RTREE (geom)""")
+		db.close()
+
+def import_type2_time_series(file_path, source_id, data_import_id):
+	ensure_region_db_exists()
+	db = duckdb_instance()
+
+	db.sql("ATTACH '%s' (READ_ONLY)" % region_db_path())
+
+	t = db.sql("""
+		SELECT
+			SourceID,
+			TaxonID,
+			SearchTypeDesc,
+			UnitOfMeasurement,
+			SiteName,
+			SurveysCentroidLatitude,
+			SurveysCentroidLongitude,
+			COLUMNS('^[0-9]+$')
+		FROM read_csv($file, all_varchar = TRUE)
+	""", params = { "file": file_path })
+
+	t = db.sql("UNPIVOT t ON COLUMNS('^[0-9]+$') INTO NAME StartYear VALUE Val")
+
+	t = db.sql("""SELECT
+			SUBSTR(TRIM('_' FROM REGEXP_REPLACE(taxon.scientific_name, '[^a-zA-Z]', '_')), 1, 40) AS Binomial,
+			CONCAT(SourceID, '_', unit.id, '_', COALESCE(search_type_id, '0'), '_', t2_site.id, '_', taxon.id) AS TimeSeriesID,
+			2 AS DataType,
+			StartYear::INTEGER AS StartYear,
+			SourceID::INTEGER AS SourceID,
+			source.description AS SourceDesc,
+			data_processing_type.description AS DataProcessingType,
+			TaxonID,
+			taxon.common_name AS CommonName,
+			taxon."order" AS "Order",
+			taxon.scientific_name AS ScientificName,
+			taxon.family_scientific_name AS Family,
+			taxon.family_common_name AS FamilyCommonName,
+			CASE taxon.taxonomic_group
+				WHEN 'Birds' THEN 'Aves'
+				WHEN 'Mammals' THEN 'Mammalia'
+				ELSE ''
+			END AS Class,
+			taxon.eligible_for_tsx AS EligibleForTSX,
+			taxon.taxonomic_group AS TaxonomicGroup,
+			(SELECT description FROM mysqldb.taxon_status WHERE id = taxon.epbc_status_id) AS EPBCStatus,
+			(SELECT description FROM mysqldb.taxon_status WHERE id = taxon.iucn_status_id) AS IUCNStatus,
+			(SELECT description FROM mysqldb.taxon_status WHERE id = taxon.bird_action_plan_status_id) AS BirdActionPlanStatus,
+			(SELECT description FROM mysqldb.taxon_status WHERE id = taxon.max_status_id) AS MaxStatus,
+			t2_site.id AS SiteID,
+			SiteName,
+			region.state AS State,
+			region.name AS Region,
+			region.lon AS RegionCentroidLongitude,
+			region.lat AS RegionCentroidLatitude,
+			SurveysCentroidLongitude::DOUBLE AS SurveysCentroidLongitude,
+			SurveysCentroidLatitude::DOUBLE AS SurveysCentroidLatitude,
+			NULL::DOUBLE AS SurveysSpatialAccuracyInMetres,
+			SearchTypeDesc,
+			UnitOfMeasurement,
+			monitoring_program.description AS MonitoringProgram,
+			'No known management' AS Management,
+			'Unkown' AS ManagementCategory,
+			NULL::DOUBLE AS SurveyCount,
+			Val::DOUBLE AS Val
+		FROM
+			t
+			LEFT JOIN mysqldb.taxon ON taxon.id = TaxonID
+			LEFT JOIN mysqldb.t2_site ON t2_site.name = SiteName
+			LEFT JOIN mysqldb.source ON source.id = SourceID
+			LEFT JOIN mysqldb.unit ON unit.description = UnitOfMeasurement
+			LEFT JOIN mysqldb.data_processing_type ON data_processing_type.id = source.data_processing_type_id
+			LEFT JOIN mysqldb.monitoring_program ON monitoring_program.id = source.monitoring_program_id
+			LEFT JOIN region.region ON region.id = (
+				SELECT MIN(id) FROM region.region WHERE ST_Contains(region.geom, ST_Point(SurveysCentroidLongitude::DOUBLE, SurveysCentroidLatitude::DOUBLE))
+			)
+	""")
+
+	output_path = os.path.join(data_dir('preprocessed'), "%s_agg_t2.parquet" % source_id)
+
+	if is_current_type2_data_import(data_import_id):
+		db.sql("COPY t TO '%s'" % output_path)
+
+
+def is_current_type2_data_import(data_import_id):
+	result = db_session.execute(
+		text("SELECT 1 FROM t2_survey WHERE data_import_id = :data_import_id LIMIT 1"),
+		{ "data_import_id": data_import_id }
+	).fetchall()
+	return len(result) == 1
+
+def check_time_series_upload(file_path, source_id):
+	print("Checking time series upload at %s" % file_path)
+
+	db = duckdb.connect()
+	t = db.sql("SELECT * FROM read_csv($file, all_varchar = TRUE) WITH ORDINALITY", params = { "file": file_path })
+
+	required_columns = [
+		'ID',
+		'SourceID',
+		'TaxonID',
+		'CommonName',
+		'ScientificName',
+		'SearchTypeDesc',
+		'UnitOfMeasurement',
+		'SiteName',
+		'SurveysCentroidLatitude',
+		'SurveysCentroidLongitude'
+	]
+	missing_columns = sorted(set(required_columns) - set(t.columns))
+
+	if missing_columns:
+		return "Missing required columns: %s" % ", ".join(missing_columns)
+
+	years = [col for col in t.columns if col.isdigit() and 1000 <= int(col) <= 3000]
+
+	if len(years) == 0:
+		return "No yearly data columns found"
+
+	# Ensure that SourceID is correct
+	invalid_row = db.sql(
+		"SELECT ordinality, SourceID FROM t WHERE SourceID != $source_id LIMIT 1",
+		params = { "source_id": source_id }).fetchall()
+	if invalid_row:
+		[(row, invalid_source_id)] = invalid_row
+		return "Row %s: SourceID (%s) does not match expected (%s)" % (row, invalid_source_id, source_id)
+
+	# Check lat/lon
+	for col in ['SurveysCentroidLatitude', 'SurveysCentroidLongitude']:
+		invalid_row = db.sql(f"SELECT ordinality, {col} FROM t WHERE TRY_CAST({col} AS DOUBLE) IS NULL LIMIT 1").fetchall()
+		if invalid_row:
+			(row, value) = invalid_row
+			return "Row %s: %s (%s) is not a number" % (row, col, value)
+
+	# TODO Other possible checks:
+	# - TaxonID/CommonName/ScientificName
+	# - SearchTypeDesc
+	# - UnitOfMeasurement
+	# - SiteName
+	# - MonitoringProgram
+	# - lat/lon values

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from sqlalchemy import CHAR, Column, Computed, Date, Double, ForeignKeyConstraint, Index, Integer, JSON, SmallInteger, String, TIMESTAMP, Table, Text, Time, text
 from sqlalchemy.dialects.mysql import MEDIUMTEXT, TINYINT
@@ -863,6 +863,28 @@ class T2Site(Base):
     search_type: Mapped['SearchType'] = relationship('SearchType')
     source: Mapped['Source'] = relationship('Source')
     survey: Mapped[List['T2Survey']] = relationship('T2Survey', secondary='t2_survey_site')
+
+
+class TimeSeriesImport(Base):
+    __tablename__ = 'time_series_import'
+    __table_args__ = (
+        ForeignKeyConstraint(['data_import_id'], ['data_import.id'], name='fk_time_series_import_data_import1'),
+        ForeignKeyConstraint(['user_id'], ['user.id'], name='fk_time_series_import_user1'),
+        Index('data_import_id_UNIQUE', 'data_import_id', unique=True),
+        Index('fk_time_series_import_data_import1_idx', 'data_import_id'),
+        Index('fk_time_series_import_user1_idx', 'user_id')
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    data_import_id: Mapped[int] = mapped_column(Integer)
+    user_id: Mapped[int] = mapped_column(Integer)
+    filename: Mapped[str] = mapped_column(String(255))
+    time_created: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
+    last_modified: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+    upload_uuid: Mapped[Optional[str]] = mapped_column(String(36))
+
+    data_import: Mapped['DataImport'] = relationship('DataImport')
+    user: Mapped['User'] = relationship('User')
 
 
 class CustodianFeedbackAnswers(CustodianFeedback):

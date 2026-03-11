@@ -4,42 +4,34 @@ from tsx.config import data_dir
 import os
 from tqdm import tqdm
 from sqlalchemy import text
+import pandas as pd
+from tsx.api.data_import import attach_region_db
+import tempfile
 
 def main():
     session = get_session()
-    source_ids = session.execute(text("SELECT id FROM source")).fetchall()
+    source_ids = [x for (x,) in session.execute(text("SELECT id FROM source")).fetchall()]
 
-    # Prepare database (using a file seems to be more stable on Duckdb 1.4.4)
-    filename = '/tmp/tsx_preprocessing.duckdb'
-    try:
-        os.remove(filename)
-    except OSError:
-        pass
+    preprocess_sources(source_ids, session)
 
-    db = duckdb.connect(filename)
-    db.sql("LOAD mysql")
-    db.sql("INSTALL spatial")
-    db.sql("LOAD spatial")
-    db.sql("ATTACH '%s' AS mysqldb (TYPE mysql)" % get_database_duckdb_attach_string())
-    db.sql("CREATE SEQUENCE serial")
+def mysql_to_parquet(session, path, sql):
+    df = pd.read_sql(sql, session.connection())
+    df.to_parquet(path)
+    return not df.empty
 
-    db.sql("""CREATE TABLE region AS
-        SELECT id, name, state, ST_GeomFromText(geom_wkt) AS geom, lat, lon
-        FROM mysql_query('mysqldb', 'SELECT
-            id, name, state,
-            ST_AsWKT(geometry) AS geom_wkt,
-            ST_Y(ST_Centroid(geometry)) AS lat,
-            ST_X(ST_Centroid(geometry)) AS lon
-        FROM region')
-    """)
-    db.sql("""CREATE INDEX region_idx ON region USING RTREE (geom)""")
+def preprocess_sources(source_ids, session):
+    with tempfile.TemporaryDirectory(prefix="tsx") as tempdir:
+        db = duckdb.connect()
+        db.sql("INSTALL spatial")
+        db.sql("LOAD spatial")
+        db.sql("CREATE SEQUENCE serial")
 
-    for (source_id,) in tqdm(source_ids):
-        preprocess_data(source_id, db)
+        attach_region_db(db)
 
-    os.remove(filename)
+        for source_id in tqdm(source_ids):
+            preprocess_source(source_id, db, session, tempdir)
 
-def preprocess_data(source_id, db):
+def preprocess_source(source_id, db, session, tempdir):
     sql1 = f"""
         SELECT
             CONCAT(source.id, '_', t1_sighting.unit_id, '_', COALESCE(t1_site.search_type_id, '0'), '_', t1_site.id, '_', taxon.id) AS TimeSeriesID,
@@ -208,16 +200,33 @@ def preprocess_data(source_id, db):
         WHERE source.id = {source_id}
     """
 
-    db.sql("CREATE OR REPLACE TABLE t AS SELECT nextval('serial') AS id, ST_Point(X, Y) as Coords, * FROM mysql_query('mysqldb', '%s')" % sql1.replace("'", "''"))
+    db.sql("DROP TABLE IF EXISTS t")
 
-    (c,) = db.sql("SELECT COUNT(*) FROM t").fetchone()
+    parquet_files = []
+    path = os.path.join(tempdir, "raw_t1.parquet")
+    if mysql_to_parquet(session, path, sql1):
+        parquet_files.append(path)
 
-    db.sql("INSERT INTO t SELECT nextval('serial') AS id, ST_Point(X, Y) as Coords, * FROM mysql_query('mysqldb', '%s')" % sql2.replace("'", "''"))
+    path = os.path.join(tempdir, "raw_t2.parquet")
+    if mysql_to_parquet(session, path, sql2):
+        parquet_files.append(path)
+
+    if parquet_files:
+        with db.cursor() as cursor:
+            cursor.execute(
+                "CREATE TABLE t AS SELECT nextval('serial') AS id, ST_Point(X, Y) as Coords, * FROM read_parquet($files)",
+                {"files": parquet_files})
+    else:
+        return "Skipping empty source: %s" % source_id
+
+    # db.sql("CREATE OR REPLACE TABLE t AS SELECT nextval('serial') AS id, ST_Point(X, Y) as Coords, * FROM mysql_query('mysqldb', '%s')" % sql1.replace("'", "''"))
+    # db.sql("INSERT INTO t SELECT nextval('serial') AS id, ST_Point(X, Y) as Coords, * FROM mysql_query('mysqldb', '%s')" % sql2.replace("'", "''"))
+
     db.sql("""CREATE INDEX coord_idx ON t USING RTREE (Coords)""")
     db.sql("""CREATE OR REPLACE TABLE t_region AS
         SELECT t.id, MIN(region.id) AS region_id
         FROM t
-        JOIN region ON ST_Contains(region.geom, t.Coords)
+        JOIN region.region ON ST_Contains(region.geom, t.Coords)
         GROUP BY t.id
         """)
 
@@ -229,7 +238,7 @@ def preprocess_data(source_id, db):
             region.lat AS RegionCentroidLatitude
         FROM t
         LEFT JOIN t_region ON t.id = t_region.id
-        LEFT JOIN region ON t_region.region_id = region.id""")
+        LEFT JOIN region.region ON t_region.region_id = region.id""")
 
     # t1 aggregation
     db.sql("""

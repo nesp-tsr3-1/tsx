@@ -10,11 +10,13 @@ from shapely.geometry import shape
 from fiona.transform import transform_geom
 import fiona
 from sqlalchemy import text
+from tsx.api.data_import import region_db_path
+import os
 
 log = logging.getLogger(__name__)
 
 def to_2d(x, y, z):
-    return tuple(filter(None, [x, y]))
+	return tuple(filter(None, [x, y]))
 
 def main():
 	logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)-15s %(name)s %(levelname)-8s %(message)s')
@@ -56,6 +58,11 @@ def main():
 	session.execute(text("CALL update_t1_survey_region(NULL)"))
 
 	session.commit()
+
+	try:
+		os.remove(region_db_path())
+	except OSError:
+		pass
 
 if __name__ == '__main__':
 	main()

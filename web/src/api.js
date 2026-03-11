@@ -28,6 +28,14 @@ export function hideImport(id) {
   return post('/imports/' + id + '/hide')
 }
 
+export function importTimeSeries(params) {
+  return post('/time_series_import', params)
+}
+
+export function deleteTimeSeriesImport(data_import_id) {
+  return del('/time_series_import/' + data_import_id)
+}
+
 export function dataSources(criteria) {
   return get('/data_sources', criteria)
 }
