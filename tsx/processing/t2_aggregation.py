@@ -14,7 +14,7 @@ def process_database(species = None, commit = False, database_config = None):
         taxa = [taxon_id for (taxon_id,) in session.execute(text("SELECT DISTINCT taxon_id FROM processing_method")).fetchall()]
     else:
         taxa = [taxon_id for (taxon_id,) in session.execute(
-            text("SELECT DISTINCT taxon_id FROM t1_sighting, taxon WHERE taxon.id = taxon_id AND spno IN (%s)" % sql_list_placeholder('species', species)),
+            text("SELECT DISTINCT taxon_id FROM t2_sighting, taxon WHERE taxon.id = taxon_id AND spno IN (%s)" % sql_list_placeholder('species', species)),
             sql_list_argument('species', species)).fetchall()]
 
     shuffle(taxa)
