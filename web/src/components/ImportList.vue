@@ -39,7 +39,8 @@
                 style="display: flex;
                 flex-direction: column;
                 gap: 0.5em;
-                align-items: start;">
+                align-items: start;"
+              >
                 <div>
                   <span
                     v-if="i.data_type === 2"
@@ -50,31 +51,41 @@
                 <div
                   v-if="isMostRecentImport(i)"
                   class="celltag"
-                >Most recent import – to update your dataset, download this file and add your new data.</div>
+                >
+                  Most recent import – to update your dataset, download this file and add your new data.
+                </div>
                 <div
                   v-if="i.timeSeriesImportStatus == 'imported'"
-                  class="celltag">
-                  Time series imported (<a :href="importUrl(i.time_series_import)">{{i.time_series_import.filename}}</a>) at {{ formatDateTime(i.time_series_import.time_created) }} <span v-if="i.time_series_import.user">by {{ i.time_series_import.user }}</span>
-                    (<span class="link" @click="function() { deleteTimeSeriesImport(i) }">delete</span>)
+                  class="celltag"
+                >
+                  Time series imported (<a :href="importUrl(i.time_series_import)">{{ i.time_series_import.filename }}</a>) at {{ formatDateTime(i.time_series_import.time_created) }} <span v-if="i.time_series_import.user">by {{ i.time_series_import.user }}</span>
+                  (<span
+                    class="link"
+                    @click="function() { deleteTimeSeriesImport(i) }"
+                  >delete</span>)
                 </div>
                 <div
                   v-if="i.timeSeriesImportError"
-                  class="celltag tag is-danger">
-                    {{ i.timeSeriesImportError }}
+                  class="celltag tag is-danger"
+                >
+                  {{ i.timeSeriesImportError }}
                 </div>
                 <div
-                  v-if="showImportTimeSeries(i)">
+                  v-if="showImportTimeSeries(i)"
+                >
                   <button
                     v-if="showImportButton(i)"
                     class="button is-small"
-                    @click="function() { importTimeSeries(i) }">
-                      Upload Time Series
+                    @click="function() { importTimeSeries(i) }"
+                  >
+                    Upload Time Series
                   </button>
                 </div>
                 <div
-                  v-if="importStatusDescription(i)">
+                  v-if="importStatusDescription(i)"
+                >
                   {{ importStatusDescription(i) }}
-                  <span class="loader"></span>
+                  <span class="loader" />
                 </div>
               </div>
             </td>
@@ -224,21 +235,21 @@ export default {
       return this.currentUser !== null && this.currentUser.roles.some(x => x === 'Administrator')
     },
     showImportTimeSeries(i) {
-      return i.data_type == 2 && (i.status == "approved" || i.status == "imported") && this.currentUserIsAdmin
+      return i.data_type == 2 && (i.status == 'approved' || i.status == 'imported') && this.currentUserIsAdmin
     },
     showImportButton(i) {
       return i.timeSeriesImportStatus == 'init'
     },
     importStatusDescription(i) {
       if(i.timeSeriesImportStatus == 'uploading') {
-        return "Uploading (" + i.timeSeriesUploadProgress + "%)"
+        return 'Uploading (' + i.timeSeriesUploadProgress + '%)'
       }
       if(i.timeSeriesImportStatus == 'importing') {
-        return "Importing…"
+        return 'Importing…'
       }
     },
     deleteTimeSeriesImport(i) {
-      if(window.confirm("Are you sure you wish to delete this time series import?")) {
+      if(window.confirm('Are you sure you wish to delete this time series import?')) {
         api.deleteTimeSeriesImport(i.id)
           .then(() => this.refresh())
           .catch((error) => {
@@ -275,9 +286,9 @@ export default {
       }).catch((error) => {
         console.log(error)
         if(error.json?.check_error) {
-          i.timeSeriesImportError = "Error importing time series: " + error.json?.check_error
+          i.timeSeriesImportError = 'Error importing time series: ' + error.json?.check_error
         } else {
-          return "Failed to import time series due to unexpected problem."
+          return 'Failed to import time series due to unexpected problem.'
         }
         i.timeSeriesImportStatus = 'init'
       })
