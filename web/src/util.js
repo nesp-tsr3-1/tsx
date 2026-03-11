@@ -27,7 +27,8 @@ export function selectFiles(options) {
   options = options || {}
   return new Promise(function(resolve, reject) {
     var input = document.createElement('input')
-    input.setAttribute('style', 'display: none')
+    /* position: fixed prevents the browser from scrolling to the bottom of the page when the button is clicked */
+    input.setAttribute('style', 'display: none; position: fixed;')
     input.setAttribute('type', 'file')
     if(options.accept) {
       input.setAttribute('accept', options.accept)
