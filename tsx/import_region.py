@@ -10,7 +10,7 @@ from shapely.geometry import shape
 from fiona.transform import transform_geom
 import fiona
 from sqlalchemy import text
-from tsx.api.data_import import region_db_path
+from tsx.preprocessing import region_db_path
 import os
 
 log = logging.getLogger(__name__)

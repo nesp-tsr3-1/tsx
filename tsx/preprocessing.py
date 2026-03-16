@@ -5,8 +5,9 @@ import os
 from tqdm import tqdm
 from sqlalchemy import text
 import pandas as pd
-from tsx.api.data_import import attach_region_db
 import tempfile
+from tsx.util import delete_file_if_exists
+from threading import Lock
 
 def main():
     session = get_session()
@@ -18,6 +19,16 @@ def mysql_to_parquet(session, path, sql):
     df = pd.read_sql(sql, session.connection())
     df.to_parquet(path)
     return not df.empty
+
+def remove_preprocessed_data(source_id):
+    for filename in [
+        "%s_raw.parquet" % source_id,
+        "%s_agg_t1.parquet" % source_id,
+        "%s_agg_t2.parquet" % source_id,
+    ]:
+        path = os.path.join(data_dir('preprocessed'), filename)
+        delete_file_if_exists(path)
+
 
 def preprocess_sources(source_ids, session):
     with tempfile.TemporaryDirectory(prefix="tsx") as tempdir:
@@ -213,8 +224,64 @@ def preprocess_source(source_id, db, session, tempdir):
 
     if parquet_files:
         with db.cursor() as cursor:
-            cursor.execute(
-                "CREATE TABLE t AS SELECT nextval('serial') AS id, ST_Point(X, Y) as Coords, * FROM read_parquet($files)",
+            # These type casts are to ensure that types are consistent accross all files
+            cursor.execute("""
+                CREATE TABLE t AS SELECT
+                    nextval('serial') AS id,
+                    ST_Point(X, Y) as Coords,
+                    TimeSeriesID::VARCHAR AS TimeSeriesID,
+                    SurveyID::INTEGER AS SurveyID,
+                    SightingID::INTEGER AS SightingID,
+                    DataType::INTEGER AS DataType,
+                    SourceType::VARCHAR AS SourceType,
+                    EligibleForTSX::BOOLEAN AS EligibleForTSX,
+                    TaxonomicGroup::VARCHAR AS TaxonomicGroup,
+                    EPBCStatus::VARCHAR AS EPBCStatus,
+                    IUCNStatus::VARCHAR AS IUCNStatus,
+                    BirdActionPlanStatus::VARCHAR AS BirdActionPlanStatus,
+                    MaxStatus::VARCHAR AS MaxStatus,
+                    SourceID::INTEGER AS SourceID,
+                    SourceDesc::VARCHAR AS SourceDesc,
+                    SourceProvider::VARCHAR AS SourceProvider,
+                    DataProcessingType::VARCHAR AS DataProcessingType,
+                    LocationName::VARCHAR AS LocationName,
+                    SearchTypeDesc::VARCHAR AS SearchTypeDesc,
+                    SourcePrimaryKey::VARCHAR AS SourcePrimaryKey,
+                    StartMonth::INTEGER AS StartMonth,
+                    StartYear::INTEGER AS StartYear,
+                    StartDate::VARCHAR AS StartDate,
+                    FinishDate::VARCHAR AS FinishDate,
+                    StartTime::VARCHAR AS StartTime,
+                    FinishTime::VARCHAR AS FinishTime,
+                    DurationInMinutes::VARCHAR AS DurationInMinutes,
+                    "DurationInDays/Nights"::VARCHAR AS "DurationInDays/Nights",
+                    "NumberOfTrapsPerDay/Night"::VARCHAR AS "NumberOfTrapsPerDay/Night",
+                    AreaInM2::DOUBLE AS AreaInM2,
+                    LengthInKm::DOUBLE AS LengthInKm,
+                    SiteID::INTEGER AS SiteID,
+                    SiteName::VARCHAR AS SiteName,
+                    Y::DOUBLE AS Y,
+                    X::DOUBLE AS X,
+                    ProjectionReference::VARCHAR AS ProjectionReference,
+                    PositionalAccuracyInM::DOUBLE AS PositionalAccuracyInM,
+                    SurveyComments::VARCHAR AS SurveyComments,
+                    MonitoringProgram::VARCHAR AS MonitoringProgram,
+                    MonitoringProgramComments::VARCHAR AS MonitoringProgramComments,
+                    Management::VARCHAR AS Management,
+                    ManagementCategory::VARCHAR AS ManagementCategory,
+                    ManagementCategoryComments::VARCHAR AS ManagementCategoryComments,
+                    TaxonID::VARCHAR AS TaxonID,
+                    CommonName::VARCHAR AS CommonName,
+                    "Order"::VARCHAR AS "Order",
+                    ScientificName::VARCHAR AS ScientificName,
+                    Family::VARCHAR AS Family,
+                    FamilyCommonName::VARCHAR AS FamilyCommonName,
+                    Class::VARCHAR AS Class,
+                    Count::DOUBLE AS Count,
+                    UnitOfMeasurement::VARCHAR AS UnitOfMeasurement,
+                    UnitType::VARCHAR AS UnitType,
+                    SightingComments::VARCHAR AS SightingComments
+                FROM read_parquet($files)""",
                 {"files": parquet_files})
     else:
         return "Skipping empty source: %s" % source_id
@@ -302,6 +369,41 @@ def preprocess_source(source_id, db, session, tempdir):
     output_path = os.path.join(data_dir('preprocessed'), "%s_agg_t1.parquet" % source_id)
     db.sql("COPY year_agg TO '%s'" % output_path)
 
+
+def attach_region_db(db):
+    ensure_region_db_exists()
+    db.sql("ATTACH '%s' AS region (READ_ONLY)" % region_db_path())
+
+
+def region_db_path():
+    return os.path.join(data_dir('cache'), "region.duckdb")
+
+region_db_lock = Lock()
+def ensure_region_db_exists():
+    with region_db_lock:
+        path = region_db_path()
+        if os.path.exists(path):
+            print("Existing region DB found")
+            return
+        print("Creating region DB")
+
+        db = duckdb.connect(path)
+        db.sql("LOAD mysql")
+        db.sql("INSTALL spatial")
+        db.sql("LOAD spatial")
+        db.sql("ATTACH '%s' AS mysqldb (TYPE mysql)" % get_database_duckdb_attach_string())
+
+        db.sql("""CREATE TABLE region AS
+            SELECT id, name, state, ST_GeomFromText(geom_wkt) AS geom, lat, lon
+            FROM mysql_query('mysqldb', 'SELECT
+                id, name, state,
+                ST_AsWKT(geometry) AS geom_wkt,
+                ST_Y(ST_Centroid(geometry)) AS lat,
+                ST_X(ST_Centroid(geometry)) AS lon
+            FROM region')
+        """)
+        db.sql("""CREATE INDEX region_idx ON region USING RTREE (geom)""")
+        db.close()
 
 if __name__ == '__main__':
     main()

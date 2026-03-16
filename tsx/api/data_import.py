@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request, send_file, Response
-from tsx.util import local_iso_datetime, Bunch
+from tsx.util import local_iso_datetime, Bunch, delete_file_if_exists
 from tsx.api.util import db_session, get_user, get_roles, get_executor
 from tsx.api.upload import get_upload_path, get_upload_name
 from tsx.importer import Importer
@@ -23,6 +23,7 @@ from tsx.api.custodian_feedback_pdf import generate_archive_pdfs
 import re
 import duckdb
 from threading import Lock
+from tsx.preprocessing import remove_preprocessed_data, preprocess_sources, attach_region_db
 
 bp = Blueprint('data_import', __name__)
 
@@ -162,6 +163,7 @@ def delete_source(source_id=None):
 
 	db_session.execute(text("""CALL delete_source(:source_id)"""), { 'source_id': source_id })
 	remove_orphaned_monitoring_programs()
+	remove_preprocessed_data(source_id)
 	db_session.execute(text("CALL update_custodian_feedback()"))
 	db_session.commit()
 
@@ -680,9 +682,25 @@ def get_data_agreement_status_id(code):
 
 def source_to_json(source):
 	(has_t1_data,) = db_session.execute(text("""SELECT EXISTS (SELECT 1 FROM t1_survey WHERE source_id = :source_id)"""), {"source_id": source.id}).fetchone()
+	(has_t2_data,) = db_session.execute(text("""SELECT EXISTS (SELECT 1 FROM t2_survey WHERE source_id = :source_id)"""), {"source_id": source.id}).fetchone()
+
+	if has_t1_data:
+		has_time_series = True
+	else:
+		(has_time_series,) = db_session.execute(
+			text("""SELECT EXISTS (SELECT 1
+				FROM t2_survey, time_series_import
+				WHERE t2_survey.data_import_id = time_series_import.data_import_id
+				AND t2_survey.source_id = :source_id)"""),
+			{"source_id": source.id}).fetchone()
+
+	db_session.execute(text("""SELECT EXISTS (SELECT 1 FROM t2_survey WHERE source_id = :source_id)"""), {"source_id": source.id}).fetchone()
 	json = {
 		'id': source.id,
-		'has_t1_data': has_t1_data
+		'has_t1_data': has_t1_data,
+		'has_t2_data': has_t2_data,
+		'has_data': has_t1_data or has_t2_data,
+		'has_time_series': has_time_series
 	}
 	for field in source_fields:
 		if field.name == 'monitoring_program' and source.monitoring_program:
@@ -847,6 +865,8 @@ def process_import_async(import_id, status):
 				last_name=user.last_name,
 				email=user.email
 			))
+			remove_preprocessed_data(info.source_id)
+			preprocess_sources([info.source_id], db_session)
 
 		if new_status == 'approved':
 			update_latest_approved_data_import(import_id)
@@ -1103,60 +1123,20 @@ def delete_time_series_import(data_import_id):
 	if is_current_type2_data_import(data_import_id):
 		(source_id,) = db_session.execute(text("SELECT source_id FROM data_import WHERE id = :id"), { "id": data_import_id }).fetchone()
 		path = os.path.join(data_dir('preprocessed'), "%s_agg_t2.parquet" % source_id)
-		try:
-			os.remove(path)
-		except FileNotFoundError:
-			pass
+		delete_file_if_exists(path)
 
 	db_session.commit()
 
 	return "OK", 204
 
-def attach_region_db(db):
-	ensure_region_db_exists()
-	db.sql("ATTACH '%s' AS region (READ_ONLY)" % region_db_path())
-
-def duckdb_instance(path=None):
-	if path:
-		db = duckdb.connect(path)
-	else:
-		db = duckdb.connect()
+def import_type2_time_series(file_path, source_id, data_import_id):
+	db = duckdb.connect()
 	db.sql("LOAD mysql")
 	db.sql("INSTALL spatial")
 	db.sql("LOAD spatial")
 	db.sql("ATTACH '%s' AS mysqldb (TYPE mysql)" % get_database_duckdb_attach_string())
-	return db
 
-def region_db_path():
-	return os.path.join(data_dir('cache'), "region.duckdb")
-
-region_db_lock = Lock()
-def ensure_region_db_exists():
-	with region_db_lock:
-		path = region_db_path()
-		if os.path.exists(path):
-			print("Existing region DB found")
-			return
-		print("Creating region DB")
-
-		db = duckdb_instance(path)
-		db.sql("""CREATE TABLE region AS
-			SELECT id, name, state, ST_GeomFromText(geom_wkt) AS geom, lat, lon
-			FROM mysql_query('mysqldb', 'SELECT
-				id, name, state,
-				ST_AsWKT(geometry) AS geom_wkt,
-				ST_Y(ST_Centroid(geometry)) AS lat,
-				ST_X(ST_Centroid(geometry)) AS lon
-			FROM region')
-		""")
-		db.sql("""CREATE INDEX region_idx ON region USING RTREE (geom)""")
-		db.close()
-
-def import_type2_time_series(file_path, source_id, data_import_id):
-	ensure_region_db_exists()
-	db = duckdb_instance()
-
-	db.sql("ATTACH '%s' (READ_ONLY)" % region_db_path())
+	attach_region_db(db)
 
 	t = db.sql("""
 		SELECT
@@ -1174,8 +1154,8 @@ def import_type2_time_series(file_path, source_id, data_import_id):
 	t = db.sql("UNPIVOT t ON COLUMNS('^[0-9]+$') INTO NAME StartYear VALUE Val")
 
 	t = db.sql("""SELECT
-			SUBSTR(TRIM('_' FROM REGEXP_REPLACE(taxon.scientific_name, '[^a-zA-Z]', '_')), 1, 40) AS Binomial,
-			CONCAT(SourceID, '_', unit.id, '_', COALESCE(search_type_id, '0'), '_', t2_site.id, '_', taxon.id) AS TimeSeriesID,
+			SUBSTR(TRIM('_' FROM REGEXP_REPLACE(taxon.scientific_name, '[^a-zA-Z]', '_', 'g')), 1, 40) AS Binomial,
+			CONCAT(SourceID, '_', unit.id, '_', COALESCE(search_type_id, '0'), '_', COALESCE(t2_site.id::VARCHAR, SiteName), '_', taxon.id) AS TimeSeriesID,
 			2 AS DataType,
 			StartYear::INTEGER AS StartYear,
 			SourceID::INTEGER AS SourceID,

@@ -45,6 +45,11 @@ def next_path(path_pattern):
 
     return path_pattern % b, b
 
+def delete_file_if_exists(path):
+    try:
+        os.remove(path)
+    except FileNotFoundError:
+        pass
 
 def local_iso_datetime():
     """

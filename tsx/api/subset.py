@@ -588,10 +588,13 @@ def taxon_status(code):
     return name
 
 def subset_sql_params(subset_params=None, state_via_region=False):
-    where_conditions = [ "TRUE", "DataType = 1" ]
+    where_conditions = [ "TRUE" ]
     params = {}
 
     args = subset_params or get_request_args_or_body()
+
+    if 'source_id' not in args:
+        where_conditions.append("DataType = 1")
 
     if 'state' in args:
         where_conditions.append("State = $state")
@@ -822,7 +825,8 @@ def params_permitted():
     return False
 
 def legacy():
-    return 'subset_legacy' in request.cookies
+    return True
+    # return 'subset_legacy' in request.cookies
 
 @bp.route('/subset/time_series', methods = ['GET'])
 def subset_time_series():

@@ -416,7 +416,7 @@
       Download Raw Data (CSV format)
     </button>
   </div>
-  <div class="block">
+  <div class="block" v-if="hasTimeSeries">
     <button
       type="button"
       class="button is-primary"
@@ -427,7 +427,7 @@
     </button>
   </div>
 
-  <div class="block">
+  <div class="block" v-if="hasTimeSeries">
     <button
       type="button"
       class="button is-primary"
@@ -468,9 +468,9 @@
     <p>An error occurred while generating the monitoring consistency plot.</p>
   </div>
 
-  <hr>
+  <hr v-if="hasTimeSeries">
 
-  <div class="block">
+  <div class="block" v-if="hasTimeSeries">
     <h4 class="title is-6">
       Population Trend
     </h4>
@@ -591,7 +591,7 @@
     </div>
   </div>
 
-  <div class="block">
+  <div class="block" v-if="hasTimeSeries">
     <div class="buttons">
       <button
         type="button"
@@ -702,7 +702,11 @@ export default {
     enableMap: Boolean,
     enableTaxonStatusFilter: Boolean,
     enableRegionFilter: Boolean,
-    enableLogLinearTrend: Boolean
+    enableLogLinearTrend: Boolean,
+    hasTimeSeries: {
+      type: Boolean,
+      default: true
+    }
   },
   data() {
     return {

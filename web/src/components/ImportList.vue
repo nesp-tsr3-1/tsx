@@ -288,7 +288,7 @@ export default {
         if(error.json?.check_error) {
           i.timeSeriesImportError = 'Error importing time series: ' + error.json?.check_error
         } else {
-          return 'Failed to import time series due to unexpected problem.'
+          i.timeSeriesImportError = 'Failed to import time series due to unexpected problem.'
         }
         i.timeSeriesImportStatus = 'init'
       })
@@ -336,5 +336,11 @@ export default {
     white-space: normal;
     border-radius: 4px;
     margin-top: 0.3em;
+  }
+  .link {
+    color: hsl(229, 53%, 53%);
+  }
+  .link:hover {
+    color: #333;
   }
 </style>

@@ -164,6 +164,7 @@
                 <source-downloads
                   :source-id="sourceId"
                   :enable-map="true"
+                  :has-time-series="source.has_time_series"
                   :enable-log-linear-trend="true"
                 />
               </div>
@@ -322,7 +323,7 @@ export default {
     })
     api.dataSource(this.sourceId).then((source) => {
       this.source = source
-      this.showDownloads = source.has_t1_data
+      this.showDownloads = source.has_data
     })
   },
   methods: {
@@ -338,7 +339,7 @@ export default {
       this.$refs.importList.refresh()
       this.$refs.dataSummary.refresh()
       api.dataSource(this.sourceId).then((source) => {
-        this.showDownloads = source.has_t1_data
+        this.showDownloads = source.has_data
       })
     },
     uploadURL: api.uploadURL,
