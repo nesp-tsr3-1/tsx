@@ -22,7 +22,7 @@ def send_email(email_address, subject, message, background=False):
 
 	s = smtplib.SMTP(smtp_host, port=smtp_port)
 	if smtp_use_starttls:
-		ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+		ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
 		ssl_context.set_ciphers('DEFAULT:!DH')
 		s.starttls(context=ssl_context)
 	s.login(smtp_username, smtp_password)
