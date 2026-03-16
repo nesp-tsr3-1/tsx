@@ -1,4 +1,4 @@
-from flask import request, jsonify, Blueprint, session
+from flask import request, jsonify, Blueprint, session, current_app
 from tsx.db import User
 from tsx.api.util import get_user, get_roles, db_session, jsonify_rows
 from sqlalchemy import exc
@@ -65,8 +65,7 @@ def create_user():
 		email_body = new_account_body.substitute(name=user.first_name)
 		send_email(user.email, 'TSX Account Created', email_body)
 	except Exception as e:
-		print('Error sending email to %s' % user.email)
-		print('Error: %s' % e)
+		current_app.logger.exception('Error sending email to %s' % user.email)
 
 	send_admin_notification('New account created', new_account_notification_body.substitute(
 		first_name=user.first_name,
@@ -183,8 +182,6 @@ def update_user_role(user_id):
 		return "Missing role", 400
 
 	db_session.execute(text("DELETE FROM user_role WHERE user_id = :user_id"), { 'user_id': user_id })
-	print(new_role)
-	print(user_id)
 	db_session.execute(text("INSERT INTO user_role (user_id, role_id) SELECT :user_id, (SELECT id FROM role WHERE description = :role)"), { 'user_id': user_id, 'role': new_role })
 	db_session.commit()
 
@@ -324,6 +321,5 @@ def reset_password():
 			send_email(email, 'TSX Password Reset Request', email_body)
 			return "OK", 200
 		except Exception as e:
-			print('Failed to send password reset email')
-			print(e)
+			current_app.logger.exception('Failed to send password reset email')
 			return jsonify('There was a problem sending the password reset email. Please try again later.'), 500
