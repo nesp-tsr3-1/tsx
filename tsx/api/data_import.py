@@ -5,7 +5,7 @@ from tsx.api.upload import get_upload_path, get_upload_name
 from tsx.importer import Importer
 from tsx.config import data_dir
 from tsx.db import User, Source, DataImport, DataProcessingNotes, AuditLogItem, TimeSeriesImport
-from tsx.db.connect import get_database_duckdb_attach_string
+from tsx.db.connect import get_database_duckdb_attach_string, get_mysql_connection
 import logging
 import os
 from threading import Lock
@@ -866,7 +866,9 @@ def process_import_async(import_id, status):
 				email=user.email
 			))
 			remove_preprocessed_data(info.source_id)
-			preprocess_sources([info.source_id], db_session)
+
+			with get_mysql_connection() as conn:
+				preprocess_sources([info.source_id], conn)
 
 		if new_status == 'approved':
 			update_latest_approved_data_import(import_id)

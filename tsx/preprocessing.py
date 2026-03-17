@@ -1,5 +1,5 @@
 import duckdb
-from tsx.db.connect import get_database_duckdb_attach_string, get_session
+from tsx.db.connect import get_database_duckdb_attach_string, get_session, get_mysql_connection
 from tsx.config import data_dir
 import os
 from tqdm import tqdm
@@ -9,16 +9,116 @@ import tempfile
 from tsx.util import delete_file_if_exists
 from threading import Lock
 
+from mysql.connector import FieldType
+import pyarrow as pa
+import pyarrow.parquet
+
 def main():
     session = get_session()
+    session.connection(execution_options = { 'stream_results': True})
     source_ids = [x for (x,) in session.execute(text("SELECT id FROM source")).fetchall()]
 
-    preprocess_sources(source_ids, session)
+    with get_mysql_connection() as conn:
+        preprocess_sources(source_ids, conn)
 
-def mysql_to_parquet(session, path, sql):
-    df = pd.read_sql(sql, session.connection())
-    df.to_parquet(path)
-    return not df.empty
+def arrow_type_from_mysql_column_description(description):
+    # https://peps.python.org/pep-0249/#description
+    (name, type_code, display_size, internal_size, precision, scale, null_ok) = description[0:7]
+
+    if type_code == FieldType.DECIMAL or type_code == FieldType.NEWDECIMAL:
+        if precision <= 38:
+            return pa.decimal128(precision, scale)
+        elif precision <= 76:
+            return pa.decimal256(precision, scale)
+        else:
+            return ValueError("Cannot represent decimal with precision greater than 76")
+    elif type_code == FieldType.TINY:
+        return pa.int8()
+    elif type_code == FieldType.SHORT:
+        return pa.int16()
+    elif type_code == FieldType.LONG:
+        return pa.int32()
+    elif type_code == FieldType.FLOAT:
+        return pa.float32()
+    elif type_code == FieldType.DOUBLE:
+        return pa.float64()
+    elif type_code == FieldType.NULL:
+        return pa.null()
+    elif type_code == FieldType.TIMESTAMP:
+        return pa.timestamp('us')
+    elif type_code == FieldType.LONGLONG:
+        return pa.int64()
+    elif type_code == FieldType.INT24:
+        return pa.int32()
+    elif type_code == FieldType.DATE:
+        return pa.date64()
+    elif type_code == FieldType.TIME:
+        return pa.time64('us')
+    elif type_code == FieldType.DATETIME:
+        return pa.timestamp('us')
+    elif type_code == FieldType.YEAR:
+        return pa.int8()
+    elif type_code == FieldType.NEWDATE:
+        return pa.date64()
+    elif type_code == FieldType.VARCHAR:
+        return pa.string()
+    elif type_code == FieldType.BIT:
+        return pa.bool_()
+    elif type_code == FieldType.VECTOR:
+        raise ValueError("Unsupported data type VECTOR")
+    elif type_code == FieldType.JSON:
+        return pa.json_()
+    elif type_code == FieldType.ENUM:
+        raise ValueError("Unsupported data type ENUM")
+    elif type_code == FieldType.SET:
+        raise ValueError("Unsupported data type SET")
+    elif type_code == FieldType.TINY_BLOB:
+        return pa.binary()
+    elif type_code == FieldType.MEDIUM_BLOB:
+        return pa.binary()
+    elif type_code == FieldType.LONG_BLOB:
+        return pa.binary()
+    elif type_code == FieldType.BLOB:
+        return pa.binary()
+    elif type_code == FieldType.VAR_STRING:
+        return pa.string()
+    elif type_code == FieldType.STRING:
+        return pa.string()
+    elif type_code == FieldType.GEOMETRY:
+        raise ValueError("Unsupported data type GEOMETRY")
+
+    raise value_error("Unrecognized type_code: %s" % type_code)
+
+
+def mysql_to_parquet(conn, path_pattern, sql, chunksize=65536):
+    result = []
+    cur = conn.cursor(buffered=False, raw=False)
+    cur.arraysize = chunksize
+    cur.execute(sql)
+
+    names = [col[0] for col in cur.description]
+    types = [arrow_type_from_mysql_column_description(x) for x in cur.description]
+
+    index = 0
+    while True:
+        rows = cur.fetchmany(chunksize)
+        if len(rows):
+            data = [
+                pa.array([row[index] for row in rows], type = type)
+                for (index, type)
+                in enumerate(types)
+            ]
+            table = pa.Table.from_arrays(data, names)
+            path = path_pattern % index
+            pyarrow.parquet.write_table(table, path)
+            result.append(path)
+            index += 1
+            print(path)
+        else:
+            break
+
+    return result
+
 
 def remove_preprocessed_data(source_id):
     for filename in [
@@ -30,7 +130,7 @@ def remove_preprocessed_data(source_id):
         delete_file_if_exists(path)
 
 
-def preprocess_sources(source_ids, session):
+def preprocess_sources(source_ids, conn):
     with tempfile.TemporaryDirectory(prefix="tsx") as tempdir:
         db = duckdb.connect()
         db.sql("INSTALL spatial")
@@ -40,9 +140,9 @@ def preprocess_sources(source_ids, session):
         attach_region_db(db)
 
         for source_id in tqdm(source_ids):
-            preprocess_source(source_id, db, session, tempdir)
+            preprocess_source(source_id, db, conn, tempdir)
 
-def preprocess_source(source_id, db, session, tempdir):
+def preprocess_source(source_id, db, conn, tempdir):
     sql1 = f"""
         SELECT
             CONCAT(source.id, '_', t1_sighting.unit_id, '_', COALESCE(t1_site.search_type_id, '0'), '_', t1_site.id, '_', taxon.id) AS TimeSeriesID,
@@ -214,13 +314,12 @@ def preprocess_source(source_id, db, session, tempdir):
     db.sql("DROP TABLE IF EXISTS t")
 
     parquet_files = []
-    path = os.path.join(tempdir, "raw_t1.parquet")
-    if mysql_to_parquet(session, path, sql1):
-        parquet_files.append(path)
 
-    path = os.path.join(tempdir, "raw_t2.parquet")
-    if mysql_to_parquet(session, path, sql2):
-        parquet_files.append(path)
+    path_pattern = os.path.join(tempdir, "raw_t1_%09d.parquet")
+    parquet_files.extend(mysql_to_parquet(conn, path_pattern, sql1))
+
+    path_pattern = os.path.join(tempdir, "raw_t2_%09d.parquet")
+    parquet_files.extend(mysql_to_parquet(conn, path_pattern, sql2))
 
     if parquet_files:
         with db.cursor() as cursor:

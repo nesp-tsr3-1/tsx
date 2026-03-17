@@ -4,6 +4,7 @@ from tsx.config import config
 import os
 import logging
 import sqlite3
+import mysql.connector
 
 log = logging.getLogger(__name__)
 
@@ -25,6 +26,26 @@ def get_database_url(database_config=None):
     url = "%s://%s:%s@%s/%s" % (type, username, password, host, name)
 
     return url
+
+def get_mysql_connection(database_config=None):
+    if database_config is None:
+        database_config = "database"
+
+    if ":" in database_config:
+        return ValueError("database_config not supported: %s" % database_config)
+
+    type = config.get(database_config, "type").strip()
+    if not type.startswith("mysql"):
+        return ValueError("database type not supported: %s" % type)
+
+    cnx = mysql.connector.connect(
+        host = config.get(database_config, "host").strip(),
+        user = config.get(database_config, "username").strip(),
+        password = config.get(database_config, "password").strip(),
+        database = config.get(database_config, "name").strip()
+    )
+
+    return cnx
 
 def get_database_duckdb_attach_string(database_config=None):
     if database_config is None:
