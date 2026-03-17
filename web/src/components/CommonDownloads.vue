@@ -416,7 +416,10 @@
       Download Raw Data (CSV format)
     </button>
   </div>
-  <div class="block" v-if="hasTimeSeries">
+  <div
+    v-if="hasTimeSeries"
+    class="block"
+  >
     <button
       type="button"
       class="button is-primary"
@@ -427,7 +430,10 @@
     </button>
   </div>
 
-  <div class="block" v-if="hasTimeSeries">
+  <div
+    v-if="hasTimeSeries"
+    class="block"
+  >
     <button
       type="button"
       class="button is-primary"
@@ -470,7 +476,10 @@
 
   <hr v-if="hasTimeSeries">
 
-  <div class="block" v-if="hasTimeSeries">
+  <div
+    v-if="hasTimeSeries"
+    class="block"
+  >
     <h4 class="title is-6">
       Population Trend
     </h4>
@@ -591,7 +600,10 @@
     </div>
   </div>
 
-  <div class="block" v-if="hasTimeSeries">
+  <div
+    v-if="hasTimeSeries"
+    class="block"
+  >
     <div class="buttons">
       <button
         type="button"
