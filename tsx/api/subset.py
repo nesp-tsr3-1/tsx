@@ -825,8 +825,7 @@ def params_permitted():
     return False
 
 def legacy():
-    return True
-    # return 'subset_legacy' in request.cookies
+    return 'subset_legacy' in request.cookies
 
 @bp.route('/subset/time_series', methods = ['GET'])
 def subset_time_series():
