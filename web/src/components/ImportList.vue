@@ -242,7 +242,11 @@ export default {
     },
     importStatusDescription(i) {
       if(i.timeSeriesImportStatus == 'uploading') {
-        return 'Uploading (' + i.timeSeriesUploadProgress + '%)'
+        let formattedProgress = i.timeSeriesUploadProgress?.toLocaleString(undefined, {
+          maximumFractionDigits: 1,
+          minimumFractionDigits: 1
+        })
+        return 'Uploading (' + formattedProgress + '%)'
       }
       if(i.timeSeriesImportStatus == 'importing') {
         return 'Importing…'
