@@ -730,10 +730,11 @@ def consistency_plot_svg(data):
 
 	svg_data = StringIO()
 	fig.savefig(svg_data, format='svg')
+	plt.close(fig)
 
 	return bytes(svg_data.getvalue(), encoding="utf8")
 
-def trend_plot_svg(data):
+def trend_plot_svg(data, assume_single_species=True):
 	rows = data.split("\n")
 
 	rows = [row for row in rows if len(row) > 0 and "NA" not in row and "LPI" not in row]
@@ -743,27 +744,28 @@ def trend_plot_svg(data):
 
 	years = [int(year) for year in years]
 
-	# Note: we can currently assume for custodian feedback surveys that
-	# number of species is always one. However, if this changes, the following
-	# code will render single species trends using a dashed line as required.
-
-	# num_species = [int(x) for x in num_species]
-	# single_species = [x == 1 for x in num_species]
-	# single_species_dilated = [a or b or c for a, b, c in zip(
-	# 	single_species[1:] + [False],
-	# 	single_species,
-	# 	[False] + single_species[:-1])
-	# ]
-	# trend_solid = [None if single_species[i] else trend[i] for i in range(len(trend))]
-	# trend_dashed = [trend[i] if single_species_dilated[i] else None for i in range(len(trend))]
-
 	fig = plt.figure(figsize=(12, 4.5))
 	plt.xlabel('Year')
 	plt.ylabel('Index (%s = 1)' % years[0])
 	plt.grid(True, color='#ddd')
-	plt.plot(years, trend, linestyle='dashed')
-	# plt.plot(years, trend_solid, color='tab:blue')
-	# plt.plot(years, trend_dashed, color='tab:blue', linestyle='dashed')
+
+
+	if assume_single_species:
+		plt.plot(years, trend, linestyle='dashed')
+	else:
+		num_species = [int(x) for x in num_species]
+		single_species = [x == 1 for x in num_species]
+		single_species_dilated = [a or b or c for a, b, c in zip(
+			single_species[1:] + [False],
+			single_species,
+			[False] + single_species[:-1])
+		]
+		trend_solid = [None if single_species[i] else trend[i] for i in range(len(trend))]
+		trend_dashed = [trend[i] if single_species_dilated[i] else None for i in range(len(trend))]
+
+		plt.plot(years, trend_solid, color='tab:blue')
+		plt.plot(years, trend_dashed, color='tab:blue', linestyle='dashed')
+
 	plt.gca().set_xlim(years[0], years[-1])
 	ax = fig.gca()
 	ax.xaxis.get_major_locator().set_params(integer=True)
@@ -772,6 +774,7 @@ def trend_plot_svg(data):
 
 	svg_data = StringIO()
 	fig.savefig(svg_data, format='svg')
+	plt.close(fig)
 
 	return bytes(svg_data.getvalue(), encoding="utf8")
 
@@ -807,6 +810,8 @@ def intensity_map_png(data):
 
 	png_data = BytesIO()
 	fig.savefig(png_data, format='png', dpi=180)
+	plt.close(fig)
+
 	return png_data.getvalue()
 
 

@@ -12,6 +12,10 @@ from tqdm import tqdm
 import shutil
 from tsx.api.results import get_dotplot_data, get_summary_data, get_intensity_data
 from random import shuffle
+from tsx.api.custodian_feedback_pdf import consistency_plot_svg, trend_plot_svg, intensity_map_png
+
+import matplotlib.pyplot as plt
+from io import StringIO
 
 log = logging.getLogger(__name__)
 
@@ -25,13 +29,14 @@ def main():
     parser.add_argument('output_db', type=str, help='SQLite file to save results in')
     parser.add_argument('end_year', type=int, help="Cutoff year for time series")
     parser.add_argument('--plot-data', action='store_true', dest='generate_plot_data', help="Generate CSV plot data")
+    parser.add_argument('--plots', action='store_true', dest='generate_plots', help="Generate plots")
 
     args = parser.parse_args()
 
     db = sqlite3.connect(args.output_db)
     df = load_lpi_wide(args.lpi_wide)
 
-    run_permutations(db, df, args.generate_plot_data, args.end_year)
+    run_permutations(db, df, args.generate_plot_data, args.generate_plots, args.end_year)
 
     log.info("Finished")
 
@@ -147,13 +152,13 @@ def permutation_dir(perm):
 def reference_years(perm):
     years = default_reference_years.copy()
 
-    if perm['FunctionalGroup'] in ('Chytrid impacted', 'Chytrid non-impacted'):
+    if perm.get('FunctionalGroup') in ('Chytrid impacted', 'Chytrid non-impacted'):
         years.append(1997)
 
-    if perm['FunctionalGroup'] in ('Wetland breeding', 'Terrestrial breeding', 'Stream breeding'):
+    if perm.get('FunctionalGroup') in ('Wetland breeding', 'Terrestrial breeding', 'Stream breeding'):
         years.append(2001)
 
-    if perm['TaxonomicGroup'] in ('Reptiles'):
+    if perm.get('TaxonomicGroup') in ('Reptiles'):
         years.append(2005)
 
     return years
@@ -198,9 +203,9 @@ def iterate_tasks(df, work_path, script_path):
 
                 yield perm, path, script_path
 
-def run_task(perm, work_path, script_path, generate_plot_data, end_year):
+def run_task(perm, work_path, script_path, generate_plot_data, generate_plots, end_year):
     if work_path is None:
-        return (perm, None)
+        return (perm, None, None)
 
     result_file = os.path.join(work_path, "data_infile_Results.txt")
     if not os.path.exists(result_file):
@@ -212,13 +217,24 @@ def run_task(perm, work_path, script_path, generate_plot_data, end_year):
                     subprocess.run(["Rscript", script_path, os.path.join(work_path, "input.csv"), work_path], stdout=stdout, stderr=stderr)
     with open(result_file) as f:
         trend_data = f.read()
+
     # Clean up extraneous files
     for file in os.listdir(work_path):
         if file not in ["data_infile_Results.txt", "stdout.txt", "stderr.txt", "input.csv"]:
             remove_file_or_dir(os.path.join(work_path, file))
 
-    if generate_plot_data:
+    if generate_plot_data or generate_plots:
         df = load_lpi_wide(os.path.join(work_path, "input.csv"))
+        stats = {
+            'NumberOfTimeSeries': len(df),
+            'NumberOfTaxa': df['TaxonID'].nunique(),
+            'AverageTimeSeriesLength': (df['MaxYear'] - df['MinYear']).mean(),
+            'AverageTimeSeriesSampleYears': df['TimeSeriesSampleYears'].mean()
+        }
+    else:
+        stats = {}
+
+    if generate_plot_data:
         with open(os.path.join(work_path, "dotplot.csv"), "w") as f:
             f.write(get_dotplot_data(df, format='csv'))
         with open(os.path.join(work_path, "summary-plot.csv"), "w") as f:
@@ -226,7 +242,50 @@ def run_task(perm, work_path, script_path, generate_plot_data, end_year):
         with open(os.path.join(work_path, "map.csv"), "w") as f:
             f.write(get_intensity_data(df, format='csv'))
 
-    return (perm, trend_data)
+    if generate_plots:
+        with open(os.path.join(work_path, "dotplot.svg"), "wb") as f:
+            f.write(consistency_plot_svg(get_dotplot_data(df, format='json')))
+        with open(os.path.join(work_path, "trend.svg"), "wb") as f:
+            f.write(trend_plot_svg(trend_data, assume_single_species=False))
+        with open(os.path.join(work_path, "map.png"), "wb") as f:
+            data = [{'lon': x[0], 'lat': x[1]} for x in get_intensity_data(df, format='json')]
+            f.write(intensity_map_png(data))
+        with open(os.path.join(work_path, "summary-plot.svg"), "wb") as f:
+            f.write(summary_plot_svg(get_summary_data(df, format='json')))
+
+
+
+    return (perm, trend_data, stats)
+
+# TODO: Move all plot functions to a separate module
+def summary_plot_svg(data):
+    xys = [(int(year), n) for (year, n) in data['timeseries'].items()]
+
+    x, y = zip(*xys)
+
+    fig = plt.figure(figsize=(6, 4.5))
+    ax = fig.gca()
+    ax.yaxis.get_major_locator().set_params(integer=True)
+    ax.xaxis.get_major_locator().set_params(integer=True)
+    plt.xlabel('Year')
+    plt.ylabel('Number of time series', color='g')
+    plt.grid(True, color='#ddd')
+    plt.plot(x, y, 'go', ms=5)
+
+    if 'taxa' in data:
+        xys = [(int(year), n) for (year, n) in data['taxa'].items()]
+        x, y = zip(*xys)
+        ax2 = ax.twinx()
+        ax2.yaxis.get_major_locator().set_params(integer=True)
+        ax2.set_ylabel('Number of taxa', color='b')
+        ax2.plot(x, y, 'bo', ms=5)
+
+    svg_data = StringIO()
+    fig.savefig(svg_data, format='svg')
+    plt.close(fig)
+
+    return bytes(svg_data.getvalue(), encoding="utf8")
+
 
 def remove_file_or_dir(path):
     if os.path.isfile(path):
@@ -234,7 +293,7 @@ def remove_file_or_dir(path):
     elif os.path.isdir(path):
         shutil.rmtree(path)
 
-def run_permutations(db, df, generate_plot_data, end_year):
+def run_permutations(db, df, generate_plot_data, generate_plots, end_year):
     db.execute("""DROP TABLE IF EXISTS trend""")
     db.execute("""CREATE TABLE trend (
         TaxonomicGroup TEXT,
@@ -247,7 +306,11 @@ def run_permutations(db, df, generate_plot_data, end_year):
         Status TEXT,
         Management TEXT,
         TaxonID TEXT,
-        TrendData BLOB
+        TrendData BLOB,
+        NumberOfTimeSeries INTEGER,
+        NumberOfTaxa INTEGER,
+        AverageTimeSeriesLength REAL,
+        AverageTimeSeriesSampleYears REAL
     );""")
 
     # with TemporaryDirectory() as work_path:
@@ -263,12 +326,14 @@ def run_permutations(db, df, generate_plot_data, end_year):
     # Randomise tasks to get a more consistent progress rate
     shuffle(tasks)
 
-    tasks = [task + (generate_plot_data, end_year) for task in tasks]
+    tasks = [task + (generate_plot_data, generate_plots, end_year) for task in tasks]
 
     for result, error in run_parallel(run_task, tqdm(tasks)):
         if result:
-            perm, trend = result
+            perm, trend, stats = result
             perm['TrendData'] = trend
+            if stats:
+                perm.update(stats)
             sql = "INSERT INTO trend (%s) VALUES (%s)" % (", ".join(perm.keys()), ", ".join(":" + k for k in perm.keys()))
             db.execute(sql, perm)
             db.commit()
@@ -300,11 +365,11 @@ def load_lpi_wide(lpi_wide_filename):
     # De-fragment frame for peformance
     df = df.copy()
     # Calculate min/max year for each time series
-    df[['MinYear','MaxYear']] = (df[(c for c in df.columns if c.isnumeric())]
+    df[['MinYear','MaxYear', 'TimeSeriesSampleYears']] = (df[(c for c in df.columns if c.isnumeric())]
                 .melt(ignore_index=False)
                 .pipe(lambda x: x[x.value.notna()])['variable']
                 .groupby('ID')
-                .agg(['min', 'max'])
+                .agg(['min', 'max', 'count'])
                 .astype(int)
                 .copy())
     return df
