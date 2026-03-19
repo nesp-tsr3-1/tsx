@@ -233,7 +233,7 @@ def run_task(perm, work_path, script_path, generate_plot_data, generate_plots, e
 
     if generate_plot_data:
         with open(os.path.join(work_path, "dotplot.csv"), "w") as f:
-            f.write(get_dotplot_data(df, format='csv'))
+            f.write(get_dotplot_data(df, sample_size=None, format='csv'))
         with open(os.path.join(work_path, "summary-plot.csv"), "w") as f:
             f.write(get_summary_data(df, format='csv'))
         with open(os.path.join(work_path, "map.csv"), "w") as f:

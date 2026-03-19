@@ -144,7 +144,7 @@ def get_intensity_data(filtered_data, format='json'):
 		raise ValueError('Invalid format')
 
 
-def get_dotplot_data(filtered_data, format='json'):
+def get_dotplot_data(filtered_data, sample_size=50, format='json'):
 	"""Converts time-series to a minimal form for generating dot plots:
 	[
 		[[year,count],[year,count] .. ],
@@ -165,17 +165,18 @@ def get_dotplot_data(filtered_data, format='json'):
 	int_years = [int(year) for year in years]
 	df = df.loc[:,years]
 
-	# Get random sample
-	df = df.assign(x = np.random.randn(len(df))).sort_values(['x']).head(50)
+	if sample_size:
+		# Get random sample
+		df = df.assign(x = np.random.randn(len(df))).sort_values(['x']).head(sample_size)
 
-	# Sort time series
-	m = (df >= 0).values
-	# c = (2 ** np.arange(0, len(df.columns), dtype=object)) # Order by last year surveyed
-	# c = np.arange(0, len(df.columns)) # Order by mean year surveyed
-	c = [1] * len(df.columns) # Order by time sample years
-	x = m.dot(c)
-	# x = np.random.randn(len(df))
-	df = df.assign(x = x).sort_values(['x'])
+		# Sort time series
+		m = (df >= 0).values
+		# c = (2 ** np.arange(0, len(df.columns), dtype=object)) # Order by last year surveyed
+		# c = np.arange(0, len(df.columns)) # Order by mean year surveyed
+		c = [1] * len(df.columns) # Order by time sample years
+		x = m.dot(c)
+		# x = np.random.randn(len(df))
+		df = df.assign(x = x).sort_values(['x'])
 
 
 	# Convert Pandas data to numpy array so we can iterate over it efficiently
