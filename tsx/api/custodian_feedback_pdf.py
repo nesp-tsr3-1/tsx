@@ -4,17 +4,16 @@ from tsx.api.custodian_feedback_shared import get_form_json_raw, field_options, 
 from tsx.api.util import server_timezone
 import json
 from datetime import datetime
-import matplotlib.pyplot as plt
-from io import StringIO, BytesIO
+from io import BytesIO
 import os
 from tsx.api.util import db_session
 from sqlalchemy import text
 from tsx.config import data_dir
-import cartopy.crs as ccrs
 from textwrap import dedent
 import urllib.request
 import zipfile
 from tsx.util import get_resource
+from tsx.plots import consistency_plot_svg, trend_plot_svg, intensity_map_png
 
 # These lines are necessary to stop MatplotLib from trying to initialize
 # GUI backend and crashing due to not being on the main thread:
@@ -714,106 +713,6 @@ def format_int(x):
 
 def format_decimal(x):
 	return f'{x:,.2f}'
-
-def consistency_plot_svg(data):
-	xys = [(year, i + 1) for i, series in enumerate(data) for year, count in series]
-	x, y = zip(*xys)
-
-	fig = plt.figure(figsize=(6, 4.5))
-	ax = fig.gca()
-	ax.yaxis.get_major_locator().set_params(integer=True)
-	ax.xaxis.get_major_locator().set_params(integer=True)
-	plt.xlabel('Year')
-	plt.ylabel('Sites (time series)')
-	plt.grid(True, color='#ddd')
-	plt.plot(x, y, 'ko', ms=5)
-
-	svg_data = StringIO()
-	fig.savefig(svg_data, format='svg')
-	plt.close(fig)
-
-	return bytes(svg_data.getvalue(), encoding="utf8")
-
-def trend_plot_svg(data, assume_single_species=True):
-	rows = data.split("\n")
-
-	rows = [row for row in rows if len(row) > 0 and "NA" not in row and "LPI" not in row]
-	series = list(zip(*[[float(x.strip('"')) for x in row.split(" ")] for row in rows]))
-
-	(years, trend, lower, upper, num_species) = series[0:5]
-
-	years = [int(year) for year in years]
-
-	fig = plt.figure(figsize=(12, 4.5))
-	plt.xlabel('Year')
-	plt.ylabel('Index (%s = 1)' % years[0])
-	plt.grid(True, color='#ddd')
-
-
-	if assume_single_species:
-		plt.plot(years, trend, linestyle='dashed')
-	else:
-		num_species = [int(x) for x in num_species]
-		single_species = [x == 1 for x in num_species]
-		single_species_dilated = [a or b or c for a, b, c in zip(
-			single_species[1:] + [False],
-			single_species,
-			[False] + single_species[:-1])
-		]
-		trend_solid = [None if single_species[i] else trend[i] for i in range(len(trend))]
-		trend_dashed = [trend[i] if single_species_dilated[i] else None for i in range(len(trend))]
-
-		plt.plot(years, trend_solid, color='tab:blue')
-		plt.plot(years, trend_dashed, color='tab:blue', linestyle='dashed')
-
-	plt.gca().set_xlim(years[0], years[-1])
-	ax = fig.gca()
-	ax.xaxis.get_major_locator().set_params(integer=True)
-	# Note: hatch fill doesn't work because it produces an SVG that PyPDF can't render
-	plt.fill_between(years, lower, upper, color=light_grey)
-
-	svg_data = StringIO()
-	fig.savefig(svg_data, format='svg')
-	plt.close(fig)
-
-	return bytes(svg_data.getvalue(), encoding="utf8")
-
-def intensity_map_png(data):
-	xs = [p["lon"] for p in data]
-	ys = [p["lat"] for p in data]
-
-	map_projection = ccrs.AlbersEqualArea(
-		central_longitude=135,
-		central_latitude=-25,
-		standard_parallels=(-35,-10))
-
-	fig = plt.figure(figsize=(6, 4.5))
-	ax = fig.add_subplot(projection=map_projection)
-	buffer = 7
-	minx = min(min(xs) - buffer, 110)
-	maxx = max(max(xs) + buffer, 160)
-	miny = min(min(ys) - buffer, -45)
-	maxy = max(max(ys) + buffer, -5)
-
-	ax.set_extent([minx, maxx, miny, maxy])
-	# ax.add_feature(cfeature.LAND)
-	# ax.add_feature(cfeature.OCEAN)
-	ax.coastlines()
-	gl = ax.gridlines(draw_labels=True, dms=True, x_inline=False, y_inline=False, color='#00000020')
-	gl.top_labels = False
-	gl.right_labels = False
-
-	scale = 1.5
-	ax.plot(xs, ys, marker='o', linewidth=0, transform=ccrs.Geodetic(), mfc='#6C85CC40', mew=0,  markersize=10 * scale)
-	ax.plot(xs, ys, marker='o', linewidth=0, transform=ccrs.Geodetic(), mfc='#6C85CC80', mew=0,  markersize=9 * scale)
-	ax.plot(xs, ys, marker='o', linewidth=0, transform=ccrs.Geodetic(), mfc='#FD49FB80', mew=0, markersize=7 * scale)
-
-	png_data = BytesIO()
-	fig.savefig(png_data, format='png', dpi=180)
-	plt.close(fig)
-
-	return png_data.getvalue()
-
 
 white = "#FFFFFF"
 light_grey = "#F4F4F4"

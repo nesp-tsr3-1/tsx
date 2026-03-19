@@ -12,10 +12,7 @@ from tqdm import tqdm
 import shutil
 from tsx.api.results import get_dotplot_data, get_summary_data, get_intensity_data
 from random import shuffle
-from tsx.api.custodian_feedback_pdf import consistency_plot_svg, trend_plot_svg, intensity_map_png
-
-import matplotlib.pyplot as plt
-from io import StringIO
+from tsx.plots import consistency_plot_svg, trend_plot_svg, intensity_map_png, summary_plot_svg
 
 log = logging.getLogger(__name__)
 
@@ -256,36 +253,6 @@ def run_task(perm, work_path, script_path, generate_plot_data, generate_plots, e
 
 
     return (perm, trend_data, stats)
-
-# TODO: Move all plot functions to a separate module
-def summary_plot_svg(data):
-    xys = [(int(year), n) for (year, n) in data['timeseries'].items()]
-
-    x, y = zip(*xys)
-
-    fig = plt.figure(figsize=(6, 4.5))
-    ax = fig.gca()
-    ax.yaxis.get_major_locator().set_params(integer=True)
-    ax.xaxis.get_major_locator().set_params(integer=True)
-    plt.xlabel('Year')
-    plt.ylabel('Number of time series', color='g')
-    plt.grid(True, color='#ddd')
-    plt.plot(x, y, 'go', ms=5)
-
-    if 'taxa' in data:
-        xys = [(int(year), n) for (year, n) in data['taxa'].items()]
-        x, y = zip(*xys)
-        ax2 = ax.twinx()
-        ax2.yaxis.get_major_locator().set_params(integer=True)
-        ax2.set_ylabel('Number of taxa', color='b')
-        ax2.plot(x, y, 'bo', ms=5)
-
-    svg_data = StringIO()
-    fig.savefig(svg_data, format='svg')
-    plt.close(fig)
-
-    return bytes(svg_data.getvalue(), encoding="utf8")
-
 
 def remove_file_or_dir(path):
     if os.path.isfile(path):
