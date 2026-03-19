@@ -12,7 +12,7 @@ from tqdm import tqdm
 import shutil
 from tsx.api.results import get_dotplot_data, get_summary_data, get_intensity_data
 from random import shuffle
-from tsx.plots import consistency_plot_svg, trend_plot_svg, intensity_map_png, summary_plot_svg
+from tsx.plots import consistency_plot, trend_plot, intensity_map, summary_plot
 
 log = logging.getLogger(__name__)
 
@@ -240,16 +240,17 @@ def run_task(perm, work_path, script_path, generate_plot_data, generate_plots, e
             f.write(get_intensity_data(df, format='csv'))
 
     if generate_plots:
-        with open(os.path.join(work_path, "dotplot.svg"), "wb") as f:
-            f.write(consistency_plot_svg(get_dotplot_data(df, format='json')))
-        with open(os.path.join(work_path, "trend.svg"), "wb") as f:
-            f.write(trend_plot_svg(trend_data, assume_single_species=False))
+        with open(os.path.join(work_path, "dotplot.png"), "wb") as f:
+            data = get_dotplot_data(df, format='json')
+            f.write(consistency_plot(data, format='png'))
+        with open(os.path.join(work_path, "trend.png"), "wb") as f:
+            f.write(trend_plot(trend_data, assume_single_species=False, format='png'))
         with open(os.path.join(work_path, "map.png"), "wb") as f:
             data = [{'lon': x[0], 'lat': x[1]} for x in get_intensity_data(df, format='json')]
-            f.write(intensity_map_png(data))
-        with open(os.path.join(work_path, "summary-plot.svg"), "wb") as f:
-            f.write(summary_plot_svg(get_summary_data(df, format='json')))
-
+            f.write(intensity_map(data, format='png'))
+        with open(os.path.join(work_path, "summary-plot.png"), "wb") as f:
+            data = get_summary_data(df, format='json')
+            f.write(summary_plot(data, format='png'))
 
 
     return (perm, trend_data, stats)

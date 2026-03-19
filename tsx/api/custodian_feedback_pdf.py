@@ -13,7 +13,7 @@ from textwrap import dedent
 import urllib.request
 import zipfile
 from tsx.util import get_resource
-from tsx.plots import consistency_plot_svg, trend_plot_svg, intensity_map_png
+from tsx.plots import consistency_plot, trend_plot, intensity_map
 
 # These lines are necessary to stop MatplotLib from trying to initialize
 # GUI backend and crashing due to not being on the main thread:
@@ -310,7 +310,7 @@ def generate_pdf(form_id):
 	pdf.set_right_margin(pdf.w / 2 + 5)
 
 	consitency_plot_data = form['stats']['monitoring_consistency']
-	svg = consistency_plot_svg(consitency_plot_data)
+	svg = consistency_plot(consitency_plot_data, format='svg')
 	pdf.image(svg, w=pdf.epw)
 	pdf.ln()
 
@@ -326,7 +326,7 @@ def generate_pdf(form_id):
 	pdf.set_right_margin(15)
 	pdf.set_x(pdf.w / 2 + 5)
 
-	png = intensity_map_png(form['stats']['intensity_map'])
+	png = intensity_map(form['stats']['intensity_map'], format='png')
 	pdf.image(png, w=pdf.epw)
 	pdf.ln()
 
@@ -485,7 +485,7 @@ def generate_pdf(form_id):
 	pdf.set_fill_color("#000000")
 	pdf.set_draw_color("#000000")
 	trend_plot_data = form['stats']['trend']
-	svg = trend_plot_svg(trend_plot_data)
+	svg = trend_plot(trend_plot_data, format='svg')
 	pdf.image(svg, w=pdf.epw)
 	pdf.ln()
 
