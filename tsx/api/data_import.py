@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request, send_file, Response
 from tsx.util import local_iso_datetime, Bunch, delete_file_if_exists
 from tsx.api.util import db_session, get_user, get_roles, get_executor
 from tsx.api.upload import get_upload_path, get_upload_name
+from tsx.api.subset import subset_data_summary_json_string, legacy
 from tsx.importer import Importer
 from tsx.config import data_dir
 from tsx.db import User, Source, DataImport, DataProcessingNotes, AuditLogItem, TimeSeriesImport
@@ -406,6 +407,17 @@ def delete_source_custodian(source_id=None, user_id=None):
 
 @bp.route('/data_sources/<int:source_id>/site_summary')
 def site_summary(source_id=None):
+	if legacy():
+		return site_summary_legacy(source_id)
+
+	params = {
+		'source_id': source_id
+	}
+	json = subset_data_summary_json_string(subset_params=params)
+	return Response(json, mimetype='application/json')
+
+
+def site_summary_legacy(source_id=None):
 	sql = """
 		WITH t AS (
 			SELECT

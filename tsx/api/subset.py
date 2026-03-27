@@ -245,6 +245,62 @@ def subset_intensity_map_json(subset_params=None):
     keys = get_keys(cursor)
     return [dict(zip(keys, row)) for row in rows]
 
+def subset_data_summary_json_string(subset_params=None):
+    where_conditions, params = subset_sql_params(subset_params)
+
+    db = duckdb.connect()
+    cursor = db.cursor()
+
+    result = cursor.execute(f"""
+        WITH t AS (
+            SELECT
+                TaxonID,
+                CommonName,
+                ScientificName,
+                SiteID,
+                SiteName,
+                SearchTypeDesc,
+                MIN(StartYear) AS MinYear,
+                MAX(StartYear) AS MaxYear
+            FROM '{aggregated_data_glob()}'
+            WHERE {" AND ".join(where_conditions)}
+            GROUP BY ALL
+        ),
+        u AS (
+            SELECT
+                TaxonID,
+                CommonName,
+                ScientificName,
+                list(
+                    {{
+                        'site_name': SiteName,
+                        'search_type': SearchTypeDesc,
+                        'max_year': MaxYear,
+                        'min_year': MinYear
+                    }}
+                    ORDER BY SiteName, SearchTypeDesc
+                ) AS TimeSeries
+            FROM t
+            GROUP BY TaxonID, CommonName, ScientificName
+        )
+        SELECT to_json(
+            list(
+                {{
+                    'taxon_id': TaxonID,
+                    'common_name': CommonName,
+                    'scientific_name': ScientificName,
+                    'ts': TimeSeries
+                }}
+                ORDER BY ScientificName
+            )
+        ) FROM u
+    """, params).fetchone()
+
+    if result:
+        return result[0]
+    else:
+        return "[]"
+
 @bp.route('/subset/sites', methods = ['GET'])
 def subset_sites():
     data = subset_sites_data()
