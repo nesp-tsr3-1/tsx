@@ -593,8 +593,9 @@ def subset_sql_params(subset_params=None, state_via_region=False):
 
     args = subset_params or get_request_args_or_body()
 
-    if 'source_id' not in args:
-        where_conditions.append("DataType = 1")
+    if 'data_type' in args:
+        params["data_type"] = args['data_type']
+        where_conditions.append('DataType = $data_type')
 
     if 'state' in args:
         where_conditions.append("State = $state")

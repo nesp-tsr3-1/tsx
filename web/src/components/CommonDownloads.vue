@@ -372,6 +372,31 @@
         </div>
       </div>
     </div>
+
+    <div
+      v-if="enableDataTypeFilter"
+      class="field"
+    >
+      <label class="label">Data Type</label>
+      <div class="control">
+        <div class="select">
+          <select v-model="criteria.dataType">
+            <option
+              :value="null"
+              selected
+            >
+              Type 1 & 2
+            </option>
+            <option value="1">
+              Type 1 only
+            </option>
+            <option value="2">
+              Type 2 only
+            </option>
+          </select>
+        </div>
+      </div>
+    </div>
   </fieldset>
   <div
     v-if="statsDescription"
@@ -714,6 +739,7 @@ export default {
     enableMap: Boolean,
     enableTaxonStatusFilter: Boolean,
     enableRegionFilter: Boolean,
+    enableDataTypeFilter: Boolean,
     enableLogLinearTrend: Boolean,
     hasTimeSeries: {
       type: Boolean,
@@ -767,8 +793,8 @@ export default {
         taxonomicGroup: null,
         taxonStatus: [],
         statusAuthority: null,
-        eligibleForTSXOnly: false
-
+        eligibleForTSXOnly: false,
+        dataType: null
       },
       changeCounter: 0, // Incremented every time criteria are changed
       stats: null,
@@ -1178,6 +1204,10 @@ export default {
 
       if(this.enableTaxonStatusFilter && this.criteria.eligibleForTSXOnly) {
         params.eligible_for_tsx_only = 'true'
+      }
+
+      if(this.enableDataTypeFilter && this.criteria.dataType) {
+        params.data_type = this.criteria.dataType
       }
 
       return params

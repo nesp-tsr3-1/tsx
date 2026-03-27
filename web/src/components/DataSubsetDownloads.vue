@@ -14,6 +14,7 @@
             :enable-management-filter="true"
             :enable-taxonomic-group-filter="true"
             :enable-taxon-status-filter="true"
+            :enable-data-type-filter="true"
             :enable-map="true"
           >
             <template #criteria-title>
