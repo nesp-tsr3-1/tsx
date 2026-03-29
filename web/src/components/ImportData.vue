@@ -22,7 +22,7 @@
 
     <div class="field">
       <label class="label">Data file</label>
-      <div v-if="status == &quot;init&quot;">
+      <div v-if="status == 'init'">
         <p>
           <button
             class="button"
@@ -69,13 +69,16 @@
     </div>
 
     <div
-      v-if="status == &quot;checked_ok&quot;"
+      v-if="status == 'checked_ok'"
       class="notification is-success"
     >
       👍 Looks good! No errors detected. Please review the log below before importing the data.
     </div>
 
-    <p v-if="status == &quot;checked_ok&quot;">
+    <div
+      v-if="status == 'checked_ok'"
+      class="buttons"
+    >
       <button
         class="button is-primary"
         @click="importData"
@@ -88,23 +91,23 @@
       >
         Upload an edited file
       </button>
-    </p>
+    </div>
 
     <div
-      v-if="status == &quot;checked_error&quot;"
+      v-if="status == 'checked_error'"
       class="notification is-warning"
     >
       ⚠️ Some issues were detected in the uploaded file. Please check the log below and then upload a new version for checking.
     </div>
 
     <div
-      v-if="status == &quot;import_error&quot;"
+      v-if="status == 'import_error'"
       class="notification is-warning"
     >
       ⚠️ Something went wrong while importing data. Please check the log below.
     </div>
 
-    <p v-if="status == &quot;checked_error&quot; || status == &quot;import_error&quot;">
+    <p v-if="status == 'checked_error' || status == 'import_error'">
       <button
         class="button"
         @click="selectFile"
@@ -114,7 +117,7 @@
     </p>
 
     <div
-      v-if="status == &quot;approved&quot; || status == &quot;imported&quot;"
+      v-if="status == 'approved' || status == 'imported'"
       class="notification is-success"
     >
       🎉 All data has been imported without errors. See full import log below.
