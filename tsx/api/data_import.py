@@ -1156,6 +1156,7 @@ def import_type2_time_series(file_path, source_id, data_import_id):
 		SELECT
 			SourceID,
 			TaxonID,
+			$data_import_id AS DataImportID,
 			SearchTypeDesc,
 			UnitOfMeasurement,
 			SiteName,
@@ -1163,13 +1164,17 @@ def import_type2_time_series(file_path, source_id, data_import_id):
 			SurveysCentroidLongitude,
 			COLUMNS('^[0-9]+$')
 		FROM read_csv($file, all_varchar = TRUE)
-	""", params = { "file": file_path })
+	""", params = {
+		"file": file_path,
+		"data_import_id": data_import_id
+	})
 
 	t = db.sql("UNPIVOT t ON COLUMNS('^[0-9]+$') INTO NAME StartYear VALUE Val")
 
 	t = db.sql("""SELECT
 			SUBSTR(TRIM('_' FROM REGEXP_REPLACE(taxon.scientific_name, '[^a-zA-Z]', '_', 'g')), 1, 40) AS Binomial,
 			CONCAT(SourceID, '_', unit.id, '_', COALESCE(search_type_id, '0'), '_', COALESCE(t2_site.id::VARCHAR, SiteName), '_', taxon.id) AS TimeSeriesID,
+			DataImportID,
 			2 AS DataType,
 			StartYear::INTEGER AS StartYear,
 			SourceID::INTEGER AS SourceID,
