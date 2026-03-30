@@ -1084,7 +1084,7 @@ def post_time_series():
 	except KeyError:
 		return jsonify('data_import_id is required'), 400
 
-	if not permitted(user, 'update', 'type2_time_series', source_id):
+	if not permitted(user, 'update', 'type_2_time_series', source_id):
 		return 'Not authorized', 401
 
 	# Check upload parameter
@@ -1110,7 +1110,7 @@ def post_time_series():
 	if error:
 		return jsonify({ "check_error": error }), 400
 
-	import_type2_time_series(file_path, source_id, data_import_id)
+	import_type_2_time_series(file_path, source_id, data_import_id)
 
 	time_series_import = TimeSeriesImport(
 		data_import_id = data_import_id,
@@ -1128,13 +1128,13 @@ def post_time_series():
 def delete_time_series_import(data_import_id):
 	user = get_user()
 
-	if not permitted(user, 'delete', 'type2_time_series', data_import_id):
+	if not permitted(user, 'delete', 'type_2_time_series', data_import_id):
 		return 'Not authorized', 401
 
 	db_session.execute(text("DELETE FROM time_series_import WHERE data_import_id = :data_import_id"),
 		{ "data_import_id": data_import_id })
 
-	if is_current_type2_data_import(data_import_id):
+	if is_current_type_2_data_import(data_import_id):
 		(source_id,) = db_session.execute(text("SELECT source_id FROM data_import WHERE id = :id"), { "id": data_import_id }).fetchone()
 		path = os.path.join(data_dir('preprocessed'), "%s_agg_t2.parquet" % source_id)
 		delete_file_if_exists(path)
@@ -1143,7 +1143,7 @@ def delete_time_series_import(data_import_id):
 
 	return "OK", 204
 
-def import_type2_time_series(file_path, source_id, data_import_id):
+def import_type_2_time_series(file_path, source_id, data_import_id):
 	db = duckdb.connect()
 	db.sql("LOAD mysql")
 	db.sql("INSTALL spatial")
@@ -1228,11 +1228,11 @@ def import_type2_time_series(file_path, source_id, data_import_id):
 
 	output_path = os.path.join(data_dir('preprocessed'), "%s_agg_t2.parquet" % source_id)
 
-	if is_current_type2_data_import(data_import_id):
+	if is_current_type_2_data_import(data_import_id):
 		db.sql("COPY t TO '%s'" % output_path)
 
 
-def is_current_type2_data_import(data_import_id):
+def is_current_type_2_data_import(data_import_id):
 	result = db_session.execute(
 		text("SELECT 1 FROM t2_survey WHERE data_import_id = :data_import_id LIMIT 1"),
 		{ "data_import_id": data_import_id }
