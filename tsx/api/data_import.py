@@ -1249,8 +1249,6 @@ def check_time_series_upload(file_path, source_id):
 		'ID',
 		'SourceID',
 		'TaxonID',
-		'CommonName',
-		'ScientificName',
 		'SearchTypeDesc',
 		'UnitOfMeasurement',
 		'SiteName',
