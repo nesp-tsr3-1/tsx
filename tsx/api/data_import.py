@@ -24,7 +24,7 @@ from tsx.api.custodian_feedback_pdf import generate_archive_pdfs
 import re
 import duckdb
 from threading import Lock
-from tsx.preprocessing import remove_preprocessed_data, preprocess_sources, attach_region_db
+from tsx.preprocessing import remove_preprocessed_data, preprocess_sources, attach_region_db, aggregated_data_path
 
 bp = Blueprint('data_import', __name__)
 
@@ -1118,11 +1118,38 @@ def post_time_series():
 		upload_uuid = upload_uuid,
 		filename = get_upload_name(upload_uuid)
 	)
-
 	db_session.add(time_series_import)
+
+	update_data_import_taxon_from_type_2_time_series(source_id, data_import_id)
+
 	db_session.commit()
 
 	return "OK", 201
+
+def update_data_import_taxon_from_type_2_time_series(source_id, data_import_id):
+	with duckdb.connect() as db:
+		rows = db.sql(f"""
+				SELECT DISTINCT DataImportID, TaxonID
+				FROM '{aggregated_data_path(source_id, 2)}'
+				WHERE DataImportID = $data_import_id
+			""",
+			params = { 'data_import_id': data_import_id}
+		).fetchall()
+
+		data = [
+			{
+				"data_import_id": data_import_id,
+				"taxon_id": taxon_id
+			}
+			for data_import_id, taxon_id in rows
+		]
+
+	db_session.execute(
+		text("DELETE FROM data_import_taxon WHERE data_import_id = :data_import_id"),
+		{ "data_import_id": data_import_id})
+	db_session.execute(
+		text("INSERT INTO data_import_taxon (data_import_id, taxon_id) VALUES (:data_import_id, :taxon_id)"),
+		data)
 
 @bp.route('/time_series_import/<int:data_import_id>', methods = ['DELETE'])
 def delete_time_series_import(data_import_id):
@@ -1136,12 +1163,33 @@ def delete_time_series_import(data_import_id):
 
 	if is_current_type_2_data_import(data_import_id):
 		(source_id,) = db_session.execute(text("SELECT source_id FROM data_import WHERE id = :id"), { "id": data_import_id }).fetchone()
-		path = os.path.join(data_dir('preprocessed'), "%s_agg_t2.parquet" % source_id)
+		path = aggregated_data_path(source_id, 2)
 		delete_file_if_exists(path)
 
 	db_session.commit()
 
 	return "OK", 204
+
+@bp.route('/time_series_import/reimport')
+def reimport_type_2_time_series():
+	user = get_user()
+
+	if not permitted(user, 'reimport', 'type_2_time_series', None):
+		return 'Not authorized', 401
+
+	result = db_session.execute(text("""
+		SELECT time_series_import.upload_uuid, data_import.source_id, data_import.id
+		FROM time_series_import
+		JOIN data_import ON data_import.id = time_series_import.data_import_id
+		WHERE data_import.id IN (SELECT data_import_id FROM t2_sighting)
+	""")).fetchall()
+
+	for upload_uuid, source_id, data_import_id in result:
+		file_path = get_upload_path(upload_uuid)
+		import_type_2_time_series(file_path, source_id, data_import_id)
+
+	return "OK"
+
 
 def import_type_2_time_series(file_path, source_id, data_import_id):
 	db = duckdb.connect()
@@ -1226,7 +1274,7 @@ def import_type_2_time_series(file_path, source_id, data_import_id):
 			)
 	""")
 
-	output_path = os.path.join(data_dir('preprocessed'), "%s_agg_t2.parquet" % source_id)
+	output_path = aggregated_data_path(source_id, 2)
 
 	if is_current_type_2_data_import(data_import_id):
 		db.sql("COPY t TO '%s'" % output_path)

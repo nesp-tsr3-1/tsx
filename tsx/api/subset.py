@@ -6,6 +6,7 @@ from tsx.util import get_resource
 from tsx.api.permissions import permitted
 from tsx.api.results import trend_txt_to_csv
 from tsx.config import data_dir
+from tsx.preprocessing import aggregated_data_glob, raw_data_glob
 import os
 from threading import Thread, Lock
 import shutil
@@ -124,13 +125,6 @@ def subset_stats_data_legacy():
     result = db_session.execute(text(sql), params).fetchone()
     return dict(result._mapping)
 
-preprocessed_data_dir = data_dir('preprocessed')
-
-def raw_data_glob():
-    return os.path.join(preprocessed_data_dir, '*_raw.parquet').replace("'", "''")
-
-def aggregated_data_glob():
-    return os.path.join(preprocessed_data_dir, '*_agg*.parquet').replace("'", "''")
 
 def subset_stats_data():
     if legacy():
@@ -1384,3 +1378,17 @@ def subset_get_trend_diagnostics(trend_id):
             return Response(file.read(), mimetype="application/json")
     else:
         return "Not found", 404
+
+# Get all taxa
+def get_all_aggregated_dataset_taxa():
+    db = duckdb.connect()
+    cursor = db.cursor()
+
+    # Get stats based on raw data
+    sql = f"""
+        SELECT DISTINCT SourceID, TaxonID, DataImportID
+        FROM '{aggregated_data_glob()}'
+        WHERE DataImportID IS NOT NULL
+    """
+
+    return cursor.execute(sql).fetchall()

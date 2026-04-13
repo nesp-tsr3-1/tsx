@@ -416,6 +416,20 @@ def get_form_json_raw(form_id):
 # ---- Dataset stats logic -----
 
 def update_all_dataset_stats():
+	if False:
+		return update_all_dataset_stats_legacy()
+
+	existing = set(db_session.execute(text("""select source_id, taxon_id, data_import_id FROM dataset_stats""")).fetchall())
+	required = set(subset.get_all_aggregated_dataset_taxa())
+
+	missing = sorted(required - existing)
+
+	for source_id, taxon_id, data_import_id in missing:
+		update_dataset_stats(source_id, taxon_id, data_import_id)
+
+	return len(missing)
+
+def update_all_dataset_stats_legacy():
 	count = 0
 	while True:
 		# Find a dataset that needs updating
@@ -438,8 +452,6 @@ def update_all_dataset_stats():
 			break
 
 	return count
-
-
 
 def processing_summary(source_id, taxon_id):
 	result = db_session.execute(text("""
@@ -574,6 +586,112 @@ def safe_float(x):
 		return 0
 	else:
 		return x
+
+# Ensures that forms are correctly created/archived
+# Should be called whenever a new data import is approved (*after* pre-processing into parquet files)
+def update_custodian_feedback_forms():
+	approved_import_ids = db_session.execute(text("""
+		SELECT id
+		FROM data_import
+		WHERE data_import.status_id = (SELECT id FROM data_import_status WHERE code = 'approved')
+	""")).fetchall()
+
+	approved_import_ids = set(x for (x,) in approved_import_ids)
+
+	db_session.execute(text("""
+		CREATE TEMPORARY TABLE tmp_latest_taxon AS SELECT
+			source.id AS source_id,
+			data_import.id AS data_import_id,
+			taxon.id AS taxon_id
+		FROM
+			source, data_import, taxon
+		WHERE FALSE
+	"""))
+
+	rows = []
+	for source_id, taxon_id, data_import_id in subset.get_all_aggregated_dataset_taxa():
+		if data_import_id in approved_import_ids:
+			rows.append(({"source_id": source_id, "taxon_id": taxon_id, "data_import_id": data_import_id}))
+
+	db_session.execute(text("""
+		INSERT INTO tmp_latest_taxon (source_id, data_import_id, taxon_id)
+		VALUES (:source_id, :data_import_id, :taxon_id)
+		"""), rows)
+
+	# Approach: Create temporary table based on get_all_aggregated_dataset_taxa(), then use that to power the following steps
+
+
+	# 1. Archive surveys where status = complete, type = integrated and data_import_id is no longer the most recent
+	db_session.execute(text("""
+		UPDATE custodian_feedback
+		LEFT JOIN tmp_latest_import ON (custodian_feedback.taxon_id = tmp_latest_import.taxon_id AND custodian_feedback.source_id = tmp_latest_import.source_id)
+		SET feedback_status_id = (SELECT id FROM feedback_status WHERE code = 'archived')
+		WHERE feedback_status_id = (SELECT id FROM feedback_status WHERE code = 'complete')
+		AND feedback_type_id = (SELECT id FROM feedback_type WHERE code = 'integrated')
+		AND custodian_feedback.data_import_id != COALESCE(tmp_latest_import.data_import_id, -1)
+	"""))
+
+	# 2. Delete surveys where status = incomplete/draft, type='integrated' and data_import_id is no longer the most recent
+	db_session.execute(text("""
+		DELETE FROM custodian_feedback
+		WHERE feedback_type_id = (SELECT id FROM feedback_type WHERE code = 'integrated')
+		AND feedback_status_id IN (SELECT id FROM feedback_status WHERE code IN ('incomplete', 'draft'))
+		AND (source_id, taxon_id, data_import_id) NOT IN (SELECT source_id, taxon_id, data_import_id FROM tmp_latest_import)
+	"""))
+
+	# 3. Update survey status to 'incomplete', data_import_id = latest where type = admin and data_import_id is no longer the most recent
+	db_session.execute(text("""
+		UPDATE custodian_feedback
+		JOIN tmp_latest_import ON (custodian_feedback.taxon_id = tmp_latest_import.taxon_id AND custodian_feedback.source_id = tmp_latest_import.source_id)
+		SET
+			custodian_feedback.feedback_status_id = (SELECT id FROM feedback_status WHERE code = 'incomplete'),
+			custodian_feedback.data_import_id = tmp_latest_import.data_import_id
+		WHERE COALESCE(custodian_feedback.data_import_id, 0) != tmp_latest_import.data_import_id
+		AND feedback_type_id = (SELECT id FROM feedback_type WHERE code = 'admin')
+	"""))
+
+	# 4. Add new incomplete surveys
+	db_session.execute(text("""
+		INSERT INTO custodian_feedback (source_id, taxon_id, data_import_id, feedback_type_id, feedback_status_id)
+		SELECT
+			tmp_latest_import.source_id,
+			tmp_latest_import.taxon_id,
+			tmp_latest_import.data_import_id,
+			(SELECT id FROM feedback_type WHERE code = 'integrated'),
+			(SELECT id FROM feedback_status WHERE code = 'incomplete')
+		FROM tmp_latest_import
+		LEFT JOIN custodian_feedback ON (
+			custodian_feedback.source_id = tmp_latest_import.source_id
+			AND custodian_feedback.taxon_id = tmp_latest_import.taxon_id
+			AND custodian_feedback.data_import_id = tmp_latest_import.data_import_id
+			AND custodian_feedback.feedback_type_id = (SELECT id FROM feedback_type WHERE code = 'integrated'))
+		WHERE custodian_feedback.id IS NULL
+	"""))
+
+
+	# 5. Add new admin surveys
+	db_session.execute(text("""
+		INSERT INTO custodian_feedback (source_id, taxon_id, data_import_id, feedback_type_id, feedback_status_id)
+		SELECT
+			tmp_latest_import.source_id,
+			tmp_latest_import.taxon_id,
+			tmp_latest_import.data_import_id,
+			(SELECT id FROM feedback_type WHERE code = 'admin'),
+			(SELECT id FROM feedback_status WHERE code = 'incomplete')
+		FROM tmp_latest_import
+		LEFT JOIN custodian_feedback ON (
+			custodian_feedback.source_id = tmp_latest_import.source_id
+			AND custodian_feedback.taxon_id = tmp_latest_import.taxon_id
+			AND custodian_feedback.feedback_type_id = (SELECT id FROM feedback_type WHERE code = 'admin'))
+		WHERE custodian_feedback.id IS NULL
+	"""))
+
+	# Clean up
+	db_session.execute(text("""
+		DROP TEMPORARY TABLE IF EXISTS tmp_latest_import
+	"""))
+
+	db_session.commit()
 
 def update_dataset_stats(source_id, taxon_id, data_import_id):
 	log.info("Updating dataset stats for source_id=%s, taxon_id=%s, data_import_id=%s" % (source_id, taxon_id, data_import_id))

@@ -13,6 +13,21 @@ from mysql.connector import FieldType
 import pyarrow as pa
 import pyarrow.parquet
 
+preprocessed_data_dir = data_dir('preprocessed')
+
+def raw_data_glob():
+    return os.path.join(preprocessed_data_dir, '*_raw.parquet').replace("'", "''")
+
+def aggregated_data_glob():
+    return os.path.join(preprocessed_data_dir, '*_agg*.parquet').replace("'", "''")
+
+def aggregated_data_path(source_id, data_type):
+    return os.path.join(preprocessed_data_dir, '%s_agg_t%s.parquet' % (source_id, data_type))
+
+def raw_data_path(source_id):
+    return os.path.join(preprocessed_data_dir, '%s_raw.parquet' % (source_id,))
+
+
 def main():
     session = get_session()
     session.connection(execution_options = { 'stream_results': True})
@@ -466,10 +481,10 @@ def preprocess_source(source_id, db, conn, tempdir):
         GROUP BY ALL;
     """)
 
-    output_path = os.path.join(data_dir('preprocessed'), "%s_raw.parquet" % source_id)
+    output_path = raw_data_path(source_id)
     db.sql("COPY t TO '%s'" % output_path)
 
-    output_path = os.path.join(data_dir('preprocessed'), "%s_agg_t1.parquet" % source_id)
+    output_path = aggregated_data_path(source_id, 1)
     db.sql("COPY year_agg TO '%s'" % output_path)
 
 
