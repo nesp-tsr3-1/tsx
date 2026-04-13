@@ -186,8 +186,7 @@ INSERT INTO feedback_status (id, code, description) VALUES
   (1, 'incomplete', 'Incomplete'),
   (2, 'draft', 'Draft Saved'),
   (3, 'complete', 'Complete'),
-  (4, 'archived', 'Archived'),
-  (5, 'dataset_deleted', 'Dataset Deleted');
+  (4, 'archived', 'Archived');
 
 INSERT INTO data_agreement_status (id, code, description, category, long_description) VALUES
 ( 1, "no_agreement", "No agreement in place",
