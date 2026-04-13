@@ -756,11 +756,11 @@
                           </tr>
                           <tr>
                             <td>Range of raw data (counts)</td>
-                            <td>{{ stats.min_count.toLocaleString() }}–{{ stats.max_count.toLocaleString() }}</td>
+                            <td>{{ stats.min_count?.toLocaleString() }}–{{ stats.max_count?.toLocaleString() }}</td>
                           </tr>
                           <tr>
                             <td>Number of 0 counts</td>
-                            <td>{{ stats.zero_counts.toLocaleString() }}</td>
+                            <td>{{ stats.zero_counts?.toLocaleString() }}</td>
                           </tr>
                         </template>
                         <template
