@@ -4,18 +4,31 @@ from email.mime.text import MIMEText
 from tsx.config import config
 import ssl
 from concurrent.futures import ThreadPoolExecutor
+from pprint import pp
 
-smtp_host = config.get('smtp', 'host')
-smtp_port = config.getint('smtp', 'port')
-smtp_username = config.get('smtp', 'username')
-smtp_password = config.get('smtp', 'password')
-smtp_use_starttls = config.getboolean('smtp', 'use_starttls')
-smtp_sender = config.get('smtp', 'default_sender')
-admin_recipient = config.get('api', 'admin_notification_email')
+email_configured = False
+admin_recipient = None
+
+try:
+	smtp_host = config.get('smtp', 'host')
+	smtp_port = config.getint('smtp', 'port')
+	smtp_username = config.get('smtp', 'username')
+	smtp_password = config.get('smtp', 'password')
+	smtp_use_starttls = config.getboolean('smtp', 'use_starttls')
+	smtp_sender = config.get('smtp', 'default_sender')
+	admin_recipient = config.get('api', 'admin_notification_email')
+	email_configured = True
+except:
+	print("Warning: Failed to load mail configuration")
 
 _executor = ThreadPoolExecutor(1)
 
 def send_email(email_address, subject, message, background=False):
+	if not email_configured:
+		print("Mail server not configured. Unable to send the following email: ")
+		pp(locals())
+		return
+
 	if background:
 		_executor.submit(send_email, email_address, subject, message)
 		return
