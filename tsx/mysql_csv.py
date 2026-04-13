@@ -69,8 +69,6 @@ def perform_export(table, cnx):
         ", ".join("%s.%s" % (quote_identifier(table), quote_identifier(col)) for col in primary_key_columns)
     )
 
-    log.debug(sql)
-
     cur.execute(sql)
     writer = csv.writer(sys.stdout)
     writer.writerow([name for (name, type) in columns])
@@ -118,7 +116,6 @@ def perform_import(table, cnx, delete):
                 ",\n".join(quote_identifier(col) for col in csv_column_names),
                 ", ".join(insert_clause(col, type) for col, type in columns)
             )
-            log.debug(sql)
             is_header = False
         else:
             assert len(row) == len(columns)
