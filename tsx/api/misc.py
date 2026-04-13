@@ -94,3 +94,8 @@ def get_taxonomic_group():
 @bp.route('/data_agreement_status', methods = ['GET'])
 def get_data_agreement_status():
 	return query_to_json("""SELECT code, description FROM data_agreement_status""")
+
+# healthcheck
+@bp.route('/ok', methods = ['GET'])
+def ok():
+	return "OK", 200
