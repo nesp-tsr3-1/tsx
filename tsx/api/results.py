@@ -263,7 +263,7 @@ def get_taxon_data():
 
 def get_trend_data():
 	df = read_data(get_database_filename(), table='trend', index_col=None)
-	if df['ReferenceYear'].dtype != object:
+	if df['ReferenceYear'].dtype not in [object, 'str']:
 		df['ReferenceYear'] = df['ReferenceYear'].apply(lambda x: '' if np.isnan(x) else str(int(x)))
 	df['has_trend'] = df['TrendData'].notna()
 	return df
