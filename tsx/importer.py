@@ -231,7 +231,6 @@ class Importer:
 
 				with open(self.filename, "r", encoding="utf-8-sig") as csvfile:
 					reader = csv.DictReader(csvfile)
-					print(reader.fieldnames)
 					self.check_headers(reader.fieldnames)
 					self.processed_rows = 1
 					for i, row in enumerate(self.progress_wrapper(reader)):
