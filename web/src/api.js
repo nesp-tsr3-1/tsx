@@ -2,7 +2,7 @@ import * as util from './util'
 
 // export const ROOT_URL = 'https://tsx.org.au/tsxapi'
 
-export const ROOT_URL = 'http://localhost:5000'
+export const ROOT_URL = 'http://localhost:5001'
 
 export function isLoggedIn() {
   return get('/is_logged_in')
