@@ -1,3 +1,4 @@
+import fiona
 from tsx.db import get_session
 import os
 import logging
@@ -9,7 +10,6 @@ import shapely.wkb
 from tsx.geo import subdivide_geometry, to_multipolygon
 from shapely.geometry import MultiPolygon, Polygon, shape
 from shapely.ops import transform
-import fiona
 import pyproj
 from sqlalchemy import text
 

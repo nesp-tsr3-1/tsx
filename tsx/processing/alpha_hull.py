@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import fiona
 import shapely.geometry as geometry
 from shapely.ops import unary_union, polygonize, transform
 from scipy.spatial import Delaunay
@@ -20,7 +21,6 @@ import logging
 import shapely.wkb
 import binascii
 from sqlalchemy import text
-import fiona # Important - moving this dependency to the top causes a segfault loading sqlite extensions in mysql_to_sqlite!
 
 
 

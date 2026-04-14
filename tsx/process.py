@@ -1,3 +1,4 @@
+import fiona
 import argparse
 import shapely.geometry
 import shapely.wkb
@@ -19,7 +20,6 @@ import tsx.processing.t2_aggregation
 import tsx.processing.export_lpi
 import tsx.processing.spatial_rep
 import tsx.processing.filter_time_series
-import fiona
 from tsx.geo import to_multipolygon
 from sqlalchemy import text
 
