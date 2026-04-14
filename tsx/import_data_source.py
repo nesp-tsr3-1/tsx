@@ -40,6 +40,7 @@ def main():
 				'excluded_years': row.get('ExcludedYears') or None,
 				'exclude_from_analysis': get_bool(row, 'NotInIndex', False, unknown_value_default=True, optional=True),
 				'suppress_aggregated_data': get_suppress_aggregated_data(row),
+				'suppress_aggregated_data_until': None
 			}
 
 			try:
