@@ -39,7 +39,7 @@ def main():
 
 	session.commit()
 
-_taxon_re = re.compile('(u?[0-9]+)([a-z](\.[a-z])*)?')
+_taxon_re = re.compile(r'(u?[0-9]+)([a-z](\.[a-z])*)?')
 
 def process_shp(session, spno, shp):
 	transformer = pyproj.Transformer.from_crs(pyproj.CRS.from_wkt(shp.crs_wkt), 'EPSG:4326', always_xy=True)
