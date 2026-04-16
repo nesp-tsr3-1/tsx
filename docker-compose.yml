@@ -1,0 +1,168 @@
+# To run tests:
+# docker compose run --build --rm test
+
+# To run workflow_cli
+# docker compose run --build --rm workflow_cli
+
+version: "3.1"
+name: tsx
+services:
+  mysql:
+    image: mysql:8.3.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: tsx
+      MYSQL_USER: tsx
+      MYSQL_PASSWORD: tsx
+    ports:
+      - "6033:3306"
+    volumes:
+      - tsx_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: mysqladmin ping -h 127.0.0.1 -u $$MYSQL_USER --password=$$MYSQL_PASSWORD
+      timeout: 20s
+      retries: 10
+      interval: 1s
+
+
+  phpmyadmin:
+    profiles: [debug]
+    image: phpmyadmin
+    restart: always
+    ports:
+      - 8033:80
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root
+
+
+  workflow_cli:
+    profiles: [cli] # prevents this service from starting automatically
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: cli
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - /tsx/.venv  # This ensures the image has it's own .venv folder instead of mounting the host's
+      - /tsx/renv/library
+      - /tsx/renv/local
+      - /tsx/renv/cellar
+      - /tsx/renv/lock
+      - /tsx/renv/python
+      - /tsx/renv/sandbox
+      - /tsx/renv/staging
+      - ./:/tsx/
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+
+
+  api:
+    profiles: [webapp]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: base
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - 5001:5001
+    volumes:
+      - /tsx/.venv  # This ensures the image has it's own .venv folder instead of mounting the host's
+      - /tsx/renv/library
+      - /tsx/renv/local
+      - /tsx/renv/cellar
+      - /tsx/renv/lock
+      - /tsx/renv/python
+      - /tsx/renv/sandbox
+      - /tsx/renv/staging
+      - ./:/tsx/
+    environment:
+      TSX_CONFIG: tsx.conf
+    command: uv run ./dev-server.sh
+    # healthcheck:
+    #   test:  curl -sf http://localhost:5001/ok
+    #   timeout: 20s
+    #   retries: 10
+    #   interval: 2s
+
+
+  data_interface:
+    profiles: [webapp]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: frontend
+    user: 'node'
+    working_dir: /home/node/app
+    volumes:
+      - /home/node/app/node_modules
+      - ./web:/home/node/app
+    command: "bash -c 'npm i &&  npx vite data --host 0.0.0.0 --port 3000'"
+    ports:
+      - 3000:3000
+    # depends_on:
+    #   api:
+    #     condition: service_started
+
+
+  tsx_visualiser:
+    profiles: [webapp]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: frontend
+    user: 'node'
+    working_dir: /home/node/app
+    volumes:
+      - /home/node/app/node_modules
+      - ./web:/home/node/app
+    command: "bash -c 'npm i &&  npx vite tsx --host 0.0.0.0 --port 3001'"
+    ports:
+      - 3001:3001
+    # depends_on:
+    #   api:
+    #     condition: service_started
+
+
+
+  test:
+    profiles: [test]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test
+    volumes:
+      - /tsx/.venv  # This ensures the image has it's own .venv folder instead of mounting the host's
+      - /tsx/renv/library
+      - /tsx/renv/local
+      - /tsx/renv/cellar
+      - /tsx/renv/lock
+      - /tsx/renv/python
+      - /tsx/renv/sandbox
+      - /tsx/renv/staging
+      - ./:/tsx/
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+
+  jupyter:
+    profiles: [jupyter]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: jupyter
+    ports:
+      - 8034:8888
+    depends_on:
+      mysql:
+        condition: service_healthy
+volumes:
+  tsx_mysql_data:
