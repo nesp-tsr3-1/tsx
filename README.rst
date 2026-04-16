@@ -87,8 +87,7 @@ Install development libraries (Ubuntu/Debian):
 .. code:: bash
 
  sudo apt-get update
- sudo apt-get install libgdal-dev git build-essential libharfbuzz-dev libfribidi-dev \
-   libfontconfig1-dev libgit2-dev libssl-dev default-mysql-client libbz2-dev curl
+ sudo apt-get install -y --no-install-recommends libgdal-dev r-base r-base-dev git build-essential libharfbuzz-dev libfribidi-dev  libfontconfig1-dev libgit2-dev libssl-dev  default-mysql-client libbz2-dev curl
 
 
 Create MySQL database

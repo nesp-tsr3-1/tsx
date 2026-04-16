@@ -6,7 +6,7 @@ Run the following commands to install prerequisite software:
 
 ----
 sudo apt-get update
-sudo apt-get install -y nginx mysql-server python python-pip git
+sudo apt-get install -y --no-install-recommends libgdal-dev r-base r-base-dev git build-essential libharfbuzz-dev libfribidi-dev  libfontconfig1-dev libgit2-dev libssl-dev  default-mysql-client libbz2-dev curl
 ----
 
 Install `uv` by following the instructions at https://docs.astral.sh/uv/getting-started/installation/
@@ -19,13 +19,12 @@ Run the following command to download the TSX workflow into a folder named `tsx`
 git clone https://github.com/nesp-tsr3-1/tsx.git
 ----
 
-Then enter the `tsx` directory and run the following commands:
+Then enter the `tsx` directory and run the following commands to install Python and R dependencies:
 
 ----
 uv sync
+Rscript -e 'renv::restore()'
 ----
-
-NOTE: Since we are using the `uv` package manager, all python commands in this guide should be prefixed by `uv run` (e.g. `uv run python -m tsx.process -c t1_aggregation`). Alternatively, you may wish to start a new shell with `uv run bash` and run all commands from there without the `uv run` prefix.
 
 ==== Database Setup
 
@@ -36,7 +35,6 @@ sudo mysql tsx < sample-data/seed.sql
 ----
 
 Understanding the database schema is not essential to following the steps in this guide, but is recommended if you want to gain an in-depth understanding of the processing.
-// TODO: link to database schema
 
 ==== Update Workflow Configuration File
 
