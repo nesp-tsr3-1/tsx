@@ -76,7 +76,7 @@ There are two main options for getting a TSX development environment up and runn
 
 1. Installing dependencies natively as per instructions below
 
-2. Use the supplied Docker Compose configuation to automatically build containers with the necessary dependencies included. This is quicker to get up and running, but is arguably more complicated to use for development and requires some familiarity with Docker. (TODO: Docker compose instructions)
+2. Use the supplied Docker Compose configuation to automatically build containers with the necessary dependencies included. This is quicker to get up and running, but is arguably more complicated to use for development and requires some familiarity with Docker. (See `Docker Compose Instructions`_.)
 
 
 Install native packages
@@ -205,8 +205,8 @@ Run TSX Visualiser
 Note: the TSX Visualiser will not function properly until time series and trend permutations have been generated.
 
 
-Docker Compose
-==============
+Docker Compose Instructions
+===========================
 
 The following command will build necessary Docker containers and start a shell for running the workflow:
 
