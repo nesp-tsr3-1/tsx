@@ -27,7 +27,6 @@ services:
 
 
   phpmyadmin:
-    profiles: [debug]
     image: phpmyadmin
     restart: always
     ports:
@@ -48,6 +47,8 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      phpmyadmin:
+        condition: service_started
     volumes:
       - /tsx/.venv  # This ensures the image has it's own .venv folder instead of mounting the host's
       - /tsx/renv/library
@@ -161,6 +162,16 @@ services:
       target: jupyter
     ports:
       - 8034:8888
+    volumes:
+      - /tsx/.venv  # This ensures the image has it's own .venv folder instead of mounting the host's
+      - /tsx/renv/library
+      - /tsx/renv/local
+      - /tsx/renv/cellar
+      - /tsx/renv/lock
+      - /tsx/renv/python
+      - /tsx/renv/sandbox
+      - /tsx/renv/staging
+      - ./:/tsx/
     depends_on:
       mysql:
         condition: service_healthy

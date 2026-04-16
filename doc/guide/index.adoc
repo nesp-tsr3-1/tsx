@@ -70,45 +70,44 @@ The TSX workflow can run on Windows, macOS or Linux. 8GB RAM and 4GB available s
 
 == Installation methods
 
-The workflow was primarily designed to run on Linux and macOS, and requires several prerequisite software packages to be installed. Performing the installation directly onto a Windows is possible, but is complicated and not recommended for most users. Instead, we supply a virtual machine image that allows you to run a Linux environment under Windows which is pre-configured to run the TSX workflow. It is also possible to run the workflow using Docker.
+The workflow was primarily designed to run on Linux and macOS, and requires several prerequisite software packages to be installed. Performing the installation directly onto a Windows is possible, but is complicated and not recommended for most users.
 
-=== Installation using a Virtual Machine (recommended)
+We also supply a Docker Compose configuration that is pre-configured to run the TSX workflow.
 
-include::include/install-virtualbox.adoc[]
-
-That's it! You can now skip straight to <<Running the workflow>>.
-
-=== Installation using Docker
+=== Installation using Docker (recommended)
 
 If you do not already have Docker installed on your machine, we recommend installing Docker Desktop via https://docs.docker.com/get-started/get-docker/. If you install Docker using a different method, you must ensure that Docker Compose is also installed. You can check this by attempting to run `docker compose` on the command line/terminal.
 
-Create a new folder for running the workflow (any name is fine).
+Download the TSX code from https://github.com/nesp-tsr3-1/tsx to your machine.
 
-Download and save the following file into the folder: https://raw.githubusercontent.com/nesp-tsr3-1/tsx/master/containers/docker-compose.yml
-
-Using the command line/terminal, run the following command inside the folder where you placed docker-compose.yml:
+Using the command line/terminal, run the following command inside the folder containing the TSX code.
 
 ----
-docker compose run --rm workflow_cli
+docker compose run --build --rm workflow_cli
 ----
 
-The first time you run this command, Docker will need to download and the necessary containers, which can take a few minutes. When the containers have been loaded, you will be presented with a command prompt which you can use to follow along with the rest of this guide. The command prompt looks like this:
+The first time you run this command, Docker will need to download packages and build the necessary containers, which can take a few minutes. When the containers have been loaded, you will be presented with a command prompt which you can use to follow along with the rest of this guide. The command prompt looks like this:
 
 ----
-Welcome to the TSX Workflow docker image.
-
-TSX:~/data#
+TSX:/tsx#
 ----
+
+The first time you run the TSX Workflow container, you will need to initialise the database by running:
+
+----
+TSX:/tsx# mysql -u root -proot tsx < db/sql/create.sql
+TSX:/tsx# mysql -u root -proot tsx < db/sql/init.sql
+TSX:/tsx# mysql -u root -proot tsx < sample-data/seed.sql
+----
+
 
 Please note the following:
 
- - A folder called `data` will be created in the same folder that you placed docker-compose.yml. This folder is shared with the Docker container, so you can access any files that you place in the folder from the TSX Workflow command prompt. This folder will also contain the Python and R scripts which you can edit if you want to experiment with modifying the workflow.
+ - The folder containing the TSX code will be shared with the Docker container, so you can access any files that you place in the folder from the TSX Workflow command prompt.
 
  - When the workflow is running in Docker, you can access the MySQL database admin interface by going to http://localhost:8033/index.php?route=/database/structure&db=tsx
 
- - To update to the latest version of the Docker image in future, run: `docker compose pull workflow_cli` at the command line/terminal (*not* inside the TSX command prompt)
-
- - To completely reset all data and code changes, delete all Docker containers under the `tsx` project, delete the Docker volume called `tsx_tsx_mysql_data` and delete the `data` folder. Deleting Docker volumes and containers can be done either via the Docker Desktop GUI or by using the `docker` command in the terminal.
+ - To completely reset the database and containers, run `docker compose --profile '*' down -v`. Then start the TSX workflow container again and run the commands above to initialise the database again.
 
 You can now proceed to <<Running the workflow>>.
 
@@ -135,7 +134,7 @@ The <<Taxonomic list file format>> is a useful reference if you want to build yo
 Import the sample taxonomic list:
 
 ----
-python -m tsx.import_taxa sample-data/TaxonList.xlsx
+uv run python -m tsx.import_taxa sample-data/TaxonList.xlsx
 ----
 
 If the import is successful, the command will complete without any output.
@@ -145,7 +144,7 @@ If the import is successful, the command will complete without any output.
 Type 1 observation data may now be imported into the database. Some sample Type 1 data can be found in `sample-data/type_1_sample.csv`. Import this data, by running the following command:
 
 ----
-python -m tsx.importer --type 1 -c sample-data/type_1_sample.csv
+uv run python -m tsx.importer --type 1 -c sample-data/type_1_sample.csv
 ----
 
 The `--type 1` part of the command tells the import script that you are importing Type 1 data. This is important because Type 1 data has different requirements and is stored in a separate database table compared to Type 2 data. The `-c` flag is short for “commit” and causes the imported data to be committed to the database; without this flag, the command only performs a “dry run” and does not modify the database. This feature is also present in most of the data processing scripts, and is a useful way to test whether the data/processing is valid without actually making any change to the database.
@@ -159,7 +158,7 @@ The Type 1 data is now imported into the `t1_survey`, `t1_sighting` and `t1_site
 Type 2 data is imported in much the same way as Type 1 data. Sample Type 2 data can be found in `sample-data/type_2_sample.csv`. Import this data by running the following command:
 
 ----
-python -m tsx.importer --type 2 -c sample-data/type_2_sample.csv
+uv run python -m tsx.importer --type 2 -c sample-data/type_2_sample.csv
 ----
 
 This imports data into the `t2_survey` and `t2_sighting` tables.
@@ -170,7 +169,7 @@ During data processing, all observations are matched to Interim Biogeographic Re
 
 Import the SubIBRA regions into the database:
 ----
-python -m tsx.import_region sample-data/spatial/Regions-simplified.shp
+uv run python -m tsx.import_region sample-data/spatial/Regions-simplified.shp
 ----
 
 NOTE: Calling this command can take up to 20–30 minutes to process depending on you computer.
@@ -200,12 +199,12 @@ After monthly aggregation, the data is then aggregated to yearly by averaging th
 
 The sample processing methods file is available at `sample-data/processing_methods.csv`. Import this by running:
 ----
-python -m tsx.import_processing_method sample-data/processing_method.csv
+uv run python -m tsx.import_processing_method sample-data/processing_method.csv
 ----
 
 To aggregate the Type 1 data by month and year, run the following command:
 ----
-python -m tsx.process -c t1_aggregation
+uv run python -m tsx.process -c t1_aggregation
 ----
 
 This will aggregate the data and put the result into the `aggregated_by_year` and `aggregated_by_month` tables.
@@ -222,12 +221,12 @@ After generating these alpha hulls at the species level they are trimmed down to
 
 There is a sample incidental sightings input file at `sample-data/incidental_sightings.csv`, which can be imported by running:
 ----
-python -m tsx.import_incidental sample-data/incidental_sightings.csv
+uv run python -m tsx.import_incidental sample-data/incidental_sightings.csv
 ----
 
 There are sample range polygons at `sample-data/spatial/species-range/`, which can be imported by running:
 ----
-python -m tsx.import_range sample-data/spatial/species-range
+uv run python -m tsx.import_range sample-data/spatial/species-range
 ----
 NOTE: Ignore the warning ‘Failed to auto identify EPSG: 7’ popping up while this processing step is running.
 
@@ -236,7 +235,7 @@ The specifications for both the incidental sightings file and the species range 
 
 After importing these files, you can then run the alpha hull processing script:
 ----
-python -m tsx.process -c alpha_hull
+uv run python -m tsx.process -c alpha_hull
 ----
 
 NOTE: Calling this command may take a few minutes depending on your computer.
@@ -276,7 +275,7 @@ Note that the mean abundance calculation includes pseudo-absences as zeroes, rat
 
 The type 2 aggregation we have just described can be performed by running the following command
 ----
-python -m tsx.process -c t2_aggregation
+uv run python -m tsx.process -c t2_aggregation
 ----
 
 This will aggregate the data and put the result into the `aggregated_by_year` and `aggregated_by_month` tables, alongside any existing aggregated type 1 data.
@@ -289,12 +288,12 @@ Spatial representativeness is a measure of how much of the known range of a taxo
 
 This step requires the range polygons file to be imported first. If you skipped to this section from the Type 1 data aggregation step, then you will need to import this now. A set of sample range polygons can be imported by running:
 ----
-python -m tsx.import_range sample-data/spatial/species-range
+uv run python -m tsx.import_range sample-data/spatial/species-range
 ----
 
 The spatial representativeness processing can now be run with this command:
 ----
-python -m tsx.process -c spatial_rep
+uv run python -m tsx.process -c spatial_rep
 ----
 
 This will produce alpha hulls, intersect them with the taxon core range, and populate them into the `taxon_source_alpha_hull` database table. The area of the core range and the alpha hulls is also populated so that the spatial representativeness can be calculated from this.
@@ -324,12 +323,12 @@ In order to calculate these filtering criteria, data source metadata must be imp
 
 Sample metadata can be imported by running:
 ----
-python -m tsx.import_data_source sample-data/data_source.csv
+uv run python -m tsx.import_data_source sample-data/data_source.csv
 ----
 
 The time series can then be filtered by running:
 ----
-python -m tsx.process -c filter_time_series
+uv run python -m tsx.process -c filter_time_series
 ----
 
 === Attribute regions & metadata and export data (Type 1 & 2 data)
@@ -340,7 +339,7 @@ The data is now fully processed and ready for export into the “wide table” C
 
 To export the data, run:
 ----
-python -m tsx.process export_lpi --filter
+uv run python -m tsx.process export_lpi --filter
 ----
 
 This will place an output file into `sample-data/export/lpi-filtered.csv`.
@@ -349,24 +348,24 @@ This file is ready for LPI analysis!
 
 It is also possible to export an unfiltered version:
 ----
-python -m tsx.process export_lpi
+uv run python -m tsx.process export_lpi
 ----
 
 or a version aggregated by month instead of year:
 ----
-python -m tsx.process export_lpi --monthly
+uv run python -m tsx.process export_lpi --monthly
 ----
 
 === Run it all at once
 
 It is possible to run all the data pre-processing & filtering in a single command:
 ----
-python -m tsx.process -c all
+uv run python -m tsx.process -c all
 ----
 
 After which you must export the data again, e.g.:
 ----
-python -m tsx.process export_lpi --filter
+uv run python -m tsx.process export_lpi --filter
 ----
 
 This is useful when you import some updated input files and wish to re-run all the data processing again.
@@ -403,20 +402,20 @@ This will generate the result data in a file named `infile_infile_Results.txt` (
 
 To run the entire workflow, including the LPI calculation, run the following command:
 ----
-python -m tsx.process -c all && python -m tsx.process export_lpi --filter && (cd r; Rscript lpi.R)
+uv run python -m tsx.process -c all && uv run python -m tsx.process export_lpi --filter && (cd r; Rscript lpi.R)
 ----
 
 // == Extra diagnostic workflow outputs
 // 
 // TODO brief explanation of these commands
 // ----
-// python -m tsx.process export alpha
+// uv run python -m tsx.process export alpha
 // 
-// python -m tsx.process export pa
+// uv run python -m tsx.process export pa
 // 
-// python -m tsx.process export ultrataxa
+// uv run python -m tsx.process export ultrataxa
 // 
-// python -m tsx.process export grid
+// uv run python -m tsx.process export grid
 // ----
 
 = Working with your own data
@@ -479,7 +478,7 @@ include::include/appendix-file-formats.adoc[]
 To access your own files when running the workflow via Docker, place them inside the `data` folder which is automatically created in the same folder as the 'docker-compose.yml' file when you first run the workflow. Files in this folder are accessible from the Docker workflow command prompt. For example if you placed a file called `my-surveys.csv` into this folder, then you could import them in the Docker workflow command prompt by running:
 
 ---
-python -m tsx.importer --type 1 -c my-surveys.csv
+uv run python -m tsx.importer --type 1 -c my-surveys.csv
 ---
 
 [appendix]
