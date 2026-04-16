@@ -120,20 +120,10 @@ Initialise the database using the provided scripts:
 
 .. code:: bash
 
- # Native MySQL install:
- mysql -u tsx -ptsx tsx < db/sql/create.sql
- mysql -u tsx -ptsx tsx < db/sql/init.sql
+ mysql -u root -p tsx < db/sql/create.sql
+ mysql -u root -p tsx < db/sql/init.sql
+ mysql -u root -p tsx < sample-data/seed.sql
 
- # MySQL in Docker:
- docker exec tsx-mysql mysql -u tsx -ptsx tsx < db/sql/create.sql
- docker exec tsx-mysql mysql -u tsx -ptsx tsx < db/sql/init.sql
-
- # Docker Compose:
- docker compose run docker compose run --rm workflow_cli
- TSX:/tsx# mysql < db/sql/create.sql
- TSX:/tsx# mysql < db/sql/init.sql
-
-Note that if you are following the workflow user guide, you will also want to seed the database with some extra sample data found in sample-data/seed.sql
 
 Copy example configuration
 --------------------------
@@ -247,3 +237,4 @@ A script is provided that will perform a full workflow run using the sample data
 
  uv run setup/test-workflow.sh
 
+(Make sure you have completed `Initialise MySQL database`_ first.)
