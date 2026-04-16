@@ -209,9 +209,9 @@ def run_task(perm, work_path, script_path, generate_plot_data, generate_plots, e
         with open(os.path.join(work_path, "stdout.txt"), "wb") as stdout:
             with open(os.path.join(work_path, "stderr.txt"), "wb") as stderr:
                 if 'ReferenceYear' in perm:
-                    subprocess.run(["Rscript", script_path, os.path.join(work_path, "input.csv"), work_path, str(perm['ReferenceYear']), str(end_year)], stdout=stdout, stderr=stderr)
+                    subprocess.run(["Rscript", script_path, os.path.join(work_path, "input.csv"), work_path, str(perm['ReferenceYear']), str(end_year)], stdout=stdout, stderr=stderr, check=True)
                 else:
-                    subprocess.run(["Rscript", script_path, os.path.join(work_path, "input.csv"), work_path], stdout=stdout, stderr=stderr)
+                    subprocess.run(["Rscript", script_path, os.path.join(work_path, "input.csv"), work_path], stdout=stdout, stderr=stderr, check=True)
     with open(result_file) as f:
         trend_data = f.read()
 
@@ -305,6 +305,8 @@ def run_permutations(db, df, generate_plot_data, generate_plots, end_year):
             sql = "INSERT INTO trend (%s) VALUES (%s)" % (", ".join(perm.keys()), ", ".join(":" + k for k in perm.keys()))
             db.execute(sql, perm)
             db.commit()
+        if error:
+            sys.exit("Aborting due to error (see details above)")
 
 def load_lpi_wide(lpi_wide_filename):
     dt = defaultdict(lambda: str)
