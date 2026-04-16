@@ -70,7 +70,7 @@ git clone https://github.com/nesp-tsr3-1/tsx.git
 
 
 Native install vs Docker Compose
------------------------------------------------
+--------------------------------
 
 There are two main options for getting a TSX development environment up and running:
 
@@ -147,23 +147,18 @@ If necessary edit the ``[database]`` section in tsx.conf to match the database y
 Install R dependencies
 ------------------------
 
+R dependencies are managed using `renv <https://rstudio.github.io/renv/articles/renv.html>`_.
+
+Install R dependencies by running:
+
 .. code:: bash
 
-  R --no-save <<EOF
-  options(Ncpus = 1)
-  install.packages("pak")
-  pak::pkg_install("ggplot2")
-  pak::pkg_install("nesp-tsr3-1/rlpi")
-  pak::pkg_install("IRkernel")
-  pak::pkg_install("data.table")
-  pak::pkg_install("dplyr")
-  pak::pkg_install("plyr")
-  pak::pkg_install("tidyr")
-  pak::pkg_install("docopt")
-  EOF
+  Rscript -e 'renv::restore()'
 
 Install Python dependencies
 ----------------------------------
+
+Python dependencies are managed using `uv <https://docs.astral.sh/uv/>`_.
 
 Install uv: https://docs.astral.sh/uv/getting-started/installation/
 
@@ -218,4 +213,37 @@ Run TSX Visualiser
 
 
 Note: the TSX Visualiser will not function properly until time series and trend permutations have been generated.
+
+
+Docker Compose
+==============
+
+The following command will build necessary Docker containers and start a shell for running the workflow:
+
+.. code:: bash
+
+  docker compose run --build --rm workflow_cli
+
+It will take a while to download the necessary packages and build the containers.
+
+Important notes:
+
+- When running via Docker Compose, ``tsx.conf`` must be configured with a database hostname of ``mysql``. (i.e. set ``host=mysql`` under ``[database]``)
+- The project root directory is mounted to the default working directory (``/tsx/``) inside each container. In order to import your own files using the workflow, you will need to first put them within the project directory tree so that the container can see them.
+
+To run the Data Interface and TSX Visualiser, use:
+
+.. code:: bash
+
+  docker compose --profile webapp up
+
+
+Generate time series and permutations for sample data
+=====================================================
+
+A script is provided that will perform a full workflow run using the sample data and generate trend permutations for the TSX visualiser.
+
+.. code:: bash
+
+ uv run setup/test-workflow.sh
 
