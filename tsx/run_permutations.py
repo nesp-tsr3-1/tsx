@@ -283,7 +283,8 @@ def run_permutations(db, df, generate_plot_data, generate_plots, end_year):
 
     # with TemporaryDirectory() as work_path:
     work_path='/tmp/tsxperm'
-    os.makedirs(work_path, exist_ok=True)
+    remove_file_or_dir(work_path)
+    os.makedirs(work_path)
     script_path = os.path.join(work_path, "lpi.R")
     # Write LPI script into temp dir
     with open(script_path, "wb") as f:
