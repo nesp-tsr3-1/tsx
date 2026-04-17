@@ -51,17 +51,18 @@ The TSX consists of several components
     - A separate instance is deployed for each new version of the TSX
     - Code lives under `web/tsx`
 
+
+Setup
+=====
+
 Prerequisites
-=============
+-------------
 
 - MySQL 8.x
 - Python 3.12+
 - Node 22+
 - R 3.6+
 - `uv <https://docs.astral.sh/uv/>`_
-
-Setup
-=====
 
 Clone this repository
 ---------------------
@@ -89,6 +90,7 @@ Install development libraries (Ubuntu/Debian):
  sudo apt-get update
  sudo apt-get install -y --no-install-recommends libgdal-dev r-base r-base-dev git build-essential libharfbuzz-dev libfribidi-dev  libfontconfig1-dev libgit2-dev libssl-dev  default-mysql-client libbz2-dev curl
 
+On macOS, we recommend using homebrew to install packages as needed while following the steps below.
 
 Create MySQL database
 ---------------------
