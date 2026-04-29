@@ -36,7 +36,7 @@ def test_filter_time_series(fresh_database, db_name, output_dir):
     import_test_data(db_name, 'region',
         csv_data="""\
         id,name,geometry,state,positional_accuracy_in_m
-        1,Example Region,000000000106000000010000000103000000010000000500000000000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F000000000000F03F0000000000000000000000000000F03F00000000000000000000000000000000,Example State,0
+        1,Example Region,"MULTIPOLYGON(((0 0,1 0,1 1,0 1,0 0)))",Example State,0
         """)
 
     import_test_data(db_name, 'data_source',
@@ -45,14 +45,13 @@ def test_filter_time_series(fresh_database, db_name, output_dir):
         1,1,1,1,1,1,1,0,NULL,NULL,0,NULL
         """)
 
-    # Note: 0x00000000010100000000000000000000000000000000000000 = Point(0,0)
     import_test_data(db_name, 'aggregated_by_year',
         csv_data="""\
         start_date_y,site_id,search_type_id,taxon_id,response_variable_type_id,value,data_type,source_id,region_id,unit_id,positional_accuracy_in_m,centroid_coords,survey_count,include_in_analysis
-        2001,0,1,1,1,1,1,1,1,1,0,00000000010100000000000000000000000000000000000000,1,0
-        2002,0,1,1,1,1,1,1,1,1,0,00000000010100000000000000000000000000000000000000,1,0
-        2003,0,1,1,1,1,1,1,1,1,0,00000000010100000000000000000000000000000000000000,1,0
-        2004,0,1,1,1,1,1,1,1,1,0,00000000010100000000000000000000000000000000000000,1,0
+        2001,0,1,1,1,1,1,1,1,1,0,POINT(0 0),1,0
+        2002,0,1,1,1,1,1,1,1,1,0,POINT(0 0),1,0
+        2003,0,1,1,1,1,1,1,1,1,0,POINT(0 0),1,0
+        2004,0,1,1,1,1,1,1,1,1,0,POINT(0 0),1,0
         """)
 
     import_test_data(db_name, 'custodian_feedback',
@@ -82,9 +81,9 @@ def test_filter_time_series(fresh_database, db_name, output_dir):
     expected_csv = textwrap.dedent(
     """\
     start_date_y,site_id,search_type_id,taxon_id,response_variable_type_id,value,data_type,source_id,region_id,unit_id,positional_accuracy_in_m,centroid_coords,survey_count,include_in_analysis
-    2001,0,1,1,1,1,1,1,1,1,0,00000000010100000000000000000000000000000000000000,1,1
-    2002,0,1,1,1,1,1,1,1,1,0,00000000010100000000000000000000000000000000000000,1,0
-    2003,0,1,1,1,1,1,1,1,1,0,00000000010100000000000000000000000000000000000000,1,0
-    2004,0,1,1,1,1,1,1,1,1,0,00000000010100000000000000000000000000000000000000,1,1
+    2001,0,1,1,1,1,1,1,1,1,0,POINT(0 0),1,1
+    2002,0,1,1,1,1,1,1,1,1,0,POINT(0 0),1,0
+    2003,0,1,1,1,1,1,1,1,1,0,POINT(0 0),1,0
+    2004,0,1,1,1,1,1,1,1,1,0,POINT(0 0),1,1
     """)
     assert get_csv_data(db_name, 'aggregated_by_year') == expected_csv

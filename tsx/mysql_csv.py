@@ -163,7 +163,9 @@ def select_clause(column, type):
         'multipoint',
         'multilinestring',
         'multipolygon',
-        'geometrycollection',
+        'geometrycollection']:
+        return "ST_AsText(%s) AS %s" % (quote_identifier(column), quote_identifier(column))
+    elif type in [
         'binary',
         'blob',
         'longblob',
@@ -212,7 +214,9 @@ def insert_clause(column, type):
         'multipoint',
         'multilinestring',
         'multipolygon',
-        'geometrycollection',
+        'geometrycollection']:
+        return "ST_GeomFromText(%s)"
+    elif type in [
         'binary',
         'blob',
         'longblob',
