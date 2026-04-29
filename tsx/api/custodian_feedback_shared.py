@@ -599,7 +599,7 @@ def update_custodian_feedback_forms():
 	approved_import_ids = set(x for (x,) in approved_import_ids)
 
 	db_session.execute(text("""
-		CREATE TEMPORARY TABLE tmp_latest_taxon AS SELECT
+		CREATE TEMPORARY TABLE tmp_latest_import AS SELECT
 			source.id AS source_id,
 			data_import.id AS data_import_id,
 			taxon.id AS taxon_id
@@ -614,7 +614,7 @@ def update_custodian_feedback_forms():
 			rows.append(({"source_id": source_id, "taxon_id": taxon_id, "data_import_id": data_import_id}))
 
 	db_session.execute(text("""
-		INSERT INTO tmp_latest_taxon (source_id, data_import_id, taxon_id)
+		INSERT INTO tmp_latest_import (source_id, data_import_id, taxon_id)
 		VALUES (:source_id, :data_import_id, :taxon_id)
 		"""), rows)
 

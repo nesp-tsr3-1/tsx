@@ -19,7 +19,7 @@ from string import Template
 from textwrap import dedent
 from tsx.api.mail import send_admin_notification
 from tsx.config import config
-from tsx.api.custodian_feedback_shared import update_all_dataset_stats
+from tsx.api.custodian_feedback_shared import update_all_dataset_stats, update_custodian_feedback_forms
 from tsx.api.custodian_feedback_pdf import generate_archive_pdfs
 import re
 import duckdb
@@ -165,7 +165,7 @@ def delete_source(source_id=None):
 	db_session.execute(text("""CALL delete_source(:source_id)"""), { 'source_id': source_id })
 	remove_orphaned_monitoring_programs()
 	remove_preprocessed_data(source_id)
-	db_session.execute(text("CALL update_custodian_feedback()"))
+	update_custodian_feedback_forms()
 	db_session.commit()
 
 	return "OK", 200
@@ -884,8 +884,7 @@ def process_import_async(import_id, status):
 
 		if new_status == 'approved':
 			update_latest_approved_data_import(import_id)
-			db_session.execute(text("CALL update_custodian_feedback()"))
-			db_session.commit()
+			update_custodian_feedback_forms()
 			update_all_dataset_stats()
 			generate_archive_pdfs(info.source_id)
 
@@ -1009,7 +1008,7 @@ def approve_import(import_id=None):
 		'import_id': import_id
 	})
 	update_latest_approved_data_import(import_id)
-	db_session.execute(text("CALL update_custodian_feedback()"))
+	update_custodian_feedback_forms()
 	db_session.commit()
 	get_executor().submit(update_all_dataset_stats)
 	get_executor().submit(generate_archive_pdfs, data_import.source_id)
@@ -1170,6 +1169,9 @@ def delete_time_series_import(data_import_id):
 
 	return "OK", 204
 
+
+# This is intended for rare situations where the time series import logic changes
+# in some way and all existing t2 time-series need to be re-imported.
 @bp.route('/time_series_import/reimport')
 def reimport_type_2_time_series():
 	user = get_user()
@@ -1187,6 +1189,8 @@ def reimport_type_2_time_series():
 	for upload_uuid, source_id, data_import_id in result:
 		file_path = get_upload_path(upload_uuid)
 		import_type_2_time_series(file_path, source_id, data_import_id)
+
+	update_custodian_feedback_forms()
 
 	return "OK"
 
