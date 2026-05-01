@@ -613,10 +613,11 @@ def update_custodian_feedback_forms():
 		if data_import_id in approved_import_ids:
 			rows.append(({"source_id": source_id, "taxon_id": taxon_id, "data_import_id": data_import_id}))
 
-	db_session.execute(text("""
-		INSERT INTO tmp_latest_import (source_id, data_import_id, taxon_id)
-		VALUES (:source_id, :data_import_id, :taxon_id)
-		"""), rows)
+	if len(rows):
+		db_session.execute(text("""
+			INSERT INTO tmp_latest_import (source_id, data_import_id, taxon_id)
+			VALUES (:source_id, :data_import_id, :taxon_id)
+			"""), rows)
 
 	# Approach: Create temporary table based on get_all_aggregated_dataset_taxa(), then use that to power the following steps
 
