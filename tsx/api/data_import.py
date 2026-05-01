@@ -1119,7 +1119,7 @@ def post_time_series():
 	)
 	db_session.add(time_series_import)
 
-	update_data_import_taxon_from_type_2_time_series(source_id, data_import_id)
+	update_custodian_feedback_forms()
 
 	db_session.commit()
 
@@ -1195,6 +1195,9 @@ def reimport_type_2_time_series():
 	return "OK"
 
 
+# Import type 2 time series to the preprocessed folder containing Parquet files
+# Updates the data_import_taxon table
+# Does *not* update time_series_import table
 def import_type_2_time_series(file_path, source_id, data_import_id):
 	db = duckdb.connect()
 	db.sql("LOAD mysql")
@@ -1283,12 +1286,15 @@ def import_type_2_time_series(file_path, source_id, data_import_id):
 	if is_current_type_2_data_import(data_import_id):
 		db.sql("COPY t TO '%s'" % output_path)
 
+	update_data_import_taxon_from_type_2_time_series(source_id, data_import_id)
+
 
 def is_current_type_2_data_import(data_import_id):
 	result = db_session.execute(
 		text("SELECT 1 FROM t2_survey WHERE data_import_id = :data_import_id LIMIT 1"),
 		{ "data_import_id": data_import_id }
 	).fetchall()
+
 	return len(result) == 1
 
 def check_time_series_upload(file_path, source_id):
