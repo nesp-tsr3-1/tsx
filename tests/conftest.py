@@ -5,6 +5,10 @@ import os
 import tsx.config
 import mysql.connector
 import shutil
+import tsx.db.connect
+from tsx.api.util import db_session
+from contextlib import contextmanager
+from sqlalchemy.orm import close_all_sessions
 
 from subprocess import Popen, PIPE, STDOUT
 
@@ -36,7 +40,50 @@ def output_dir(request):
 
 
 @pytest.fixture(scope="function")
-def fresh_database(db_name):
+def data_dir(request, custom_config_file):
+	path = os.path.join("tests", "tmp-data", request.node.name)
+	if os.path.exists(path):
+		shutil.rmtree(path)
+	os.makedirs(path)
+
+	with modify_config(custom_config_file) as config:
+		config.set('global', 'data_dir', path)
+
+	return path
+
+@pytest.fixture(scope="function")
+def custom_config_file():
+	# Create config file with database name set
+	config_file = tempfile.NamedTemporaryFile(
+		suffix='.conf',
+		prefix='tsx',
+		delete=False)
+
+	with open('tsx.conf.test', 'r') as src:
+		with open(config_file.name, 'w') as dest:
+			dest.write(src.read())
+
+	# Set TSX_CONFIG environment for subprocesses to use
+	os.environ['TSX_CONFIG'] = config_file.name
+
+	tsx.config.reload()
+
+	yield config_file.name
+
+	# Remove temporary config file
+	os.remove(config_file.name)
+
+@contextmanager
+def modify_config(path):
+	config = configparser.ConfigParser()
+	config.read(path)
+	yield config
+	with open(path, 'w') as f:
+		config.write(f)
+	tsx.config.reload()
+
+@pytest.fixture(scope="function")
+def fresh_database(db_name, custom_config_file):
 	"""
 	Return a function for connecting to a temporary database for the current test.
 	The temporary database is initialised with the TSX schema using db/sql/create.sql and db/sql/init.sql.
@@ -56,29 +103,20 @@ def fresh_database(db_name):
 	p = Popen(['mysql'], text=True, stdin=PIPE)
 	p.communicate(input = ';\n'.join(init_sql))
 
-	config = configparser.ConfigParser()
-	config.read('tsx.conf.test')
-	config.set('database', 'name', db_name)
-
 	# Create config file with database name set
-	config_file = tempfile.NamedTemporaryFile(
-		suffix='.conf',
-		prefix='tsx',
-		delete=False)
+	with modify_config(custom_config_file) as config:
+		config.set('database', 'name', db_name)
 
-	with open(config_file.name, 'w') as f:
-		config.write(f)
-
-	# Set TSX_CONFIG environment for subprocesses to use
-	os.environ['TSX_CONFIG'] = config_file.name
+	tsx.db.connect.reload_config(db_session)
 
 	# Run test
 	yield get_connection_maker(config)
 
+	close_all_sessions()
+
 	# Clean up
 	p = Popen(['mysql'], text=True, stdin=PIPE)
-	p.communicate(input = """DROP DATABASE %s""" % db_name)
-	os.remove(config_file.name)
+	p.communicate(input = """DROP DATABASE %s;\n""" % db_name)
 
 # Takes a configuration file and returns a function that provides a database connection
 def get_connection_maker(config):

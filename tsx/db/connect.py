@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine, event
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm import sessionmaker, scoped_session, close_all_sessions
 from tsx.config import config
 import os
 import logging
@@ -10,9 +10,6 @@ log = logging.getLogger(__name__)
 
 # database_config can be a config file section, or a database connection url (e.g. for sqlite)
 def get_database_url(database_config=None):
-    if database_config is None:
-        database_config = "database"
-
     if ":" in database_config:
         return database_config
 
@@ -71,31 +68,49 @@ def get_session_maker(database_config=None):
     if database_config is None:
         database_config = "database"
     global last_pid
+
     if last_pid != os.getpid():
         last_pid = os.getpid()
         clear_session_maker_cache()
 
     if database_config not in cached_session_makers:
-        url = get_database_url(database_config=database_config)
-        connect_args = {
-            'time_zone': '+00:00'
-        }
-        if url.startswith("mysql+mysqlconnector"):
-            connect_args['use_pure'] = True
-        engine = create_engine(url,
-            pool_recycle=600, # Avoid DB connection timeout
-            connect_args = connect_args,
-            future=True) # This avoids weird intermittent 'Access denied for user' error (maybe due to a bug in the MySQL C connector?)
-
-        @event.listens_for(engine, "connect")
-        def connect(dbapi_connection, connection_record):
-            if dbapi_connection.__class__ == sqlite3.Connection:
-                setup_sqlite_conn(dbapi_connection)
-
-
-        cached_session_makers[database_config] = scoped_session(sessionmaker(bind=engine, future=True))
+        sm = sessionmaker()
+        configure_session_maker(sm, database_config)
+        cached_session_makers[database_config] = sm
 
     return cached_session_makers[database_config]
+
+def get_engine(database_config=None):
+    if database_config is None:
+        database_config = "database"
+
+    url = get_database_url(database_config=database_config)
+    connect_args = {
+        'time_zone': '+00:00'
+    }
+    if url.startswith("mysql+mysqlconnector"):
+        connect_args['use_pure'] = True
+        # connect_args['ssl_disabled'] = True
+    engine = create_engine(url,
+        pool_recycle=600, # Avoid DB connection timeout
+        connect_args = connect_args,
+        future=True) # This avoids weird intermittent 'Access denied for user' error (maybe due to a bug in the MySQL C connector?)
+
+    @event.listens_for(engine, "connect")
+    def connect(dbapi_connection, connection_record):
+        if dbapi_connection.__class__ == sqlite3.Connection:
+            setup_sqlite_conn(dbapi_connection)
+
+    return engine
+
+
+def configure_session_maker(session_maker, database_config=None):
+    if database_config is None:
+        database_config = "database"
+
+    engine = get_engine(database_config)
+
+    session_maker.configure(bind=get_engine(database_config), future=True)
 
 def setup_sqlite_conn(conn):
     # Load spatialite extension
@@ -127,3 +142,8 @@ def get_session(database_config=None):
     return session
 
 Session = get_session_maker()
+
+def reload_config(session):
+    session.remove()
+    configure_session_maker(session)
+    close_all_sessions()
