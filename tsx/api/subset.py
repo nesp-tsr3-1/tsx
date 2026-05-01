@@ -1384,6 +1384,9 @@ def get_all_aggregated_dataset_taxa():
     db = duckdb.connect()
     cursor = db.cursor()
 
+    if cursor.execute(f"SELECT EXISTS (SELECT * FROM glob('{aggregated_data_glob()}'))").fetchone() == (False,):
+        return []
+
     # Get stats based on raw data
     sql = f"""
         SELECT DISTINCT SourceID, TaxonID, DataImportID
