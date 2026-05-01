@@ -24,6 +24,7 @@ def main():
     parser.add_argument('--password', '-p', help='MySQL password')
     parser.add_argument('--port', '-P', type=int, help='MySQL port')
     parser.add_argument('--delete', action='store_true', dest='delete', help='Delete existing data before importing')
+    parser.add_argument('--allow-missing-columns', action='store_true', dest='allow_missing_columns', help='Allow missing columns when importing')
 
     args = parser.parse_args()
 
@@ -49,7 +50,7 @@ def main():
     if args.command == 'export':
         perform_export(table, cnx)
     elif args.command == 'import':
-        perform_import(table, cnx, args.delete)
+        perform_import(table, cnx, args.delete, args.allow_missing_columns)
     else:
         raise ValueError("invalid command: %s" % args.command)
 
@@ -80,7 +81,7 @@ def perform_export(table, cnx):
         else:
             break
 
-def perform_import(table, cnx, delete):
+def perform_import(table, cnx, delete, allow_missing_columns):
     cur = cnx.cursor(buffered=False, raw=False)
 
     columns = get_columns(cur, table)
@@ -109,16 +110,22 @@ def perform_import(table, cnx, delete):
                 exit(1)
             missing_columns = set(db_column_names) - set(csv_column_names)
             if len(missing_columns):
-                log.error("CSV is missing columns: %s" % missing_columns)
-                exit(1)
+                if allow_missing_columns:
+                    columns = [c for c in columns if c[0] in csv_column_names]
+                else:
+                    log.error("CSV is missing columns: %s" % missing_columns)
+                    exit(1)
+
+            column_type_map = dict(columns)
+
             sql = """INSERT INTO %s (%s) VALUES (%s)""" % (
                 quote_identifier(table),
                 ",\n".join(quote_identifier(col) for col in csv_column_names),
-                ", ".join(insert_clause(col, type) for col, type in columns)
+                ", ".join(insert_clause(col, column_type_map[col]) for col in csv_column_names)
             )
             is_header = False
         else:
-            assert len(row) == len(columns)
+            assert len(row) == len(csv_column_names)
             current_batch.append([import_val(val) for val in row])
             if len(current_batch) >= pagesize:
                 cur.executemany(sql, current_batch)
