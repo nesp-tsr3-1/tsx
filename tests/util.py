@@ -3,6 +3,8 @@ import subprocess
 import filecmp
 import tempfile
 import textwrap
+from csv import DictWriter
+from io import StringIO
 
 def import_test_data(db_name, table_name, *, csv_file=None, csv_data=None):
     """
@@ -27,8 +29,23 @@ def import_test_data(db_name, table_name, *, csv_file=None, csv_data=None):
 
     subprocess.run([
         "sh", "-c",
-        "python -m tsx.mysql_csv import --delete %s %s < %s" % (db_name, table_name, csv_file)
+        "python -m tsx.mysql_csv import --allow-missing-columns --delete %s %s < %s" % (db_name, table_name, csv_file)
     ]).check_returncode()
+
+def insert_test_data(db_name, table_name, rows):
+    if type(rows) == dict:
+        rows = [rows]
+
+    if len(rows) == 0:
+        return
+
+    f = StringIO()
+    w = DictWriter(f, rows[0].keys(), dialect='unix')
+    w.writeheader()
+    for row in rows:
+        w.writerow(row)
+
+    import_test_data(db_name, table_name, csv_data = f.getvalue())
 
 def compare_output(db_name, table_name, output_dir):
     output_path = os.path.join(output_dir, '%s.csv' % table_name)
