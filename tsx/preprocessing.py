@@ -13,19 +13,20 @@ from mysql.connector import FieldType
 import pyarrow as pa
 import pyarrow.parquet
 
-preprocessed_data_dir = data_dir('preprocessed')
+def preprocessed_data_dir():
+    return data_dir('preprocessed')
 
 def raw_data_glob():
-    return os.path.join(preprocessed_data_dir, '*_raw.parquet').replace("'", "''")
+    return os.path.join(preprocessed_data_dir(), '*_raw.parquet').replace("'", "''")
 
 def aggregated_data_glob():
-    return os.path.join(preprocessed_data_dir, '*_agg*.parquet').replace("'", "''")
+    return os.path.join(preprocessed_data_dir(), '*_agg*.parquet').replace("'", "''")
 
 def aggregated_data_path(source_id, data_type):
-    return os.path.join(preprocessed_data_dir, '%s_agg_t%s.parquet' % (source_id, data_type))
+    return os.path.join(preprocessed_data_dir(), '%s_agg_t%s.parquet' % (source_id, data_type))
 
 def raw_data_path(source_id):
-    return os.path.join(preprocessed_data_dir, '%s_raw.parquet' % (source_id,))
+    return os.path.join(preprocessed_data_dir(), '%s_raw.parquet' % (source_id,))
 
 
 def main():
@@ -128,7 +129,6 @@ def mysql_to_parquet(conn, path_pattern, sql, chunksize=65536):
             pyarrow.parquet.write_table(table, path)
             result.append(path)
             index += 1
-            print(path)
         else:
             break
 
