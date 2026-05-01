@@ -12,6 +12,8 @@ log.setLevel(logging.DEBUG)
 
 pagesize = 10000
 
+csv.field_size_limit(sys.maxsize)
+
 def main():
     parser = argparse.ArgumentParser(description='Export and import MySQL tables in CSV format')
 
@@ -57,6 +59,9 @@ def main():
 def perform_export(table, cnx):
     # Note: we could probably go faster with raw=True, ensuring that we are connected with the correct charset
     cur = cnx.cursor(buffered=False, raw=False)
+
+    # Because we sort on every column to get repeatable ordering, this can require a larger than normal sort buffer
+    cur.execute("SET SESSION sort_buffer_size = 32*1024*1024")
 
     columns = get_columns(cur, table)
     primary_key_columns = get_primary_key(cur, table) or [col for (col, type) in columns]
