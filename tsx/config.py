@@ -18,11 +18,10 @@ import configparser
 import os
 import errno
 
-config = None
+config = configparser.ConfigParser()
 
 def reload():
-	global config
-	config = configparser.ConfigParser()
+	config.clear()
 
 	if os.environ.get("TSX_CONFIG"):
 		config.read(os.environ.get("TSX_CONFIG"))
