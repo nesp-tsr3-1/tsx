@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 import tsx.api.lpi_data
 from tsx.api.util import setup_db
 import tsx.config
@@ -70,6 +70,11 @@ class CustomJSONProvider(DefaultJSONProvider):
 		return super().default(obj)
 
 app.json = CustomJSONProvider(app)
+
+@app.after_request
+def log_request(response):
+	app.logger.info("%s %s %s" % (request.method, request.full_path, response.status_code))
+	return response
 
 # @app.before_first_request
 # def app_init():
