@@ -1120,6 +1120,7 @@ def post_time_series():
 	db_session.add(time_series_import)
 
 	update_custodian_feedback_forms()
+	get_executor().submit(update_all_dataset_stats)
 
 	db_session.commit()
 
