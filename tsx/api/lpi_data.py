@@ -781,10 +781,10 @@ def get_stats(filtered_data):
 	n_taxa = df['TaxonID'].nunique()
 
 	grouped_by_taxon = df.groupby('TaxonID').agg({
-		'TimeSeriesLength': np.mean,
-		'SourceDesc': lambda x: x.nunique(),
-		'TimeSeriesID': lambda x: x.nunique(),
-		'SpatialRepresentativeness': np.mean
+		'TimeSeriesLength': 'mean',
+		'SourceDesc': 'nunique',
+		'TimeSeriesID': 'nunique',
+		'SpatialRepresentativeness': 'mean'
 	}).rename(columns = {
 		'TimeSeriesLength': 'ts_length_mean',
 		'SourceDesc': 'num_sources',
