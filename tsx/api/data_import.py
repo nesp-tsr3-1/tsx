@@ -201,7 +201,7 @@ def get_source_imports(source_id=None):
 				END),
 			'is_hidden', data_import.is_hidden IS TRUE,
 			'time_series_import', (SELECT JSON_OBJECT(
-					'time_created', time_series_import.time_created,
+					'time_created', DATE_FORMAT(time_series_import.time_created, "%Y-%m-%d %H:%i:%sZ"),
 					'user', CONCAT(ts_user.first_name, " ", ts_user.last_name),
 					'filename', time_series_import.filename,
 					'upload_uuid', time_series_import.upload_uuid
