@@ -88,6 +88,16 @@ def get_sources():
 					FROM source_data_agreement
 					JOIN data_agreement_file ON data_agreement_file.data_agreement_id = source_data_agreement.data_agreement_id
 					WHERE source_data_agreement.source_id = source.id
+				),
+				'taxa', (
+					SELECT JSON_ARRAYAGG(JSON_OBJECT(
+						'id', taxon.id,
+						'common_name', taxon.common_name,
+						'scientific_name', taxon.scientific_name
+					))
+					FROM data_import_taxon
+					JOIN taxon ON taxon.id = data_import_taxon.taxon_id
+					WHERE data_import_taxon.data_import_id = data_import.id
 				)
 			))
 		FROM source

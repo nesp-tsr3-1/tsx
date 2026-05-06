@@ -180,6 +180,12 @@ function valuesForPrefix(source, prefix) {
       return source.data_agreement_files ?? []
     case 'Custodian':
       return source.custodians ?? []
+    case 'Common name':
+      return source.taxa?.map(t => t.common_name)?.filter(x => x) ?? []
+    case 'Scientific name':
+      return source.taxa?.map(t => t.scientific_name)?.filter(x => x) ?? []
+    case 'Taxon ID':
+      return source.taxa?.map(t => t.id) ?? []
     default:
       throw new Error('Unknown prefix: ' + prefix)
   }
@@ -233,7 +239,10 @@ export default {
         'Author',
         'Monitoring program',
         'Agreement',
-        'Custodian'
+        'Custodian',
+        'Scientific name',
+        'Common name',
+        'Taxon ID'
       ]
     }
   },
