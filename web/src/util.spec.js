@@ -294,8 +294,10 @@ describe('matchParts', () => {
     ['Tomato Mate', /mat/gi, [['To', 'mat'], ['o ', 'Mat'], ['e', '']]],
     ['Tomato Mate', /foo/gi, [['Tomato Mate', '']]],
     ['Tomato Mate', /T/gi, [['', 'T'], ['oma', 't'], ['o Ma', 't'], ['e', '']]],
-    ['Tomato Mate', /T/g, [['', 'T'], ['omato Mate', '']]]
+    ['Tomato Mate', /T/g, [['', 'T'], ['omato Mate', '']]],
+    ['Tomato Mate', /Tomato Mate/g, [['', 'Tomato Mate'], ['', '']]]
   ]
+
   test.each(testValues)(
     'should search %s for %s',
     (haystack, regex, expectedResult) => {
