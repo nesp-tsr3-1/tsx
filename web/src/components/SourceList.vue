@@ -168,6 +168,8 @@ import AutocompleteInput from './AutocompleteInput.vue'
 
 function valuesForPrefix(source, prefix) {
   switch (prefix) {
+    case 'Description':
+      return [source.description ?? '']
     case 'Data provider':
       return [source.provider ?? '']
     case 'Data details':
@@ -234,6 +236,7 @@ export default {
       dataAgreementStatusOptions: null,
       dataAgreementStatusFilter: null,
       searchPrefixes: [
+        'Description',
         'Data provider',
         'Data details',
         'Author',
@@ -254,43 +257,44 @@ export default {
 
       let searchPrefix = this.searchPrefixes.filter(prefix => search.indexOf(prefix + ':') == 0)[0] ?? ''
       let searchValue = searchPrefix ? search.substr(searchPrefix.length + 1).trim() : search.trim()
+      let prefixes = searchPrefix ? [searchPrefix] : this.searchPrefixes
 
       if(searchValue) {
         let searchRegex = searchStringToRegex(searchValue)
 
-        if(searchPrefix) {
-          results = this.sources.map((source) => {
-            let values = valuesForPrefix(source, searchPrefix)
-            let matches = values.map(v => matchParts(v, searchRegex)).filter(m => m.length > 1)
-            if(matches.length > 0) {
-              return {
-                source,
-                descriptionParts: [[source.description, '']],
-                propertyMatches: matches.map(match => ({
-                  property: searchPrefix,
-                  matchParts: match
-                }))
-              }
-            } else {
-              return undefined
+        results = this.sources.map((source) => {
+          let descriptionParts
+          if(prefixes.includes('Description')) {
+            descriptionParts = matchParts(source.description, searchRegex)
+          } else {
+            descriptionParts = [[source.description, '']]
+          }
+
+          let propertyMatches = prefixes
+            .filter(x => x != 'Description')
+            .flatMap(prefix =>
+              valuesForPrefix(source, prefix)
+                .map(v => matchParts(v, searchRegex))
+                .filter(m => m.length > 1)
+                .map(matchParts => ({
+                  property: prefix,
+                  matchParts
+                })))
+
+          let hasMatch = propertyMatches.length > 0 || descriptionParts.length > 1
+
+          if(hasMatch) {
+            return {
+              source,
+              descriptionParts,
+              propertyMatches
             }
-          }).filter(x => x)
-        } else {
-          results = this.sources.map((source) => {
-            let matches = matchParts(source.description, searchRegex)
-            if(matches.length > 1) {
-              return {
-                source,
-                descriptionParts: matches,
-                propertyMatches: []
-              }
-            } else {
-              return undefined
-            }
-          }).filter(x => x)
-        }
+          } else {
+            return undefined
+          }
+        }).filter(x => x)
       } else {
-        if(searchPrefix) {
+        if(searchPrefix && searchPrefix != 'Description') {
           results = this.sources.map((source) => {
             let values = valuesForPrefix(source, searchPrefix).filter(x => x)
             if(values.length) {
