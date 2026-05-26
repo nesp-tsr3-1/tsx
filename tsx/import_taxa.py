@@ -74,7 +74,7 @@ def main():
 			try:
 				taxon = Taxon(
 					id = row['TaxonID'],
-					ultrataxon = row['UltrataxonID'] == 'u',
+					ultrataxon = str(row['UltrataxonID']) in ('1', 'u'),
 					taxon_level = get_or_create(session, TaxonLevel, description = row['TaxonLevel']) if row['TaxonLevel'] else None,
 					spno = row['SpNo'],
 					common_name = normalize(row['TaxonCommonName']),
@@ -89,7 +89,7 @@ def main():
 					state_status = get_status('StatePlantStatus'),
 					bird_action_plan_status = get_status('BirdActionPlanStatus'),
 					taxonomic_group = row['TaxonomicGroup'],
-					national_priority = str(row.get('NationalPriorityTaxa')) == '1',
+					national_priority = str(row.get('NationalPriorityTaxa')) in ('1', 'YES'),
 					suppress_spatial_representativeness = str(row.get('SuppressSpatialRep', '0')) == '1',
 					eligible_for_tsx = str(row.get('EligibleForTSX', 'YES')) == 'YES'
 				)
