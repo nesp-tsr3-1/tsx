@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, send_file, Response
+from flask import Blueprint, jsonify, request, send_file, Response, current_app
 from tsx.api.util import db_session, get_user, db_insert, server_timezone, sanitise_file_name_string
 from tsx.util import Bunch
 from tsx.api.validation import *
@@ -332,7 +332,7 @@ def parse_field(raw_value, field):
 	elif field.type == 'options':
 		return raw_value
 	else:
-		print("Unknown field type: %s" % field)
+		current_app.logger.warning("Unknown field type: %s" % field)
 		return raw_value
 
 def parse_fields(raw_json, fields):
@@ -387,9 +387,9 @@ def update_form(form_id):
 	context.feedback_type = feedback_type_code(form_id)
 
 	try:
-		print(json.dumps(request.json))
+		current_app.logger.debug(json.dumps(request.json))
 	except:
-		print("Failed to dump json")
+		current_app.logger.error("Failed to dump json")
 		pass
 
 	form = json.loads(get_form_json_raw(form_id))

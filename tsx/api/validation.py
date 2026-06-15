@@ -51,7 +51,6 @@ def validate_date():
 	def _validate_date(value, field, context):
 		if value_present(value):
 			try:
-				print(value)
 				date.fromisoformat(value)
 			except ValueError:
 				return "Must be a valid date"

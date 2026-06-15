@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, send_file, Response
+from flask import Blueprint, jsonify, request, send_file, Response, current_app
 from tsx.util import local_iso_datetime, Bunch, delete_file_if_exists
 from tsx.api.util import db_session, get_user, get_roles, get_executor
 from tsx.api.upload import get_upload_path, get_upload_name
@@ -1309,7 +1309,7 @@ def is_current_type_2_data_import(data_import_id):
 	return len(result) == 1
 
 def check_time_series_upload(file_path, source_id):
-	print("Checking time series upload at %s" % file_path)
+	current_app.logger.info("Checking time series upload at %s" % file_path)
 
 	db = duckdb.connect()
 	t = db.sql("SELECT * FROM read_csv($file, all_varchar = TRUE) WITH ORDINALITY", params = { "file": file_path })
