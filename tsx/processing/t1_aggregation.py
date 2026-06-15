@@ -15,6 +15,15 @@ def process_database(species = None, commit = False, simple_mode = False, databa
             text("SELECT DISTINCT taxon_id FROM t1_sighting, taxon WHERE taxon.id = taxon_id AND spno IN (%s)" % sql_list_placeholder('species', species)),
             sql_list_argument('species', species)).fetchall()]
 
+    # Refuse to continue if aggregated data already exists
+    if species is None:
+        for table in ["aggregated_by_month", "aggregated_by_year"]:
+            sql = "SELECT 1 FROM %s WHERE data_type = 1 LIMIT 1" % table
+            data_exists = len(session.execute(text(sql)).fetchall()) > 0
+            if data_exists:
+                log.error("Type 1 data already exists in %s table" % table)
+                exit(1)
+
     if not simple_mode:
         create_region_lookup_table(session)
 
