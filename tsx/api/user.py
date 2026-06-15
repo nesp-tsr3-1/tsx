@@ -142,19 +142,6 @@ def logout():
 	session.pop('user_id', None)
 	return "OK", 200
 
-# @bp.route('/password_reset_request', methods = ['POST'])
-# def password_reset_request():
-# 	pass
-# 	# generate random token
-# 	# record token in database
-# 	# email reset link
-
-# @bp.route('/password_reset', methods = ['POST'])
-# def password_reset():
-# 	pass
-# 	# verify token
-# 	# update user
-
 @bp.route('/is_logged_in', methods = ['GET'])
 def is_logged_in():
 	return jsonify(get_user() is not None), 200
