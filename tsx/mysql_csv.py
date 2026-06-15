@@ -10,8 +10,6 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.StreamHandler(sys.stderr))
 log.setLevel(logging.DEBUG)
 
-pagesize = 10000
-
 csv.field_size_limit(sys.maxsize)
 
 def main():
@@ -27,6 +25,7 @@ def main():
     parser.add_argument('--port', '-P', type=int, help='MySQL port')
     parser.add_argument('--delete', action='store_true', dest='delete', help='Delete existing data before importing')
     parser.add_argument('--allow-missing-columns', action='store_true', dest='allow_missing_columns', help='Allow missing columns when importing')
+    parser.add_argument('--batch-size', type=int, default=10000, help='Number of rows to read/write at a time')
 
     args = parser.parse_args()
 
@@ -50,13 +49,13 @@ def main():
     cnx = mysql.connector.connect(**connect_args)
 
     if args.command == 'export':
-        perform_export(table, cnx)
+        perform_export(table, cnx, args.batch_size)
     elif args.command == 'import':
-        perform_import(table, cnx, args.delete, args.allow_missing_columns)
+        perform_import(table, cnx, args.delete, args.allow_missing_columns, args.batch_size)
     else:
         raise ValueError("invalid command: %s" % args.command)
 
-def perform_export(table, cnx):
+def perform_export(table, cnx, pagesize):
     # Note: we could probably go faster with raw=True, ensuring that we are connected with the correct charset
     cur = cnx.cursor(buffered=False, raw=False)
 
@@ -86,7 +85,7 @@ def perform_export(table, cnx):
         else:
             break
 
-def perform_import(table, cnx, delete, allow_missing_columns):
+def perform_import(table, cnx, delete, allow_missing_columns, pagesize):
     cur = cnx.cursor(buffered=False, raw=False)
 
     columns = get_columns(cur, table)
