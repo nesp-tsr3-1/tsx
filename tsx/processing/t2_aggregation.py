@@ -84,6 +84,8 @@ def run_sql(session, sql, *args, **kwargs):
     t1 = time.time()
     # print("%s took %s sec" % (short_sql, t1 - t0))
 
+
+# Assumption: the raw data does not contain ultrataxa and non-ultrataxa for the same species
 def process_task(taxon_id, commit=False, database_config=None):
     session = get_session(database_config)
 
@@ -91,7 +93,7 @@ def process_task(taxon_id, commit=False, database_config=None):
         -- Go faster
         SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
 
-        -- Fix for annoying character collation issue
+        -- This ensures that @taxon_id has the correct character collation issue
         SET @taxon_id = (SELECT id FROM taxon WHERE id = :taxon_id);
 
         SET @species_id = (
@@ -111,13 +113,6 @@ def process_task(taxon_id, commit=False, database_config=None):
 
         -- Find all sightings and pseudo-absences
         CREATE TEMPORARY TABLE tmp_sighting AS
-            WITH species_taxon AS (
-                SELECT t1.id
-                FROM taxon t1, taxon t2
-                WHERE t1.spno = t2.spno
-                AND t2.id = @taxon_id
-                AND NOT t1.ultrataxon
-            )
             -- Pseudo-absences and presences based on spno or taxon_id match
             SELECT t2_survey.id AS survey_id, t2_sighting.id AS sighting_id
             FROM t2_survey
@@ -152,8 +147,8 @@ def process_task(taxon_id, commit=False, database_config=None):
                 -- Extra conditions as per old workflow
 
                 WHERE t2_survey.search_type_id != 6
-                AND COALESCE(t2_survey.duration_in_minutes <= 6 * 60, TRUE)
-                AND COALESCE((t2_survey.start_date_y, t2_survey.start_date_m, t2_survey.start_date_d) = (t2_survey.finish_date_y, t2_survey.finish_date_m, t2_survey.finish_date_d), TRUE)
+                -- AND COALESCE(t2_survey.duration_in_minutes <= 6 * 60, TRUE)
+                -- AND COALESCE((t2_survey.start_date_y, t2_survey.start_date_m, t2_survey.start_date_d) = (t2_survey.finish_date_y, t2_survey.finish_date_m, t2_survey.finish_date_d), TRUE)
 
                 GROUP BY
                     year, month, site_id, search_type_id, source_id
@@ -266,5 +261,7 @@ def process_task(taxon_id, commit=False, database_config=None):
     for stmt in sql.split(";"):
         run_sql(session, stmt, { 'taxon_id': taxon_id })
 
-    session.commit()
+    if commit:
+        session.commit()
+
     session.close()
