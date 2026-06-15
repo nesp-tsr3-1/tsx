@@ -168,6 +168,8 @@ export default {
       }).catch((error) => {
         if(error.xhr.status === 400) {
           this.errors = JSON.parse(error.xhr.response)
+        } else {
+          this.errors = { server_error: true }
         }
       }).finally(() => {
         this.submitting = false
