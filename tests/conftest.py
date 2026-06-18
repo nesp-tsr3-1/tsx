@@ -10,7 +10,7 @@ from tsx.api.util import db_session
 from contextlib import contextmanager
 from sqlalchemy.orm import close_all_sessions
 
-from subprocess import Popen, PIPE, STDOUT
+from subprocess import Popen, PIPE
 
 # Note to self: pytest fixtures automatically become available to tests
 # based on the test function having an argument that matches the name of

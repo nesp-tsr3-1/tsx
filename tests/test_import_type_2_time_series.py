@@ -1,13 +1,10 @@
-import subprocess
-from tests.util import insert_test_data, import_test_data, compare_output, get_csv_data
+from tests.util import insert_test_data, import_test_data
 import textwrap
 from tsx.api.data_import import import_type_2_time_series
-from tsx.api.custodian_feedback_shared import update_custodian_feedback_forms
 from tsx.api.util import db_session
 from sqlalchemy import text
 
 import tempfile
-import os
 
 def test_type_2_time_series_import(fresh_database, db_name, output_dir, data_dir):
     import_test_data(db_name, 'unit',

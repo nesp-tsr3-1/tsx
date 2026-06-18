@@ -1,5 +1,5 @@
 import subprocess
-from tests.util import import_test_data, compare_output, get_csv_data
+from tests.util import import_test_data, get_csv_data
 import textwrap
 
 def test_filter_time_series(fresh_database, db_name, output_dir):

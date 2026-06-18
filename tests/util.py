@@ -33,7 +33,7 @@ def import_test_data(db_name, table_name, *, csv_file=None, csv_data=None):
     ]).check_returncode()
 
 def insert_test_data(db_name, table_name, rows):
-    if type(rows) == dict:
+    if isinstance(rows, dict):
         rows = [rows]
 
     if len(rows) == 0:

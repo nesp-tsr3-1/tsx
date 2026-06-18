@@ -5,7 +5,8 @@
 from shapely.geometry import Polygon
 import shapely.wkb
 from tqdm import tqdm
-from tsx.db import get_session, Taxon, T2UltrataxonSighting
+from tsx.db import get_session
+from tsx.db.models import Taxon, T2UltrataxonSighting
 from tsx.util import run_parallel, sql_list_placeholder, sql_list_argument
 from tsx.geo import point_intersects_geom
 import logging

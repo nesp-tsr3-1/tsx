@@ -9,7 +9,6 @@ from shapely import minimum_bounding_radius
 from fiona.transform import transform_geom
 from freezegun import freeze_time
 import csv
-from datetime import datetime
 import subprocess
 
 num_sites_per_region = 5

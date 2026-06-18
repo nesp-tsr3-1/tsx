@@ -1,7 +1,5 @@
 import subprocess
 from tests.util import import_test_data, compare_output
-import os
-import filecmp
 
 def test_import_type1(fresh_database, db_name, output_dir):
     import_test_data(db_name, 'source')
