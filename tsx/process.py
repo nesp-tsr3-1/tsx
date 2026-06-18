@@ -77,7 +77,7 @@ def main():
     except ValueError:
         parser.error('--species argument must be a comma-separated list of integers')
 
-    if args.commit != True:
+    if not args.commit:
         log.info("Not committing any changes to database (dry-run only)")
 
     if args.command == 'alpha_hull':

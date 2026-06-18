@@ -1,9 +1,10 @@
 from flask import Blueprint, jsonify, request
 from tsx.api.util import db_session, get_user
 from tsx.api.permissions import permitted
-from tsx.db import MonitoringProgram, User
-from tsx.api.validation import *
+from tsx.db.models import MonitoringProgram, User
+from tsx.api.validation import validate_required, validate_max_chars, validate_fields, Field, email_regex
 from sqlalchemy import text
+import re
 
 bp = Blueprint('program', __name__)
 
@@ -163,7 +164,7 @@ def create_or_update_program(program_id=None):
 def update_program_from_json(program, json):
 	for field in program_fields:
 		value = json.get(field.name)
-		if type(value) == str:
+		if isinstance(value, str):
 			value = value.strip()
 		setattr(program, field.name, value)
 

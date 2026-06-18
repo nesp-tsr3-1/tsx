@@ -8,6 +8,8 @@ from random import shuffle
 
 log = logging.getLogger(__name__)
 
+print_sql_times = False
+
 def process_database(species = None, commit = False, database_config = None):
     session = get_session(database_config)
     if species is None:
@@ -77,12 +79,16 @@ def process_database(species = None, commit = False, database_config = None):
     run_sql(session, "DROP TABLE tmp_site_centroid")
 
 def run_sql(session, sql, *args, **kwargs):
-    short_sql = sql.replace("\n", " ")[:100]
-    # print(short_sql)
-    t0 = time.time()
+    if print_sql_times:
+        short_sql = sql.replace("\n", " ")[:100]
+        print(short_sql)
+        t0 = time.time()
+
     session.execute(text(sql), *args, **kwargs)
-    t1 = time.time()
-    # print("%s took %s sec" % (short_sql, t1 - t0))
+
+    if print_sql_times:
+        t1 = time.time()
+        print("%s took %s sec" % (short_sql, t1 - t0))
 
 
 # Assumption: the raw data does not contain ultrataxa and non-ultrataxa for the same species

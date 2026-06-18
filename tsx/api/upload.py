@@ -26,7 +26,6 @@ def post_upload():
 	An accompanying <UUID>.json file is also created which contains upload metadata such as the MIME type.
 	"""
 
-	result = []
 	files = list(request.files.values())
 
 	if len(files) > 0:

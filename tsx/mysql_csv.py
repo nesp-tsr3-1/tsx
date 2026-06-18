@@ -89,7 +89,6 @@ def perform_import(table, cnx, delete, allow_missing_columns, pagesize):
     cur = cnx.cursor(buffered=False, raw=False)
 
     columns = get_columns(cur, table)
-    primary_key_columns = get_primary_key(cur, table)
 
     if not columns_ok(columns):
         exit(1)

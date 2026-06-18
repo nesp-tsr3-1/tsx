@@ -1,5 +1,5 @@
 from tsx.api.util import db_session, db_insert
-from tsx.api.validation import *
+from tsx.api.validation import validate_one_of, validate_required, validate_integer, Field
 from sqlalchemy import text
 from tsx.api import subset
 import json
@@ -174,7 +174,7 @@ def val_required_integrated_only(value, field, context):
 def validate_integer_or_unsure(min_value=None, max_value=None):
 	integer_validator = validate_integer(min_value=min_value, max_value=max_value)
 	def _validate_integer_or_unsure(value, field, context):
-		if type(value) == str and value.strip().strip('"\'').lower() == "unsure":
+		if isinstance(value, str) and value.strip().strip('"\'').lower() == "unsure":
 				return None
 		result = integer_validator(value, field, context)
 		if result:
@@ -707,13 +707,13 @@ def update_dataset_stats(source_id, taxon_id, data_import_id):
 	try:
 		with open(trend_path, 'r') as file:
 			trend_data = file.read()
-	except:
+	except OSError:
 		trend_data = None
 
 	try:
 		with open(diagnostics_path, 'r') as file:
 			trend_diagnostics = json.load(file)
-	except:
+	except OSError:
 		trend_diagnostics = None
 
 	# Generate monitoring consistency plot

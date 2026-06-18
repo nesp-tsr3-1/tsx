@@ -2,7 +2,7 @@
 from flask import Blueprint, jsonify, request, Response #, send_file, session,
 from tsx.api.util import db_session, get_user, get_roles, db_insert, db_update #, server_timezone, sanitise_file_name_string
 from tsx.util import Bunch
-from tsx.api.validation import *
+from tsx.api.validation import validate_fields, validate_required, validate_boolean, validate_date, validate_max_chars, Field
 from tsx.api.permissions import permitted
 from sqlalchemy import text
 from io import StringIO
@@ -439,17 +439,17 @@ def val_required_for_submit(value, field, context):
 
 def val_required_if(other_field):
 	def _validate_required_if(value, field, context):
-		if context.body.get(other_field) == True:
+		if context.body.get(other_field) is True:
 			return validate_required(value, field, context)
 	return _validate_required_if
 
 def val_list(value, field, context):
-	if value is not None and type(value) != list:
+	if not isinstance(value, list | type(None)):
 		return "Must be a list"
 
 def val_non_empty_for_submit(value, field, context):
 	if context.submitting:
-		if type(value) == list and len(value) == 0:
+		if isinstance(value, list) and len(value) == 0:
 			return "Must contain at least one value"
 
 

@@ -45,7 +45,7 @@ def main():
 
 			try:
 				data['suppress_aggregated_data_until'] = parse_date(row.get('SuppressAggregatedDataUntil'))
-			except:
+			except ValueError:
 				pass
 
 			# In relaxed mode, silently skip rows without SourceID value
@@ -79,7 +79,7 @@ def main():
 			try:
 				if data['data_agreement_id']:
 					data['data_agreement_id'] = int(data['data_agreement_id'])
-			except:
+			except ValueError:
 				if args.relax:
 					log.warning("Treating unknown AgreementSigned value as blank: %s" % data['data_agreement_id'])
 					data['data_agreement_id'] = None
@@ -204,7 +204,7 @@ def get_suppress_aggregated_data(row):
 		supress_until = parse_date(value)
 		if supress_until:
 			return date.today() < supress_until
-	except:
+	except ValueError:
 		pass
 
 	log.warning("Unknown value for SuppressAggregatedDataUntil: '%s', defaulting to False" % (raw_value))

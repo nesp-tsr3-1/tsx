@@ -12,12 +12,6 @@ from sqlalchemy import text
 
 log = logging.getLogger(__name__)
 
-try:
-    if unicode:
-        unicode_type_exists = True
-except NameError:
-    unicode_type_exists = False
-
 def process_database(species = None, monthly = False, filter_output = False, include_all_years_data = False, database_config = None, export_dir = None):
     session = get_session(database_config)
 
@@ -386,9 +380,6 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                 del data['value_count']
                 del data['scientific_name']
 
-                if unicode_type_exists:
-                    writer.writerow({k: None if v is None else unicode(v).encode("utf-8") for k, v in data.items()})
-                else:
-                    writer.writerow({k: None if v is None else str(v) for k, v in data.items()})
+                writer.writerow({k: None if v is None else str(v) for k, v in data.items()})
 
     log.info("Done")

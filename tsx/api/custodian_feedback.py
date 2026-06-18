@@ -1,12 +1,12 @@
 from flask import Blueprint, jsonify, request, send_file, Response, current_app
 from tsx.api.util import db_session, get_user, db_insert, server_timezone, sanitise_file_name_string
 from tsx.util import Bunch
-from tsx.api.validation import *
+from tsx.api.validation import validate_fields
 from tsx.api.permissions import permitted
 from sqlalchemy import text
 import json
 from tsx.api.custodian_feedback_pdf import generate_pdf
-from tsx.api.custodian_feedback_shared import *
+from tsx.api.custodian_feedback_shared import field_options, form_fields, get_form_json_raw, update_all_dataset_stats, current_form_version
 from tsx.config import data_dir, config
 import os
 from io import StringIO
@@ -388,7 +388,7 @@ def update_form(form_id):
 
 	try:
 		current_app.logger.debug(json.dumps(request.json))
-	except:
+	except Exception:
 		current_app.logger.error("Failed to dump json")
 		pass
 

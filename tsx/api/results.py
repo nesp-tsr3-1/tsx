@@ -80,7 +80,7 @@ def download_time_series():
 
 				for filename in os.listdir(extra_dir):
 					zip_file.write(os.path.join(extra_dir, filename), filename)
-			except:
+			except OSError:
 				# Directory may not exist etc. - carry on
 				pass
 
@@ -328,9 +328,9 @@ def filter_data(df, params):
 	if get_dataset_name() == 'tsx2019':
 		# legacy
 		if management == 'No management':
-			df = df[df.IntensiveManagement.isna() == True]
+			df = df[df.IntensiveManagement.isna()]
 		elif management == 'Any management':
-			df = df[df.IntensiveManagement.isna() == False]
+			df = df[df.IntensiveManagement.notna()]
 		elif management == 'Predator-free':
 			df = df[df.IntensiveManagementGrouping.str.contains('predator-free', na=False)]
 	elif get_dataset_name() == 'tsx2020':
@@ -663,7 +663,6 @@ def get_taxon_option(taxon_id, common_name, scientific_name, has_trend):
 
 @bp.route('/params', methods = ['GET'])
 def get_parameters():
-	df = get_trend_data()
 	param_values = get_parameter_values()
 
 	query_type = request.args.get('type', default='all', type=str)
@@ -680,8 +679,6 @@ def get_parameters():
 		# Special case - remove 'All' status for EPBC
 		if param_values['Status'] == 'NT_VU_EN_CR' and param_values['StatusAuthority'] == 'EPBC':
 			param_values['Status'] = 'VU_EN_CR'
-
-	results = {}
 
 	params = [
 		dict(name='type',

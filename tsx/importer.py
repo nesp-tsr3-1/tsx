@@ -1,5 +1,7 @@
 from pyproj import Transformer
-from tsx.db import T1Survey, T1Sighting, T1Site, T2Survey, T2Sighting, T2Site, Taxon, Source, DataImport, SourceType, SearchType, Unit, UnitType, Management, ProjectionName, DataProcessingType, get_session, MonitoringProgram
+from pyproj.exceptions import CRSError
+from tsx.db.models import T1Survey, T1Sighting, T1Site, T2Survey, T2Sighting, T2Site, Taxon, Source, DataImport, SourceType, SearchType, Unit, UnitType, Management, ProjectionName, DataProcessingType, MonitoringProgram
+from tsx.db import get_session
 import tsx.util
 import logging
 from datetime import date, datetime, time
@@ -193,7 +195,7 @@ class Importer:
 				# We could convert everything to str, but that gives us issues with date formats and 'None'
 				# So we just convert numeric values to strings
 				def normalize_excel_value(v):
-					if type(v) == int or type(v) == float:
+					if isinstance(v, int | float):
 						return str(v)
 					else:
 						return v
@@ -415,7 +417,7 @@ class Importer:
 		# Strip leading/trailing whitespace from all values, and convert empty strings to None
 		row_is_empty = True
 		for key in row:
-			if type(row[key]) in (str, text_type):
+			if isinstance(row[key], str | text_type):
 				row[key] = row[key].strip()
 			if row[key] == '':
 				row[key] = None
@@ -907,7 +909,7 @@ def create_point(x, y, projection_ref):
 	if projection_ref not in (None, 'EPSG:4326'):
 		try:
 			transformer = get_proj_transformer(projection_ref)
-		except:
+		except CRSError:
 			log.exception("Invalid/unrecognised projection")
 			raise ImportError("Invalid/unrecognised projection: %s" % projection_ref)
 		x, y = transformer.transform(x, y)
@@ -1007,10 +1009,10 @@ def parse_date(raw_date, log):
 	if raw_date is None:
 		return None, None, None
 
-	if type(raw_date) == datetime:
+	if isinstance(raw_date, datetime):
 		return raw_date.day, raw_date.month, raw_date.year
 
-	if type(raw_date) in (str, text_type):
+	if isinstance(raw_date, str | text_type):
 		parts = raw_date.split('/')
 		if len(parts) != 3:
 			raise ValueError("Invalid date format (expected DD/MM/YYYY)")
@@ -1051,10 +1053,10 @@ def parse_time(raw_time):
 	if raw_time is None:
 		return None
 
-	if type(raw_time) == time:
+	if isinstance(raw_time, time):
 		return raw_time
 
-	if type(raw_time) in (str, text_type):
+	if isinstance(raw_time, str | text_type):
 		return datetime.strptime(raw_time, '%H:%M:%S').time()
 
 	raise ValueError("Unable to process time: %s" % raw_time)
@@ -1078,8 +1080,8 @@ def quoted_strings(s):
 
 def case_insensitive_equal(a, b):
 	return a == b or (
-		type(a) == str and
-		type(b) == str and
+		isinstance(a, str) and
+		isinstance(b, str) and
 		a.casefold() == b.casefold())
 
 if __name__ == '__main__':

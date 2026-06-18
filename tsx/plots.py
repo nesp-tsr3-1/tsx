@@ -2,6 +2,10 @@ import matplotlib.pyplot as plt
 from io import StringIO, BytesIO
 import cartopy.crs as ccrs
 from contextlib import contextmanager
+import matplotlib
+
+# Stop MatplotLib from trying to initialize GUI backend and crashing due to not being on the main thread:
+matplotlib.use('agg')
 
 @contextmanager
 def figure(*args, **kwds):
@@ -12,11 +16,6 @@ def figure(*args, **kwds):
 		plt.close(fig)
 
 light_grey = "#F4F4F4"
-
-# These lines are necessary to stop MatplotLib from trying to initialize
-# GUI backend and crashing due to not being on the main thread:
-import matplotlib
-matplotlib.use('agg')
 
 def rendered_plot_data(fig, format):
 	if format == 'svg':

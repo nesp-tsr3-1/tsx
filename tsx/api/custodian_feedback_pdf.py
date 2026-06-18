@@ -1,6 +1,6 @@
 from fpdf import FPDF
 from fpdf.fonts import FontFace
-from tsx.api.custodian_feedback_shared import get_form_json_raw, field_options, form_fields
+from tsx.api.custodian_feedback_shared import get_form_json_raw, field_options
 from tsx.api.util import server_timezone
 import json
 from datetime import datetime
@@ -534,8 +534,6 @@ def generate_pdf(form_id):
 		headings.cell('Description')
 		headings.cell('Your assessment', colspan=3)
 
-		form_fields_by_name = { f.name: f for f in form_fields }
-
 		for number, field_name, title, description in [
 			(11, 'standardisation_of_method_effort', 'Standardisation of method effort', 'This data suitability indicator rates the degree of standardisation of monitoring method/effort and is assessed to the data source level by enquiring with the data custodian and examining data.'),
 			(12, 'objective_of_monitoring', 'Objective of monitoring', 'This field indicates the objective of the monitoring.'),
@@ -543,7 +541,6 @@ def generate_pdf(form_id):
 			(14, 'monitoring_frequency_and_timing', 'Monitoring frequency and timing', 'This data suitability indicator rates whether the taxon was monitored with an appropriate frequency and during an appropriate season/timing.'),
 			(15, 'absences_recorded', 'Were absences recorded systematically?', 'Absences are non-detections of taxa i.e. where 0 counts of a species are recorded.')]:
 
-			field = form_fields_by_name[field_name]
 			options = field_options[field_name]
 
 			for index, option in enumerate(options):

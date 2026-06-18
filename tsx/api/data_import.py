@@ -5,11 +5,10 @@ from tsx.api.upload import get_upload_path, get_upload_name
 from tsx.api.subset import subset_data_summary_json_string, legacy
 from tsx.importer import Importer
 from tsx.config import data_dir
-from tsx.db import User, Source, DataImport, DataProcessingNotes, AuditLogItem, TimeSeriesImport
+from tsx.db.models import User, Source, DataImport, DataProcessingNotes, AuditLogItem, TimeSeriesImport
 from tsx.db.connect import get_database_duckdb_attach_string, get_mysql_connection
 import logging
 import os
-from threading import Lock
 import traceback
 import time
 from tsx.api.validation import validate_fields, validate_required, Field, email_regex, validate_max_chars, validate_one_of, validate_email
@@ -1235,7 +1234,7 @@ def import_type_2_time_series(file_path, source_id, data_import_id):
 		"data_import_id": data_import_id
 	})
 
-	t = db.sql("UNPIVOT t ON COLUMNS('^[0-9]+$') INTO NAME StartYear VALUE Val")
+	t = db.sql("UNPIVOT t ON COLUMNS('^[0-9]+$') INTO NAME StartYear VALUE Val") # noqa: F841
 
 	t = db.sql("""SELECT
 			SUBSTR(TRIM('_' FROM REGEXP_REPLACE(taxon.scientific_name, '[^a-zA-Z]', '_', 'g')), 1, 40) AS Binomial,
@@ -1290,7 +1289,7 @@ def import_type_2_time_series(file_path, source_id, data_import_id):
 			LEFT JOIN region.region ON region.id = (
 				SELECT MIN(id) FROM region.region WHERE ST_Contains(region.geom, ST_Point(SurveysCentroidLongitude::DOUBLE, SurveysCentroidLatitude::DOUBLE))
 			)
-	""")
+	""") # noqa: F841
 
 	output_path = aggregated_data_path(source_id, 2)
 

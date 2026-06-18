@@ -142,7 +142,7 @@ def lpi_data():
 
 				for filename in os.listdir(extra_dir):
 					zip_file.write(os.path.join(extra_dir, filename), filename)
-			except:
+			except OSError:
 				# Directory may not exist etc. - carry on
 				pass
 
@@ -168,7 +168,7 @@ def lpi_data():
 
 	elif output_format == "json":
 		#pandas index data a bit different, so need to unfold it, can use json_pandas for direct export
-		json_data = json.loads(unicode(filtered_dat.to_json(), errors='ignore'))
+		json_data = json.loads(filtered_dat.to_json())
 		return_json = {}
 		for field, value in json_data.items():
 			for _timeserie_id, _item_value in value.items():
@@ -182,7 +182,7 @@ def lpi_data():
 
 	# This will be removed
 	elif output_format == 'dotplot':
-		json_data = json.loads(unicode(filtered_dat.to_json(), errors='ignore'))
+		json_data = json.loads(filtered_dat.to_json())
 		plot_dat = []
 		years = sorted([ y for y in json_data.keys() if y.isdigit() ])
 		binomials = json_data['Binomial']
@@ -193,7 +193,7 @@ def lpi_data():
 		return json.dumps(plot_dat)
 	# TODO: replace dotplot with plot
 	elif output_format == 'plot':
-		json_data = json.loads(unicode(filtered_dat.to_json(), errors='ignore'))
+		json_data = json.loads(filtered_dat.to_json())
 		dotplot_dat = []
 		timeseries_year = {}
 		species_year = {}
@@ -397,7 +397,7 @@ def get_summary_data(filtered_data):
 
 	# Get only years that have data
 	m = df[years].max()
-	years = list(m.index[(m.bfill() + m.ffill()).isna() == False])
+	years = list(m.index[(m.bfill() + m.ffill()).notna()])
 
 	# Fill in any gaps in time series
 	# We are being a bit tricky here. We do a back-fill and forward-fill of values, and then add them together.
@@ -479,9 +479,9 @@ def get_filtered_data():
 	if get_dataset_name() == 'tsx2019':
 		# legacy
 		if management == 'No management':
-			df = df[df.IntensiveManagement.isna() == True]
+			df = df[df.IntensiveManagement.isna()]
 		elif management == 'Any management':
-			df = df[df.IntensiveManagement.isna() == False]
+			df = df[df.IntensiveManagement.notna()]
 		elif management == 'Predator-free':
 			df = df[df.IntensiveManagementGrouping.str.contains('predator-free', na=False)]
 	elif get_dataset_name() == 'tsx2020':
@@ -766,19 +766,11 @@ def stats_html():
 def get_stats(filtered_data):
 	df = filtered_data
 
-	years = [col for col in df.columns if col.isdigit()]
-	int_years = [int(year) for year in years]
-
-	year_df = df.loc[:,years] * 0 + int_years
-
 	# Time series length
 	ts_length = df['TimeSeriesLength'] # year_df.max(axis = 1) - year_df.min(axis = 1) + 1
 
 	# Time series sample years
 	ts_years = df['TimeSeriesSampleYears'] # (year_df * 0 + 1).sum(axis = 1)
-
-	n_sources = df['SourceDesc'].nunique()
-	n_taxa = df['TaxonID'].nunique()
 
 	grouped_by_taxon = df.groupby('TaxonID').agg({
 		'TimeSeriesLength': 'mean',

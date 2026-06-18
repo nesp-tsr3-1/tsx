@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine, event
-from sqlalchemy.orm import sessionmaker, scoped_session, close_all_sessions
+from sqlalchemy.orm import sessionmaker, close_all_sessions
 from tsx.config import config
 import os
 import logging
@@ -107,8 +107,6 @@ def get_engine(database_config=None):
 def configure_session_maker(session_maker, database_config=None):
     if database_config is None:
         database_config = "database"
-
-    engine = get_engine(database_config)
 
     session_maker.configure(bind=get_engine(database_config), future=True)
 

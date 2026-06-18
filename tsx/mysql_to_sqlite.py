@@ -62,14 +62,13 @@ def drop_table(dest_db, table):
 def copy_table_schema(session, table, dest_db):
     drop_table(dest_db, table)
     created = False
-    field_defs = []
     # Note: we create columns one by one because that is the only supported way to create spatial columns
     # (https://www.gaia-gis.it/gaia-sins/spatialite-cookbook/html/new-geom.html)
     # However you can't create a table with no columns.
     for (name, datatype, nullable, key, default, extra) in session.execute(text("describe `%s`" % table)).fetchall():
         datatype = datatype.decode("utf-8")
         if is_spatial_datatype(datatype):
-            if created == False:
+            if not created:
                 raise "First column cannot be a spatial column"
             sql = "SELECT AddGeometryColumn('%s', '%s', -1, '%s', 'XY', %s)" % (table, name, datatype, {'YES': 0}.get(nullable, 1))
         else:

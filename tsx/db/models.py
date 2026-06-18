@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import List, Optional
 
 from sqlalchemy import CHAR, Column, Computed, Date, Double, ForeignKeyConstraint, Index, Integer, JSON, SmallInteger, String, TIMESTAMP, Table, Text, Time, text
 from sqlalchemy.dialects.mysql import MEDIUMTEXT, TINYINT

@@ -68,7 +68,7 @@ def process_shp(session, spno, shp):
 			suffix = parts.group(2) or ''
 
 			geometry = shape(feature['geometry'])
-			if type(geometry) == Polygon:
+			if isinstance(geometry, Polygon):
 				geometry = MultiPolygon([geometry])
 
 			geometry = transform(transformer.transform, geometry)

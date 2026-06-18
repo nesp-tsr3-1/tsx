@@ -1,6 +1,6 @@
 from flask import session, current_app, jsonify, request
 from tsx.db.connect import Session
-from tsx.db import User
+from tsx.db.models import User
 from sqlalchemy import orm
 from werkzeug.local import LocalProxy
 from sqlalchemy import text

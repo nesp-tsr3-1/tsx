@@ -4,7 +4,6 @@ from tsx.config import data_dir
 import os
 from tqdm import tqdm
 from sqlalchemy import text
-import pandas as pd
 import tempfile
 from tsx.util import delete_file_if_exists
 from threading import Lock
@@ -103,7 +102,7 @@ def arrow_type_from_mysql_column_description(description):
     elif type_code == FieldType.GEOMETRY:
         raise ValueError("Unsupported data type GEOMETRY")
 
-    raise value_error("Unrecognized type_code: %s" % type_code)
+    raise ValueError("Unrecognized type_code: %s" % type_code)
 
 
 def mysql_to_parquet(conn, path_pattern, sql, chunksize=65536):

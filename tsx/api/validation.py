@@ -1,16 +1,16 @@
 # Basic field validation framework
 from collections.abc import Collection, Callable
-from dataclasses import dataclass, field
+import dataclasses
 import re
 from datetime import date
 
 # Field = namedtuple("Field", "name title validators")
 
-@dataclass
+@dataclasses.dataclass
 class Field:
 	name: str
 	title: str = ''
-	validators: Collection[Callable] = field(default_factory=list)
+	validators: Collection[Callable] = dataclasses.field(default_factory=list)
 	type: str = 'any'
 
 email_regex = r'^[^@\s]+@[^@\s]+\.[^@\s]+$'
@@ -98,7 +98,7 @@ def validate_decimal(min_value=None, max_value=None, max_dp=None):
 				ok = False
 
 			if max_dp is not None:
-				if type(value) == str and '.' in value:
+				if isinstance(value, str) and '.' in value:
 					if len(value.split('.')[1]) > max_dp:
 						ok = False
 
@@ -127,7 +127,7 @@ def validate_fields(fields, body, context=None):
 	for field in fields:
 		value = body.get(field.name)
 
-		if type(value) == str:
+		if isinstance(value, str):
 			value = value.strip()
 
 		for validator in field.validators:

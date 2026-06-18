@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request, Response
 import csv
 from uuid import uuid4
-from tsx.api.util import db_session, get_user, jsonify_rows, get_request_args_or_body, sanitise_file_name_string
+from tsx.api.util import db_session, get_user, get_request_args_or_body, sanitise_file_name_string
 from tsx.util import get_resource
 from tsx.api.permissions import permitted
 from tsx.api.results import trend_txt_to_csv
@@ -620,7 +620,7 @@ def subset_sql_params_legacy(subset_params=None, state_via_region=False):
             pnames = ["site%s" % i for i in range(0, len(ids))]
             where_conditions.append("t1_site.id IN (%s)" % ", ".join([":%s" % p for p in pnames]))
             params.update(dict(zip(pnames, ids)))
-        except:
+        except Exception:
             pass
 
     return (where_conditions, having_conditions, params)
@@ -1238,7 +1238,7 @@ def process_trend(trend_id):
                     script_params.append('--log-linear')
                 if params_json.get('excluded_years'):
                     script_params.append('--excluded-years=' + params_json.get('excluded_years'))
-        except:
+        except (OSError, ValueError):
             pass
 
         script_params.append('--filter-rows')
@@ -1341,7 +1341,7 @@ def get_trend_params(trend_id):
     try:
         with open(os.path.join(path, "params.json"), "r") as f:
             return json.load(f)
-    except:
+    except (OSError, ValueError):
         return None
 
 @bp.route('/subset/trend/<trend_id>')

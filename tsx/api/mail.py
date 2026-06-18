@@ -5,6 +5,7 @@ from tsx.config import config
 import ssl
 from concurrent.futures import ThreadPoolExecutor
 from pprint import pp
+import configparser
 
 email_configured = False
 admin_recipient = None
@@ -18,7 +19,7 @@ try:
 	smtp_sender = config.get('smtp', 'default_sender')
 	admin_recipient = config.get('api', 'admin_notification_email')
 	email_configured = True
-except:
+except configparser.Error:
 	print("Warning: Failed to load mail configuration")
 
 _executor = ThreadPoolExecutor(1)
