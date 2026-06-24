@@ -30,7 +30,27 @@ Clicking on any row of the table opens the <<Dataset Details>> page for that dat
 
 === Search Bar
 
-A search bar above the table allows datasets to be searched by description and custodian name. As text is entered into the search bar, the table is filtered to show only matching records. When the search text matches a custodian name or email address, the custodian name also appears along side the dataset. Text which matches the search text is higlighted in bold.
+A search bar above the table allows datasets to be searched by the following attributes:
+
+ * Dataset description
+ * Custodian name(s)
+ * Data provider
+ * Data details
+ * Author
+ * Monitoring program
+ * Agreement file name
+ * Taxon scientific name
+ * Taxon common name
+ * Taxon ID
+
+
+As text is entered into the search bar, the table is immediately filtered to show only matching records.
+
+By default, the search text is matched against _all_ of the attributes listed above, but if the search text is prefixed with an attribute name it will search for that attribute only. For example, entering "Custodian: joe" into the search bar will list only datasets with a custodian name that includes the text "joe". An auto-suggest drop down is used to show the available attribute prefixes so that users can easily discover them.
+
+When the search text matches an attribute (besides description), the attribute name and value is displayed alongside the dataset description. Any text that matches the search text is higlighted in bold.
+
+If the user enters a prefix into the search bar without any following text, then all datasets are listed and the attribute value(s) corresponding to that prefix are displayed. For example, if the user enters "Custodian:" into the search bar, all datasets are listed and all custodian names are displayed alongside the dataset description.
 
 === Dataset Count
 
@@ -42,7 +62,7 @@ The "Create Dataset" button navigates to the <<Dataset Editing>> interface where
 
 == Dataset Details
 
-The dataset details displays information related to an individual dataset and provides a variety of management functions.
+The dataset details page displays information related to an individual dataset and provides a variety of management functions.
 
 The dataset description is displayed as the page title.
 
@@ -160,13 +180,22 @@ The dataset is completely removed from the database along with its imported data
 
 To prevent accidental deletion, users must tick a checkbox to confirm their decision before the deletion can proceed.
 
+=== No Data Sharing Agreement Warning
+
+If the user is an administrator and the dataset does not have a data sharing agreement in place, a red warning banner is displayed at the top of the Dataset Details page with the text:
+
+[quote]
+____
+Note: There is currently no data sharing agreement in place for this dataset.
+____
+
 == Dataset Editing
 
 The Dataset Editing interface is used for entering and updating dataset metadata and contact details.
 
 All fields are validated when the user attempts to submit the form, and any fields with errors are highlighted.
 
-=== Metadata fields
+=== Metadata Fields
 
 The following fields are all required:
 
@@ -191,7 +220,7 @@ The Source type field allows one of two values:
  * Custodian (the data are provided as electronic primary data from a custodian)
  * Paper report (the data are extracted from a published scientific paper or report)
 
-=== Contact fields
+=== Contact Fields
 
 These fields all fields required unless marked otherwise:
 
