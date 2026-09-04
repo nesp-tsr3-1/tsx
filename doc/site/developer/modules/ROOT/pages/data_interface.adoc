@@ -1,0 +1,24 @@
+= Data Interface
+
+The data interface is implemented as a Vue front-end talking to a Python/Flask back-end.
+
+== Quick start
+
+* Initialise a MySQL database using `db/sql/create.sql` and `db/sql/init.sql`
+* Configure database connection details in tsx.conf
+* Start dev server with `uv run ./dev-server.sh`
+* Start front-end with `cd web; npm run dev-data`
+* See project README for more info
+
+== Data preprocessing
+
+When new survey data is imported by a user, it is stored in the MySQL database in the `t1/t2_survey/site/sighting` tables.
+
+In additional, some automatic data preprocessing takes place:
+
+ * Raw data is flattened into a single table format and placed into `<data_dir>/preprocessed/<source_id>_raw.parquet`. The data columns and values are formatted in a way that is suitable for providing to the user via the Downloads page. This allows the Downloads page to filter data and generate CSV downloads very efficiently, much faster than via the MySQL database. It also makes dataset and download statistics calculations very fast. We use DuckDB both for generating and querying the parquet files. Type 1 and Type 2 data is aggregated into exactly the same structure, so that downloads and stats can be generated across type 1 and type 2 datasets without any special consideration of the two data types.
+
+ * Type 1 data is aggregated into time series and placed into `<data_dir>/preprocessed/<source_id>_agg_t1.parquet`. The rationale for this is the same as for raw data, with even greater speed gains since it avoids slow aggregation.
+
+ * We cannot automatically aggregated Type 2 data into time series, becuase that processing requires extra input files (processing methods). However, users can manually import Type 2 time series data. When they do this, the type 2 time series data is saved into `<data_dir>/preprocessed/<source_id>_agg_t2.parquet` using exactly the same structure as the auto-generated Type 1 time series. Once again, this common structure enables the use of common logic for providing downloads and statustics for type 1 and type 2 data.
+

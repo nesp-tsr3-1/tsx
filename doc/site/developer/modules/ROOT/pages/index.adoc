@@ -1,0 +1,36 @@
+= Introduction
+
+This documentation is intended for developers working on the TSX codebase.
+
+== Overview
+
+The TSX consists of several components
+
+ * MySQL database:
+ ** For storage of raw data, which is either uploaded via the data interface, or imported via the command line scripts
+ ** For storage for the data interface (e.g. user accounts, custodian feedback data, etc.)
+ ** For processing of data using SQL queries and storing the results
+ ** database schema is found under `db/sql/create.sql`
+
+ * Python scripts:
+ ** For running the TSX workflow that transforms raw data into time series
+ ** For importing data such as taxonomic lists and species range polygons
+ ** For generating trend permutations to be displayed by the TSX visualiser
+ ** Code lives under the `tsx` directory
+
+ * API backend:
+ ** Implemented in Python as a Flask app
+ ** Backend for TSX Data Interface and TSX Visualiser
+ ** Code lives under `tsx/api`
+
+ * Data interface front-end (https://tsx.org.au/data)
+ ** Implemented using the Vue Javascript framework
+ ** Provides an interface for users to upload, manage and analyse datasets
+ ** Requires login access (data custodians can self-register)
+ ** Code lives under `web/data`
+
+ * TSX Visualiser (https://tsx.org.au/tsx)
+ ** Implemented using the Vue Javascript framework
+ ** A single-page application that allows users to explore a set of trend permutations
+ ** A separate instance is deployed for each new version of the TSX
+ ** Code lives under `web/tsx`
