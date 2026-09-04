@@ -575,6 +575,11 @@ def create_or_update_source(source_id=None):
 			email=user.email
 		))
 
+	if action == 'update':
+		remove_preprocessed_data(source.id)
+		with get_mysql_connection() as conn:
+			preprocess_sources([source.id], conn)
+
 	return jsonify(new_source_json), 200 if source_id else 201
 
 def new_audit_log_item():
