@@ -35,10 +35,9 @@ def data_agreements():
 					WHERE data_agreement_file.data_agreement_id = data_agreement.id
 				), JSON_ARRAY()),
 				'description', (
-					SELECT filename
+					SELECT GROUP_CONCAT(filename SEPARATOR ", ")
 					FROM data_agreement_file
 					WHERE data_agreement_file.data_agreement_id = data_agreement.id
-					LIMIT 1
 				),
 				'commencement_date', provider_date_signed,
 				'custodians', (
