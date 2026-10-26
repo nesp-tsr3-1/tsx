@@ -724,7 +724,10 @@ class Importer:
 						self.cache[key] = True
 						log.warning("Common name (%s) does not match expected (%s)" % (common_name, taxon.common_name))
 			if scientific_name and taxon.scientific_name != scientific_name:
-				log.warning("Scientific name (%s) does not match expected (%s)" % (scientific_name, taxon.scientific_name))
+				key = 'warn_sn_' + scientific_name
+				if key not in self.cache:
+					self.cache[key] = True
+					log.warning("Scientific name (%s) does not match expected (%s)" % (scientific_name, taxon.scientific_name))
 
 			if self.fast_mode:
 				sighting = None
