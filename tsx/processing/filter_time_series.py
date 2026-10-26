@@ -26,7 +26,7 @@ def process_database():
                 CASE coalesce(absences_recorded, '')
                     WHEN 'yes' THEN 1
                     WHEN 'no' THEN 0
-                    WHEN 'partially' THEN 0
+                    WHEN 'partially' THEN 1
                     ELSE NULL
                 END AS absences_recorded
             FROM custodian_feedback
