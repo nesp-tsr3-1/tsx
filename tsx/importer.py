@@ -27,6 +27,8 @@ warnings.filterwarnings("ignore", ".*Invalid utf8 character string.*")
 
 log = logging.getLogger(__name__)
 
+max_error_warning_rate = 0.1
+
 # Helper to make logging and progress bar work together
 class TqdmStream(object):
 	def write(self, x):
@@ -368,7 +370,7 @@ class Importer:
 			self.processed_rows += 1
 
 
-		if self.processed_rows > 100 and self.error_count + self.warning_count > self.processed_rows / 100.0:
+		if self.processed_rows > 100 and (self.error_count + self.warning_count) > (self.processed_rows * max_error_warning_rate):
 			raise ImportError("Warning/error rate too high")
 
 	def handle_import_exception(self, ex):
