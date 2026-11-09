@@ -56,7 +56,7 @@ def process_database():
             a.end_year,
             a.suppress_aggregated_data
         FROM data_source a
-        JOIN cf_data_source b ON a.source_id = b.source_id AND a.taxon_id = b.taxon_id;
+        LEFT JOIN cf_data_source b ON a.source_id = b.source_id AND a.taxon_id = b.taxon_id;
         """
     ]
 
