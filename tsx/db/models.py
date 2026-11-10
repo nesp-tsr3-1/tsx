@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from sqlalchemy import CHAR, Column, Computed, Date, Double, ForeignKeyConstraint, Index, Integer, JSON, SmallInteger, String, TIMESTAMP, Table, Text, Time, text
 from sqlalchemy.dialects.mysql import MEDIUMTEXT, TINYINT
@@ -399,6 +399,10 @@ class Taxon(Base):
     state_status_id: Mapped[Optional[int]] = mapped_column(Integer)
     bird_action_plan_status_id: Mapped[Optional[int]] = mapped_column(Integer)
     max_status_id: Mapped[Optional[int]] = mapped_column(Integer, Computed('(nullif(greatest(coalesce(`epbc_status_id`,0),coalesce(`iucn_status_id`,0),coalesce(`bird_action_plan_status_id`,0)),0))', persisted=False))
+    class_: Mapped[Optional[str]] = mapped_column('class', String(255))
+    genus: Mapped[Optional[str]] = mapped_column(String(255))
+    species: Mapped[Optional[str]] = mapped_column(String(255))
+    subspecies: Mapped[Optional[str]] = mapped_column(String(255))
 
     bird_action_plan_status: Mapped['TaxonStatus'] = relationship('TaxonStatus', foreign_keys=[bird_action_plan_status_id])
     epbc_status: Mapped['TaxonStatus'] = relationship('TaxonStatus', foreign_keys=[epbc_status_id])

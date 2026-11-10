@@ -84,6 +84,10 @@ def main():
 					family_scientific_name = normalize(row['FamilyScientificName']),
 					order = normalize(row['Order']),
 					population = row.get('Population'),
+					class_ = normalize(row.get('Class')),
+					genus = normalize(row.get('Genus')),
+					species = normalize(row.get('Species')),
+					subspecies = normalize(row.get('Subspecies')),
 					# TODO - there are status in WLAB like 'Introduced' and 'Vagrant' not in Glenn's list - for now importing as NULL
 					epbc_status = get_status('EPBCStatus'),
 					iucn_status = get_status('IUCNStatus'),
