@@ -285,7 +285,7 @@ export function generateCitation(authors, details, provider) {
   details = fix(details) || '<Data Details>'
   provider = fix(provider) || '<Data Provider>'
 
-  return `${authors} (${year}). ${details}. ${provider}. Aggregated for the Australian Threatened Species Index, an output of the NESP Threatened Species Recovery Hub and operated by the Terrestrial Ecosystem Research Network, The University of Queensland.`
+  return `${authors} (${year}). ${details}. ${provider}. 'Source data incorporated into the Australian Threatened Species Index, maintained by the NCRIS-enabled Terrestrial Ecosystem Research Network (TERN).'`
 }
 
 export function handleLinkClick(evt, url, router) {

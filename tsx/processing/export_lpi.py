@@ -275,7 +275,7 @@ def process_database(species = None, monthly = False, filter_output = False, inc
                         ' (', YEAR(NOW()), '). ',
                         TRIM(TRAILING '.' FROM TRIM(source.details)), '. ',
                         TRIM(TRAILING '.' FROM TRIM(source.provider)), '. ',
-                        'Aggregated for the Australian Threatened Species Index, an output of the NESP Threatened Species Recovery Hub and operated by the Terrestrial Ecosystem Research Network, The University of Queensland.'
+                        'Source data incorporated into the Australian Threatened Species Index, maintained by the NCRIS-enabled Terrestrial Ecosystem Research Network (TERN).'
                     ) AS Citation
                 FROM
                     {aggregated_table} agg
