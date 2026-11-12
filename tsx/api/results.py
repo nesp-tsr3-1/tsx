@@ -36,7 +36,7 @@ def read_data(filename, table="time_series", index_col="ID"):
 
 def sanitise_df(df):
 	# Important: remove sensitive information that must not be exposed publicly
-	df = df.drop(['SurveysCentroidLatitude', 'SurveysCentroidLongitude', 'SurveysSpatialAccuracy', 'DataAgreement', 'SiteDesc', 'SiteName', 'StatePlantStatus'], axis=1, errors='ignore')
+	df = df.drop(['SurveysCentroidLatitude', 'SurveysCentroidLongitude', 'SurveysSpatialAccuracy', 'DataAgreement', 'SiteDesc', 'SiteName', 'StatePlantStatus', 'SourceDesc'], axis=1, errors='ignore')
 	if get_dataset_name() != 'tsx2019':
 		df = df.drop(['IntensiveManagement'], axis=1, errors='ignore')
 
