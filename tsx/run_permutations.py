@@ -30,6 +30,12 @@ def main():
 
     args = parser.parse_args()
 
+    try:
+        subprocess.run(["Rscript", "-e", "library(rlpi)"], stdout=stdout, stderr=stderr, check=True)
+    except(e):
+        print('Failed to load rlpi package. Do you need to install packages or run "renv::restore()"?')
+        raise e
+
     db = sqlite3.connect(args.output_db)
     df = load_lpi_wide(args.lpi_wide)
 
