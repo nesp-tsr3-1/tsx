@@ -372,7 +372,7 @@ def stats_html():
 
 	query_type = request.args.get('type', default='all', type=str)
 
-	include_spatial_rep = get_dataset_name() not in ['tsx2023', 'tsx2024']
+	include_spatial_rep = (get_dataset_name() not in ['tsx2023', 'tsx2024']) and ('SpatialRepresentativeness' in df.columns)
 
 	template = u"""
 	<html>
@@ -469,17 +469,29 @@ def get_filtered_taxa():
 def get_stats(filtered_data):
 	df = filtered_data
 
-	grouped_by_taxon = df.groupby(['TaxonID']).agg({
-		'TimeSeriesLength': 'mean',
-		'SourceDesc': 'nunique',
-		'TimeSeriesID': 'nunique',
-		'SpatialRepresentativeness': 'mean',
-	}).rename(columns = {
-		'TimeSeriesLength': 'ts_length_mean',
-		'SourceDesc': 'num_sources',
-		'TimeSeriesID': 'num_ts',
-		'SpatialRepresentativeness': 'spatial_rep'
-	})
+	if 'SpatialRepresentativeness' in df.columns:
+		grouped_by_taxon = df.groupby(['TaxonID']).agg({
+			'TimeSeriesLength': 'mean',
+			'SourceDesc': 'nunique',
+			'TimeSeriesID': 'nunique',
+			'SpatialRepresentativeness': 'mean',
+		}).rename(columns = {
+			'TimeSeriesLength': 'ts_length_mean',
+			'SourceDesc': 'num_sources',
+			'TimeSeriesID': 'num_ts',
+			'SpatialRepresentativeness': 'spatial_rep'
+		})
+	else:
+		grouped_by_taxon = df.groupby(['TaxonID']).agg({
+			'TimeSeriesLength': 'mean',
+			'SourceDesc': 'nunique',
+			'TimeSeriesID': 'nunique'
+		}).rename(columns = {
+			'TimeSeriesLength': 'ts_length_mean',
+			'SourceDesc': 'num_sources',
+			'TimeSeriesID': 'num_ts'
+		}).assign(spatial_rep = np.nan)
+
 
 	taxa = get_filtered_taxa()
 
